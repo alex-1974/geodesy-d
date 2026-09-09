@@ -769,6 +769,6 @@ It is a set of independent D libraries that are individually worth using.
 ### Validation expansion
 
 - [x] deterministic PROJ/cct cross-validation harness for EPSG 9602/1031/1032/1033
-- [ ] broaden PROJ differential matrix with reproducible generated vectors
+- [x] broaden PROJ differential matrix with reproducible generated vectors
 - [ ] run validation in CI where PROJ is available
 - [ ] establish measured accuracy envelopes before v0.1

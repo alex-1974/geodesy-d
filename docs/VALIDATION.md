@@ -157,3 +157,101 @@ Independent implementation:
 PROJ explicitly models geodetic transformations as pipelines of elementary
 operations and requires the Helmert rotation convention to be declared when
 rotational parameters are used.
+
+## Extended fixed-seed differential suite
+
+The fast default gate remains:
+
+```bash
+tools/validate-proj.sh
+```
+
+For a broader deterministic validation run:
+
+```bash
+tools/validate-proj.sh --extended
+```
+
+The extended suite uses a locally implemented SplitMix64 generator with fixed
+seeds. This avoids relying on a Phobos RNG implementation detail and keeps the
+generated vectors reproducible across compiler/library upgrades.
+
+### Generated EPSG 9602 matrix
+
+Four ellipsoid models are exercised:
+
+```text
+WGS 84
+GRS 80
+Airy 1830
+sphere, R = 6 371 000 m
+```
+
+PROJ receives the same ellipsoid parameters through `+ellps`, `+a`/`+rf`, or
+`+a`/`+b`.
+
+For each ellipsoid, 48 generated geodetic vectors cover:
+
+- both longitude hemispheres;
+- explicit antimeridian-near cases;
+- ordinary and near-polar latitudes;
+- heights from -1 km to 1 billion metres.
+
+Forward XYZ is compared directly to PROJ.
+
+For the inverse direction, PROJ independently generates XYZ from the known
+geodetic vector and `geodesy-d` must recover the known source.
+
+### Generated EPSG 1031 matrix
+
+64 generated geocentric vectors use:
+
+```text
+X/Y/Z:  +/- 100 000 km
+dX/dY/dZ: +/- 1 km
+```
+
+and are compared with PROJ Helmert translation-only operations.
+
+### Generated EPSG 1032 / 1033 matrix
+
+64 generated 7-parameter transformations exercise:
+
+```text
+X/Y/Z:       +/- 100 000 km
+translations +/- 500 m
+rotations    +/- 5 arcsec on every axis
+scale        +/- 25 ppm
+```
+
+Every vector is evaluated as both:
+
+```text
+EPSG 1033 Position Vector
+EPSG 1032 Coordinate Frame
+```
+
+with the three Coordinate Frame rotation signs reversed.
+
+The suite checks both implementations independently against PROJ and also
+checks that the two convention-specific `geodesy-d` parameterizations produce
+the same physical target coordinate.
+
+### Extended tolerances
+
+The generated matrix uses operation-specific absolute floors plus a small
+magnitude-dependent term for very large coordinates:
+
+```text
+linear XYZ: 20 micrometres + 5e-13 * coordinate magnitude
+inverse angular: 1e-9 degrees
+inverse height: 50 micrometres + 2e-12 * |height|
+```
+
+These remain validation thresholds, not API accuracy guarantees.
+
+### Reproducibility
+
+The fixed seeds are part of the validator source and should not be changed
+casually. If a seed changes, that change should be treated like changing a
+reference-vector corpus and called out in review.

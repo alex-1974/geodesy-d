@@ -8,7 +8,8 @@ set -euo pipefail
 #
 # Usage:
 #   tools/validate-proj.sh
-#   DC=dmd tools/validate-proj.sh
+#   tools/validate-proj.sh --extended
+#   DC=dmd tools/validate-proj.sh --extended
 #
 # Run this script from anywhere; it resolves the repository root itself.
 
@@ -49,4 +50,4 @@ echo "Compiling PROJ cross-validation probe with $dc..."
 
 echo
 echo "Running geodesy-d differential validation against PROJ..."
-"$binary"
+"$binary" "$@"
