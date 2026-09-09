@@ -36,6 +36,7 @@ private:
     }
 
 public:
+    /** Construct from finite X/Y/Z components without throwing. */
     static bool tryFromComponents(
         const T x,
         const T y,
@@ -52,6 +53,7 @@ public:
         return true;
     }
 
+    /** Construct from X/Y/Z or throw when any component is non-finite. */
     static GeocentricCoordinate fromComponents(const T x, const T y, const T z)
         @safe
     {
@@ -61,8 +63,11 @@ public:
         return result;
     }
 
+    /** Geocentric X component. */
     @property T x() const pure nothrow @safe @nogc { return _x; }
+    /** Geocentric Y component. */
     @property T y() const pure nothrow @safe @nogc { return _y; }
+    /** Geocentric Z component. */
     @property T z() const pure nothrow @safe @nogc { return _z; }
 }
 

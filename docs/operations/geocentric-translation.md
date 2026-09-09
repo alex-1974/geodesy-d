@@ -71,7 +71,7 @@ GeocentricCoordinate!T applyGeocentricTranslation(T)(
 
 ## Validation
 
-The initial deterministic test set includes the EPSG/IOGP North Sea worked
+The deterministic unit-test set includes the EPSG/IOGP North Sea worked
 example:
 
 ```text
@@ -106,7 +106,7 @@ Tests also cover:
 This operation is deliberately implemented independently of the 7-parameter
 Helmert transformations.
 
-The next layer adds:
+The library also implements:
 
 - EPSG 1033 — Position Vector transformation (geocentric domain);
 - EPSG 1032 — Coordinate Frame rotation (geocentric domain).

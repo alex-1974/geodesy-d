@@ -781,6 +781,8 @@ It is a set of independent D libraries that are individually worth using.
 - [x] explicit v0.1 readiness checklist
 - [x] resolve `Ellipsoid.init` semantics — invalid sentinel, ADR-0004
 - [x] public API audit — external compile contract + docs/API.md
-- [ ] documentation audit
+- [x] documentation audit — Ddoc + release-facing docs contract
+- [x] CHANGELOG.md and CONTRIBUTING.md added
+- [x] package minimum D frontend 2.111.0 declared in dub.sdl
 - [ ] observe remote CI green
 - [ ] tag v0.1.0

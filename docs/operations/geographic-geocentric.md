@@ -208,11 +208,16 @@ test uses tolerances compatible with those rounded inputs.
 
 `double` remains the normative validation scalar.
 
-## Still pending
+## Validation status
 
-Before stable release:
+The implementation is covered by:
 
-- randomized differential testing against PROJ;
-- wider coverage of extreme heights and unusual ellipsoid flattenings;
-- explicit benchmark data;
-- GIGS test data where licensing/access permits.
+- published EPSG/IOGP reference vectors;
+- analytical and singularity/axis unit tests;
+- PROJ smoke differential validation;
+- a fixed-seed extended PROJ suite covering WGS 84, GRS 80, Airy 1830,
+  a spherical ellipsoid, antimeridian-near inputs, near-polar inputs, and
+  heights up to 1 billion linear units.
+
+Further work such as GIGS vectors, benchmarks, and measured public accuracy
+envelopes is useful but is not a v0.1 release blocker.

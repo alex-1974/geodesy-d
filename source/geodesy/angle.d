@@ -45,6 +45,7 @@ private:
     }
 
 public:
+    /** Construct from radians without throwing; returns false for non-finite input. */
     static bool tryFromRadians(const T radians, out Angle result)
         pure nothrow @safe @nogc
     {
@@ -54,6 +55,7 @@ public:
         return true;
     }
 
+    /** Construct from degrees without throwing; returns false for non-finite input. */
     static bool tryFromDegrees(const T degrees, out Angle result)
         pure nothrow @safe @nogc
     {
@@ -62,6 +64,7 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
+    /** Construct from radians or throw `GeodesyValueException` for non-finite input. */
     static Angle fromRadians(const T radians)
         @safe
     {
@@ -71,6 +74,7 @@ public:
         return result;
     }
 
+    /** Construct from degrees or throw `GeodesyValueException` for non-finite input. */
     static Angle fromDegrees(const T degrees)
         @safe
     {
@@ -80,11 +84,13 @@ public:
         return result;
     }
 
+    /** Angle value in canonical radians. */
     @property T radians() const pure nothrow @safe @nogc
     {
         return _radians;
     }
 
+    /** Angle value converted to degrees. */
     @property T degrees() const pure nothrow @safe @nogc
     {
         return radiansToDegrees(_radians);
@@ -106,6 +112,7 @@ private:
     }
 
 public:
+    /** Construct from radians; returns false outside [-pi/2,+pi/2] or for non-finite input. */
     static bool tryFromRadians(const T radians, out Latitude result)
         pure nothrow @safe @nogc
     {
@@ -115,6 +122,7 @@ public:
         return true;
     }
 
+    /** Construct from degrees; returns false outside [-90,+90] or for non-finite input. */
     static bool tryFromDegrees(const T degrees, out Latitude result)
         pure nothrow @safe @nogc
     {
@@ -123,6 +131,7 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
+    /** Construct from radians or throw when outside the latitude domain. */
     static Latitude fromRadians(const T radians)
         @safe
     {
@@ -132,6 +141,7 @@ public:
         return result;
     }
 
+    /** Construct from degrees or throw when outside the latitude domain. */
     static Latitude fromDegrees(const T degrees)
         @safe
     {
@@ -141,16 +151,19 @@ public:
         return result;
     }
 
+    /** Latitude in radians. */
     @property T radians() const pure nothrow @safe @nogc
     {
         return _radians;
     }
 
+    /** Latitude in degrees. */
     @property T degrees() const pure nothrow @safe @nogc
     {
         return radiansToDegrees(_radians);
     }
 
+    /** Return the same angular value as a general `Angle!T`. */
     @property Angle!T asAngle() const pure nothrow @safe @nogc
     {
         return Angle!T.fromRadiansUnchecked(_radians);
@@ -172,6 +185,7 @@ private:
     }
 
 public:
+    /** Construct from radians; returns false outside [-pi,+pi] or for non-finite input. */
     static bool tryFromRadians(const T radians, out Longitude result)
         pure nothrow @safe @nogc
     {
@@ -181,6 +195,7 @@ public:
         return true;
     }
 
+    /** Construct from degrees; returns false outside [-180,+180] or for non-finite input. */
     static bool tryFromDegrees(const T degrees, out Longitude result)
         pure nothrow @safe @nogc
     {
@@ -189,6 +204,7 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
+    /** Construct from radians or throw when outside the longitude domain. */
     static Longitude fromRadians(const T radians)
         @safe
     {
@@ -198,6 +214,7 @@ public:
         return result;
     }
 
+    /** Construct from degrees or throw when outside the longitude domain. */
     static Longitude fromDegrees(const T degrees)
         @safe
     {
@@ -207,16 +224,19 @@ public:
         return result;
     }
 
+    /** Longitude in radians. */
     @property T radians() const pure nothrow @safe @nogc
     {
         return _radians;
     }
 
+    /** Longitude in degrees. */
     @property T degrees() const pure nothrow @safe @nogc
     {
         return radiansToDegrees(_radians);
     }
 
+    /** Return the same angular value as a general `Angle!T`. */
     @property Angle!T asAngle() const pure nothrow @safe @nogc
     {
         return Angle!T.fromRadiansUnchecked(_radians);

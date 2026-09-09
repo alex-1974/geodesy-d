@@ -6,9 +6,15 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Initial implementation phase.**
+**v0.1 release preparation.**
 
-No stable public API exists yet. `Angle`, `Latitude`, `Longitude`, `Ellipsoid`, `GeodeticCoordinate`, `GeocentricCoordinate`, and the bidirectional geodetic ↔ geocentric conversion now form the initial core. Frame transformations follow next.
+The intended v0.1 public baseline is implemented and under release audit. It
+contains strong angular/coordinate value types, reference ellipsoids, EPSG 9602
+bidirectional geographic/geocentric conversion, EPSG 1031 geocentric
+translation, and EPSG 1032/1033 static 7-parameter Helmert transformations.
+
+The API is documented and validated, but Semantic Versioning stability begins
+only when the repository is tagged `v0.1.0`.
 
 ## Responsibility boundary
 
@@ -38,24 +44,25 @@ EPSG database / WKT / PROJJSON / grid resources  -> proj-d
 
 A projected result may later be adapted to a `geo-d` point, but `geodesy-d` does not require `geo-d` merely to represent projected coordinates.
 
-## Initial vertical slice
+## v0.1 implemented baseline
 
-The first usable core should contain only:
+The v0.1 baseline contains:
 
 ```text
-Angle
-Latitude
-Longitude
+Angle / Latitude / Longitude
 Ellipsoid
 GeodeticCoordinate
-GeocentricCoordinate (ECEF terminology)
-geodeticToGeocentric()
-geocentricToGeodetic()
+GeocentricCoordinate
+EPSG 9602  geodetic <-> geocentric
+EPSG 1031  geocentric translations
+EPSG 1033  Position Vector Helmert 7P
+EPSG 1032  Coordinate Frame Helmert 7P
 ```
 
-This slice is intentionally small. It gives later frame transformations and projections a verified numerical foundation.
+Projection mathematics and ellipsoidal geodesics remain later milestones and
+are not v0.1 release blockers.
 
-## Planned layering
+## Current and planned layering
 
 A tentative module layout is:
 
@@ -70,7 +77,8 @@ source/geodesy/
 ├── geocentric.d
 ├── conversion.d
 ├── transform/
-│   └── helmert.d                 # later
+│   ├── geocentric_translation.d # EPSG 1031
+│   └── helmert.d                 # EPSG 1032 / 1033
 ├── projection/
 │   ├── transverse_mercator.d     # later
 │   └── utm.d                     # later
@@ -135,10 +143,17 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 
 ## Documentation
 
-- `docs/adr/0001-scope-and-boundaries.md` — accepted responsibility boundary.
-- `docs/adr/0002-core-type-and-unit-model.md` — accepted core type, angle, scalar, validation, and ellipsoid semantics.
+- `docs/API.md` — v0.1 public API baseline.
+- `docs/VALIDATION.md` — compiler and independent PROJ validation policy.
+- `docs/V0_1_READINESS.md` — release gate checklist.
 - `docs/REFERENCES.md` — reference hierarchy and validation sources.
-- `docs/operations/geographic-geocentric.md` — EPSG method 9602 implementation contract and validation.
+- `docs/adr/0001-scope-and-boundaries.md` — responsibility boundary.
+- `docs/adr/0002-core-type-and-unit-model.md` — core type/unit model.
+- `docs/adr/0003-helmert-rotation-conventions.md` — EPSG 1032/1033 convention model.
+- `docs/adr/0004-invalid-ellipsoid-default-state.md` — `Ellipsoid.init` semantics.
+- `docs/operations/geographic-geocentric.md` — EPSG 9602.
+- `docs/operations/geocentric-translation.md` — EPSG 1031.
+- `docs/operations/helmert-7p.md` — EPSG 1032/1033.
 
 The workspace `ROADMAP.md` remains the authoritative project roadmap.
 
@@ -146,3 +161,10 @@ The workspace `ROADMAP.md` remains the authoritative project roadmap.
 ## Release readiness
 
 The v0.1 release gate is tracked in `docs/V0_1_READINESS.md`.
+
+
+## Compiler compatibility
+
+`geodesy-d` v0.1 declares D frontend **2.111.0** as the minimum supported
+frontend. CI also tests current DMD and LDC. A newer workspace development
+baseline does not imply that consumers must use that newer frontend.

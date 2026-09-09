@@ -46,6 +46,7 @@ public:
             && _flattening < cast(T) 1;
     }
 
+    /** Construct from semi-major axis and flattening without throwing. */
     static bool tryFromFlattening(
         const T semiMajorAxis,
         const T flattening,
@@ -61,6 +62,7 @@ public:
         return true;
     }
 
+    /** Construct from semi-major axis and flattening or throw on invalid parameters. */
     static Ellipsoid fromFlattening(const T semiMajorAxis, const T flattening)
         @safe
     {
@@ -71,6 +73,7 @@ public:
         return result;
     }
 
+    /** Construct from semi-major axis and inverse flattening without throwing. */
     static bool tryFromInverseFlattening(
         const T semiMajorAxis,
         const T inverseFlattening,
@@ -85,6 +88,7 @@ public:
             result);
     }
 
+    /** Construct from semi-major axis and inverse flattening or throw on invalid parameters. */
     static Ellipsoid fromInverseFlattening(
         const T semiMajorAxis,
         const T inverseFlattening)
@@ -97,6 +101,7 @@ public:
         return result;
     }
 
+    /** Construct from semi-major and semi-minor axes without throwing. */
     static bool tryFromAxes(
         const T semiMajorAxis,
         const T semiMinorAxis,
@@ -112,6 +117,7 @@ public:
         return tryFromFlattening(semiMajorAxis, flattening, result);
     }
 
+    /** Construct from semi-major and semi-minor axes or throw on invalid parameters. */
     static Ellipsoid fromAxes(const T semiMajorAxis, const T semiMinorAxis)
         @safe
     {
@@ -122,12 +128,14 @@ public:
         return result;
     }
 
+    /** Construct a sphere without throwing; radius must be finite and positive. */
     static bool trySphere(const T radius, out Ellipsoid result)
         pure nothrow @safe @nogc
     {
         return tryFromFlattening(radius, cast(T) 0, result);
     }
 
+    /** Construct a sphere or throw when the radius is invalid. */
     static Ellipsoid sphere(const T radius)
         @safe
     {
@@ -137,37 +145,44 @@ public:
         return result;
     }
 
+    /** Semi-major axis `a` in the ellipsoid linear unit. */
     @property T semiMajorAxis() const pure nothrow @safe @nogc
     {
         return _semiMajorAxis;
     }
 
+    /** Flattening `f`. */
     @property T flattening() const pure nothrow @safe @nogc
     {
         return _flattening;
     }
 
+    /** Derived semi-minor axis `b = a(1-f)`. */
     @property T semiMinorAxis() const pure nothrow @safe @nogc
     {
         return _semiMajorAxis * (cast(T) 1 - _flattening);
     }
 
+    /** Derived inverse flattening `1/f`; infinity for a sphere. */
     @property T inverseFlattening() const pure nothrow @safe @nogc
     {
         return _flattening == 0 ? T.infinity : cast(T) 1 / _flattening;
     }
 
+    /** First eccentricity squared `e²`. */
     @property T firstEccentricitySquared() const pure nothrow @safe @nogc
     {
         return _flattening * (cast(T) 2 - _flattening);
     }
 
+    /** Second eccentricity squared `e'²`. */
     @property T secondEccentricitySquared() const pure nothrow @safe @nogc
     {
         const T e2 = firstEccentricitySquared;
         return e2 / (cast(T) 1 - e2);
     }
 
+    /** Third flattening `n = f/(2-f)`. */
     @property T thirdFlattening() const pure nothrow @safe @nogc
     {
         return _flattening / (cast(T) 2 - _flattening);

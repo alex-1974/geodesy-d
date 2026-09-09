@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
+          - dmd-2.111.0
           - dmd-latest
           - ldc-latest
 
@@ -45,6 +46,11 @@ jobs:
       - name: Public API contract
         shell: bash
         run: tools/validate-api.sh
+
+      - name: Documentation contract
+        if: matrix.compiler == 'dmd-latest'
+        shell: bash
+        run: tools/validate-docs.sh
 
       - name: Release build
         shell: bash

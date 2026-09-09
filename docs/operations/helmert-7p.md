@@ -159,7 +159,7 @@ test uses a matching tolerance.
 
 ## Additional validation
 
-The initial implementation also tests:
+Unit and differential validation also covers:
 
 1. identity semantics of `.init`;
 2. reduction to EPSG 1031 when rotation and scale are zero;

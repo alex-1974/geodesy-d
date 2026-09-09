@@ -18,7 +18,10 @@ import geodesy.scalar : isFiniteGeodesyScalar, isGeodesyScalar;
 /** EPSG Helmert rotation convention. */
 enum HelmertConvention
 {
+    /** EPSG 1033 Position Vector rotation convention. */
     positionVector,
+
+    /** EPSG 1032 Coordinate Frame rotation convention. */
     coordinateFrame
 }
 

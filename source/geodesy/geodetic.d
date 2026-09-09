@@ -35,6 +35,7 @@ private:
     }
 
 public:
+    /** Construct from strong angular values and finite ellipsoidal height without throwing. */
     static bool tryFromComponents(
         const Latitude!T latitude,
         const Longitude!T longitude,
@@ -49,6 +50,7 @@ public:
         return true;
     }
 
+    /** Construct a geodetic coordinate or throw when height is non-finite. */
     static GeodeticCoordinate fromComponents(
         const Latitude!T latitude,
         const Longitude!T longitude,
@@ -61,16 +63,19 @@ public:
         return result;
     }
 
+    /** Geodetic latitude. */
     @property Latitude!T latitude() const pure nothrow @safe @nogc
     {
         return _latitude;
     }
 
+    /** Geodetic longitude. */
     @property Longitude!T longitude() const pure nothrow @safe @nogc
     {
         return _longitude;
     }
 
+    /** Ellipsoidal height in the operation's linear unit. */
     @property T ellipsoidalHeight() const pure nothrow @safe @nogc
     {
         return _ellipsoidalHeight;

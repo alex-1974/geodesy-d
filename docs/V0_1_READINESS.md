@@ -106,6 +106,25 @@ Those belong to later milestones or other libraries.
 - [x] No global machine-epsilon approximate-equality policy.
 - [x] No broad `@fastmath`.
 
+
+### Minimum supported D frontend
+
+The v0.1 package minimum is:
+
+```text
+D frontend >= 2.111.0
+```
+
+This is evidence-based rather than aspirational: the v0.1 documentation/API
+audit was executed successfully with local DMD 2.111.0 before the DUB package
+gate was aligned.
+
+The normal CI also retains current DMD and LDC jobs. The exact
+`dmd-2.111.0` job exists specifically to prevent accidental use of newer
+language features from silently raising the package minimum.
+
+This package minimum is distinct from a newer workspace development baseline.
+
 ### Compiler validation
 
 Local development gate:
@@ -127,7 +146,7 @@ CI definitions:
 - [x] GitHub Actions DMD gate added.
 - [x] GitHub Actions LDC gate added.
 - [x] GitHub Actions release build added.
-- [ ] First remote GitHub Actions run observed green.
+- [ ] First remote GitHub Actions run observed green, including dmd-2.111.0.
 
 ### Independent numerical validation
 
@@ -196,7 +215,7 @@ Before tagging:
 - [x] verify `pure`, `nothrow`, `@safe`, and `@nogc` claims;
 - [x] check that package-internal helpers are not accidentally re-exported;
 - [x] check that no API exposes ambiguous rotation/scale units;
-- [ ] check Ddoc comments for every public symbol.
+- [x] check Ddoc comments for every public symbol.
 
 ### Public API compile contract
 
@@ -227,18 +246,25 @@ It runs:
 
 ### 4. Release-facing documentation audit
 
-- [ ] verify `docs/README.md` describes the actual v0.1 scope;
-- [ ] verify `docs/REFERENCES.md` contains the normative references used;
-- [ ] verify `docs/VALIDATION.md` matches the implemented validator;
-- [ ] verify ADR-0001/0002/0003 remain consistent with code;
-- [ ] remove obsolete "next step" wording left over from implementation
+- [x] verify `docs/README.md` describes the actual v0.1 scope;
+- [x] verify `docs/REFERENCES.md` contains the normative references used;
+- [x] verify `docs/VALIDATION.md` matches the implemented validator;
+- [x] verify ADR-0001/0002/0003/0004 remain consistent with code;
+- [x] remove obsolete "next step" wording left over from implementation
       sequencing.
+
+### Documentation contract
+
+- [x] Ddoc generated from all public source modules;
+- [x] release-facing documentation stale-wording check added;
+- [x] required documentation/repository files checked in `tools/validate-docs.sh`;
+- [x] DMD documentation gate added to CI.
 
 ### 5. Release metadata
 
-- [ ] decide whether to add a library-specific `CHANGELOG.md` before v0.1;
-- [ ] confirm MIT license/copyright text;
-- [ ] confirm DUB package metadata;
+- [x] add library-specific `CHANGELOG.md`;
+- [x] confirm MIT license/copyright text;
+- [x] confirm DUB package metadata and package minimum D frontend >=2.111.0;
 - [ ] create and verify Git tag `v0.1.0`.
 
 ## Non-blocking quality improvements

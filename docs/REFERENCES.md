@@ -46,7 +46,7 @@ Use other standards or national/international geodetic sources when they define 
 
 The first numerical operation is the bidirectional geographic/geocentric conversion (EPSG method 9602).
 
-Current IOGP publication metadata identifies Report 373-07-2 as version 74, July 2026. The initial worked-example regression vector is the WGS 84 North Sea example that is also present in the publicly accessible December 2024 edition. Before a stable release, revalidate the method text and worked vector against the exact current publication revision.
+IOGP's current publication library continues to list Report 373-07-2 as the formula reference for EPSG coordinate conversions and transformations. The regression vectors used here are traceable to the publicly accessible December 2024 report, while method identities, parameter semantics, and Helmert convention behavior are additionally cross-checked against the current EPSG/PROJ ecosystem.
 
 See `docs/operations/geographic-geocentric.md` for the operation-level contract and test vector.
 
