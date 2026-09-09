@@ -158,3 +158,8 @@ They may be considered for a particular algorithm only when:
 - EPSG method 1032 — Coordinate Frame rotation (geocentric domain)
 
 The EPSG/IOGP parameter sign conventions are normative for these APIs.
+
+
+### Helmert convention policy
+
+ADR-0003 makes the EPSG 1032 Coordinate Frame and EPSG 1033 Position Vector rotation conventions distinct at the type level. PROJ Helmert documentation is used as an independent cross-validation source for convention conversion and parameter interchange behavior.

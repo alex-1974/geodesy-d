@@ -756,3 +756,11 @@ The first active library is therefore `geodesy-d`. Its first implementation mile
 The intended result is not one large geospatial product.
 
 It is a set of independent D libraries that are individually worth using.
+
+### Helmert 7P architecture
+
+- [x] ADR-0003: explicit EPSG 1032/1033 rotation conventions
+- [ ] EPSG 1033 Position Vector implementation
+- [ ] EPSG 1032 Coordinate Frame implementation
+- [ ] convention-equivalence reference tests
+- [ ] PROJ differential validation
