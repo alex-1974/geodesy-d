@@ -56,6 +56,9 @@ bool tryGeodeticToGeocentric(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
+    if (!ellipsoid.isValid)
+        return false;
+
     const T phi = source.latitude.radians;
     const T lambda = source.longitude.radians;
     const T h = source.ellipsoidalHeight;
@@ -88,7 +91,7 @@ if (isGeodesyScalar!T)
     GeocentricCoordinate!T result;
     if (!tryGeodeticToGeocentric(source, ellipsoid, result))
         throw new GeodesyValueException(
-            "Geodetic to geocentric conversion produced a non-finite result.");
+            "Geodetic to geocentric conversion requires a valid ellipsoid and a finite representable result.");
     return result;
 }
 
@@ -123,6 +126,9 @@ bool tryGeocentricToGeodetic(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
+    if (!ellipsoid.isValid)
+        return false;
+
     const T zero = cast(T) 0;
     const T one = cast(T) 1;
 
@@ -248,7 +254,7 @@ if (isGeodesyScalar!T)
     GeodeticCoordinate!T result;
     if (!tryGeocentricToGeodetic(source, ellipsoid, result))
         throw new GeodesyValueException(
-            "Geocentric to geodetic conversion is undefined or produced a non-finite result.");
+            "Geocentric to geodetic conversion requires a valid ellipsoid and a defined finite representable result.");
     return result;
 }
 
@@ -324,6 +330,22 @@ unittest
     assert(near(southGeo.latitude.degrees, -90.0, 1e-12));
     assert(southGeo.longitude.radians == 0.0);
     assert(near(southGeo.ellipsoidalHeight, 100.0, 1e-9));
+
+    // A default-initialized ellipsoid is deliberately invalid and must be
+    // rejected before any conversion mathematics is attempted.
+    const invalidEllipsoid = Ellipsoid!double.init;
+
+    GeocentricCoordinate!double invalidForward;
+    assert(!tryGeodeticToGeocentric(
+        source, invalidEllipsoid, invalidForward));
+    assertThrown!GeodesyValueException(
+        geodeticToGeocentric(source, invalidEllipsoid));
+
+    GeodeticCoordinate!double invalidReverse;
+    assert(!tryGeocentricToGeodetic(
+        epsgXyz, invalidEllipsoid, invalidReverse));
+    assertThrown!GeodesyValueException(
+        geocentricToGeodetic(epsgXyz, invalidEllipsoid));
 
     // The exact ellipsoid centre is not uniquely invertible.
     const centre = GeocentricCoordinate!double.init;

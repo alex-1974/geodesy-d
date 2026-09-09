@@ -10,9 +10,16 @@ struct Ellipsoid(T)
 if (isGeodesyScalar!T)
 {
 private:
-    // A valid and deterministic .init: unit sphere.
-    T _semiMajorAxis = 1;
-    T _flattening = 0;
+    /*
+     * `.init` is intentionally invalid.
+     *
+     * A silently valid default ellipsoid is dangerous: accidental default
+     * construction could otherwise produce finite, plausible, but physically
+     * meaningless geodetic results. All public factories construct valid
+     * ellipsoids explicitly.
+     */
+    T _semiMajorAxis = T.nan;
+    T _flattening = T.nan;
 
     static Ellipsoid fromCanonicalUnchecked(const T semiMajorAxis, const T flattening)
         pure nothrow @safe @nogc
@@ -24,6 +31,21 @@ private:
     }
 
 public:
+    /**
+     * True when this value represents a supported spherical or oblate
+     * ellipsoid.
+     *
+     * In particular, `Ellipsoid!T.init.isValid` is false.
+     */
+    @property bool isValid() const pure nothrow @safe @nogc
+    {
+        return isFiniteGeodesyScalar(_semiMajorAxis)
+            && _semiMajorAxis > cast(T) 0
+            && isFiniteGeodesyScalar(_flattening)
+            && _flattening >= cast(T) 0
+            && _flattening < cast(T) 1;
+    }
+
     static bool tryFromFlattening(
         const T semiMajorAxis,
         const T flattening,
@@ -167,12 +189,19 @@ unittest
     static assert(is(Ellipsoid!double));
     static assert(is(Ellipsoid!real));
 
+    const invalid = Ellipsoid!double.init;
+    assert(!invalid.isValid);
+    assert(invalid.semiMajorAxis != invalid.semiMajorAxis);
+    assert(invalid.flattening != invalid.flattening);
+
     const earth = wgs84!double();
+    assert(earth.isValid);
     assert(earth.semiMajorAxis == 6_378_137.0);
     assert(fabs(earth.inverseFlattening - 298.257223563) < 1e-10);
     assert(fabs(earth.semiMinorAxis - 6_356_752.314245179) < 1e-6);
 
     const sphere = Ellipsoid!double.sphere(6_371_000.0);
+    assert(sphere.isValid);
     assert(sphere.flattening == 0);
     assert(sphere.semiMinorAxis == sphere.semiMajorAxis);
     assert(sphere.inverseFlattening == double.infinity);

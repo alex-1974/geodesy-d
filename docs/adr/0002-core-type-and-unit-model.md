@@ -316,3 +316,15 @@ Not chosen because IOGP/EPSG consistently use the more general geocentric Cartes
 ### Embed datum/CRS metadata in each coordinate
 
 Rejected for the core because it couples value representation to authority/catalogue infrastructure and repeats the scope problems of the historical prototype.
+
+
+## Amendment: default `Ellipsoid<T>` state
+
+ADR-0004 amends this ADR for D struct default initialization.
+
+`Ellipsoid<T>.init` is intentionally invalid rather than a unit sphere.
+Factories still return only valid spherical/oblate ellipsoids, and numerical
+operations that consume an ellipsoid reject an invalid value before
+calculation.
+
+See `0004-invalid-ellipsoid-default-state.md`.

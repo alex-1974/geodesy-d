@@ -177,28 +177,14 @@ Release checklist:
 
 ## Remaining v0.1 blockers
 
-### 1. Resolve `Ellipsoid.init`
+### 1. `Ellipsoid.init` semantics
 
-Current implementation makes:
+- [x] Resolved in ADR-0004.
 
-```d
-Ellipsoid!T.init
-```
+`Ellipsoid!T.init` is an intentionally invalid NaN sentinel. Public factories
+create valid ellipsoids, `isValid` exposes the state explicitly, and checked
+EPSG 9602 operations reject an invalid ellipsoid before calculation.
 
-a valid unit sphere.
-
-This was chosen so every default value is valid, but it has not yet been
-accepted as a long-term semantic contract.
-
-Before v0.1, choose and document one of:
-
-1. retain unit-sphere `.init`;
-2. make `.init` an intentionally invalid sentinel and require checked
-   construction before use;
-3. redesign the type so accidental default initialization is structurally
-   harder.
-
-This is the main unresolved core-type semantic issue.
 
 ### 2. Public API audit
 
@@ -266,7 +252,7 @@ problem:
 `v0.1.0` is ready to tag when:
 
 ```text
-Ellipsoid.init semantics accepted
+Ellipsoid.init semantics accepted (ADR-0004)
 AND public API audit complete
 AND documentation audit complete
 AND remote DMD/LDC CI green

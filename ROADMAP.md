@@ -779,7 +779,7 @@ It is a set of independent D libraries that are individually worth using.
 - [x] DMD/LDC GitHub Actions workflow defined
 - [x] separate PROJ extended-validation workflow defined
 - [x] explicit v0.1 readiness checklist
-- [ ] resolve `Ellipsoid.init` semantics
+- [x] resolve `Ellipsoid.init` semantics — invalid sentinel, ADR-0004
 - [ ] public API audit
 - [ ] documentation audit
 - [ ] observe remote CI green
