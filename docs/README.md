@@ -141,3 +141,8 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/operations/geographic-geocentric.md` — EPSG method 9602 implementation contract and validation.
 
 The workspace `ROADMAP.md` remains the authoritative project roadmap.
+
+
+## Release readiness
+
+The v0.1 release gate is tracked in `docs/V0_1_READINESS.md`.

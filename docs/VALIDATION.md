@@ -255,3 +255,10 @@ These remain validation thresholds, not API accuracy guarantees.
 The fixed seeds are part of the validator source and should not be changed
 casually. If a seed changes, that change should be treated like changing a
 reference-vector corpus and called out in review.
+
+
+## CI integration
+
+Normal DMD/LDC compiler gates run in `.github/workflows/ci.yml`.
+
+The extended PROJ differential suite is isolated in `.github/workflows/proj-validation.yml`; it runs manually, weekly, and on pull requests touching numerical or validation code.

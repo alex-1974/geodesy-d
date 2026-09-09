@@ -772,3 +772,15 @@ It is a set of independent D libraries that are individually worth using.
 - [x] broaden PROJ differential matrix with reproducible generated vectors
 - [ ] run validation in CI where PROJ is available
 - [ ] establish measured accuracy envelopes before v0.1
+
+
+### geodesy-d v0.1 baseline consolidation
+
+- [x] DMD/LDC GitHub Actions workflow defined
+- [x] separate PROJ extended-validation workflow defined
+- [x] explicit v0.1 readiness checklist
+- [ ] resolve `Ellipsoid.init` semantics
+- [ ] public API audit
+- [ ] documentation audit
+- [ ] observe remote CI green
+- [ ] tag v0.1.0

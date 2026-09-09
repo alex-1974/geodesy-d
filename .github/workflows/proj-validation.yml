@@ -1,0 +1,45 @@
+name: PROJ differential validation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+  pull_request:
+    paths:
+      - "source/geodesy/**"
+      - "validation/**"
+      - "tools/validate-proj.sh"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/proj-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  proj-crosscheck:
+    name: PROJ extended cross-validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install DMD
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-latest
+
+      - name: Install PROJ command-line tools
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin
+          cct --version
+
+      - name: D compiler gate
+        shell: bash
+        run: dub test --force
+
+      - name: Extended differential validation
+        shell: bash
+        run: tools/validate-proj.sh --extended
