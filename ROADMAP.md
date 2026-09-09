@@ -270,6 +270,50 @@ simplification
 - allocation policy;
 - interoperability conventions.
 
+
+### Current implementation status
+
+The fixed-size 2D geometry foundation is substantially implemented and
+verified.
+
+Completed:
+
+- [x] `Point2` and `Vector2`
+- [x] explicit scalar and conversion policy
+- [x] `Bounds2`
+- [x] `Segment2`
+- [x] distance and squared distance
+- [x] segment length
+- [x] nearest point on a segment
+- [x] robust orientation for `int`
+- [x] robust orientation for `long`
+- [x] robust orientation for `float`
+- [x] robust orientation for `double`
+- [x] independent `BigInt` oracle and property verification
+- [x] exact segment-intersection classification
+- [x] exact positive-length segment-overlap construction
+- [x] correctly rounded unique-point segment-intersection construction
+
+Segment intersection keeps exact topology separate from geometric
+construction. Proper crossings use bounded exact arithmetic internally
+and are rounded to binary64 only for the final point coordinates.
+
+Deliberately deferred:
+
+- [ ] robust orientation for `real` — requires a platform-aware backend
+- [ ] segment-intersection support for `real` — follows the future robust
+      `real` predicate backend
+
+Next structural slice:
+
+- [ ] define ownership and view semantics for variable-size linear geometry
+- [ ] `Polyline` / `PolylineView`
+- [ ] `LinearRing`
+- [ ] signed area
+
+`Polygon` should follow the variable-size ownership/view decision rather
+than precede it.
+
 ### Quality gates
 
 Before a stable API:
