@@ -1,0 +1,7 @@
+name "geodesy-d"
+description "Dependency-light pure-D geodetic mathematics."
+authors "Alexander Leisser"
+copyright "Copyright © 2026, Alexander Leisser"
+license "MIT"
+targetType "library"
+sourcePaths "source"
