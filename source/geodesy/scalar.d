@@ -19,3 +19,17 @@ unittest
     static assert(!isGeodesyScalar!int);
     static assert(!isGeodesyScalar!(const double));
 }
+
+/** Return true if a supported scalar is finite. Internal package helper. */
+package bool isFiniteGeodesyScalar(T)(const T value) pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return value == value && value != T.infinity && value != -T.infinity;
+}
+
+unittest
+{
+    assert(isFiniteGeodesyScalar(0.0));
+    assert(!isFiniteGeodesyScalar(double.nan));
+    assert(!isFiniteGeodesyScalar(double.infinity));
+}

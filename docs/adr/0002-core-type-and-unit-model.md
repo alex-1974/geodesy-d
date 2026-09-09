@@ -249,6 +249,23 @@ In particular:
 
 The historical `mathematics.floating` prototype is useful as an exploration of generic floating-point helpers and compensated summation, but its global `equal`/`ltE`/`gtE` style is not adopted as domain validation policy.
 
+
+### 14. Linear coordinates use a shared scalar-unit contract in v0.1
+
+v0.1 does not introduce a separate `Length<T>` type. `Ellipsoid<T>` axes, `GeodeticCoordinate<T>.ellipsoidalHeight`, and `GeocentricCoordinate<T>` X/Y/Z components are stored as `T`.
+
+Operations that combine these values require them to use the same linear unit. The unit is therefore an operation-level contract rather than encoded into each scalar type. Metres are the normative unit for the initial authoritative geodetic reference vectors, but the mathematical value types themselves are not intrinsically metre-only.
+
+This decision may be revisited only if real cross-library use demonstrates that a strong length/unit type prevents material errors without imposing disproportionate interoperability or generic-programming cost.
+
+### 15. Geodetic and geocentric coordinates are checked value types
+
+`GeodeticCoordinate<T>` contains `Latitude<T>`, `Longitude<T>`, and finite ellipsoidal height. `GeocentricCoordinate<T>` contains finite Cartesian X/Y/Z components. Neither embeds an ellipsoid, datum, CRS, epoch, or accuracy metadata.
+
+The geocentre `(0, 0, 0)` is a valid representable Cartesian coordinate. A geocentric-to-geodetic conversion may nevertheless report that the inverse position is undefined/non-unique at that point; representability and operation-domain validity are distinct concerns.
+
+Both types expose checked throwing factories and `try...` construction paths, consistent with the other core value types.
+
 ## Consequences
 
 - unit mistakes become visible at API boundaries;

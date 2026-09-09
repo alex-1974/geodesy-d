@@ -107,6 +107,14 @@ For Earth-coordinate operations, important edge cases include poles, equator, lo
 
 The numerical core is floating-point-generic. `float`, `double`, and `real` are supported instantiations, but `double` is the normative reference precision. `float` is explicitly reduced precision; `real` has no portable precision guarantee beyond `double`. Tolerances are algorithm-specific rather than derived from one global machine-epsilon comparison rule.
 
+## Linear-unit policy
+
+`geodesy-d` does not introduce a `Length<T>` wrapper in v0.1. Ellipsoid axes, ellipsoidal height, projected coordinates, and geocentric Cartesian coordinates use scalar linear values. Mathematical operations that combine them require all participating linear values to use the same unit.
+
+This keeps the numerical kernel independent of a unit framework while preserving an explicit operation-level unit contract. Metres are the normal geodetic convention and the unit used by the initial reference data, but the core value types do not hard-code metres into their representation.
+
+`GeocentricCoordinate.init` is the geocentre `(0, 0, 0)` and is representable; an inverse geocentric-to-geodetic operation may reject or specially handle it because longitude/latitude are not uniquely defined there.
+
 ## Dependency policy
 
 The numerical core should begin with the D standard library only unless a dependency is justified by a concrete requirement.

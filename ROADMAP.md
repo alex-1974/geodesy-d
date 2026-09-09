@@ -191,7 +191,7 @@ Those responsibilities belong respectively to `geo-d`, `proj-d` and `georef-d`.
 - angle storage and degree/radian construction semantics;
 - latitude/longitude normalisation versus validation;
 - canonical ellipsoid representation;
-- coordinate value types and optional height semantics;
+- coordinate value types and ellipsoidal-height / shared linear-unit semantics;
 - error semantics for invalid/undefined inputs;
 - numerical accuracy and convergence policy;
 - `@safe`, `@nogc`, `nothrow` and CTFE expectations;

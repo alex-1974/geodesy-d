@@ -3,13 +3,8 @@ module geodesy.angle;
 
 import std.math : PI;
 import geodesy.errors : GeodesyValueException;
-import geodesy.scalar : isGeodesyScalar;
+import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
-private bool isFiniteScalar(T)(const T value) pure nothrow @safe @nogc
-if (isGeodesyScalar!T)
-{
-    return value == value && value != T.infinity && value != -T.infinity;
-}
 
 private T pi(T)() pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -53,7 +48,7 @@ public:
     static bool tryFromRadians(const T radians, out Angle result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(radians))
+        if (!isFiniteGeodesyScalar(radians))
             return false;
         result = fromRadiansUnchecked(radians);
         return true;
@@ -62,7 +57,7 @@ public:
     static bool tryFromDegrees(const T degrees, out Angle result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(degrees))
+        if (!isFiniteGeodesyScalar(degrees))
             return false;
         return tryFromRadians(degreesToRadians(degrees), result);
     }
@@ -112,7 +107,7 @@ public:
     static bool tryFromRadians(const T radians, out Latitude result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(radians) || radians < -halfPi!T || radians > halfPi!T)
+        if (!isFiniteGeodesyScalar(radians) || radians < -halfPi!T || radians > halfPi!T)
             return false;
         result = fromRadiansUnchecked(radians);
         return true;
@@ -121,7 +116,7 @@ public:
     static bool tryFromDegrees(const T degrees, out Latitude result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(degrees) || degrees < cast(T) -90 || degrees > cast(T) 90)
+        if (!isFiniteGeodesyScalar(degrees) || degrees < cast(T) -90 || degrees > cast(T) 90)
             return false;
         return tryFromRadians(degreesToRadians(degrees), result);
     }
@@ -176,7 +171,7 @@ public:
     static bool tryFromRadians(const T radians, out Longitude result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(radians) || radians < -pi!T || radians > pi!T)
+        if (!isFiniteGeodesyScalar(radians) || radians < -pi!T || radians > pi!T)
             return false;
         result = fromRadiansUnchecked(radians);
         return true;
@@ -185,7 +180,7 @@ public:
     static bool tryFromDegrees(const T degrees, out Longitude result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(degrees) || degrees < cast(T) -180 || degrees > cast(T) 180)
+        if (!isFiniteGeodesyScalar(degrees) || degrees < cast(T) -180 || degrees > cast(T) 180)
             return false;
         return tryFromRadians(degreesToRadians(degrees), result);
     }

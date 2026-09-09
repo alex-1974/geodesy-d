@@ -2,13 +2,8 @@
 module geodesy.ellipsoid;
 
 import geodesy.errors : GeodesyValueException;
-import geodesy.scalar : isGeodesyScalar;
+import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
-private bool isFiniteScalar(T)(const T value) pure nothrow @safe @nogc
-if (isGeodesyScalar!T)
-{
-    return value == value && value != T.infinity && value != -T.infinity;
-}
 
 /** A spherical or oblate reference ellipsoid stored canonically as (a, f). */
 struct Ellipsoid(T)
@@ -35,9 +30,9 @@ public:
         out Ellipsoid result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(semiMajorAxis) || semiMajorAxis <= 0)
+        if (!isFiniteGeodesyScalar(semiMajorAxis) || semiMajorAxis <= 0)
             return false;
-        if (!isFiniteScalar(flattening) || flattening < 0 || flattening >= 1)
+        if (!isFiniteGeodesyScalar(flattening) || flattening < 0 || flattening >= 1)
             return false;
 
         result = fromCanonicalUnchecked(semiMajorAxis, flattening);
@@ -59,7 +54,7 @@ public:
         out Ellipsoid result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(inverseFlattening) || inverseFlattening <= 1)
+        if (!isFiniteGeodesyScalar(inverseFlattening) || inverseFlattening <= 1)
             return false;
         return tryFromFlattening(
             semiMajorAxis,
@@ -84,9 +79,9 @@ public:
         out Ellipsoid result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteScalar(semiMajorAxis) || semiMajorAxis <= 0)
+        if (!isFiniteGeodesyScalar(semiMajorAxis) || semiMajorAxis <= 0)
             return false;
-        if (!isFiniteScalar(semiMinorAxis) || semiMinorAxis <= 0 || semiMinorAxis > semiMajorAxis)
+        if (!isFiniteGeodesyScalar(semiMinorAxis) || semiMinorAxis <= 0 || semiMinorAxis > semiMajorAxis)
             return false;
 
         const T flattening = (semiMajorAxis - semiMinorAxis) / semiMajorAxis;
