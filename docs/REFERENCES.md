@@ -168,3 +168,8 @@ ADR-0003 makes the EPSG 1032 Coordinate Frame and EPSG 1033 Position Vector rota
 ### EPSG 1033 reference vector
 
 The initial Position Vector implementation is validated against the IOGP Guidance Note 7-2 WGS 72 -> WGS 84 worked example (EPSG transformation 1238).
+
+
+### EPSG 1032 equivalence vector
+
+The Coordinate Frame implementation is validated with the same WGS 72 -> WGS 84 worked case as EPSG 1033, using the EPSG rule that the three rotations change sign while translations and scale remain unchanged.

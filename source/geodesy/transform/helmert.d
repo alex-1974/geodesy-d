@@ -492,3 +492,269 @@ unittest
         applyPositionVectorHelmert(
             hugeSource, hugeScale));
 }
+
+
+/**
+ * Convert an EPSG 1033 Position Vector parameter set into the equivalent
+ * EPSG 1032 Coordinate Frame parameter set.
+ *
+ * Translations and scale difference are preserved. All three rotations are
+ * negated. The represented source-to-target transformation is unchanged.
+ */
+CoordinateFrameHelmert!T toCoordinateFrame(T)(
+    const Helmert7!(T, HelmertConvention.positionVector) source)
+    @safe
+if (isGeodesyScalar!T)
+{
+    return CoordinateFrameHelmert!T.fromCanonical(
+        source.translationX,
+        source.translationY,
+        source.translationZ,
+        Angle!T.fromRadians(-source.rotationX.radians),
+        Angle!T.fromRadians(-source.rotationY.radians),
+        Angle!T.fromRadians(-source.rotationZ.radians),
+        source.scaleDifference);
+}
+
+
+/**
+ * Convert an EPSG 1032 Coordinate Frame parameter set into the equivalent
+ * EPSG 1033 Position Vector parameter set.
+ *
+ * Translations and scale difference are preserved. All three rotations are
+ * negated.
+ */
+PositionVectorHelmert!T toPositionVector(T)(
+    const Helmert7!(T, HelmertConvention.coordinateFrame) source)
+    @safe
+if (isGeodesyScalar!T)
+{
+    return PositionVectorHelmert!T.fromCanonical(
+        source.translationX,
+        source.translationY,
+        source.translationZ,
+        Angle!T.fromRadians(-source.rotationX.radians),
+        Angle!T.fromRadians(-source.rotationY.radians),
+        Angle!T.fromRadians(-source.rotationZ.radians),
+        source.scaleDifference);
+}
+
+
+/**
+ * Private EPSG 1032 Coordinate Frame kernel.
+ *
+ * EPSG small-angle matrix:
+ *
+ *   Xt = tX + M * ( Xs + rZ*Ys - rY*Zs )
+ *   Yt = tY + M * (-rZ*Xs + Ys + rX*Zs )
+ *   Zt = tZ + M * ( rY*Xs - rX*Ys + Zs )
+ */
+private bool tryApplyCoordinateFrameKernel(T)(
+    const GeocentricCoordinate!T source,
+    const Helmert7!(T, HelmertConvention.coordinateFrame) transform,
+    out GeocentricCoordinate!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    const T x = source.x;
+    const T y = source.y;
+    const T z = source.z;
+
+    const T rx = transform.rotationX.radians;
+    const T ry = transform.rotationY.radians;
+    const T rz = transform.rotationZ.radians;
+    const T m = transform.scaleFactor;
+
+    if (!isFiniteGeodesyScalar(m))
+        return false;
+
+    const T targetX = transform.translationX
+        + m * (x + rz * y - ry * z);
+
+    const T targetY = transform.translationY
+        + m * (-rz * x + y + rx * z);
+
+    const T targetZ = transform.translationZ
+        + m * (ry * x - rx * y + z);
+
+    return GeocentricCoordinate!T.tryFromComponents(
+        targetX, targetY, targetZ, result);
+}
+
+
+/**
+ * Apply EPSG method 1032 — Coordinate Frame rotation
+ * (geocentric domain).
+ *
+ * Returns false when finite parameters/intermediate arithmetic produce a
+ * non-finite target coordinate in scalar type T.
+ */
+bool tryApplyCoordinateFrameHelmert(T)(
+    const GeocentricCoordinate!T source,
+    const Helmert7!(T, HelmertConvention.coordinateFrame) transform,
+    out GeocentricCoordinate!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return tryApplyCoordinateFrameKernel(source, transform, result);
+}
+
+
+/** Throwing convenience wrapper for EPSG 1032. */
+GeocentricCoordinate!T applyCoordinateFrameHelmert(T)(
+    const GeocentricCoordinate!T source,
+    const Helmert7!(T, HelmertConvention.coordinateFrame) transform)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeocentricCoordinate!T result;
+    if (!tryApplyCoordinateFrameHelmert(source, transform, result))
+        throw new GeodesyValueException(
+            "Coordinate Frame Helmert transformation produced a non-finite result.");
+    return result;
+}
+
+
+unittest
+{
+    import std.exception : assertThrown;
+    import std.math : fabs;
+
+    bool nearCf(
+        const double actual,
+        const double expected,
+        const double tolerance)
+    {
+        return fabs(actual - expected) <= tolerance;
+    }
+
+    // Same WGS 72 -> WGS 84 transformation as the EPSG 1033 worked example,
+    // expressed in the EPSG 1032 Coordinate Frame convention.
+    //
+    // EPSG explicitly changes only the rotation sign:
+    //   Position Vector rZ  = +0.554 arcsec
+    //   Coordinate Frame rZ = -0.554 arcsec
+    const source = GeocentricCoordinate!double.fromComponents(
+        3_657_660.66,
+          255_768.55,
+        5_201_382.11);
+
+    const coordinateFrame =
+        CoordinateFrameHelmert!double.fromArcSecondsAndPpm(
+            0.0,
+            0.0,
+            4.5,
+            0.0,
+            0.0,
+            -0.554,
+            0.219);
+
+    const target =
+        applyCoordinateFrameHelmert(source, coordinateFrame);
+
+    // Same published target as EPSG 1033, rounded to centimetres.
+    assert(nearCf(target.x, 3_657_660.78, 0.01));
+    assert(nearCf(target.y,   255_778.43, 0.01));
+    assert(nearCf(target.z, 5_201_387.75, 0.01));
+
+    // Equivalent Position Vector parameterization.
+    const positionVector =
+        PositionVectorHelmert!double.fromArcSecondsAndPpm(
+            0.0,
+            0.0,
+            4.5,
+            0.0,
+            0.0,
+            +0.554,
+            0.219);
+
+    const convertedCf = toCoordinateFrame(positionVector);
+
+    assert(convertedCf.translationX == positionVector.translationX);
+    assert(convertedCf.translationY == positionVector.translationY);
+    assert(convertedCf.translationZ == positionVector.translationZ);
+    assert(convertedCf.scaleDifference == positionVector.scaleDifference);
+    assert(convertedCf.rotationX.radians == -positionVector.rotationX.radians);
+    assert(convertedCf.rotationY.radians == -positionVector.rotationY.radians);
+    assert(convertedCf.rotationZ.radians == -positionVector.rotationZ.radians);
+
+    const viaPv =
+        applyPositionVectorHelmert(source, positionVector);
+    const viaConvertedCf =
+        applyCoordinateFrameHelmert(source, convertedCf);
+
+    // The conversion changes representation, not the physical transform.
+    assert(nearCf(viaPv.x, viaConvertedCf.x, 1e-9));
+    assert(nearCf(viaPv.y, viaConvertedCf.y, 1e-9));
+    assert(nearCf(viaPv.z, viaConvertedCf.z, 1e-9));
+
+    const roundTripPv = toPositionVector(convertedCf);
+    assert(roundTripPv.translationX == positionVector.translationX);
+    assert(roundTripPv.translationY == positionVector.translationY);
+    assert(roundTripPv.translationZ == positionVector.translationZ);
+    assert(roundTripPv.rotationX.radians == positionVector.rotationX.radians);
+    assert(roundTripPv.rotationY.radians == positionVector.rotationY.radians);
+    assert(roundTripPv.rotationZ.radians == positionVector.rotationZ.radians);
+    assert(roundTripPv.scaleDifference == positionVector.scaleDifference);
+
+    // `.init` is also the identity for the Coordinate Frame specialization.
+    const identity = applyCoordinateFrameHelmert(
+        source,
+        CoordinateFrameHelmert!double.init);
+    assert(identity == source);
+
+    // Positive Coordinate Frame rZ has the opposite effect to positive
+    // Position Vector rZ: +X moves toward -Y in the linearized matrix.
+    const zRotation =
+        CoordinateFrameHelmert!double.fromCanonical(
+            0.0, 0.0, 0.0,
+            Angle!double.init,
+            Angle!double.init,
+            Angle!double.fromRadians(1.0e-6),
+            0.0);
+
+    const xAxis =
+        GeocentricCoordinate!double.fromComponents(
+            1_000_000.0, 0.0, 0.0);
+
+    const rotated =
+        applyCoordinateFrameHelmert(xAxis, zRotation);
+
+    assert(nearCf(rotated.x, 1_000_000.0, 1e-9));
+    assert(nearCf(rotated.y, -1.0, 1e-12));
+    assert(nearCf(rotated.z, 0.0, 1e-12));
+
+    // Generic scalar instantiation.
+    const floatIdentity = applyCoordinateFrameHelmert(
+        GeocentricCoordinate!float.fromComponents(1.0f, 2.0f, 3.0f),
+        CoordinateFrameHelmert!float.init);
+    assert(floatIdentity ==
+        GeocentricCoordinate!float.fromComponents(1.0f, 2.0f, 3.0f));
+
+    const realIdentity = applyCoordinateFrameHelmert(
+        GeocentricCoordinate!real.fromComponents(1.0L, 2.0L, 3.0L),
+        CoordinateFrameHelmert!real.init);
+    assert(realIdentity ==
+        GeocentricCoordinate!real.fromComponents(1.0L, 2.0L, 3.0L));
+
+    // Finite parameters may still overflow during application.
+    const hugeSource =
+        GeocentricCoordinate!double.fromComponents(
+            double.max, double.max, double.max);
+
+    const hugeScale =
+        CoordinateFrameHelmert!double.fromCanonical(
+            0.0, 0.0, 0.0,
+            Angle!double.init,
+            Angle!double.init,
+            Angle!double.init,
+            double.max);
+
+    GeocentricCoordinate!double candidate;
+    assert(!tryApplyCoordinateFrameHelmert(
+        hugeSource, hugeScale, candidate));
+
+    assertThrown!GeodesyValueException(
+        applyCoordinateFrameHelmert(
+            hugeSource, hugeScale));
+}

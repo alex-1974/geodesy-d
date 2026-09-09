@@ -761,6 +761,6 @@ It is a set of independent D libraries that are individually worth using.
 
 - [x] ADR-0003: explicit EPSG 1032/1033 rotation conventions
 - [x] EPSG 1033 Position Vector implementation
-- [ ] EPSG 1032 Coordinate Frame implementation
-- [ ] convention-equivalence reference tests
+- [x] EPSG 1032 Coordinate Frame implementation
+- [x] convention-equivalence reference tests
 - [ ] PROJ differential validation

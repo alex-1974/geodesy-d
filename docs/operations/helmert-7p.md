@@ -4,7 +4,7 @@
 
 - Parameter/type model implemented.
 - EPSG 1033 Position Vector implemented.
-- EPSG 1032 Coordinate Frame pending.
+- EPSG 1032 Coordinate Frame implemented.
 
 The normative design is ADR-0003:
 
@@ -171,9 +171,9 @@ The initial implementation also tests:
 
 `double` remains the normative validation scalar.
 
-## EPSG 1032 — next step
+## EPSG 1032 — Coordinate Frame
 
-Coordinate Frame will use the same parameter storage but the opposite
+Coordinate Frame uses the same parameter storage but the opposite
 rotation-term signs:
 
 ```text
@@ -182,7 +182,28 @@ Yt = tY + M * (-rZ*Xs + Ys + rX*Zs )
 Zt = tZ + M * ( rY*Xs - rX*Ys + Zs )
 ```
 
-The convention conversion will be explicit and will negate only `rX/rY/rZ`.
+Implemented API:
+
+```d
+bool tryApplyCoordinateFrameHelmert(...);
+GeocentricCoordinate!T applyCoordinateFrameHelmert(...);
+
+CoordinateFrameHelmert!T toCoordinateFrame(...);
+PositionVectorHelmert!T toPositionVector(...);
+```
+
+Convention conversion preserves translations and scale and negates only
+`rX/rY/rZ`.
+
+The deterministic equivalence test expresses the WGS 72 -> WGS 84 example in
+both conventions:
+
+```text
+Position Vector:  rZ = +0.554 arcsec
+Coordinate Frame: rZ = -0.554 arcsec
+```
+
+Both produce the same geocentric target coordinate.
 
 ## Deferred
 
