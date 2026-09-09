@@ -763,4 +763,12 @@ It is a set of independent D libraries that are individually worth using.
 - [x] EPSG 1033 Position Vector implementation
 - [x] EPSG 1032 Coordinate Frame implementation
 - [x] convention-equivalence reference tests
-- [ ] PROJ differential validation
+- [x] initial PROJ differential validation harness
+
+
+### Validation expansion
+
+- [x] deterministic PROJ/cct cross-validation harness for EPSG 9602/1031/1032/1033
+- [ ] broaden PROJ differential matrix with reproducible generated vectors
+- [ ] run validation in CI where PROJ is available
+- [ ] establish measured accuracy envelopes before v0.1

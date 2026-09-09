@@ -173,3 +173,8 @@ The initial Position Vector implementation is validated against the IOGP Guidanc
 ### EPSG 1032 equivalence vector
 
 The Coordinate Frame implementation is validated with the same WGS 72 -> WGS 84 worked case as EPSG 1033, using the EPSG rule that the three rotations change sign while translations and scale remain unchanged.
+
+
+## PROJ differential validation
+
+PROJ/cct is used only as an independent validation oracle. The initial deterministic differential matrix covers EPSG 9602, 1031, 1032 and 1033. PROJ is not a geodesy-d runtime or build dependency.
