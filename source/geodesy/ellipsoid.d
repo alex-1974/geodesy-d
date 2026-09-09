@@ -62,6 +62,7 @@ public:
     }
 
     static Ellipsoid fromFlattening(const T semiMajorAxis, const T flattening)
+        @safe
     {
         Ellipsoid result;
         if (!tryFromFlattening(semiMajorAxis, flattening, result))
@@ -87,6 +88,7 @@ public:
     static Ellipsoid fromInverseFlattening(
         const T semiMajorAxis,
         const T inverseFlattening)
+        @safe
     {
         Ellipsoid result;
         if (!tryFromInverseFlattening(semiMajorAxis, inverseFlattening, result))
@@ -111,6 +113,7 @@ public:
     }
 
     static Ellipsoid fromAxes(const T semiMajorAxis, const T semiMinorAxis)
+        @safe
     {
         Ellipsoid result;
         if (!tryFromAxes(semiMajorAxis, semiMinorAxis, result))
@@ -126,6 +129,7 @@ public:
     }
 
     static Ellipsoid sphere(const T radius)
+        @safe
     {
         Ellipsoid result;
         if (!trySphere(radius, result))

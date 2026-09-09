@@ -42,6 +42,10 @@ jobs:
         shell: bash
         run: dub test --force
 
+      - name: Public API contract
+        shell: bash
+        run: tools/validate-api.sh
+
       - name: Release build
         shell: bash
         run: dub build --build=release --force

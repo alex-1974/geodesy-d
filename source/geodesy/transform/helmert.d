@@ -2,14 +2,14 @@
  * Static 7-parameter Helmert transformations in the geocentric domain.
  *
  * The public type model makes the EPSG rotation convention a compile-time
- * property. EPSG 1033 Position Vector is implemented in this revision;
- * EPSG 1032 Coordinate Frame follows using the same parameter model.
+ * property. EPSG 1033 Position Vector and EPSG 1032 Coordinate Frame
+ * share the same parameter model while retaining distinct conventions.
  */
 module geodesy.transform.helmert;
 
 import std.math : PI;
 
-import geodesy.angle : Angle;
+import geodesy.angle : Angle, angleFromRadiansUnchecked;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geocentric : GeocentricCoordinate;
 import geodesy.scalar : isFiniteGeodesyScalar, isGeodesyScalar;
@@ -247,7 +247,7 @@ alias PositionVectorHelmert(T) =
     Helmert7!(T, HelmertConvention.positionVector);
 
 
-/** EPSG 1032 parameter type. Numerical application follows separately. */
+/** EPSG 1032 Coordinate Frame parameter type. */
 alias CoordinateFrameHelmert(T) =
     Helmert7!(T, HelmertConvention.coordinateFrame);
 
@@ -503,17 +503,18 @@ unittest
  */
 CoordinateFrameHelmert!T toCoordinateFrame(T)(
     const Helmert7!(T, HelmertConvention.positionVector) source)
-    @safe
+    pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
-    return CoordinateFrameHelmert!T.fromCanonical(
-        source.translationX,
-        source.translationY,
-        source.translationZ,
-        Angle!T.fromRadians(-source.rotationX.radians),
-        Angle!T.fromRadians(-source.rotationY.radians),
-        Angle!T.fromRadians(-source.rotationZ.radians),
-        source.scaleDifference);
+    CoordinateFrameHelmert!T result;
+    result._translationX = source._translationX;
+    result._translationY = source._translationY;
+    result._translationZ = source._translationZ;
+    result._rotationX = angleFromRadiansUnchecked!T(-source._rotationX.radians);
+    result._rotationY = angleFromRadiansUnchecked!T(-source._rotationY.radians);
+    result._rotationZ = angleFromRadiansUnchecked!T(-source._rotationZ.radians);
+    result._scaleDifference = source._scaleDifference;
+    return result;
 }
 
 
@@ -526,17 +527,18 @@ if (isGeodesyScalar!T)
  */
 PositionVectorHelmert!T toPositionVector(T)(
     const Helmert7!(T, HelmertConvention.coordinateFrame) source)
-    @safe
+    pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
-    return PositionVectorHelmert!T.fromCanonical(
-        source.translationX,
-        source.translationY,
-        source.translationZ,
-        Angle!T.fromRadians(-source.rotationX.radians),
-        Angle!T.fromRadians(-source.rotationY.radians),
-        Angle!T.fromRadians(-source.rotationZ.radians),
-        source.scaleDifference);
+    PositionVectorHelmert!T result;
+    result._translationX = source._translationX;
+    result._translationY = source._translationY;
+    result._translationZ = source._translationZ;
+    result._rotationX = angleFromRadiansUnchecked!T(-source._rotationX.radians);
+    result._rotationY = angleFromRadiansUnchecked!T(-source._rotationY.radians);
+    result._rotationZ = angleFromRadiansUnchecked!T(-source._rotationZ.radians);
+    result._scaleDifference = source._scaleDifference;
+    return result;
 }
 
 

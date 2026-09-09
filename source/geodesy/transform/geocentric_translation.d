@@ -18,9 +18,29 @@ import geodesy.scalar : isFiniteGeodesyScalar, isGeodesyScalar;
 struct GeocentricTranslation(T)
 if (isGeodesyScalar!T)
 {
-    T deltaX = cast(T) 0;
-    T deltaY = cast(T) 0;
-    T deltaZ = cast(T) 0;
+private:
+    T _deltaX = cast(T) 0;
+    T _deltaY = cast(T) 0;
+    T _deltaZ = cast(T) 0;
+
+public:
+    /** X-axis translation in the coordinate linear unit. */
+    @property T deltaX() const pure nothrow @safe @nogc
+    {
+        return _deltaX;
+    }
+
+    /** Y-axis translation in the coordinate linear unit. */
+    @property T deltaY() const pure nothrow @safe @nogc
+    {
+        return _deltaY;
+    }
+
+    /** Z-axis translation in the coordinate linear unit. */
+    @property T deltaZ() const pure nothrow @safe @nogc
+    {
+        return _deltaZ;
+    }
 
     /**
      * Checked non-throwing construction.
@@ -39,9 +59,9 @@ if (isGeodesyScalar!T)
             || !isFiniteGeodesyScalar(deltaZ))
             return false;
 
-        result.deltaX = deltaX;
-        result.deltaY = deltaY;
-        result.deltaZ = deltaZ;
+        result._deltaX = deltaX;
+        result._deltaY = deltaY;
+        result._deltaZ = deltaZ;
         return true;
     }
 
@@ -67,10 +87,11 @@ if (isGeodesyScalar!T)
     GeocentricTranslation!T inverse() const
         pure nothrow @safe @nogc
     {
-        return GeocentricTranslation!T(
-            -deltaX,
-            -deltaY,
-            -deltaZ);
+        GeocentricTranslation!T result;
+        result._deltaX = -_deltaX;
+        result._deltaY = -_deltaY;
+        result._deltaZ = -_deltaZ;
+        return result;
     }
 }
 

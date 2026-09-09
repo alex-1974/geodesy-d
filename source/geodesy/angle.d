@@ -63,6 +63,7 @@ public:
     }
 
     static Angle fromRadians(const T radians)
+        @safe
     {
         Angle result;
         if (!tryFromRadians(radians, result))
@@ -71,6 +72,7 @@ public:
     }
 
     static Angle fromDegrees(const T degrees)
+        @safe
     {
         Angle result;
         if (!tryFromDegrees(degrees, result))
@@ -122,6 +124,7 @@ public:
     }
 
     static Latitude fromRadians(const T radians)
+        @safe
     {
         Latitude result;
         if (!tryFromRadians(radians, result))
@@ -130,6 +133,7 @@ public:
     }
 
     static Latitude fromDegrees(const T degrees)
+        @safe
     {
         Latitude result;
         if (!tryFromDegrees(degrees, result))
@@ -186,6 +190,7 @@ public:
     }
 
     static Longitude fromRadians(const T radians)
+        @safe
     {
         Longitude result;
         if (!tryFromRadians(radians, result))
@@ -194,6 +199,7 @@ public:
     }
 
     static Longitude fromDegrees(const T degrees)
+        @safe
     {
         Longitude result;
         if (!tryFromDegrees(degrees, result))
@@ -224,6 +230,20 @@ public:
         return fromRadiansUnchecked(_radians);
     }
 }
+
+
+/**
+ * Internal construction helper for geodesy implementation modules.
+ *
+ * The caller must already have established that `radians` is finite.
+ */
+package(geodesy) Angle!T angleFromRadiansUnchecked(T)(const T radians)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return Angle!T.fromRadiansUnchecked(radians);
+}
+
 
 unittest
 {

@@ -780,7 +780,7 @@ It is a set of independent D libraries that are individually worth using.
 - [x] separate PROJ extended-validation workflow defined
 - [x] explicit v0.1 readiness checklist
 - [x] resolve `Ellipsoid.init` semantics — invalid sentinel, ADR-0004
-- [ ] public API audit
+- [x] public API audit — external compile contract + docs/API.md
 - [ ] documentation audit
 - [ ] observe remote CI green
 - [ ] tag v0.1.0

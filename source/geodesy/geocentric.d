@@ -53,6 +53,7 @@ public:
     }
 
     static GeocentricCoordinate fromComponents(const T x, const T y, const T z)
+        @safe
     {
         GeocentricCoordinate result;
         if (!tryFromComponents(x, y, z, result))

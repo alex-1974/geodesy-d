@@ -190,13 +190,21 @@ EPSG 9602 operations reject an invalid ellipsoid before calculation.
 
 Before tagging:
 
-- [ ] review every public symbol exported by `geodesy.package`;
-- [ ] verify naming consistency;
-- [ ] verify `const` use;
-- [ ] verify `pure`, `nothrow`, `@safe`, and `@nogc` claims;
-- [ ] check that package-internal helpers are not accidentally re-exported;
-- [ ] check that no API exposes ambiguous rotation/scale units;
+- [x] review every public symbol exported by `geodesy.package`;
+- [x] verify naming consistency;
+- [x] verify `const` use;
+- [x] verify `pure`, `nothrow`, `@safe`, and `@nogc` claims;
+- [x] check that package-internal helpers are not accidentally re-exported;
+- [x] check that no API exposes ambiguous rotation/scale units;
 - [ ] check Ddoc comments for every public symbol.
+
+### Public API compile contract
+
+- [x] external aggregate-import contract added;
+- [x] negative compile tests protect encapsulation/internal helpers;
+- [x] DMD/LDC CI step defined.
+
+The canonical v0.1 surface is documented in `docs/API.md`.
 
 ### 3. Validate CI remotely
 

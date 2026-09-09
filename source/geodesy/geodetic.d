@@ -53,6 +53,7 @@ public:
         const Latitude!T latitude,
         const Longitude!T longitude,
         const T ellipsoidalHeight = 0)
+        @safe
     {
         GeodeticCoordinate result;
         if (!tryFromComponents(latitude, longitude, ellipsoidalHeight, result))
