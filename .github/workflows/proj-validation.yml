@@ -2,8 +2,20 @@ name: PROJ differential validation
 
 on:
   workflow_dispatch:
+
   schedule:
     - cron: "17 3 * * 1"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "source/geodesy/**"
+      - "validation/**"
+      - "tools/validate-proj.sh"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/proj-validation.yml"
+
   pull_request:
     paths:
       - "source/geodesy/**"
