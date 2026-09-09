@@ -163,3 +163,8 @@ The EPSG/IOGP parameter sign conventions are normative for these APIs.
 ### Helmert convention policy
 
 ADR-0003 makes the EPSG 1032 Coordinate Frame and EPSG 1033 Position Vector rotation conventions distinct at the type level. PROJ Helmert documentation is used as an independent cross-validation source for convention conversion and parameter interchange behavior.
+
+
+### EPSG 1033 reference vector
+
+The initial Position Vector implementation is validated against the IOGP Guidance Note 7-2 WGS 72 -> WGS 84 worked example (EPSG transformation 1238).
