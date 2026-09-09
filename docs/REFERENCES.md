@@ -149,3 +149,12 @@ They may be considered for a particular algorithm only when:
 2. the resulting numerical behavior is characterized;
 3. authoritative/reference and randomized tests show the required accuracy is preserved;
 4. the decision is documented.
+
+
+## Geocentric frame transformations
+
+- EPSG method 1031 — Geocentric translations (geocentric domain)
+- EPSG method 1033 — Position Vector transformation (geocentric domain)
+- EPSG method 1032 — Coordinate Frame rotation (geocentric domain)
+
+The EPSG/IOGP parameter sign conventions are normative for these APIs.
