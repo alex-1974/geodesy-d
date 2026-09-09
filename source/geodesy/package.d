@@ -7,3 +7,5 @@ public import geodesy.errors;
 public import geodesy.geodetic;
 public import geodesy.geocentric;
 public import geodesy.scalar;
+
+public import geodesy.conversion;

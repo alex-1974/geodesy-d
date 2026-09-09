@@ -6,9 +6,9 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Architecture phase.**
+**Initial implementation phase.**
 
-No stable public API exists yet. The first implementation milestone is deliberately limited to the core value types and geodetic ↔ geocentric conversion.
+No stable public API exists yet. `Angle`, `Latitude`, `Longitude`, `Ellipsoid`, `GeodeticCoordinate`, `GeocentricCoordinate`, and the forward geodetic → geocentric conversion now form the initial core. The reverse geocentric → geodetic conversion follows next.
 
 ## Responsibility boundary
 
@@ -62,10 +62,13 @@ A tentative module layout is:
 ```text
 source/geodesy/
 ├── package.d
+├── scalar.d
+├── errors.d
 ├── angle.d
 ├── ellipsoid.d
 ├── geodetic.d
 ├── geocentric.d
+├── conversion.d
 ├── transform/
 │   └── helmert.d                 # later
 ├── projection/
@@ -107,6 +110,7 @@ For Earth-coordinate operations, important edge cases include poles, equator, lo
 
 The numerical core is floating-point-generic. `float`, `double`, and `real` are supported instantiations, but `double` is the normative reference precision. `float` is explicitly reduced precision; `real` has no portable precision guarantee beyond `double`. Tolerances are algorithm-specific rather than derived from one global machine-epsilon comparison rule.
 
+
 ## Linear-unit policy
 
 `geodesy-d` does not introduce a `Length<T>` wrapper in v0.1. Ellipsoid axes, ellipsoidal height, projected coordinates, and geocentric Cartesian coordinates use scalar linear values. Mathematical operations that combine them require all participating linear values to use the same unit.
@@ -134,5 +138,6 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/adr/0001-scope-and-boundaries.md` — accepted responsibility boundary.
 - `docs/adr/0002-core-type-and-unit-model.md` — accepted core type, angle, scalar, validation, and ellipsoid semantics.
 - `docs/REFERENCES.md` — reference hierarchy and validation sources.
+- `docs/operations/geographic-geocentric.md` — EPSG method 9602 implementation contract and validation.
 
 The workspace `ROADMAP.md` remains the authoritative project roadmap.

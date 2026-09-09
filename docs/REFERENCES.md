@@ -41,6 +41,15 @@ PROJ is not a runtime dependency of `geodesy-d`. It is a valuable oracle for gen
 
 Use other standards or national/international geodetic sources when they define an operation that is not adequately covered above.
 
+
+## Implemented operation: EPSG 9602
+
+The first numerical operation is the forward geographic/geocentric conversion (EPSG method 9602).
+
+Current IOGP publication metadata identifies Report 373-07-2 as version 74, July 2026. The initial worked-example regression vector is the WGS 84 North Sea example that is also present in the publicly accessible December 2024 edition. Before a stable release, revalidate the method text and worked vector against the exact current publication revision.
+
+See `docs/operations/geographic-geocentric.md` for the operation-level contract and test vector.
+
 ## Historical `coordinate` repository
 
 The repository `alex-1974/coordinate` is a historical pure-D prototype and may be inspected for:

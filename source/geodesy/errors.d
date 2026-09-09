@@ -4,7 +4,7 @@ module geodesy.errors;
 /** Thrown by convenience constructors when a supplied geodetic value is invalid. */
 final class GeodesyValueException : Exception
 {
-    this(string message, string file = __FILE__, size_t line = __LINE__)
+    @safe this(string message, string file = __FILE__, size_t line = __LINE__)
     {
         super(message, file, line);
     }
