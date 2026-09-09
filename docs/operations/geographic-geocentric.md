@@ -2,35 +2,44 @@
 
 ## Status
 
-Forward direction implemented. Reverse direction pending.
+Forward and reverse directions implemented.
 
 ## Scope
 
-This operation converts a 3D geodetic coordinate
+EPSG method 9602 converts between:
 
 ```text
+GeodeticCoordinate
 (latitude, longitude, ellipsoidal height)
 ```
 
-to geocentric Cartesian coordinates
+and:
 
 ```text
+GeocentricCoordinate
 (X, Y, Z)
 ```
 
 on the **same ellipsoid/reference frame**.
 
-It is a coordinate conversion, not a datum transformation.
+This is a coordinate conversion, not a datum transformation.
 
-## Reference
+## Primary reference
 
-Primary method: **EPSG coordinate operation method 9602 — Geographic/geocentric conversions**, as defined by IOGP Report 373-07-2 / EPSG Guidance Note 7-2.
+**EPSG coordinate operation method 9602 — Geographic/geocentric conversions**, as specified by IOGP Report 373-07-2 / EPSG Guidance Note 7-2.
 
-Current IOGP publication metadata at implementation time identifies Report 373-07-2 as version 74, July 2026. The initial deterministic worked-example test is the WGS 84 North Sea example also present in the publicly accessible December 2024 edition. Before a stable release, the implementation and vector should be rechecked against the exact current publication revision.
+The formulas assume angles in radians and conventional geocentric axes:
 
-## Forward equations
+- `Z` is positive along the rotation axis toward the north pole;
+- `X` passes through the equator and the frame's prime meridian;
+- `Y` passes through the equator at +90 degrees longitude.
 
-For geodetic latitude `phi`, longitude `lambda`, ellipsoidal height `h`, semi-major axis `a`, and first eccentricity squared `e²`:
+Conventional EPSG geocentric systems use Greenwich as the prime meridian.
+
+## Forward direction
+
+For latitude `phi`, longitude `lambda`, ellipsoidal height `h`,
+semi-major axis `a`, and first eccentricity squared `e²`:
 
 ```text
 nu = a / sqrt(1 - e² sin²(phi))
@@ -40,37 +49,111 @@ Y = (nu + h) cos(phi) sin(lambda)
 Z = ((1 - e²) nu + h) sin(phi)
 ```
 
-with:
+where:
 
 ```text
 e² = 2f - f²
 ```
 
-where `f` is ellipsoid flattening.
+## Reverse direction
 
-## Axis and prime-meridian semantics
+Let:
 
-The geocentric system is right-handed:
+```text
+p = sqrt(X² + Y²)
+b = a(1-f)
+e'² = e² / (1-e²)
+```
 
-- `Z` is positive along the Earth's rotation axis toward the north pole;
-- `X` passes through the equator and the prime meridian defining the geocentric frame;
-- `Y` passes through the equator at +90° longitude from that meridian.
+The direct EPSG/IOGP Bowring form is used as the initial latitude:
 
-Conventional EPSG geocentric systems use the Greenwich meridian. `geodesy-d` does not carry CRS or prime-meridian metadata, so callers are responsible for supplying longitude in the convention required by the intended geocentric frame.
+```text
+q = atan2(Z*a, p*b)
+
+phi = atan2(
+    Z + e'²*b*sin³(q),
+    p - e²*a*cos³(q)
+)
+
+lambda = atan2(Y, X)
+```
+
+`geodesy-d` evaluates `q` using the ratio-equivalent
+
+```text
+atan2(Z/b, p/a)
+```
+
+to avoid unnecessary large intermediate products.
+
+The direct solution is then refined with the iterative EPSG relation:
+
+```text
+nu  = a / sqrt(1 - e² sin²(phi))
+phi = atan2(Z + e²*nu*sin(phi), p)
+```
+
+A fixed maximum of eight refinement steps is used. Exact floating-point
+stabilization may terminate the loop early. No global approximate-equality or
+machine-epsilon comparison policy is introduced.
+
+For height, EPSG gives:
+
+```text
+h = p / cos(phi) - nu
+```
+
+Near the rotation axis, `geodesy-d` uses the algebraically equivalent Z
+equation because it is better conditioned:
+
+```text
+h = Z / sin(phi) - (1-e²)*nu
+```
+
+## Degenerate cases
+
+### Ellipsoid centre
+
+```text
+X = Y = Z = 0
+```
+
+has no unique geodetic inverse. `tryGeocentricToGeodetic` returns `false`; the
+throwing wrapper raises `GeodesyValueException`.
+
+### Rotation axis
+
+For:
+
+```text
+X = Y = 0
+Z != 0
+```
+
+latitude is `+/- pi/2` and height is:
+
+```text
+|Z| - b
+```
+
+Longitude is mathematically indeterminate. The library returns **0 radians**
+as a deterministic convention.
+
+This convention is part of the API contract and does not imply that longitude
+is physically defined at the pole.
 
 ## Units
 
-`geodesy-d` does not encode a linear unit in the scalar type.
-
-For this operation:
+The following values must use the same linear unit:
 
 ```text
-ellipsoid semi-major axis
+ellipsoid axes
 ellipsoidal height
-output X/Y/Z
+X / Y / Z
 ```
 
-must all use the same linear unit. EPSG geocentric coordinates conventionally use metres.
+EPSG geocentric coordinates conventionally use metres. `geodesy-d` does not
+encode a linear unit in the scalar type.
 
 ## API
 
@@ -84,21 +167,31 @@ bool tryGeodeticToGeocentric(T)(
 GeocentricCoordinate!T geodeticToGeocentric(T)(
     const GeodeticCoordinate!T source,
     const Ellipsoid!T ellipsoid);
-```
 
-The `try...` form reports scalar overflow/non-finite output without throwing. The convenience form throws `GeodesyValueException` in that case.
+bool tryGeocentricToGeodetic(T)(
+    const GeocentricCoordinate!T source,
+    const Ellipsoid!T ellipsoid,
+    out GeodeticCoordinate!T result)
+    pure nothrow @safe @nogc;
+
+GeodeticCoordinate!T geocentricToGeodetic(T)(
+    const GeocentricCoordinate!T source,
+    const Ellipsoid!T ellipsoid);
+```
 
 ## Initial validation
 
-The initial test set contains:
+The deterministic test set contains:
 
-1. the EPSG/IOGP WGS 84 North Sea worked example;
-2. an equator/prime-meridian axis case;
-3. a north-pole case;
-4. instantiation checks for `float`, `double`, and `real`;
-5. an explicit overflow case for the checked API.
+1. the EPSG/IOGP WGS 84 North Sea worked example in both directions;
+2. equatorial cases;
+3. north- and south-axis cases;
+4. explicit rejection of the ellipsoid centre;
+5. a high-altitude forward/reverse round trip;
+6. `float`, `double`, and `real` instantiation;
+7. checked forward overflow behavior.
 
-The published WGS 84 reference vector is:
+Published WGS 84 worked vector:
 
 ```text
 latitude            53°48'33.820" N
@@ -110,4 +203,16 @@ Y =   140 253.342 m
 Z = 5 124 304.349 m
 ```
 
-`double` is the normative scalar for the reference-vector tolerance. Broader randomized differential testing against PROJ is still pending.
+Because the published Cartesian values are rounded to millimetres, the reverse
+test uses tolerances compatible with those rounded inputs.
+
+`double` remains the normative validation scalar.
+
+## Still pending
+
+Before stable release:
+
+- randomized differential testing against PROJ;
+- wider coverage of extreme heights and unusual ellipsoid flattenings;
+- explicit benchmark data;
+- GIGS test data where licensing/access permits.

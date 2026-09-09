@@ -8,7 +8,7 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 **Initial implementation phase.**
 
-No stable public API exists yet. `Angle`, `Latitude`, `Longitude`, `Ellipsoid`, `GeodeticCoordinate`, `GeocentricCoordinate`, and the forward geodetic → geocentric conversion now form the initial core. The reverse geocentric → geodetic conversion follows next.
+No stable public API exists yet. `Angle`, `Latitude`, `Longitude`, `Ellipsoid`, `GeodeticCoordinate`, `GeocentricCoordinate`, and the bidirectional geodetic ↔ geocentric conversion now form the initial core. Frame transformations follow next.
 
 ## Responsibility boundary
 
