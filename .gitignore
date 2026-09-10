@@ -17,3 +17,6 @@ __dummy.html
 /*-test-library
 
 /patch/
+
+# Local d-geospatial workspace context
+.workspace/
