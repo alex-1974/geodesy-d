@@ -8,6 +8,13 @@ The project follows Semantic Versioning from the first tagged public release.
 
 No changes yet.
 
+## [0.1.1] - 2026-09-13
+
+### Fixed
+
+- Replace the inherited `d-geospatial` workspace README with the
+  package-specific `geodesy-d` README used by GitHub and the DUB registry.
+
 ## [0.1.0] - 2026-09-09
 
 ### Added
