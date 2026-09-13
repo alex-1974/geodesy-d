@@ -6,15 +6,15 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**v0.1 release preparation.**
+**v0.1 released.**
 
-The intended v0.1 public baseline is implemented and under release audit. It
-contains strong angular/coordinate value types, reference ellipsoids, EPSG 9602
-bidirectional geographic/geocentric conversion, EPSG 1031 geocentric
-translation, and EPSG 1032/1033 static 7-parameter Helmert transformations.
+`geodesy-d v0.1.0` was tagged on September 9, 2026. The release contains strong
+angular/coordinate value types, reference ellipsoids, EPSG 9602 bidirectional
+geographic/geocentric conversion, EPSG 1031 geocentric translation, and EPSG
+1032/1033 static 7-parameter Helmert transformations.
 
-The API is documented and validated, but Semantic Versioning stability begins
-only when the repository is tagged `v0.1.0`.
+The v0.1 public API is documented and independently validated. Semantic
+Versioning applies from the `v0.1.0` release onward.
 
 ## Responsibility boundary
 
@@ -160,7 +160,8 @@ The workspace `ROADMAP.md` remains the authoritative project roadmap.
 
 ## Release readiness
 
-The v0.1 release gate is tracked in `docs/V0_1_READINESS.md`.
+The completed v0.1 release gate and its validation evidence are recorded in
+`docs/V0_1_READINESS.md`.
 
 
 ## Compiler compatibility
