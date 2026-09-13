@@ -178,13 +178,25 @@ if (isGeodesyScalar!T)
      *   phi = atan2(Z + e'²*b*sin³q,
      *               p - e²*a*cos³q)
      *
-     * q is evaluated as atan2(Z/b, p/a), which has the same ratio but avoids
-     * the unnecessary products Z*a and p*b.
+     * Only sin(q) and cos(q) are needed below, so q itself need not be
+     * materialised. Starting from the equivalent direction
+     *
+     *   q = atan2(Z/b, p/a)
+     *
+     * and multiplying both arguments by b gives
+     *
+     *   sin(q) = Z / hypot(Z, p*b/a)
+     *   cos(q) = (p*b/a) / hypot(Z, p*b/a)
+     *
+     * This avoids an atan2 plus sin/cos pair while retaining the same
+     * Bowring seed and the existing iterative refinement semantics.
      */
     const T secondEccentricitySquared = e2 / oneMinusE2;
-    const T q = atan2(z / b, p / a);
-    const T sinQ = sin(q);
-    const T cosQ = cos(q);
+    const T qHorizontal = p * (b / a);
+    const T qNorm = hypot2(z, qHorizontal);
+    const T inverseQNorm = one / qNorm;
+    const T sinQ = z * inverseQNorm;
+    const T cosQ = qHorizontal * inverseQNorm;
 
     T phi = atan2(
         z + secondEccentricitySquared * b * sinQ * sinQ * sinQ,
