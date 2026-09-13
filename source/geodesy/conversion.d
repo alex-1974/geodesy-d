@@ -213,6 +213,10 @@ if (isGeodesyScalar!T)
      * Exact stabilization may terminate early without defining an approximate
      * floating-point equality policy.
      */
+    T stableSinPhi = zero;
+    T stableNu = zero;
+    bool haveStableCurvature = false;
+
     foreach (_; 0 .. 8)
     {
         const T sinPhi = sin(phi);
@@ -223,7 +227,12 @@ if (isGeodesyScalar!T)
             return false;
 
         if (nextPhi == phi)
+        {
+            stableSinPhi = sinPhi;
+            stableNu = nu;
+            haveStableCurvature = true;
             break;
+        }
 
         phi = nextPhi;
     }
@@ -231,9 +240,22 @@ if (isGeodesyScalar!T)
     if (!Latitude!T.tryFromRadians(phi, latitude))
         return false;
 
-    const T sinPhi = sin(phi);
+    /*
+     * On exact stabilization, sin(phi) and nu already correspond to the
+     * final latitude. Reuse them for height instead of evaluating them again.
+     * If the bounded loop exhausts all eight iterations, recompute from the
+     * final phi exactly as before.
+     */
+    T sinPhi = stableSinPhi;
+    T nu = stableNu;
+
+    if (!haveStableCurvature)
+    {
+        sinPhi = sin(phi);
+        nu = a / sqrt(one - e2 * sinPhi * sinPhi);
+    }
+
     const T cosPhi = cos(phi);
-    const T nu = a / sqrt(one - e2 * sinPhi * sinPhi);
 
     /*
      * EPSG gives h = p/cos(phi) - nu.
