@@ -6,6 +6,10 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.1.0] - 2026-09-09
+
 ### Added
 
 - Strong `Angle`, `Latitude`, and `Longitude` value types.

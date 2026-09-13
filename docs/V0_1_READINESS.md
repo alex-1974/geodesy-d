@@ -11,6 +11,15 @@ not a roadmap for every future geodesy feature.
 The v0.1 objective is a small, coherent, independently useful pure-D core with
 well-defined semantics and independently validated numerical behavior.
 
+## Release status
+
+`v0.1.0` was tagged on September 9, 2026 at commit
+`b2c21a2b43ad17d8df584ae791f7922ee84d4960`.
+
+The required compiler CI and independent PROJ differential-validation workflow
+were observed green on that release commit. This document therefore records a
+completed release gate rather than a pending release plan.
+
 ## Proposed v0.1 scope
 
 ### Core value types
@@ -146,7 +155,7 @@ CI definitions:
 - [x] GitHub Actions DMD gate added.
 - [x] GitHub Actions LDC gate added.
 - [x] GitHub Actions release build added.
-- [ ] First remote GitHub Actions run observed green, including dmd-2.111.0.
+- [x] First remote GitHub Actions run observed green, including dmd-2.111.0.
 
 ### Independent numerical validation
 
@@ -192,9 +201,9 @@ Release checklist:
 - [x] Non-finite validator outputs explicitly fail.
 - [x] PROJ version is printed in validation logs.
 - [x] Separate GitHub Actions PROJ workflow added.
-- [ ] First remote GitHub Actions PROJ extended run observed green.
+- [x] First remote GitHub Actions PROJ extended run observed green.
 
-## Remaining v0.1 blockers
+## v0.1 blocker resolution
 
 ### 1. `Ellipsoid.init` semantics
 
@@ -225,17 +234,17 @@ Before tagging:
 
 The canonical v0.1 surface is documented in `docs/API.md`.
 
-### 3. Validate CI remotely
+### 3. Remote CI validation
 
 Local YAML creation is not sufficient.
 
 Before release:
 
-- [ ] push the CI workflows;
-- [ ] observe DMD job green;
-- [ ] observe LDC job green;
-- [ ] observe PROJ extended job green;
-- [ ] fix runner-specific assumptions if any appear.
+- [x] push the CI workflows;
+- [x] observe DMD job green;
+- [x] observe LDC job green;
+- [x] observe PROJ extended job green;
+- [x] verify no unresolved runner-specific assumptions remain.
 
 The PROJ workflow is deliberately separate from the normal compiler gate.
 It runs:
@@ -265,7 +274,7 @@ It runs:
 - [x] add library-specific `CHANGELOG.md`;
 - [x] confirm MIT license/copyright text;
 - [x] confirm DUB package metadata and package minimum D frontend >=2.111.0;
-- [ ] create and verify Git tag `v0.1.0`.
+- [x] create and verify Git tag `v0.1.0`.
 
 ## Non-blocking quality improvements
 
@@ -283,7 +292,9 @@ problem:
 
 ## Release decision
 
-`v0.1.0` is ready to tag when:
+The v0.1 release gate is complete.
+
+The release satisfied:
 
 ```text
 Ellipsoid.init semantics accepted (ADR-0004)
@@ -294,4 +305,5 @@ AND remote PROJ extended validation green
 AND release metadata checked
 ```
 
-No additional geodetic operation is required to satisfy that gate.
+`v0.1.0` was subsequently tagged at the verified release commit. No additional
+geodetic operation was required to satisfy the gate.
