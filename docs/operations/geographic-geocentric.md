@@ -57,58 +57,111 @@ e² = 2f - f²
 
 ## Reverse direction
 
-Let:
+The reverse transformation is implemented as a hybrid numerical kernel rather
+than as the former Bowring-plus-iteration sequence.
 
-```text
-p = sqrt(X² + Y²)
-b = a(1-f)
-e'² = e² / (1-e²)
-```
+For ordinary non-degenerate oblate positions, `geodesy-d` uses the homogeneous
+reduced-latitude Halley formulation described by Fukushima (2006).
 
-The direct EPSG/IOGP Bowring form is used as the initial latitude:
+At most two Halley updates are attempted. After each update the candidate is
+accepted only when its scale-independent algebraic defect satisfies:
 
-```text
-q = atan2(Z*a, p*b)
+~~~text
+defect <= 64 * working_epsilon * a
+~~~
 
-phi = atan2(
-    Z + e'²*b*sin³(q),
-    p - e²*a*cos³(q)
-)
+where `a` is the semi-major axis.
 
-lambda = atan2(Y, X)
-```
+The factor 64 is a validated implementation bound for this algorithm. It is not
+a library-wide approximate-equality policy.
 
-`geodesy-d` evaluates `q` using the ratio-equivalent
+If the fast candidate is not accepted, the conversion falls back to an oblate
+specialization of the extended Vermeille formulation used by GeographicLib's
+`Geocentric` implementation.
 
-```text
-atan2(Z/b, p/a)
-```
+The robust branch follows the cancellation-avoiding algebra and branch
+structure used by Karney, including:
 
-to avoid unnecessary large intermediate products.
+- stable evaluation of the real cubic root;
+- the three-real-root branch;
+- cancellation-safe evaluation where direct `u + v` would be unstable;
+- protection against small negative intermediate values caused only by
+  roundoff;
+- an analytic solution for the degenerate equatorial evolute.
 
-The direct solution is then refined with the iterative EPSG relation:
+For interior Cartesian points for which several geodetic normals exist, the
+reverse transformation selects the nearest-ellipsoid,
+minimum-absolute-height solution. This matches GeographicLib's canonical
+solution on the supported oblate domain.
 
-```text
-nu  = a / sqrt(1 - e² sin²(phi))
-phi = atan2(Z + e²*nu*sin(phi), p)
-```
+The exact equatorial interior/evolute region is routed directly to the robust
+analytic branch. In that region a non-canonical equatorial normal can also have
+zero Halley algebraic defect, so the defect alone cannot select the required
+solution.
 
-A fixed maximum of eight refinement steps is used. Exact floating-point
-stabilization may terminate the loop early. No global approximate-equality or
-machine-epsilon comparison policy is introduced.
+Extremely distant finite coordinates use a scaled asymptotic branch to avoid
+avoidable intermediate overflow.
 
-For height, EPSG gives:
+### Working precision
 
-```text
-h = p / cos(phi) - nu
-```
+The public scalar type is preserved.
 
-Near the rotation axis, `geodesy-d` uses the algebraically equivalent Z
-equation because it is better conditioned:
+~~~text
+float  -> double working precision -> float result
+double -> double working precision -> double result
+real   -> real working precision   -> real result
+~~~
 
-```text
-h = Z / sin(phi) - (1-e²)*nu
-```
+Direct single-precision evaluation was rejected because it is insufficient for
+numerically sensitive Earth-scale interior and cusp cases.
+
+### Numerical accuracy
+
+A conservative public numerical-accuracy contract is defined for the validated
+terrestrial domain:
+
+~~~text
+ellipsoids:
+    WGS 84
+    GRS 80
+    Airy 1830
+
+latitude:
+    full legal range [-90 deg, +90 deg]
+
+ellipsoidal height:
+    -20 km through +100 km
+~~~
+
+Within that domain:
+
+~~~text
+float:
+    represented Cartesian position <= 2 m
+    ellipsoidal height             <= 0.1 m
+
+double:
+    represented Cartesian position <= 1 mm
+
+real:
+    represented Cartesian position <= 1 mm
+~~~
+
+Here, represented Cartesian position means the ECEF point obtained by applying
+the forward transformation to the returned geodetic coordinate on the same
+ellipsoid.
+
+These limits describe numerical coordinate-conversion error. They do not
+describe datum, reference-frame, measurement, survey, GNSS, or physical
+position accuracy.
+
+Outside the validated terrestrial domain, the documented robust and canonical
+inverse semantics still apply, but the same absolute accuracy envelope is not
+claimed.
+
+See ADR-0005 for the algorithm-selection rationale, rejected alternatives,
+validation evidence, and performance measurements.
+
 
 ## Degenerate cases
 

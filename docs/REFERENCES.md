@@ -151,6 +151,98 @@ They may be considered for a particular algorithm only when:
 4. the decision is documented.
 
 
+## EPSG 9602 reverse numerical methods
+
+The current reverse geographic/geocentric implementation uses a hybrid of a
+fast Fukushima/Halley path and a robust extended Vermeille/Karney fallback.
+
+### Fukushima 2006
+
+Primary reference for the fast path:
+
+Toshio Fukushima,
+"Transformation from Cartesian to geodetic coordinates accelerated by
+Halley's method",
+Journal of Geodesy 79, 689-693 (2006).
+
+DOI:
+
+~~~text
+10.1007/s00190-006-0023-2
+~~~
+
+`geodesy-d` uses the homogeneous reduced-latitude Halley formulation as the
+ordinary-position fast path.
+
+The implementation does not use Fukushima's method as the sole inverse.
+Candidates are accepted only after checking a scale-independent algebraic
+defect, and difficult cases fall back to the robust branch.
+
+### Vermeille 2002
+
+Primary reference for the direct algebraic inverse:
+
+H. Vermeille,
+"Direct transformation from geocentric coordinates to geodetic coordinates",
+Journal of Geodesy 76, 451-454 (2002).
+
+DOI:
+
+~~~text
+10.1007/s00190-002-0273-6
+~~~
+
+The production fallback is not a literal implementation of the original
+formula alone. It uses the stabilized extended formulation described below.
+
+### Karney / GeographicLib
+
+Charles F. F. Karney's GeographicLib `Geocentric` implementation is the
+numerical reference for the extended and stabilized Vermeille branch used by
+the robust fallback.
+
+The geodesy-d implementation follows the relevant oblate-spheroid numerical
+structure, including:
+
+- the real-discriminant and three-real-root branches;
+- cancellation-avoiding cubic-root algebra;
+- stable evaluation of `u + v`;
+- the degenerate equatorial-evolute solution;
+- the canonical nearest-ellipsoid solution for multiply representable
+  deep-interior Cartesian points.
+
+The implementation reference used during development and validation was:
+
+~~~text
+GeographicLib 2.7
+Geocentric::IntReverse
+~~~
+
+GeographicLib is an independent validation and algorithm-provenance reference.
+It is not a build or runtime dependency of `geodesy-d`.
+
+### Relationship to EPSG method 9602
+
+EPSG/IOGP remains normative for:
+
+- the coordinate-operation identity;
+- coordinate meanings;
+- ellipsoid parameter semantics;
+- units;
+- axis conventions;
+- the forward geographic-to-geocentric equations.
+
+Fukushima, Vermeille, and Karney are numerical-method references for computing
+the reverse EPSG 9602 operation robustly and efficiently.
+
+ADR-0005 records why this hybrid was selected and which alternatives were
+rejected.
+
+Numerically significant algorithms must also be identified in public API
+documentation. ADRs document why an implementation was selected; API/Ddoc
+documents what mathematical method the current implementation uses.
+
+
 ## Geocentric frame transformations
 
 - EPSG method 1031 — Geocentric translations (geocentric domain)

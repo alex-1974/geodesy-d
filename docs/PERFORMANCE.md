@@ -112,6 +112,208 @@ Machine-to-machine absolute timing comparisons should be treated cautiously.
 Performance regressions should primarily be evaluated on the same machine and
 toolchain.
 
+## EPSG 9602 hybrid reverse benchmark
+
+The hybrid reverse kernel introduced by ADR-0005 was benchmarked against:
+
+- the previous geodesy-d Bowring/iterative implementation;
+- PROJ 9.7.1;
+- GeographicLib 2.7.
+
+The external implementations are benchmark references only. They are not
+`geodesy-d` build or runtime dependencies.
+
+### Controlled reference environment
+
+The final reference run used:
+
+~~~text
+date:               2026-09-14
+CPU:                Intel Core i7-9750H
+compiler:           LDC 1.41.0
+D frontend:         2.111.0
+LLVM:               19.1.7
+build:              release, -mcpu=native
+PROJ:               9.7.1
+GeographicLib:      2.7
+CPU affinity:       logical CPU 2
+SMT sibling:        logical CPU 8
+intel_pstate:       performance governor
+Turbo:              disabled
+maximum frequency:  2.6 GHz
+operations:         250000 per corpus
+rounds:             21
+~~~
+
+Inputs were prepared before timing.
+
+Each round rotated implementation order to avoid assigning systematic
+frequency, cache, or thermal effects to one implementation.
+
+The reported `ns/op` values are bulk-throughput measurements. They must not be
+interpreted as true single-operation dependency-chain latency.
+
+### Surface-normal corpus
+
+Ordinary geodetic positions with ellipsoidal heights from -1 km through
++10 km:
+
+~~~text
+implementation          median ns/op    p25       p75
+geodesy-d                   162.740     162.587   163.229
+Bowring baseline            376.096     375.586   376.777
+PROJ 9.7.1                  154.018     153.478   154.264
+GeographicLib 2.7           283.868     283.557   284.394
+~~~
+
+Relative to the current hybrid:
+
+~~~text
+current / Bowring        = 0.433x
+current / PROJ           = 1.057x
+current / GeographicLib  = 0.573x
+~~~
+
+Thus the hybrid is approximately:
+
+~~~text
+2.31x faster than the previous Bowring implementation
+1.74x faster than GeographicLib 2.7
+5.7% slower than PROJ 9.7.1
+~~~
+
+### Full terrestrial corpus
+
+The public terrestrial validation height domain, from -20 km through +100 km:
+
+~~~text
+implementation          median ns/op    p25       p75
+geodesy-d                   162.871     162.487   163.394
+Bowring baseline            436.999     435.868   437.696
+PROJ 9.7.1                  153.488     153.306   154.343
+GeographicLib 2.7           283.107     282.520   284.296
+~~~
+
+Relative to the current hybrid:
+
+~~~text
+current / Bowring        = 0.373x
+current / PROJ           = 1.061x
+current / GeographicLib  = 0.575x
+~~~
+
+Thus the hybrid is approximately:
+
+~~~text
+2.68x faster than the previous Bowring implementation
+1.74x faster than GeographicLib 2.7
+6.1% slower than PROJ 9.7.1
+~~~
+
+### Extended-normal corpus
+
+A wider height range exercises positions outside the normal terrestrial
+contract:
+
+~~~text
+implementation          median ns/op    p25       p75
+geodesy-d                   330.407     330.241   330.547
+Bowring baseline            497.098     496.913   497.586
+PROJ 9.7.1                  153.418     153.136   153.520
+GeographicLib 2.7           283.392     283.274   283.820
+~~~
+
+The extended-normal corpus is substantially more expensive for the hybrid than
+the ordinary terrestrial corpora. The benchmark does not instrument path
+selection, so no specific branch is identified as the cause of that increase.
+
+### Interior-cusp corpus
+
+The difficult near-evolute and deep-interior corpus produced:
+
+~~~text
+implementation          median ns/op    p25       p75
+geodesy-d                   335.641     335.239   336.451
+Bowring baseline            942.072     940.660   944.358
+PROJ 9.7.1                  154.662     154.315   155.329
+GeographicLib 2.7           285.192     284.442   286.213
+~~~
+
+This corpus is intentionally outside the ordinary surface-performance target.
+
+It is also semantically significant: the geodesy-d and GeographicLib result
+checksums agree to the precision printed by the benchmark, while Bowring and
+PROJ produce different aggregate checksums. This is consistent with the
+separately validated differences in deep-interior inverse semantics.
+
+### Equatorial-degenerate corpus
+
+Exact equatorial interior positions with:
+
+~~~text
+Z = 0
+horizontal <= a * e^2
+~~~
+
+are routed directly to the analytic degenerate branch.
+
+The measured result was:
+
+~~~text
+implementation          median ns/op    p25       p75
+geodesy-d                   155.537     154.486   155.954
+Bowring baseline            649.485     646.158   651.633
+PROJ 9.7.1                  122.811     121.834   123.283
+GeographicLib 2.7           158.059     156.983   158.850
+~~~
+
+This is not a measurement of the complete generic robust fallback. It measures
+the dedicated analytic equatorial-degenerate branch.
+
+### Float working-precision cost
+
+The public `float` inverse uses `double` internally.
+
+To isolate the cost of that policy, `float` and `double` were benchmarked on
+the same float-quantized ECEF information in alternating measurement order.
+
+~~~text
+float API:
+    median = 171.330 ns/op
+    p25    = 170.612 ns/op
+    p75    = 171.733 ns/op
+
+double API:
+    median = 169.454 ns/op
+    p25    = 168.860 ns/op
+    p75    = 169.619 ns/op
+
+float / double = 1.011x
+~~~
+
+The double-working-precision policy therefore adds approximately one percent
+to public float reverse-conversion cost in this benchmark.
+
+### CPU-frequency sensitivity
+
+Earlier same-machine runs produced substantially lower absolute times while
+preserving nearly the same ratios against the Bowring baseline and GeographicLib.
+The CPU frequency state was not recorded during those timed sections, so those
+runs are not used as the controlled absolute reference.
+
+The controlled reference run above deliberately used:
+
+~~~text
+intel_pstate no_turbo = 1
+maximum frequency     = 2.6 GHz
+~~~
+
+Absolute `ns/op` values are therefore hardware- and frequency-state-specific.
+
+The primary performance conclusion is the relative same-process comparison,
+not the absolute nanosecond value.
+
+
 ## CI
 
 Normal CI should verify that benchmark code still builds.

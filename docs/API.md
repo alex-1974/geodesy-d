@@ -55,6 +55,77 @@ tryGeocentricToGeodetic
 geocentricToGeodetic
 ```
 
+### EPSG 9602 reverse precision policy
+
+The public scalar type of the reverse geographic/geocentric conversion is
+preserved.
+
+Internally, working precision is selected as follows:
+
+~~~text
+float  -> double working precision -> float result
+double -> double working precision -> double result
+real   -> real working precision   -> real result
+~~~
+
+The promotion of public `float` input to `double` working precision is
+intentional. Direct single-precision evaluation was found insufficient for
+numerically sensitive Earth-scale interior and evolute cases.
+
+The reverse implementation uses:
+
+- a Fukushima/Halley fast path for ordinary oblate positions;
+- an extended Vermeille/Karney robust fallback for difficult positions;
+- dedicated analytic handling for selected degenerate cases.
+
+For multiply representable deep-interior Cartesian points, the inverse selects
+the nearest-ellipsoid, minimum-absolute-height solution.
+
+The exact ellipsoid centre remains undefined and is rejected by the checked
+API.
+
+For the validated terrestrial domain:
+
+~~~text
+ellipsoids:
+    WGS 84
+    GRS 80
+    Airy 1830
+
+latitude:
+    full legal range [-90 deg, +90 deg]
+
+ellipsoidal height:
+    -20 km through +100 km
+~~~
+
+the conservative public numerical contract is:
+
+~~~text
+float:
+    represented Cartesian position <= 2 m
+    ellipsoidal height             <= 0.1 m
+
+double and real:
+    represented Cartesian position <= 1 mm
+~~~
+
+Represented Cartesian position means the ECEF coordinate obtained by applying
+the forward conversion to the returned geodetic coordinate on the same
+ellipsoid.
+
+These limits describe numerical coordinate-conversion error only. They do not
+describe datum, reference-frame, observation, survey, GNSS, or physical
+position accuracy.
+
+Outside the validated terrestrial domain, the documented robust and canonical
+inverse semantics still apply, but the same absolute accuracy envelope is not
+claimed.
+
+See ADR-0005 and `docs/operations/geographic-geocentric.md` for algorithmic and
+validation details.
+
+
 ## EPSG 1031
 
 ```text

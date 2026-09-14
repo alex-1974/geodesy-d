@@ -257,6 +257,171 @@ casually. If a seed changes, that change should be treated like changing a
 reference-vector corpus and called out in review.
 
 
+## EPSG 9602 hybrid inverse validation
+
+The reverse EPSG 9602 kernel is additionally validated against difficult cases
+that are not adequately characterized by ordinary surface round trips.
+
+Independent regression sources include GeographicLib 2.7 and PROJ 9.7.1.
+
+### GeographicLib regressions
+
+The permanent unit suite includes the supported oblate `CartConvert0`
+regression:
+
+~~~text
+a = 6400000
+f = 0.01
+XYZ = (10000, 0, 1000)
+~~~
+
+The resulting ECEF round-trip residual is approximately:
+
+~~~text
+1.14e-9 m
+~~~
+
+The neighboring upstream `CartConvert1` case is prolate and is intentionally
+outside the current `Ellipsoid<T>` domain.
+
+The documented WGS 84 equatorial-evolute conditioning examples are also
+covered:
+
+~~~text
+exact cusp:
+    latitude = 0
+
+1 nm radially inward:
+    latitude = 0.044807356 arcsec
+    documented magnitude approximately 0.04 arcsec
+
+1 nm in +Z:
+    latitude = 7.451998626 arcsec
+    documented magnitude approximately 7.45 arcsec
+~~~
+
+### PROJ regressions
+
+PROJ 9.7.1 handwritten `+proj=cart` cases are reproduced for:
+
+~~~text
++X equator
+-X equator
++Y equator
+-Y equator
+north pole
+south pole
+~~~
+
+PROJ chooses a conventional inverse at the exact ellipsoid centre.
+
+`geodesy-d` intentionally differs and returns `false` because the inverse is
+not unique there.
+
+The documented PROJ GRS 80 Cartesian example is also covered.
+
+### Deterministic difficult-domain validation
+
+A multi-scale WGS 84 cusp sweep containing 2527 points produced:
+
+~~~text
+failures = 0
+points above 1 micrometre residual = 0
+worst residual = 3.49e-9 m
+~~~
+
+A broader deterministic scalar-generic suite exercises:
+
+~~~text
+WGS 84
+GRS 80
+Airy 1830
+sphere
+flattening = 0.1
+flattening = 0.5
+~~~
+
+For `double`:
+
+~~~text
+cases = 340000
+failures = 0
+scaled-limit violations = 0
+maximum ECEF residual = 3.35e-6 m
+~~~
+
+For `real`:
+
+~~~text
+cases = 340000
+failures = 0
+scaled-limit violations = 0
+maximum ECEF residual = 1.49e-9 m
+~~~
+
+Large latitude or height differences between source and recovered geodetic
+coordinates may occur for multiply representable deep-interior points.
+
+Such differences are not treated as failures when the recovered coordinate
+represents the same Cartesian position and follows the documented canonical
+nearest-ellipsoid solution.
+
+### Float terrestrial accuracy validation
+
+Public `float` inverse conversion is evaluated internally using `double`
+working precision.
+
+A dedicated terrestrial corpus validates the resulting public behaviour over:
+
+~~~text
+ellipsoids:
+    WGS 84
+    GRS 80
+    Airy 1830
+
+latitude:
+    full legal range
+
+ellipsoidal height:
+    -20 km through +100 km
+~~~
+
+Each ellipsoid contributed 250726 cases, for a total of:
+
+~~~text
+752178 cases
+~~~
+
+Observed worst cases across the three ellipsoids were approximately:
+
+~~~text
+ECEF round-trip error:       0.771 m
+horizontal position error:   0.760 m
+ellipsoidal-height error:    0.003906 m
+~~~
+
+There were no failed inverse operations.
+
+These measurements support the conservative public terrestrial accuracy
+contract:
+
+~~~text
+float:
+    represented Cartesian position <= 2 m
+    ellipsoidal height             <= 0.1 m
+
+double and real:
+    represented Cartesian position <= 1 mm
+~~~
+
+These are numerical transformation bounds, not datum, reference-frame,
+measurement, survey, GNSS, or physical-position accuracy guarantees.
+
+Outside the validated terrestrial domain the implementation retains its
+documented robust and canonical inverse semantics, but the same absolute
+accuracy envelope is not claimed.
+
+
 ## CI integration
 
 Normal DMD/LDC compiler gates run in `.github/workflows/ci.yml`.
