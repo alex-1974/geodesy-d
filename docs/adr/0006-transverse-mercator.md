@@ -580,106 +580,98 @@ micro-optimisation.
 
 ## Validation evidence recorded during implementation
 
-The series-order decision and the current `float`/`double` accuracy candidate
-were tested with both DMD and LDC against GeographicLib 2.7
-`TransverseMercatorExact`.
+The numerical implementation has now passed the large independent
+GeographicLib Exact corpora for public `double` and `float`, and the dedicated
+spherical validation sub-gate.
 
-The Exact corpora cover the six named oblate terrestrial ellipsoids plus the
-synthetic `f = 0.01` boundary ellipsoid. The spherical case is intentionally
-excluded from these Exact counts because `TransverseMercatorExact` does not
-provide the `f = 0` limit; sphere validation remains a separate oracle gate.
+For the seven applicable oblate ellipsoids, including the synthetic
+`f = 0.01` boundary ellipsoid, GeographicLib 2.7
+`TransverseMercatorExact` gives the following large-corpus results.
 
-For public `double` with eighth-order coefficients, the deterministic structured
-corpus contains 251,853 source points and independently checks both forward and
-reverse projected position:
+`double`, eighth-order:
 
 ~~~text
-forward comparisons: 251853
-reverse comparisons: 251853
-outside 0.001 m target: 0
-worst absolute projected error: 0.00040720961988 m
-worst ground-equivalent error: 0.000197241839122 m
-worst case: synthetic f = 0.01, latitude = 0 deg,
-            deltaLongitude = -60 deg, forward
+structured source points: 251853
+structured forward comparisons: 251853
+structured reverse comparisons: 251853
+structured outside 1 mm target: 0
+structured worst absolute projected error: 0.00040720961988 m
+structured worst ground-equivalent error: 0.000197241839122 m
+
+random source points: 500000
+random forward comparisons: 500000
+random reverse comparisons: 500000
+random outside 1 mm target: 0
+random worst absolute projected error: 0.00040489314832 m
+random worst ground-equivalent error: 0.000185580763518 m
 ~~~
 
-The deterministic pseudo-random `double` corpus uses SplitMix64 with seed
-`0x544D5F4558414354`, 84 projection profiles, and 500,000 source points:
+The same wide synthetic stress boundary with sixth-order coefficients was about
+26.63 mm from the Exact reference. This is the evidence for selecting order 8
+for public `double` and `real`.
+
+Public `float` uses double working precision and sixth-order coefficients:
 
 ~~~text
-forward comparisons: 500000
-reverse comparisons: 500000
-outside 0.001 m target: 0
-worst absolute projected error: 0.00040489314832 m
-worst ground-equivalent error: 0.000185580763518 m
-worst case: synthetic f = 0.01 profile R09,
-            latitude = 2.073008485 deg,
-            deltaLongitude = 59.962000211 deg, forward
+structured source points: 251853
+structured outside 2 m target: 0
+structured worst absolute projected error: 0.996066963705 m
+structured worst ground-equivalent error: 0.996106511573 m
+
+random source points: 500000
+random outside 2 m target: 0
+random worst absolute projected error: 1.34535363361 m
+random worst ground-equivalent error: 1.17173743512 m
 ~~~
 
-DMD and LDC evaluated the same deterministic corpora and produced identical
-reported maxima. They are compiler cross-checks of one reproducible corpus, not
-independent random samples.
+The promoted double twin remains within about 0.407 mm of Exact, while almost
+all public float forward outputs exactly match the correctly rounded Exact
+coordinate pair. This supports the conclusion that the observed metre-scale
+float maxima are dominated by binary32 coordinate representation rather than
+the promoted numerical kernel.
 
-For public `float`, the kernel uses `double` working precision and sixth-order
-coefficients. The Exact oracle is constructed from the actually represented
-public `float` parameters and angle radians, so validation measures the public
-binary32 API rather than a separately rounded degree surrogate.
-
-The deterministic structured `float` corpus reported:
+The `f = 0` spherical sub-gate is independently complete. Eight projection
+profiles were tested against direct analytic spherical Transverse Mercator
+formulas.
 
 ~~~text
-forward comparisons: 251853
-reverse comparisons: 251853
-outside 2 m target: 0
-worst absolute projected error: 0.996066963705 m
-worst ground-equivalent error: 0.996106511573 m
-worst case: International 1924, latitude = 89.000001338 deg,
-            deltaLongitude = -39.000002793 deg, forward
+double structured source points: 291912
+double structured outside 1 mm target: 0
+double structured worst absolute error: 1.49011611938e-08 m
+
+double random source points: 500000
+double random outside 1 mm target: 0
+double random worst absolute error: 1.53597653866e-08 m
+
+float structured source points: 291912
+float structured outside 2 m target: 0
+float structured worst absolute error: 1.40418094005 m
+
+float random source points: 500000
+float random outside 2 m target: 0
+float random worst absolute error: 1.40217080524 m
 ~~~
 
-The deterministic 500,000-point pseudo-random `float` corpus reported:
+Structured spherical corpora pass under both DMD and LDC. The deterministic
+random corpora were also cross-compiler checked during validation.
 
-~~~text
-forward comparisons: 500000
-reverse comparisons: 500000
-outside 2 m target: 0
-worst absolute projected error: 1.34535363361 m
-worst ground-equivalent error: 1.17173743512 m
-~~~
+The analytic spherical oracle is itself independently cross-checked against
+GeographicLib 2.7 `TransverseMercator` with `f = 0` and PROJ spherical `tmerc`.
+GeographicLib agrees at approximately nanometre scale in both structured and
+random external corpora.
 
-The float diagnostics show that final binary32 representation dominates the
-observed error envelope rather than the promoted numerical kernel: 99.994441%
-of structured forward results and 99.986200% of random forward results were
-exactly equal to correctly rounded Exact easting/northing pairs. The represented
-`double` twin of the same public float inputs stayed within about 0.407 mm of
-Exact in the structured corpus and about 0.405 mm in the random corpus.
+PROJ 9.7.1 exposes the known upstream spherical-equator numerical instability
+tracked as PROJ issue #4673. The validation harness classifies that defect
+separately for affected PROJ versions instead of weakening the numerical
+tolerance. It is non-gating only when GeographicLib independently satisfies the
+strict oracle target. Other PROJ disagreements remain failures.
 
-A targeted boundary diagnostic also isolated 43 structured high-latitude float
-reverse inputs whose rounded projected coordinates recovered infinitesimally
-outside the nominal +/-60-degree longitude boundary. Every case was within
-0.414 m of the boundary when measured along the ellipsoidal parallel, with at
-most about 0.492 m of projected-input quantization. This evidence led to the
-representation-aware reverse boundary classification described above. After the
-change, the structured float corpus has zero reverse boundary failures, and a
-specific WGS 84 regression case is retained in the unit tests.
-
-The same stress point with sixth-order coefficients in binary64 was about
-26.63 mm from the Exact reference. This remains the evidence for selecting
-order 8 for `double` and `real`.
-
-PROJ 9.7.1 remains near-identical in the ordinary smoke corpus, but its
-sixth-order Poder/Engsager path differs from the eighth-order implementation by
-about 26 mm at the synthetic wide-domain stress boundary. That difference is
-expected series truncation in the reference path and is not used as an accuracy
-failure for `geodesy-d`.
-
-These results complete the large structured and deterministic pseudo-random
-Exact-reference sub-gates for `double` and `float`. They do **not** by themselves
-promote this ADR to `Accepted`. Remaining acceptance work includes the
-independent spherical oracle, `real` validation with platform properties, the
-remaining deterministic/property/runtime gates, and the LDC release performance
-baseline.
+These results establish the selected `double`, `float`, and spherical numerical
+paths. They do **not** promote this ADR to `Accepted`. Mandatory work still
+includes the remaining deterministic boundary/property checks, `real`
+validation, runtime/API properties, reverse-Newton instrumentation, the
+reproducible LDC release performance baseline, and the required additional
+platform/architecture coverage.
 
 ## Alternatives considered
 

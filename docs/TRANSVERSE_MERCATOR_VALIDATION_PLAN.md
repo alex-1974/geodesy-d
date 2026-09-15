@@ -704,6 +704,8 @@ Record reference-library version and build precision.
 
 ### Sphere oracle
 
+Status: **PASS** for the `float` and `double` spherical validation sub-gate.
+
 Validate `f = 0` independently with:
 
 - direct analytic spherical Transverse Mercator formulas in the validation
@@ -713,6 +715,23 @@ Validate `f = 0` independently with:
 
 At least two of these references must agree before a sphere discrepancy is
 attributed to `geodesy-d`.
+
+The completed validation uses the analytic formulas as the committed corpus
+oracle and separately cross-checks that oracle against GeographicLib 2.7 and
+PROJ.
+
+GeographicLib `TransverseMercator` with `f = 0` is the strict independent
+numerical cross-check. The external structured corpus agrees with the analytic
+oracle to about 19 nm forward and 5 nm reverse projected residual; the
+160000-point external random corpus agrees to about 21 nm forward and 26 nm
+reverse projected residual.
+
+PROJ is retained as an additional independent compatibility reference.
+PROJ 9.7.1 has the upstream spherical-equator numerical instability documented
+as PROJ issue #4673. The reference harness recognizes that defect only for
+affected PROJ versions and only when GeographicLib independently satisfies the
+strict oracle target. The issue was fixed upstream before PROJ 9.8.0. Other
+PROJ disagreements remain gating failures.
 
 ### GeographicLib series
 
@@ -969,6 +988,109 @@ production reverse classifier now evaluates that representation-level boundary
 excursion in physical distance; the post-fix structured corpus has zero
 failures and the representative WGS 84 case is retained as a unit regression.
 
+### Sphere, analytic oracle and independent cross-check
+
+The spherical `f = 0` sub-gate is complete for public `double` and `float`.
+
+The committed analytic-oracle corpus covers eight projection profiles spanning
+Earth-sized and synthetic radii, non-zero natural-origin latitudes,
+antimeridian-adjacent origins, scale-factor endpoints, large false offsets,
+poles, equatorial cases, and the full supported `abs(deltaLongitude) <= 60 deg`
+domain.
+
+Structured `double` corpus:
+
+~~~text
+source points: 291912
+forward comparisons: 291912
+reverse comparisons: 291912
+outside 0.001 m target: 0
+worst absolute projected error: 1.49011611938e-08 m
+worst ground-equivalent error: 8.27834181595e-09 m
+DMD: PASS
+LDC: PASS
+~~~
+
+Deterministic pseudo-random `double` corpus:
+
+~~~text
+source points: 500000
+forward comparisons: 500000
+reverse comparisons: 500000
+outside 0.001 m target: 0
+worst absolute projected error: 1.53597653866e-08 m
+worst ground-equivalent error: 8.27838520459e-09 m
+~~~
+
+Structured `float` corpus:
+
+~~~text
+source points: 291912
+forward comparisons: 291912
+reverse comparisons: 291912
+outside 2 m target: 0
+classified failures: 0
+worst absolute projected error: 1.40418094005 m
+worst ground-equivalent error: 1.23281080064 m
+DMD: PASS
+LDC: PASS
+~~~
+
+Deterministic pseudo-random `float` corpus:
+
+~~~text
+source points: 500000
+forward comparisons: 500000
+reverse comparisons: 500000
+outside 2 m target: 0
+classified failures: 0
+worst absolute projected error: 1.40217080524 m
+worst ground-equivalent error: 1.23665695919 m
+~~~
+
+The deterministic random sphere corpora were also exercised under both DMD and
+LDC during validation. The final post-cleanup regression repeated the structured
+corpora under both compilers and the 500000-point random corpora under DMD.
+
+The analytic oracle was independently cross-checked against GeographicLib 2.7
+and PROJ 9.7.1.
+
+External structured corpus:
+
+~~~text
+profiles: 8
+source points: 2080
+GeographicLib forward failures: 0
+GeographicLib reverse failures: 0
+worst oracle vs GeographicLib forward: 1.86264514923e-08 m
+worst GeographicLib reverse projected residual: 5.26835606386e-09 m
+
+PROJ gating failures: 0
+known PROJ < 9.8.0 spherical-equator deviations: 198
+~~~
+
+External deterministic random corpus:
+
+~~~text
+profiles: 8
+source points: 160000
+GeographicLib forward failures: 0
+GeographicLib reverse failures: 0
+worst oracle vs GeographicLib forward: 2.04890966415e-08 m
+worst GeographicLib reverse projected residual: 2.60770320892e-08 m
+
+PROJ forward failures: 0
+PROJ reverse failures: 0
+known PROJ < 9.8.0 spherical-equator deviations: 0
+worst oracle vs PROJ forward: 3.93837690353e-05 m
+worst PROJ reverse projected residual: 3.06100226927e-05 m
+~~~
+
+The 198 structured PROJ deviations are not absorbed into a widened tolerance.
+They are explicitly classified as the known pre-9.8.0 PROJ spherical-equator
+reference defect only after GeographicLib independently agrees with the analytic
+oracle. All other reference discrepancies remain failures.
+
 ### PROJ compatibility
 
 PROJ 9.7.1 smoke compatibility remains at nanometre scale in the tested
@@ -980,12 +1102,15 @@ accuracy gate.
 ### Remaining work
 
 The large structured/random Exact-reference sub-gates are complete for `double`
-and `float`, but TM validation is not yet complete. Outstanding mandatory work
-includes:
+and `float`, and the independent spherical Transverse Mercator sub-gate is
+complete for both scalars. TM validation as a whole is not yet complete.
 
-- independent spherical Transverse Mercator oracle and cross-checks;
+Outstanding mandatory work includes:
+
+- remaining deterministic boundary/property cases, especially represented
+  reverse behaviour near the +/-60-degree domain boundary and high latitudes;
 - `real` validation with recorded platform/compiler precision properties;
-- remaining deterministic boundary/property and runtime/API gates;
+- remaining runtime/API gates;
 - reverse-Newton instrumentation required by this plan;
 - reproducible LDC release performance baseline;
 - required additional platform/architecture coverage before stable release.
