@@ -8,6 +8,8 @@ module geodesy.projection.transverse_mercator;
 import std.math :
     PI, asinh, atan, atan2, atanh, cos, cosh, exp, fabs, sin, sinh, sqrt;
 
+import std.typecons : tuple;
+
 import geodesy.angle : Latitude, Longitude;
 import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
@@ -81,6 +83,44 @@ private T halfPi(T)() pure nothrow @safe @nogc
 private T maxLongitudeDifference(T)() pure nothrow @safe @nogc
 {
     return pi!T / cast(T) 3;
+}
+
+
+private T ordinaryScaleLowerBound(T)()
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    static if (T.mant_dig == 24)
+        return 0x1.ccccccp-1F;                 // nearest float to 0.9
+    else static if (T.mant_dig == 53)
+        return cast(T) 0x1.ccccccccccccdp-1;  // nearest binary64 to 0.9
+    else static if (T.mant_dig == 64)
+        return cast(T) 0x1.ccccccccccccccccp-1L;
+    else static if (T.mant_dig == 113)
+        return cast(T) 0x1.cccccccccccccccccccccccccccdp-1L;
+    else
+        static assert(
+            false,
+            "unsupported floating mantissa width for TM profile boundary");
+}
+
+
+private T ordinaryScaleUpperBound(T)()
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    static if (T.mant_dig == 24)
+        return 0x1.19999ap+0F;                 // nearest float to 1.1
+    else static if (T.mant_dig == 53)
+        return cast(T) 0x1.199999999999ap+0;  // nearest binary64 to 1.1
+    else static if (T.mant_dig == 64)
+        return cast(T) 0x1.199999999999999ap+0L;
+    else static if (T.mant_dig == 113)
+        return cast(T) 0x1.199999999999999999999999999ap+0L;
+    else
+        static assert(
+            false,
+            "unsupported floating mantissa width for TM profile boundary");
 }
 
 
@@ -742,6 +782,71 @@ private:
 
 
 
+    W workingLatitudeRadians(const Latitude!T latitude) const
+        pure nothrow @safe @nogc
+    {
+        /*
+         * Latitude<T> defines its closed public domain using halfPi!T.
+         * For T=float and W=double, blindly promoting the stored endpoint
+         * produces a value slightly beyond +/-halfPi!double. Preserve the
+         * semantic endpoints exactly when crossing working precision.
+         */
+        const T radians = latitude.radians;
+
+        if (radians == halfPi!T)
+            return halfPi!W;
+
+        if (radians == -halfPi!T)
+            return -halfPi!W;
+
+        return cast(W) radians;
+    }
+
+
+    int representedPoleSign(
+        const ProjectedCoordinate!T source,
+        const W scale) const
+        pure nothrow @safe @nogc
+    {
+        /*
+         * A public ProjectedCoordinate<T> has already rounded the mathematical
+         * pole to T. Reconstruct the same public outputs produced by forward()
+         * and canonicalize an exact match before reverseKernel's W-precision
+         * pole tolerance is applied.
+         *
+         * A non-polar point which rounds to the same public E/N pair is
+         * numerically indistinguishable at scalar T and therefore receives the
+         * documented canonical pole result.
+         */
+        const T representedPoleEasting =
+            cast(T) _falseEasting;
+
+        if (source.easting != representedPoleEasting)
+            return 0;
+
+        const W falseNorthing =
+            cast(W) _falseNorthing;
+
+        const T representedNorthPoleNorthing =
+            cast(T) (
+                falseNorthing
+                + scale * (halfPi!W - _originXi));
+
+        if (source.northing == representedNorthPoleNorthing)
+            return 1;
+
+        const T representedSouthPoleNorthing =
+            cast(T) (
+                falseNorthing
+                + scale * (-halfPi!W - _originXi));
+
+        if (source.northing == representedSouthPoleNorthing)
+            return -1;
+
+        return 0;
+    }
+
+
     W longitudeDomainSlack() const
         pure nothrow @safe @nogc
     {
@@ -778,8 +883,8 @@ private:
         const bool ordinaryTerrestrialProfile =
             a >= cast(W) 6_000_000
             && a <= cast(W) 7_000_000
-            && k0 >= cast(W) 0.9
-            && k0 <= cast(W) 1.1
+            && k0 >= cast(W) ordinaryScaleLowerBound!T()
+            && k0 <= cast(W) ordinaryScaleUpperBound!T()
             && fabs(falseEasting) <= cast(W) 2 * a
             && fabs(falseNorthing) <= cast(W) 2 * a;
 
@@ -833,8 +938,8 @@ private:
         const bool ordinaryTerrestrialProfile =
             a >= cast(W) 6_000_000
             && a <= cast(W) 7_000_000
-            && k0 >= cast(W) 0.9
-            && k0 <= cast(W) 1.1
+            && k0 >= cast(W) ordinaryScaleLowerBound!T()
+            && k0 <= cast(W) ordinaryScaleUpperBound!T()
             && fabs(falseEasting) <= cast(W) 2 * a
             && fabs(falseNorthing) <= cast(W) 2 * a;
 
@@ -945,7 +1050,7 @@ public:
 
         W originEta;
         if (!candidate.forwardKernel(
-                cast(W) latitudeOfNaturalOrigin.radians,
+                candidate.workingLatitudeRadians(latitudeOfNaturalOrigin),
                 cast(W) 0,
                 candidate._originXi,
                 originEta))
@@ -1047,7 +1152,8 @@ public:
         if (!isValid)
             return false;
 
-        const W latitude = cast(W) source.latitude.radians;
+        const W latitude =
+            workingLatitudeRadians(source.latitude);
         W deltaLongitude = cast(W) 0;
 
         const W poleTolerance =
@@ -1138,14 +1244,23 @@ public:
         if (!(scale > cast(W) 0) || !isFiniteScalar(scale))
             return false;
 
-        const W eta =
+        W eta =
             (cast(W) source.easting - cast(W) _falseEasting) / scale;
-        const W xi =
+        W xi =
             (cast(W) source.northing - cast(W) _falseNorthing) / scale
             + _originXi;
 
         if (!isFiniteScalar(xi) || !isFiniteScalar(eta))
             return false;
+
+        const int poleSign =
+            representedPoleSign(source, scale);
+
+        if (poleSign != 0)
+        {
+            xi = poleSign < 0 ? -halfPi!W : halfPi!W;
+            eta = cast(W) 0;
+        }
 
         W latitude;
         W deltaLongitude;
@@ -1478,6 +1593,143 @@ unittest
                 - cast(double) floatBoundaryProjected.northing);
 
     assert(floatBoundaryResidual <= 2.0);
+
+    /*
+     * Float pole promotion regression.
+     *
+     * Latitude!float stores +/-90 degrees as +/-halfPi!float. Promoting that
+     * raw endpoint to double moves it slightly beyond +/-halfPi!double, so the
+     * projection must preserve the public endpoint when entering its double
+     * working scalar.
+     */
+    const floatSphere =
+        Ellipsoid!float.fromFlattening(
+            6_378_137.0f,
+            0.0f);
+
+    const floatPoleProjection =
+        TransverseMercator!float.fromParameters(
+            floatSphere,
+            Latitude!float.fromDegrees(0.0f),
+            Longitude!float.fromDegrees(15.0f),
+            1.0f,
+            0.0f,
+            0.0f);
+
+    foreach (latitudeDegrees; [-90.0f, 90.0f])
+    {
+        foreach (longitudeDegrees; [-180.0f, -60.0f, 0.0f, 75.0f, 180.0f])
+        {
+            const pole =
+                GeographicCoordinate!float.fromComponents(
+                    Latitude!float.fromDegrees(latitudeDegrees),
+                    Longitude!float.fromDegrees(longitudeDegrees));
+
+            ProjectedCoordinate!float poleProjected;
+            assert(floatPoleProjection.tryForward(
+                pole,
+                poleProjected));
+
+            const expectedNorthing =
+                latitudeDegrees < 0.0f
+                    ? cast(float) (-cast(double) PI
+                        * 6_378_137.0 / 2.0)
+                    : cast(float) (cast(double) PI
+                        * 6_378_137.0 / 2.0);
+
+            assert(fabs(
+                cast(double) poleProjected.easting) <= 0.5);
+            assert(fabs(
+                cast(double) poleProjected.northing
+                    - cast(double) expectedNorthing) <= 1.0);
+
+            const poleRecovered =
+                floatPoleProjection.reverse(
+                    poleProjected);
+
+            assert(poleRecovered.latitude.degrees
+                == latitudeDegrees);
+            assert(fabs(
+                cast(double) poleRecovered.longitude.degrees
+                    - 15.0) < 1.0e-4);
+        }
+    }
+
+    // Natural-origin endpoints require the same public-scalar preservation.
+    const floatPolarOrigin =
+        TransverseMercator!float.fromParameters(
+            floatSphere,
+            Latitude!float.fromDegrees(90.0f),
+            Longitude!float.fromDegrees(15.0f),
+            1.0f,
+            500_000.0f,
+            -2_000_000.0f);
+
+    const polarNaturalOrigin =
+        GeographicCoordinate!float.fromComponents(
+            Latitude!float.fromDegrees(90.0f),
+            Longitude!float.fromDegrees(-120.0f));
+
+    const polarOriginProjected =
+        floatPolarOrigin.forward(
+            polarNaturalOrigin);
+
+    assert(fabs(
+        cast(double) polarOriginProjected.easting
+            - 500_000.0) <= 0.5);
+    assert(fabs(
+        cast(double) polarOriginProjected.northing
+            + 2_000_000.0) <= 0.5);
+
+    /*
+     * Ordinary-profile scale-factor endpoint regression.
+     *
+     * The public float values 0.9f and 1.1f straddle the corresponding
+     * binary64 literals after promotion. They are nevertheless the public
+     * endpoints of the documented float validation profile and must retain
+     * the representation-aware reverse boundary slack.
+     */
+    foreach (endpointCase; [
+        tuple(
+            1.1f,
+            80.0f,
+            -179.75f,
+            12_742_000.0f,
+            -12_742_000.0f,
+            12_318_119.0f,
+            -33_290_526.0f),
+        tuple(
+            0.9f,
+            -80.0f,
+            123.0f,
+            -12_742_000.0f,
+            12_742_000.0f,
+            -13_002_063.0f,
+            11_891_462.0f),
+    ])
+    {
+        const endpointProjection =
+            TransverseMercator!float.fromParameters(
+                Ellipsoid!float.fromFlattening(
+                    6_371_000.0f,
+                    0.0f),
+                Latitude!float.fromDegrees(endpointCase[1]),
+                Longitude!float.fromDegrees(endpointCase[2]),
+                endpointCase[0],
+                endpointCase[3],
+                endpointCase[4]);
+
+        const representedBoundary =
+            ProjectedCoordinate!float.fromComponents(
+                endpointCase[5],
+                endpointCase[6]);
+
+        GeographicCoordinate!float endpointRecovered;
+        assert(endpointProjection.tryReverse(
+            representedBoundary,
+            endpointRecovered));
+
+    }
 
     // Projection-specific flattening bound.
     const tooFlat = Ellipsoid!double.fromFlattening(6_378_137.0, 0.02);
