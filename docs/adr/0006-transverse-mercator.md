@@ -306,8 +306,41 @@ abs(deltaLongitude) <= 60 degrees
 
 Forward calls outside this domain fail through the checked API.
 
-Reverse calls are accepted only for projected coordinates that recover to a
-geographic point inside this same supported sheet/domain.
+Reverse calls are accepted only for projected coordinates that recover to the
+same supported sheet/domain, with a representation-aware boundary
+classification for coordinates that are the rounded image of a valid boundary
+point.
+
+Reverse starts from represented projected coordinates. Rounding easting and
+northing can therefore move the recovered longitude slightly outside the
+nominal +/-60-degree boundary even when the unrounded projected point lies
+exactly on it. The effect is strongest at high latitude, where longitude is
+ill-conditioned because the radius of the parallel becomes small.
+
+Within the ordinary terrestrial accuracy profile, reverse boundary
+classification converts any longitude excess beyond +/-60 degrees to a local
+first-order east-west distance using:
+
+~~~text
+boundaryDistance ~= N(phi) * cos(phi) * excessDeltaLongitude
+~~~
+
+where `N(phi)` is the ellipsoidal prime-vertical radius of curvature. The
+represented projected input may be accepted only while this boundary distance
+is within the scalar's published absolute accuracy budget:
+
+~~~text
+float:       2 m
+double/real: 1 mm
+~~~
+
+An accepted representation-level excess is clamped back to the exact
++/-60-degree boundary before the public geographic result is formed. This is a
+numerical classification tolerance for reverse projection; it does not widen
+the public geographic domain and it does not change forward-domain semantics.
+Outside the ordinary terrestrial profile, reverse retains only the ordinary
+angular/representation slack and no fixed metre-based boundary guarantee is
+made.
 
 The poles are treated specially because geographic longitude is degenerate
 there.
@@ -547,23 +580,93 @@ micro-optimisation.
 
 ## Validation evidence recorded during implementation
 
-The series-order decision was tested with both DMD and LDC.
+The series-order decision and the current `float`/`double` accuracy candidate
+were tested with both DMD and LDC against GeographicLib 2.7
+`TransverseMercatorExact`.
 
-For `double` with eighth-order coefficients, the current structured
-GeographicLib 2.7 `TransverseMercatorExact` corpus contains 1168 forward/reverse
-projected-position comparisons over the mandatory named ellipsoids plus the
-synthetic `f = 0.01` boundary ellipsoid. It reported:
+The Exact corpora cover the six named oblate terrestrial ellipsoids plus the
+synthetic `f = 0.01` boundary ellipsoid. The spherical case is intentionally
+excluded from these Exact counts because `TransverseMercatorExact` does not
+provide the `f = 0` limit; sphere validation remains a separate oracle gate.
+
+For public `double` with eighth-order coefficients, the deterministic structured
+corpus contains 251,853 source points and independently checks both forward and
+reverse projected position:
 
 ~~~text
-outside 1 mm target: 0
+forward comparisons: 251853
+reverse comparisons: 251853
+outside 0.001 m target: 0
 worst absolute projected error: 0.00040720961988 m
+worst ground-equivalent error: 0.000197241839122 m
 worst case: synthetic f = 0.01, latitude = 0 deg,
             deltaLongitude = -60 deg, forward
 ~~~
 
-The same stress point with sixth-order coefficients was about 26.63 mm from the
-Exact reference. This is the evidence for selecting order 8 for `double` and
-`real`.
+The deterministic pseudo-random `double` corpus uses SplitMix64 with seed
+`0x544D5F4558414354`, 84 projection profiles, and 500,000 source points:
+
+~~~text
+forward comparisons: 500000
+reverse comparisons: 500000
+outside 0.001 m target: 0
+worst absolute projected error: 0.00040489314832 m
+worst ground-equivalent error: 0.000185580763518 m
+worst case: synthetic f = 0.01 profile R09,
+            latitude = 2.073008485 deg,
+            deltaLongitude = 59.962000211 deg, forward
+~~~
+
+DMD and LDC evaluated the same deterministic corpora and produced identical
+reported maxima. They are compiler cross-checks of one reproducible corpus, not
+independent random samples.
+
+For public `float`, the kernel uses `double` working precision and sixth-order
+coefficients. The Exact oracle is constructed from the actually represented
+public `float` parameters and angle radians, so validation measures the public
+binary32 API rather than a separately rounded degree surrogate.
+
+The deterministic structured `float` corpus reported:
+
+~~~text
+forward comparisons: 251853
+reverse comparisons: 251853
+outside 2 m target: 0
+worst absolute projected error: 0.996066963705 m
+worst ground-equivalent error: 0.996106511573 m
+worst case: International 1924, latitude = 89.000001338 deg,
+            deltaLongitude = -39.000002793 deg, forward
+~~~
+
+The deterministic 500,000-point pseudo-random `float` corpus reported:
+
+~~~text
+forward comparisons: 500000
+reverse comparisons: 500000
+outside 2 m target: 0
+worst absolute projected error: 1.34535363361 m
+worst ground-equivalent error: 1.17173743512 m
+~~~
+
+The float diagnostics show that final binary32 representation dominates the
+observed error envelope rather than the promoted numerical kernel: 99.994441%
+of structured forward results and 99.986200% of random forward results were
+exactly equal to correctly rounded Exact easting/northing pairs. The represented
+`double` twin of the same public float inputs stayed within about 0.407 mm of
+Exact in the structured corpus and about 0.405 mm in the random corpus.
+
+A targeted boundary diagnostic also isolated 43 structured high-latitude float
+reverse inputs whose rounded projected coordinates recovered infinitesimally
+outside the nominal +/-60-degree longitude boundary. Every case was within
+0.414 m of the boundary when measured along the ellipsoidal parallel, with at
+most about 0.492 m of projected-input quantization. This evidence led to the
+representation-aware reverse boundary classification described above. After the
+change, the structured float corpus has zero reverse boundary failures, and a
+specific WGS 84 regression case is retained in the unit tests.
+
+The same stress point with sixth-order coefficients in binary64 was about
+26.63 mm from the Exact reference. This remains the evidence for selecting
+order 8 for `double` and `real`.
 
 PROJ 9.7.1 remains near-identical in the ordinary smoke corpus, but its
 sixth-order Poder/Engsager path differs from the eighth-order implementation by
@@ -571,10 +674,12 @@ about 26 mm at the synthetic wide-domain stress boundary. That difference is
 expected series truncation in the reference path and is not used as an accuracy
 failure for `geodesy-d`.
 
-This evidence establishes the series-order choice. It does **not** by itself
-promote this ADR to `Accepted`; the complete validation gates still require the
-planned float, sphere, large structured/random corpora, runtime-property, and
-performance evidence.
+These results complete the large structured and deterministic pseudo-random
+Exact-reference sub-gates for `double` and `float`. They do **not** by themselves
+promote this ADR to `Accepted`. Remaining acceptance work includes the
+independent spherical oracle, `real` validation with platform properties, the
+remaining deterministic/property/runtime gates, and the LDC release performance
+baseline.
 
 ## Alternatives considered
 

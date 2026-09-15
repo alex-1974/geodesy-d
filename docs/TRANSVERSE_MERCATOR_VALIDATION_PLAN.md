@@ -2,6 +2,7 @@
 
 - Status: Active validation specification
 - Date: 2026-09-14
+- Evidence updated: 2026-09-15
 - Applies to: ADR-0006
 - Intended implementation: generic EPSG 9807 Transverse Mercator
 
@@ -409,12 +410,34 @@ rather than decimal literals alone where the distinction matters.
 
 ### Domain-boundary invariant
 
-For a successfully constructed projection and non-polar points:
+For geographic forward input and non-polar points, the nominal domain remains:
 
 ~~~text
 abs(normalized_delta_lon) <= 60 deg -> accepted, if arithmetic remains finite
-abs(normalized_delta_lon) >  60 deg -> rejected
+abs(normalized_delta_lon) >  60 deg -> rejected, apart from representation-level angular slack
 ~~~
+
+Reverse requires a separate representation-aware boundary test because its input
+is an easting/northing pair that may already have been rounded. A projected
+coordinate obtained by rounding a mathematically valid +/-60-degree boundary
+point may recover to a longitude slightly beyond +/-60 degrees, especially near
+the poles.
+
+Within the ordinary terrestrial profile, classify only that reverse excess with:
+
+~~~text
+boundaryDistance ~= N(phi) * cos(phi) * excessDeltaLongitude
+~~~
+
+and accept it only while the distance is within the scalar accuracy budget
+(2 m for `float`, 1 mm for `double`/`real`). Accepted excess is clamped to the
+exact boundary. This tolerance is not a wider geographic domain.
+
+Validation must therefore include both:
+
+- exact/inside/outside geographic forward boundary probes;
+- independently projected and rounded reverse boundary probes, including high
+  latitudes where longitude is ill-conditioned.
 
 The constructor's `f <= 0.01` bound is tested independently; the longitude
 boundary is not used as a substitute for ellipsoid-shape validation.
@@ -571,6 +594,21 @@ Target size:
 
 The exact generation rule must be committed so failures are reproducible.
 
+Current achieved Exact-reference corpus (2026-09-15):
+
+~~~text
+applicable oblate ellipsoids: 7
+source points:                251853
+forward comparisons/scalar:  251853
+reverse comparisons/scalar:  251853
+scalars completed:            float, double
+compilers:                    DMD, LDC
+~~~
+
+The same deterministic source set is used for the DMD/LDC compiler cross-check.
+Sphere remains a separate analytic/reference gate because GeographicLib Exact is
+not available for `f = 0`.
+
 ## Deterministic pseudo-random corpus
 
 Use a fixed documented PRNG algorithm and seed.
@@ -597,6 +635,22 @@ Recommended initial size for `double`:
 
 Float and real may use smaller deterministic subsets if runtime becomes
 significant, provided all adversarial/boundary cases remain exhaustive.
+
+Current achieved Exact-reference corpus (2026-09-15):
+
+~~~text
+PRNG:                        SplitMix64
+seed:                        0x544D5F4558414354
+projection profiles:         84
+source points/scalar:         500000
+forward comparisons/scalar:  500000
+reverse comparisons/scalar:  500000
+scalars completed:            float, double
+compilers:                    DMD, LDC
+~~~
+
+`float` was therefore validated with the full 500,000-point deterministic
+corpus rather than a reduced subset.
 
 ## Reverse projected-space corpus
 
@@ -835,36 +889,106 @@ to exist on one architecture.
 
 ## Current structured-reference evidence
 
-The following evidence is recorded during implementation but does not replace
-the larger mandatory corpora below.
+The large GeographicLib 2.7 `TransverseMercatorExact` corpora are now complete
+for public `double` and `float` on the seven applicable oblate ellipsoids. DMD
+and LDC evaluate the same deterministic input sets and report identical maxima.
 
-For the production candidate `double` order-8 path, DMD and LDC produced the
-same result against GeographicLib 2.7 `TransverseMercatorExact`:
+### Double, order 8
+
+Structured corpus:
 
 ~~~text
-smoke/stress comparisons: 34
-smoke/stress outside 1 mm target: 0
-
-extended structured comparisons: 1168
-extended outside 1 mm target: 0
+source points: 251853
+forward comparisons: 251853
+reverse comparisons: 251853
+outside 0.001 m target: 0
 worst absolute projected error: 0.00040720961988 m
-worst case: synthetic f = 0.01, latitude = 0 deg,
+worst ground-equivalent error: 0.000197241839122 m
+worst case: SyntheticF001 point[17889], latitude = 0 deg,
             deltaLongitude = -60 deg, forward
 ~~~
 
-The order-6 A/B build at the same stress boundary showed approximately
-26.63 mm projected-position error against the Exact reference. This evidence
-justifies order 8 for `double`/`real`.
+Deterministic pseudo-random corpus:
 
-PROJ 9.7.1 smoke compatibility remains at nanometre-scale in the tested ordinary
-cases. Its sixth-order Poder/Engsager path differs from order-8 `geodesy-d` by
-about 26 mm at the synthetic stress boundary; this is treated as expected
-same-family reference truncation rather than a failure of the Exact accuracy
-gate.
+~~~text
+source points: 500000
+forward comparisons: 500000
+reverse comparisons: 500000
+outside 0.001 m target: 0
+worst absolute projected error: 0.00040489314832 m
+worst ground-equivalent error: 0.000185580763518 m
+worst case: SyntheticF001-R09 point[1892],
+            latitude = 2.073008485 deg,
+            deltaLongitude = 59.962000211 deg, forward
+~~~
 
-TM-B remains incomplete until the required large structured and pseudo-random
-corpora, scale-normalized intrinsic metric, and all other mandatory cases have
-been run.
+The order-6 A/B build at the wide synthetic boundary showed approximately
+26.63 mm projected-position error against Exact. This continues to justify
+order 8 for `double`/`real`.
+
+### Float, double working precision, order 6
+
+Structured corpus:
+
+~~~text
+source points: 251853
+forward comparisons: 251853
+reverse comparisons: 251853
+outside 2 m target: 0
+worst absolute projected error: 0.996066963705 m
+worst ground-equivalent error: 0.996106511573 m
+worst case: International1924 point[35813],
+            latitude = 89.000001338 deg,
+            deltaLongitude = -39.000002793 deg, forward
+~~~
+
+Deterministic pseudo-random corpus:
+
+~~~text
+source points: 500000
+forward comparisons: 500000
+reverse comparisons: 500000
+outside 2 m target: 0
+worst absolute projected error: 1.34535363361 m
+worst ground-equivalent error: 1.17173743512 m
+~~~
+
+Public float validation is based on the actual stored float radians and scalar
+parameters. In the structured corpus, 251,839 / 251,853 forward outputs
+(99.994441%) exactly matched the correctly rounded Exact easting/northing pair;
+in the random corpus the count was 499,931 / 500,000 (99.986200%). The promoted
+represented-input double twin stayed within 0.000407213345174 m of Exact in the
+structured corpus and 0.000404895849976 m in the random corpus. This is strong
+evidence that the observed metre-scale maxima are dominated by binary32 output
+representation rather than the promoted numerical kernel.
+
+A dedicated diagnostic identified 43 high-latitude reverse boundary rejects in
+the pre-fix structured float run. All had ellipsoidal parallel-distance overrun
+<= 0.413757256467 m and projected-input quantization <= 0.491420437651 m. The
+production reverse classifier now evaluates that representation-level boundary
+excursion in physical distance; the post-fix structured corpus has zero
+failures and the representative WGS 84 case is retained as a unit regression.
+
+### PROJ compatibility
+
+PROJ 9.7.1 smoke compatibility remains at nanometre scale in the tested
+ordinary cases. Its sixth-order Poder/Engsager path differs from order-8
+`geodesy-d` by about 26 mm at the synthetic wide-domain stress boundary; this is
+treated as expected same-family truncation rather than a failure of the Exact
+accuracy gate.
+
+### Remaining work
+
+The large structured/random Exact-reference sub-gates are complete for `double`
+and `float`, but TM validation is not yet complete. Outstanding mandatory work
+includes:
+
+- independent spherical Transverse Mercator oracle and cross-checks;
+- `real` validation with recorded platform/compiler precision properties;
+- remaining deterministic boundary/property and runtime/API gates;
+- reverse-Newton instrumentation required by this plan;
+- reproducible LDC release performance baseline;
+- required additional platform/architecture coverage before stable release.
 
 ## Acceptance gates
 
@@ -883,6 +1007,11 @@ PASS requires:
 
 ### Gate TM-B — double numerical accuracy
 
+Current status: **large Exact structured/random sub-gates PASS** for the seven
+applicable oblate ellipsoids under both DMD and LDC. Full TM-B remains open until
+the separate sphere oracle and the remaining deterministic boundary requirements
+in this plan are complete.
+
 PASS requires:
 
 ~~~text
@@ -898,6 +1027,11 @@ failures = 0 inside supported domain
 
 ### Gate TM-C — float numerical accuracy
 
+Current status: **large Exact structured/random sub-gates PASS** under DMD and
+LDC with zero cases outside the 2 m target. Full TM-C remains open until sphere
+and the remaining scalar-generic deterministic/runtime requirements are
+complete.
+
 PASS requires:
 
 ~~~text
@@ -909,6 +1043,9 @@ failures = 0 inside supported domain
 ~~~
 
 ### Gate TM-D — real numerical accuracy
+
+Current status: **not yet run** for the required recorded `real` platform
+properties and Exact corpus.
 
 PASS requires:
 
