@@ -803,6 +803,80 @@ private:
         return slack;
     }
 
+    W reverseLongitudeDomainSlack(const W latitude) const
+        pure nothrow @safe @nogc
+    {
+        W slack = longitudeDomainSlack();
+
+        /*
+         * Reverse starts from a represented projected coordinate. Quantizing
+         * a valid boundary E/N pair can move the recovered longitude slightly
+         * outside +/-60 degrees, especially near the poles where longitude is
+         * ill-conditioned.
+         *
+         * For the published terrestrial accuracy profile, classify that
+         * representation-level excursion by physical east-west distance from
+         * the boundary meridian:
+         *
+         *     N(phi) * cos(phi) * dLambda
+         *
+         * with N(phi) the prime-vertical radius of curvature.
+         *
+         * Outside the terrestrial profile, retain the existing angular /
+         * representational slack unchanged.
+         */
+        const W a = cast(W) _ellipsoid.semiMajorAxis;
+        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
+        const W falseEasting = cast(W) _falseEasting;
+        const W falseNorthing = cast(W) _falseNorthing;
+
+        const bool ordinaryTerrestrialProfile =
+            a >= cast(W) 6_000_000
+            && a <= cast(W) 7_000_000
+            && k0 >= cast(W) 0.9
+            && k0 <= cast(W) 1.1
+            && fabs(falseEasting) <= cast(W) 2 * a
+            && fabs(falseNorthing) <= cast(W) 2 * a;
+
+        if (!ordinaryTerrestrialProfile)
+            return slack;
+
+        static if (is(T == float))
+            enum W linearBudget = cast(W) 2.0;
+        else
+            enum W linearBudget = cast(W) 0.001;
+
+        const W f = cast(W) _ellipsoid.flattening;
+        const W sinLatitude = sin(latitude);
+        const W eccentricitySquared =
+            f * (cast(W) 2 - f);
+        const W denominatorSquared =
+            cast(W) 1
+                - eccentricitySquared
+                    * sinLatitude
+                    * sinLatitude;
+
+        if (!(denominatorSquared > cast(W) 0))
+            return slack;
+
+        const W primeVerticalRadius =
+            a / sqrt(denominatorSquared);
+        const W parallelRadius =
+            fabs(primeVerticalRadius * cos(latitude));
+
+        if (!(parallelRadius > cast(W) 0))
+            return slack;
+
+        const W contractSlack =
+            linearBudget / parallelRadius;
+
+        if (contractSlack > slack)
+            slack = contractSlack;
+
+        return slack;
+    }
+
+
 
 public:
     /** True when the prepared operation contains valid supported parameters. */
@@ -1094,7 +1168,7 @@ public:
         else
         {
             const W maxDelta = maxLongitudeDifference!W;
-            const W domainSlack = longitudeDomainSlack();
+            const W domainSlack = reverseLongitudeDomainSlack(latitude);
 
             if (fabs(deltaLongitude) > maxDelta + domainSlack)
                 return false;
@@ -1358,6 +1432,52 @@ unittest
 
     assert(fabs(boundaryRecovered.latitude.degrees + 45.0) < 1e-9);
     assert(fabs(boundaryRecovered.longitude.degrees + 45.0) < 1e-9);
+
+    /*
+     * Float reverse boundary regression.
+     *
+     * GeographicLib Exact for WGS84, lat=-89 deg, delta-lon=-60 deg,
+     * rounded to ProjectedCoordinate!float. E/N quantization moves the
+     * mathematical inverse only about 0.33 m across the boundary meridian,
+     * while the longitude angle changes much more because longitude is
+     * ill-conditioned near the pole.
+     *
+     * Reverse therefore accepts the represented boundary point and preserves
+     * it within the public 2 m float accuracy contract.
+     */
+    const floatBoundaryProjection =
+        TransverseMercator!float.fromParameters(
+            Ellipsoid!float.fromFlattening(
+                6_378_137.0f,
+                cast(float) (1.0L / 298.257223563L)),
+            Latitude!float.fromDegrees(0.0f),
+            Longitude!float.fromDegrees(15.0f),
+            1.0f,
+            0.0f,
+            0.0f);
+
+    const floatBoundaryProjected =
+        ProjectedCoordinate!float.fromComponents(
+            -96_732.046875f,
+            -9_946_115.0f);
+
+    GeographicCoordinate!float floatBoundaryRecovered;
+    assert(floatBoundaryProjection.tryReverse(
+        floatBoundaryProjected,
+        floatBoundaryRecovered));
+
+    const floatBoundaryRoundTrip =
+        floatBoundaryProjection.forward(
+            floatBoundaryRecovered);
+
+    const double floatBoundaryResidual =
+        hypot2(
+            cast(double) floatBoundaryRoundTrip.easting
+                - cast(double) floatBoundaryProjected.easting,
+            cast(double) floatBoundaryRoundTrip.northing
+                - cast(double) floatBoundaryProjected.northing);
+
+    assert(floatBoundaryResidual <= 2.0);
 
     // Projection-specific flattening bound.
     const tooFlat = Ellipsoid!double.fromFlattening(6_378_137.0, 0.02);
