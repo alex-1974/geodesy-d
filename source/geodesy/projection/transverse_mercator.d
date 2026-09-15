@@ -47,8 +47,13 @@ if (isGeodesyScalar!T)
 private template seriesOrderFor(T)
 if (isGeodesyScalar!T)
 {
-    alias W = WorkingScalar!T;
-    enum int seriesOrderFor = W.mant_dig > double.mant_dig ? 8 : 6;
+    /*
+     * float keeps the sixth-order series while evaluating in double working
+     * precision.  double and real use eighth order because the documented
+     * bounded domain extends far beyond the UTM-near-central-meridian regime
+     * where sixth order is nanometre-class.
+     */
+    enum int seriesOrderFor = is(T == float) ? 6 : 8;
 }
 
 
@@ -296,8 +301,9 @@ private ComplexPair!T pairWithRealAdded(T)(
  * ellipsoids with `0 <= f <= 0.01`. Non-polar forward inputs are restricted to
  * `abs(delta longitude) <= 60 degrees`.
  *
- * `float` uses `double` working precision. `double` uses sixth-order Krueger
- * series. A `real` wider than `double` uses eighth order.
+ * `float` uses `double` working precision with sixth-order Krueger series.
+ * `double` and `real` use eighth-order series to support the bounded
+ * wide-domain accuracy contract.
  */
 struct TransverseMercator(T)
 if (isGeodesyScalar!T)
@@ -735,6 +741,69 @@ private:
     }
 
 
+
+    W longitudeDomainSlack() const
+        pure nothrow @safe @nogc
+    {
+        const W maxDelta = maxLongitudeDifference!W;
+
+        /*
+         * Baseline representational slack: enough for independently rounded
+         * public scalar longitudes to land on the nominal boundary without
+         * materially widening it.
+         */
+        W slack =
+            cast(W) 2 * cast(W) T.epsilon
+                * (maxDelta > cast(W) 1 ? maxDelta : cast(W) 1);
+
+        /*
+         * Inside the ordinary terrestrial validation profile, the public
+         * accuracy contract gives a stronger and more meaningful numerical
+         * indistinguishability scale than raw machine epsilon.
+         *
+         * A recovered longitude that exceeds +/-60 degrees by less than the
+         * corresponding projected-position error budget is classified as the
+         * boundary itself and clamped there. This is needed because the
+         * finite forward/reverse series are not bitwise inverse operations,
+         * especially at the validated f=0.01 stress boundary.
+         *
+         * Outside this profile there is deliberately no fixed metre accuracy
+         * promise, so only the representational slack above is used.
+         */
+        const W a = cast(W) _ellipsoid.semiMajorAxis;
+        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
+        const W falseEasting = cast(W) _falseEasting;
+        const W falseNorthing = cast(W) _falseNorthing;
+
+        const bool ordinaryTerrestrialProfile =
+            a >= cast(W) 6_000_000
+            && a <= cast(W) 7_000_000
+            && k0 >= cast(W) 0.9
+            && k0 <= cast(W) 1.1
+            && fabs(falseEasting) <= cast(W) 2 * a
+            && fabs(falseNorthing) <= cast(W) 2 * a;
+
+        if (ordinaryTerrestrialProfile)
+        {
+            static if (is(T == float))
+                enum W linearBudget = cast(W) 2.0;
+            else
+                enum W linearBudget = cast(W) 0.001;
+
+            const W naturalScale = _a1 * k0;
+
+            if (naturalScale > cast(W) 0 && isFiniteScalar(naturalScale))
+            {
+                const W contractSlack = linearBudget / naturalScale;
+                if (contractSlack > slack)
+                    slack = contractSlack;
+            }
+        }
+
+        return slack;
+    }
+
+
 public:
     /** True when the prepared operation contains valid supported parameters. */
     @property bool isValid() const pure nothrow @safe @nogc
@@ -920,9 +989,7 @@ public:
                 cast(W) _longitudeOfNaturalOrigin.radians);
 
             const W maxDelta = maxLongitudeDifference!W;
-            const W domainSlack =
-                cast(W) 64 * cast(W) T.epsilon
-                    * (maxDelta > cast(W) 1 ? maxDelta : cast(W) 1);
+            const W domainSlack = longitudeDomainSlack();
 
             if (fabs(deltaLongitude) > maxDelta + domainSlack)
                 return false;
@@ -1027,9 +1094,7 @@ public:
         else
         {
             const W maxDelta = maxLongitudeDifference!W;
-            const W domainSlack =
-                cast(W) 64 * cast(W) T.epsilon
-                    * (maxDelta > cast(W) 1 ? maxDelta : cast(W) 1);
+            const W domainSlack = longitudeDomainSlack();
 
             if (fabs(deltaLongitude) > maxDelta + domainSlack)
                 return false;
@@ -1082,11 +1147,8 @@ unittest
     static assert(is(TransverseMercator!real));
 
     static assert(seriesOrderFor!float == 6);
-    static assert(seriesOrderFor!double == 6);
-    static if (real.mant_dig > double.mant_dig)
-        static assert(seriesOrderFor!real == 8);
-    else
-        static assert(seriesOrderFor!real == 6);
+    static assert(seriesOrderFor!double == 8);
+    static assert(seriesOrderFor!real == 8);
 
     const invalid = TransverseMercator!double.init;
     assert(!invalid.isValid);
@@ -1260,6 +1322,42 @@ unittest
         assert(fabs(actualGeographic.longitude.degrees
             - refCase.longitudeDegrees) < 1e-10);
     }
+
+    /*
+     * Regression: at the validated f=0.01 / +/-60 degree stress boundary,
+     * the finite reverse series can recover a longitude a few micrometres
+     * ground-equivalent outside the nominal sheet. That must classify as the
+     * boundary rather than fail.
+     *
+     * The projected coordinate below is independently produced by PROJ 9.7.1
+     * (`poder_engsager`) for lat=-45 deg, lon=-45 deg with:
+     *   a=6378137, f=0.01, lat0=49, lon0=15,
+     *   k0=0.9996, FE=500000, FN=0.
+     */
+    const boundaryEllipsoid =
+        Ellipsoid!double.fromFlattening(6_378_137.0, 0.01);
+
+    const boundaryProjection =
+        TransverseMercator!double.fromParameters(
+            boundaryEllipsoid,
+            Latitude!double.fromDegrees(49.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+
+    const boundaryProjected =
+        ProjectedCoordinate!double.fromComponents(
+            -4_064_935.6141685639,
+            -12_378_431.863114327);
+
+    GeographicCoordinate!double boundaryRecovered;
+    assert(boundaryProjection.tryReverse(
+        boundaryProjected,
+        boundaryRecovered));
+
+    assert(fabs(boundaryRecovered.latitude.degrees + 45.0) < 1e-9);
+    assert(fabs(boundaryRecovered.longitude.degrees + 45.0) < 1e-9);
 
     // Projection-specific flattening bound.
     const tooFlat = Ellipsoid!double.fromFlattening(6_378_137.0, 0.02);

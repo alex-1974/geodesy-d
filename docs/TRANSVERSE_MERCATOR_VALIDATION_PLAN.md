@@ -1,6 +1,6 @@
 # Transverse Mercator validation plan
 
-- Status: Pre-implementation validation specification
+- Status: Active validation specification
 - Date: 2026-09-14
 - Applies to: ADR-0006
 - Intended implementation: generic EPSG 9807 Transverse Mercator
@@ -221,6 +221,10 @@ Validate final public `float` values after rounding back from the double kernel.
 
 This is the normative reference precision for the initial release.
 
+The production `double` path uses eighth-order Krüger coefficients. The
+sixth-order A/B build remains a validation tool for quantifying truncation
+behaviour, not a supported production mode.
+
 ### real
 
 Record:
@@ -233,20 +237,17 @@ compiler
 target architecture
 ~~~
 
-Verify the compile-time series-order selection:
-
-~~~text
-real.mant_dig <= double.mant_dig -> order 6
-real.mant_dig >  double.mant_dig -> order 8
-~~~
+The production `real` path uses eighth-order Krüger coefficients regardless of
+whether the platform `real` is wider than `double`.
 
 If `real` is not wider than `double`, it must behave as a separate public
 instantiation but no stronger precision claim is inferred.
 
-If `real` is wider, validate the order-8 path separately and run an A/B
-validation against an order-6 validation build. The order-8 path must not be
-accepted merely because it is theoretically higher order; it must preserve or
-improve numerical behaviour on the wider-precision target.
+If `real` is wider, validate the wider arithmetic separately. In both cases run
+an A/B comparison against an order-6 validation build when investigating series
+truncation. Order 8 is retained because structured Exact-reference validation
+demonstrated a concrete improvement at the public `f = 0.01`,
+`abs(deltaLongitude) = 60 deg` boundary.
 
 ## Parameter-semantic matrix
 
@@ -676,8 +677,24 @@ without recording how they were generated.
 
 Use explicit `tmerc` operation parameters matching EPSG 9807.
 
-Select the Poder/Engsager/high-accuracy path explicitly where the installed
-version provides algorithm selection.
+Select the Poder/Engsager path explicitly where the installed version provides
+algorithm selection.
+
+Treat PROJ as a production-compatibility and same-family differential oracle,
+not as the primary accuracy oracle for the order-8 `double`/`real` path. The
+Poder/Engsager implementation is sixth order; at the synthetic `f = 0.01`,
+`abs(deltaLongitude) = 60 deg` stress boundary its expected truncation differs
+from GeographicLib Exact and from the eighth-order `geodesy-d` result by
+centimetres.
+
+Therefore:
+
+- ordinary/reference-profile PROJ differences may retain tight compatibility
+  tolerances;
+- deliberately wide `f = 0.01` cases must be reported as same-family
+  truncation diagnostics or use a separately documented compatibility envelope;
+- a disagreement with PROJ at those stress points is not an accuracy failure
+  when the GeographicLib Exact gate passes.
 
 Record:
 
@@ -695,9 +712,9 @@ series coefficients independently.
 
 At minimum:
 
-- compare compile-time/generated coefficients against a checked canonical table
-  for order 6;
-- if order 8 is enabled for wider `real`, verify the order-8 table separately;
+- compare compile-time/generated coefficients against checked canonical tables
+  for order 6 and order 8;
+- verify that `float` selects order 6 and `double`/`real` select order 8;
 - test `n = 0` sphere limiting behaviour;
 - test small `n` continuity.
 
@@ -816,6 +833,39 @@ If `real` precision differs by platform, record validation results separately.
 The public double contract must not depend on extended intermediates that happen
 to exist on one architecture.
 
+## Current structured-reference evidence
+
+The following evidence is recorded during implementation but does not replace
+the larger mandatory corpora below.
+
+For the production candidate `double` order-8 path, DMD and LDC produced the
+same result against GeographicLib 2.7 `TransverseMercatorExact`:
+
+~~~text
+smoke/stress comparisons: 34
+smoke/stress outside 1 mm target: 0
+
+extended structured comparisons: 1168
+extended outside 1 mm target: 0
+worst absolute projected error: 0.00040720961988 m
+worst case: synthetic f = 0.01, latitude = 0 deg,
+            deltaLongitude = -60 deg, forward
+~~~
+
+The order-6 A/B build at the same stress boundary showed approximately
+26.63 mm projected-position error against the Exact reference. This evidence
+justifies order 8 for `double`/`real`.
+
+PROJ 9.7.1 smoke compatibility remains at nanometre-scale in the tested ordinary
+cases. Its sixth-order Poder/Engsager path differs from order-8 `geodesy-d` by
+about 26 mm at the synthetic stress boundary; this is treated as expected
+same-family reference truncation rather than a failure of the Exact accuracy
+gate.
+
+TM-B remains incomplete until the required large structured and pseudo-random
+corpora, scale-normalized intrinsic metric, and all other mandatory cases have
+been run.
+
 ## Acceptance gates
 
 ### Gate TM-A — semantics
@@ -870,8 +920,10 @@ ordinary-profile end-to-end error <= 1 mm
 failures = 0 inside supported domain
 ~~~
 
-For wider-than-double `real`, additionally compare the order-8 path against the
-exact reference and record the achieved maximum error.
+For `real`, additionally compare the order-8 path against the exact reference
+and record the achieved maximum error. On wider-than-double platforms, record
+whether the wider arithmetic improves the binary64 result or is limited by
+series truncation/reference precision.
 
 ### Gate TM-E — API and runtime properties
 

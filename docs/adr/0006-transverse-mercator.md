@@ -209,34 +209,32 @@ obvious from the public API.
 
 ### Series order
 
-For binary64 working precision use a sixth-order series.
+Use a sixth-order series for public `float`, evaluated in `double` working
+precision.
 
-This is the default for:
+Use an eighth-order series for public `double` and `real`.
 
-~~~text
-public float  -> double working precision -> order 6
-public double -> double working precision -> order 6
-~~~
-
-For `real`, choose the order from actual working precision rather than from the
-type name alone:
-
-~~~text
-real.mant_dig <= double.mant_dig -> order 6
-real.mant_dig >  double.mant_dig -> order 8
-~~~
-
-The working-scalar policy is therefore conceptually:
+The working-scalar policy is therefore:
 
 ~~~text
 public float  -> working double -> order 6
-public double -> working double -> order 6
-public real   -> working real   -> order selected by mant_dig
+public double -> working double -> order 8
+public real   -> working real   -> order 8
 ~~~
 
-The predicate uses mantissa precision, not `sizeof(real)`. D only guarantees
-that `real` has at least the range and precision of `double`; its actual format
-is implementation/platform dependent.
+This policy is evidence-driven rather than selected solely from machine
+precision. Differential validation against GeographicLib
+`TransverseMercatorExact` showed that sixth order is not sufficient for the
+documented worst-case operation domain: on the synthetic `f = 0.01` ellipsoid
+at `abs(deltaLongitude) = 60 deg`, sixth order produced about 26.6 mm projected
+position error near the equator. The same implementation with eighth-order
+coefficients reduced the worst observed projected-position error in the
+structured Exact corpus to about 0.407 mm.
+
+`real` therefore remains eighth order even on platforms where it has only
+binary64 precision. This keeps the public accuracy policy independent of
+platform-specific `real` representation and avoids silently weakening the
+validated series truncation bound.
 
 The series order is an implementation decision, not a caller-selectable runtime
 option in the initial API.
@@ -547,6 +545,37 @@ may only be introduced after:
 The scalar algorithm and data layout are optimized before architecture-specific
 micro-optimisation.
 
+## Validation evidence recorded during implementation
+
+The series-order decision was tested with both DMD and LDC.
+
+For `double` with eighth-order coefficients, the current structured
+GeographicLib 2.7 `TransverseMercatorExact` corpus contains 1168 forward/reverse
+projected-position comparisons over the mandatory named ellipsoids plus the
+synthetic `f = 0.01` boundary ellipsoid. It reported:
+
+~~~text
+outside 1 mm target: 0
+worst absolute projected error: 0.00040720961988 m
+worst case: synthetic f = 0.01, latitude = 0 deg,
+            deltaLongitude = -60 deg, forward
+~~~
+
+The same stress point with sixth-order coefficients was about 26.63 mm from the
+Exact reference. This is the evidence for selecting order 8 for `double` and
+`real`.
+
+PROJ 9.7.1 remains near-identical in the ordinary smoke corpus, but its
+sixth-order Poder/Engsager path differs from the eighth-order implementation by
+about 26 mm at the synthetic wide-domain stress boundary. That difference is
+expected series truncation in the reference path and is not used as an accuracy
+failure for `geodesy-d`.
+
+This evidence establishes the series-order choice. It does **not** by itself
+promote this ADR to `Accepted`; the complete validation gates still require the
+planned float, sphere, large structured/random corpora, runtime-property, and
+performance evidence.
+
 ## Alternatives considered
 
 ### Direct transcription of the EPSG series
@@ -580,11 +609,14 @@ Advantages:
 - simpler single policy;
 - lower truncation error.
 
-Rejected as the default because binary64 does not require it for the intended
-domain and extra arithmetic should not be added without a numerical benefit.
+Rejected for public `float`: its 2 m accuracy target does not justify the extra
+series terms when the kernel already evaluates in `double` working precision.
 
-Eighth order is retained for genuinely extended `real` precision where
-validation supports it.
+For `double` and `real`, however, eighth order is selected. Exact-reference
+validation demonstrated a concrete numerical benefit at the documented
+`f = 0.01`, `abs(deltaLongitude) = 60 deg` stress boundary: sixth order exceeded
+the 1 mm target by more than an order of magnitude, while eighth order remained
+below the target in the structured corpus.
 
 ### Evenden/Snyder approximate path
 
@@ -616,8 +648,13 @@ Advantages:
 
 Not selected as the specification.
 
-PROJ remains an independent reference and differential-validation target. The
-implementation should follow primary mathematical provenance rather than
+PROJ remains a production-compatibility and same-family differential target.
+Its Poder/Engsager path is sixth order, so it is not the primary accuracy oracle
+for the eighth-order `double`/`real` implementation at the deliberately wide
+stress boundary. GeographicLib `TransverseMercatorExact` is the primary
+high-accuracy oracle there.
+
+The implementation should follow primary mathematical provenance rather than
 mechanically reproduce another library's internal API or source structure.
 
 ### GeographicLib API copied directly
