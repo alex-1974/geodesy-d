@@ -1099,16 +1099,83 @@ ordinary cases. Its sixth-order Poder/Engsager path differs from order-8
 treated as expected same-family truncation rather than a failure of the Exact
 accuracy gate.
 
+### Reverse boundary/property classification
+
+The deterministic represented-coordinate reverse boundary/property sub-gate is
+complete for public `double` and `float` under both DMD and LDC.
+
+The probe exercises spherical profiles at:
+
+~~~text
+k0 = 0.9, 1.0, 1.1
+latitudes from +/-80 deg through values extremely close to the poles
+deltaLongitude boundary = +/-60 deg
+outside deltas = +/-60.000001, +/-60.001, +/-60.01,
+                 +/-60.1, +/-61, +/-65 deg
+~~~
+
+A represented outside point is not automatically required to be rejected.
+Near the poles, distinct source longitudes may be indistinguishable within the
+public projected-coordinate representation and accuracy contract.
+
+The required property is therefore:
+
+- every represented valid +/-60-degree boundary point is accepted;
+- an outside point may be accepted and clamped only when its represented
+  projected E/N distance to the returned public boundary point remains within
+  the scalar accuracy budget;
+- accepting an outside point beyond that budget is a failure.
+
+The original reverse classifier approximated this condition with
+`N(phi) * cos(phi) * dLambda`. The property probe exposed a real failure of
+that approximation for public `float` at `k0 = 1.1`: 16 outside points were
+accepted beyond the 2 m public budget under both DMD and LDC. The worst
+observed represented projected residual was approximately 2.267 m.
+
+The implementation now classifies an excursion directly in represented
+projected space by forwarding the public +/-60-degree boundary point and
+measuring the E/N residual to the supplied projected coordinate.
+
+Post-fix results under both DMD and LDC:
+
+~~~text
+double:
+  represented boundary cases: 120
+  boundary rejected: 0
+  boundary residual > 1 mm: 0
+  outside cases: 720
+  outside accepted within budget: 144
+  outside accepted beyond budget: 0
+  worst accepted outside residual: 0.000213479484405 m
+
+float:
+  represented boundary cases: 108
+  boundary rejected: 0
+  boundary residual > 2 m: 0
+  outside cases: 648
+  outside accepted within budget: 308
+  outside accepted beyond budget: 0
+  worst accepted outside residual: 1.39297150223 m
+~~~
+
+A permanent unit regression retains the former failing spherical case at
+`float`, `k0 = 1.1`, latitude 89 deg and
+`deltaLongitude = +60.001 deg`. Its represented projected distance from the
++60-degree boundary is about 2.2647 m, so reverse must reject it.
+
+After the production fix, the large structured and deterministic pseudo-random
+GeographicLib Exact and analytic-sphere corpora continued to pass with their
+previous accuracy maxima.
+
 ### Remaining work
 
-The large structured/random Exact-reference sub-gates are complete for `double`
-and `float`, and the independent spherical Transverse Mercator sub-gate is
-complete for both scalars. TM validation as a whole is not yet complete.
+The large structured/random Exact-reference sub-gates are complete for
+`double` and `float`, the independent spherical Transverse Mercator sub-gate is
+complete for both scalars, and the deterministic represented-coordinate
+reverse boundary/property sub-gate is complete.
 
-Outstanding mandatory work includes:
+TM validation as a whole is not yet complete. Outstanding mandatory work is:
 
-- remaining deterministic boundary/property cases, especially represented
-  reverse behaviour near the +/-60-degree domain boundary and high latitudes;
 - `real` validation with recorded platform/compiler precision properties;
 - remaining runtime/API gates;
 - reverse-Newton instrumentation required by this plan;
@@ -1118,6 +1185,13 @@ Outstanding mandatory work includes:
 ## Acceptance gates
 
 ### Gate TM-A — semantics
+
+Current status: **PASS**.
+
+The EPSG 9807 parameter semantics, natural origin and false offsets,
+antimeridian handling, pole canonicalization, flattening bound, nominal
++/-60-degree source domain, and represented reverse-boundary classification
+have dedicated deterministic coverage.
 
 PASS requires:
 
@@ -1132,10 +1206,13 @@ PASS requires:
 
 ### Gate TM-B — double numerical accuracy
 
-Current status: **large Exact structured/random sub-gates PASS** for the seven
-applicable oblate ellipsoids under both DMD and LDC. Full TM-B remains open until
-the separate sphere oracle and the remaining deterministic boundary requirements
-in this plan are complete.
+Current status: **PASS**.
+
+The seven applicable oblate ellipsoids pass the large GeographicLib Exact
+structured and deterministic pseudo-random corpora under DMD and LDC. The
+independent spherical oracle gate also passes, and the deterministic
+represented-coordinate reverse boundary/property gate has zero accepted
+outside points beyond the 1 mm public budget.
 
 PASS requires:
 
@@ -1152,10 +1229,14 @@ failures = 0 inside supported domain
 
 ### Gate TM-C — float numerical accuracy
 
-Current status: **large Exact structured/random sub-gates PASS** under DMD and
-LDC with zero cases outside the 2 m target. Full TM-C remains open until sphere
-and the remaining scalar-generic deterministic/runtime requirements are
-complete.
+Current status: **PASS**.
+
+The large GeographicLib Exact structured and deterministic pseudo-random
+corpora pass under DMD and LDC with zero cases outside the 2 m target. The
+independent spherical oracle gate also passes. The deterministic
+represented-coordinate reverse boundary/property gate has zero accepted
+outside points beyond the 2 m public budget, including the `k0 = 1.1` profile
+which exposed the previous classifier defect.
 
 PASS requires:
 

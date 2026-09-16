@@ -666,12 +666,50 @@ separately for affected PROJ versions instead of weakening the numerical
 tolerance. It is non-gating only when GeographicLib independently satisfies the
 strict oracle target. Other PROJ disagreements remain failures.
 
-These results establish the selected `double`, `float`, and spherical numerical
-paths. They do **not** promote this ADR to `Accepted`. Mandatory work still
-includes the remaining deterministic boundary/property checks, `real`
-validation, runtime/API properties, reverse-Newton instrumentation, the
-reproducible LDC release performance baseline, and the required additional
-platform/architecture coverage.
+The deterministic reverse-domain boundary/property gate is also complete.
+
+The initial implementation converted represented reverse excursions beyond
++/-60 degrees into an angular tolerance using
+`N(phi) * cos(phi) * dLambda`. A dedicated property probe demonstrated that
+this was not sufficient to enforce the public projected-coordinate accuracy
+contract: for `float` at `k0 = 1.1`, 16 spherical near-pole outside cases were
+accepted even though their represented projected distance from the returned
+boundary exceeded 2 m. The worst observed residual was approximately 2.267 m,
+and the result reproduced under both DMD and LDC.
+
+Reverse boundary classification now measures the represented projected E/N
+distance directly against the public +/-60-degree boundary point. The completed
+DMD/LDC property gate reports:
+
+~~~text
+double boundary cases: 120
+double boundary rejects: 0
+double outside accepted beyond 1 mm: 0
+double worst accepted outside residual: 0.000213479484405 m
+
+float boundary cases: 108
+float boundary rejects: 0
+float outside accepted beyond 2 m: 0
+float worst accepted outside residual: 1.39297150223 m
+~~~
+
+Acceptance of some outside source positions within those budgets is deliberate:
+near the poles their represented projected coordinates are numerically
+indistinguishable from the public boundary at the scalar accuracy contract.
+
+A permanent regression covers the previously failing public-float
+`k0 = 1.1`, latitude 89 deg, `deltaLongitude = +60.001 deg` case. Its
+represented projected distance from the +60-degree boundary is approximately
+2.2647 m and reverse therefore rejects it.
+
+The large Exact and spherical structured/random corpora remained unchanged and
+passing after this classifier change.
+
+These results establish the selected `double`, `float`, spherical, and bounded
+reverse-domain numerical paths. They do **not** promote this ADR to `Accepted`.
+Mandatory work still includes `real` validation, runtime/API properties,
+reverse-Newton instrumentation, the reproducible LDC release performance
+baseline, and the required additional platform/architecture coverage.
 
 ## Alternatives considered
 
