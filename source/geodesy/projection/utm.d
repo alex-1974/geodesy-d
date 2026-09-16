@@ -428,26 +428,13 @@ if (isGeodesyScalar!T)
 }
 
 
-private bool isSupportedUtmLatitude(T)(
-    const Latitude!T latitude)
-    pure nothrow @safe @nogc
-if (isGeodesyScalar!T)
-{
-    const T radians = latitude.radians;
-
-    return radians >= integralDegreesToRadians!T(-80)
-        && radians < integralDegreesToRadians!T(84);
-}
-
-
 /**
  * Prepared Universal Transverse Mercator projection for one explicit zone and
  * north/south false-northing convention.
  *
  * UTM projection mathematics is delegated entirely to
  * `TransverseMercator!T`. This type adds only the fixed UTM parameters,
- * terrestrial-metre ellipsoid policy, zone, hemisphere, and UTM latitude
- * bounds.
+ * terrestrial-metre ellipsoid policy, zone, and hemisphere.
  *
  * The selected zone does not need to be the automatic standard zone for a
  * geographic point. Explicit neighboring-zone use is therefore supported
@@ -465,6 +452,18 @@ private:
     UtmHemisphere _hemisphere = UtmHemisphere.north;
     TransverseMercator!T _transverseMercator;
 
+
+    /*
+     * Test whether a represented projected coordinate is exactly the public
+     * representation of a particular legal UTM latitude at the longitude
+     * recovered by generic Transverse Mercator reverse.
+     *
+     * This deliberately uses equality in ProjectedCoordinate<T>, not an
+     * angular or metric epsilon. If an illegal mathematical boundary point
+     * and a legal adjacent point collapse to the same public E/N pair, they
+     * are numerically indistinguishable at scalar T and the legal UTM
+     * representative wins.
+     */
 public:
     /** True when this value represents a supported prepared UTM projection. */
     @property bool isValid() const
@@ -620,22 +619,21 @@ public:
     /**
      * Project a geographic coordinate in this explicit UTM zone.
      *
-     * Geographic latitude must satisfy:
-     *
-     *     -80 degrees <= latitude < 84 degrees
-     *
+     * The standard automatic UTM latitude band is not imposed here.
      * Zone and hemisphere are not recomputed from the source coordinate.
+     * The bounded generic Transverse Mercator domain remains authoritative.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
         out ProjectedCoordinate!T result) const
         pure nothrow @safe @nogc
     {
-        if (!isValid
-            || !isSupportedUtmLatitude(source.latitude))
+        if (!isValid)
             return false;
 
-        return _transverseMercator.tryForward(source, result);
+        return _transverseMercator.tryForward(
+            source,
+            result);
     }
 
     /** Throwing convenience wrapper for `tryForward`. */
@@ -648,23 +646,20 @@ public:
         if (!tryForward(source, result))
         {
             throw new GeodesyValueException(
-                "UTM forward projection failed, the source lies outside "
-                ~ "[-80, 84) degrees latitude, or outside the bounded "
-                ~ "Transverse Mercator longitude domain.");
+                "UTM forward projection failed because the prepared "
+                ~ "projection is invalid or the source lies outside the "
+                ~ "bounded Transverse Mercator domain.");
         }
 
         return result;
     }
 
     /**
-     * Reverse an explicitly zoned UTM projected coordinate.
+     * Reverse a coordinate in this explicit UTM zone.
      *
-     * Results outside:
-     *
-     *     -80 degrees <= latitude < 84 degrees
-     *
-     * are rejected even if the underlying generic Transverse Mercator can
-     * mathematically produce them.
+     * The standard automatic UTM latitude band is not imposed here. The
+     * explicit zone and hemisphere define a fixed Transverse Mercator
+     * projection, subject to the bounded generic projection domain.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
@@ -674,18 +669,9 @@ public:
         if (!isValid)
             return false;
 
-        GeographicCoordinate!T candidate;
-
-        if (!_transverseMercator.tryReverse(
-                source,
-                candidate))
-            return false;
-
-        if (!isSupportedUtmLatitude(candidate.latitude))
-            return false;
-
-        result = candidate;
-        return true;
+        return _transverseMercator.tryReverse(
+            source,
+            result);
     }
 
     /** Throwing convenience wrapper for `tryReverse`. */
@@ -698,13 +684,150 @@ public:
         if (!tryReverse(source, result))
         {
             throw new GeodesyValueException(
-                "UTM reverse projection failed, belongs outside "
-                ~ "[-80, 84) degrees latitude, or lies outside the "
-                ~ "bounded Transverse Mercator domain.");
+                "UTM reverse projection failed because the prepared "
+                ~ "projection is invalid or the coordinate lies outside "
+                ~ "the bounded Transverse Mercator domain.");
         }
 
         return result;
     }
+}
+
+
+/**
+ * Project a geographic coordinate using the standard automatic UTM zone and
+ * hemisphere policy.
+ *
+ * This convenience operation prepares the selected zone for this call. Bulk
+ * callers processing points in a known zone should reuse `UtmProjection!T`
+ * instead.
+ */
+bool tryForwardUtm(T)(
+    const Ellipsoid!T ellipsoid,
+    const GeographicCoordinate!T source,
+    out UtmCoordinate!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    UtmZone zone;
+    UtmHemisphere hemisphere;
+
+    if (!tryStandardUtmZone(
+            source,
+            zone,
+            hemisphere))
+        return false;
+
+    UtmProjection!T projection;
+
+    if (!UtmProjection!T.tryFromZone(
+            ellipsoid,
+            zone,
+            hemisphere,
+            projection))
+        return false;
+
+    ProjectedCoordinate!T projected;
+
+    if (!projection.tryForward(
+            source,
+            projected))
+        return false;
+
+    UtmCoordinate!T candidate;
+
+    if (!UtmCoordinate!T.tryFromComponents(
+            zone,
+            hemisphere,
+            projected.easting,
+            projected.northing,
+            candidate))
+        return false;
+
+    result = candidate;
+    return true;
+}
+
+
+/** Throwing convenience wrapper for `tryForwardUtm`. */
+UtmCoordinate!T forwardUtm(T)(
+    const Ellipsoid!T ellipsoid,
+    const GeographicCoordinate!T source)
+    @safe
+if (isGeodesyScalar!T)
+{
+    UtmCoordinate!T result;
+
+    if (!tryForwardUtm(
+            ellipsoid,
+            source,
+            result))
+    {
+        throw new GeodesyValueException(
+            "Automatic UTM forward projection failed because the ellipsoid "
+            ~ "or geographic coordinate is outside the supported UTM policy.");
+    }
+
+    return result;
+}
+
+
+/**
+ * Reverse a tagged UTM coordinate using its explicit zone and hemisphere.
+ *
+ * The result is not automatically reassigned to another zone or hemisphere.
+ */
+bool tryReverseUtm(T)(
+    const Ellipsoid!T ellipsoid,
+    const UtmCoordinate!T source,
+    out GeographicCoordinate!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    if (!source.isValid)
+        return false;
+
+    UtmProjection!T projection;
+
+    if (!UtmProjection!T.tryFromZone(
+            ellipsoid,
+            source.zone,
+            source.hemisphere,
+            projection))
+        return false;
+
+    GeographicCoordinate!T candidate;
+
+    if (!projection.tryReverse(
+            source.projected,
+            candidate))
+        return false;
+
+    result = candidate;
+    return true;
+}
+
+
+/** Throwing convenience wrapper for `tryReverseUtm`. */
+GeographicCoordinate!T reverseUtm(T)(
+    const Ellipsoid!T ellipsoid,
+    const UtmCoordinate!T source)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeographicCoordinate!T result;
+
+    if (!tryReverseUtm(
+            ellipsoid,
+            source,
+            result))
+    {
+        throw new GeodesyValueException(
+            "UTM reverse projection failed because the ellipsoid, tagged "
+            ~ "coordinate, or bounded TM domain is invalid.");
+    }
+
+    return result;
 }
 
 unittest
@@ -830,13 +953,29 @@ unittest
     assert(southOrigin.easting == 500_000.0);
     assert(southOrigin.northing == 10_000_000.0);
 
-    ProjectedCoordinate!double rejected;
+    /*
+     * The standard automatic UTM band ends at 84 degrees, but an explicitly
+     * prepared zone remains the corresponding fixed Transverse Mercator
+     * projection.
+     */
+    ProjectedCoordinate!double projected84;
 
-    const upperOutside = GeographicCoordinate!double.fromComponents(
+    const explicit84 = GeographicCoordinate!double.fromComponents(
         Latitude!double.fromDegrees(84.0),
         Longitude!double.fromDegrees(15.0));
 
-    assert(!north.tryForward(upperOutside, rejected));
+    assert(north.tryForward(explicit84, projected84));
+
+    GeographicCoordinate!double reversed84;
+    assert(north.tryReverse(projected84, reversed84));
+
+    assert(fabs(
+        reversed84.latitude.radians
+        - explicit84.latitude.radians) < 1e-12);
+
+    assert(fabs(
+        reversed84.longitude.radians
+        - explicit84.longitude.radians) < 1e-12);
 
     UtmProjection!double invalid;
 
