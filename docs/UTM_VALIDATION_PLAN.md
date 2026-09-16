@@ -988,14 +988,22 @@ latitudes around:
 +84 degrees
 ~~~
 
-The UTM layer must reject reverse results outside:
+For tagged or explicitly prepared UTM reverse operations, the standard
+automatic latitude band is not reapplied.
 
-~~~text
-[-80, 84)
-~~~
+`UtmProjection!T.tryReverse()` and `tryReverseUtm()` use the explicitly stored
+zone and hemisphere and delegate to the corresponding bounded generic
+Transverse Mercator operation.
 
-even if the underlying generic Transverse Mercator can mathematically return
-them.
+The reverse operation must not:
+
+- recompute the automatic standard zone;
+- switch hemisphere from the recovered latitude;
+- reject a result merely because its latitude lies outside `[-80, 84)`.
+
+The `[-80, 84)` interval remains a requirement of automatic standard-zone
+selection and automatic forward projection only.
+
 
 #### Preserve explicitly selected zone
 
@@ -1405,3 +1413,68 @@ Those claims require separate design and validation.
 External implementations are evidence sources.
 
 They are not copied as the implementation specification for `geodesy-d`.
+
+## UTM-E result — API/runtime contract
+
+UTM-E validates the checked UTM operational surface and runtime semantics.
+
+The following checked operations are exercised from a caller declared:
+
+~~~d
+pure nothrow @safe @nogc
+~~~
+
+Covered operations include:
+
+- checked `UtmZone` construction and properties;
+- `tryStandardUtmZone`;
+- checked `UtmProjection!T` construction and properties;
+- prepared `tryForward` and `tryReverse`;
+- checked `UtmCoordinate!T` construction and properties;
+- automatic `tryForwardUtm`;
+- tagged `tryReverseUtm`.
+
+Throwing convenience wrappers are validated separately for `@safe`
+compilation and correct exception behavior.
+
+Runtime validation also covers:
+
+- default-invalid zone, projection, and tagged-coordinate values;
+- invalid zone numbers;
+- UTM ellipsoid-policy rejection;
+- automatic rejection at the open `84 degree` standard-UTM boundary;
+- explicit prepared projection acceptance at `84 degrees`;
+- inherited bounded Transverse Mercator domain rejection;
+- throwing failure semantics;
+- exact represented determinism.
+
+Determinism was tested with 100,000 repetitions for each public scalar type
+for both the prepared path and automatic/tagged path.
+
+Local results:
+
+~~~text
+DMD:
+  float   PASS
+  double  PASS
+  real    PASS
+
+LDC:
+  float   PASS
+  double  PASS
+  real    PASS
+~~~
+
+Each scalar completed:
+
+~~~text
+100000 prepared + automatic deterministic repetitions
+~~~
+
+with exact repeated public-scalar outputs.
+
+Result:
+
+~~~text
+UTM-E PASS
+~~~

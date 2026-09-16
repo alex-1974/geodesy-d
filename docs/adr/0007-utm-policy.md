@@ -161,9 +161,9 @@ latitude <  0 -> south
 
 Thus latitude zero is assigned to the northern hemisphere.
 
-An explicitly prepared UTM projection may deliberately use either hemisphere
-for a point in the UTM latitude region. This permits controlled cross-equator
-and externally specified coordinate-system usage.
+An explicitly prepared UTM projection may deliberately use either hemisphere.
+This permits controlled cross-equator and externally specified
+coordinate-system usage without applying automatic hemisphere policy.
 
 The hemisphere therefore selects the coordinate convention; it is not by
 itself proof that the geographic latitude has the same sign.
@@ -342,27 +342,37 @@ There is no implicit fallback to UPS.
 
 ### Explicit UTM projection
 
-An explicitly constructed `UtmProjection!T` also restricts accepted geographic
-results to:
+An explicitly constructed `UtmProjection!T` represents one fixed UTM
+Transverse Mercator parameterization selected by the caller.
+
+The standard automatic UTM latitude interval:
 
 ~~~text
 -80 degrees <= latitude < 84 degrees
 ~~~
 
-However, it does not require:
+does **not** constrain this prepared explicit projection. That interval belongs
+to automatic standard UTM/UPS selection.
+
+An explicit projection therefore does not require:
 
 - the selected zone to be the standard automatic zone for the point;
-- the selected hemisphere to match the sign of the latitude.
+- the selected hemisphere to match the sign of the latitude;
+- the geographic latitude to lie inside the automatic standard UTM band.
 
-This permits neighboring-zone use and explicitly selected coordinate systems
-without allowing silent use of UTM in the polar regions.
+This supports neighboring-zone use, explicit hemisphere conventions and
+externally specified projected coordinate systems without silently recomputing
+policy from each point.
 
-The existing bounded Transverse Mercator longitude-domain contract still
-applies.
+The existing bounded `TransverseMercator!T` domain remains authoritative.
+In particular, an explicitly selected zone that places a source farther than
+the supported Transverse Mercator longitude distance from its central meridian
+may fail.
 
-In particular, an explicitly selected zone that places a source more than the
-supported Transverse Mercator longitude distance from its central meridian may
-fail.
+This separation follows the reference-model distinction between standard zone
+selection and an explicitly selected UTM zone: the former applies the
+`[-80, 84)` automatic UTM band, while the latter is a fixed Transverse
+Mercator operation.
 
 ## Longitude canonicalization
 
@@ -542,7 +552,6 @@ Expected invalid cases return `false`, including:
 - spherical ellipsoid;
 - ellipsoid outside the UTM metre/Earth-size profile;
 - automatic source outside the standard UTM latitude region;
-- explicit forward/reverse result outside the bounded UTM latitude region;
 - underlying bounded Transverse Mercator rejection.
 
 Throwing convenience APIs use the existing `GeodesyValueException`.
