@@ -298,6 +298,107 @@ private bool geodeticTau(T)(
 }
 
 
+version (GeodesyTmNewtonValidation)
+{
+    struct TransverseMercatorNewtonTrace
+    {
+        int iterations;
+        real convergenceResidual = real.nan;
+        real maximumCorrection = 0.0L;
+        real tauPrime = real.nan;
+        bool converged;
+        bool newtonApplicable;
+    }
+
+    private bool geodeticTauInstrumented(T)(
+        const T tauPrime,
+        const T eccentricity,
+        out T tau,
+        out TransverseMercatorNewtonTrace trace)
+        pure nothrow @safe @nogc
+    {
+        enum int maxIterations = 5;
+
+        trace = TransverseMercatorNewtonTrace.init;
+        trace.newtonApplicable = true;
+        trace.tauPrime = cast(real) tauPrime;
+
+        const T epsilon = T.epsilon;
+        const T e2m = cast(T) 1 - eccentricity * eccentricity;
+        const T tolerance = sqrt(epsilon) / cast(T) 10;
+        const T tauMax = cast(T) 2 / sqrt(epsilon);
+
+        if (!(e2m > cast(T) 0))
+            return false;
+
+        tau = fabs(tauPrime) > cast(T) 70
+            ? tauPrime * exp(eccentricityTerm(cast(T) 1, eccentricity))
+            : tauPrime / e2m;
+
+        if (!isFiniteScalar(tau))
+            return false;
+
+        const T scaledTolerance =
+            tolerance * (fabs(tauPrime) > cast(T) 1
+                ? fabs(tauPrime)
+                : cast(T) 1);
+
+        if (!(fabs(tau) < tauMax))
+        {
+            trace.convergenceResidual =
+                cast(real) fabs(
+                    tauPrime - conformalTau(tau, eccentricity));
+            trace.converged = true;
+            return true;
+        }
+
+        foreach (_; 0 .. maxIterations)
+        {
+            const T tauPrimeApprox = conformalTau(tau, eccentricity);
+            const T denominator =
+                e2m * hypot2(cast(T) 1, tau)
+                    * hypot2(cast(T) 1, tauPrimeApprox);
+
+            if (!(denominator > cast(T) 0)
+                || !isFiniteScalar(denominator))
+                return false;
+
+            const T deltaTau =
+                (tauPrime - tauPrimeApprox)
+                * (cast(T) 1 + e2m * tau * tau)
+                / denominator;
+
+            if (!isFiniteScalar(deltaTau))
+                return false;
+
+            const real correction = cast(real) fabs(deltaTau);
+            if (correction > trace.maximumCorrection)
+                trace.maximumCorrection = correction;
+
+            tau += deltaTau;
+            ++trace.iterations;
+
+            if (!isFiniteScalar(tau))
+                return false;
+
+            if (!(fabs(deltaTau) >= scaledTolerance))
+            {
+                trace.convergenceResidual =
+                    cast(real) fabs(
+                        tauPrime - conformalTau(tau, eccentricity));
+                trace.converged = true;
+                return true;
+            }
+        }
+
+        trace.convergenceResidual =
+            cast(real) fabs(
+                tauPrime - conformalTau(tau, eccentricity));
+        return false;
+    }
+}
+
+
 private struct ComplexPair(T)
 {
     T re = 0;
@@ -780,6 +881,122 @@ private:
             && isFiniteScalar(deltaLongitude);
     }
 
+
+
+    version (GeodesyTmNewtonValidation)
+    {
+    public:
+        bool tryReverseNewtonTrace(
+            const ProjectedCoordinate!T source,
+            out GeographicCoordinate!T result,
+            out TransverseMercatorNewtonTrace trace) const
+            pure nothrow @safe @nogc
+        {
+            trace = TransverseMercatorNewtonTrace.init;
+
+            if (!tryReverse(source, result))
+                return false;
+
+            const W scale =
+                _a1 * cast(W) _scaleFactorAtNaturalOrigin;
+
+            if (!(scale > cast(W) 0) || !isFiniteScalar(scale))
+                return false;
+
+            W eta =
+                (cast(W) source.easting - cast(W) _falseEasting) / scale;
+            W xi =
+                (cast(W) source.northing - cast(W) _falseNorthing) / scale
+                    + _originXi;
+
+            if (!isFiniteScalar(xi) || !isFiniteScalar(eta))
+                return false;
+
+            const int poleSign =
+                representedPoleSign(source, scale);
+
+            if (poleSign != 0)
+            {
+                trace.newtonApplicable = false;
+                return true;
+            }
+
+            W latitude;
+            W deltaLongitude;
+            return reverseKernelNewtonTrace(
+                xi,
+                eta,
+                latitude,
+                deltaLongitude,
+                trace);
+        }
+
+    private:
+        bool reverseKernelNewtonTrace(
+            const W xi,
+            const W eta,
+            out W latitude,
+            out W deltaLongitude,
+            out TransverseMercatorNewtonTrace trace) const
+            pure nothrow @safe @nogc
+        {
+            trace = TransverseMercatorNewtonTrace.init;
+
+            const W poleTolerance =
+                cast(W) 64 * W.epsilon
+                    * (fabs(xi) > cast(W) 1 ? fabs(xi) : cast(W) 1);
+
+            if (eta == cast(W) 0
+                && fabs(fabs(xi) - halfPi!W) <= poleTolerance)
+            {
+                trace.newtonApplicable = false;
+                latitude = xi < cast(W) 0 ? -halfPi!W : halfPi!W;
+                deltaLongitude = cast(W) 0;
+                return true;
+            }
+
+            W xiPrime;
+            W etaPrime;
+            if (!applyReverseSeries(xi, eta, xiPrime, etaPrime))
+                return false;
+
+            const W sinhEtaPrime = sinh(etaPrime);
+            W cosXiPrime = cos(xiPrime);
+
+            if (!isFiniteScalar(sinhEtaPrime)
+                || !isFiniteScalar(cosXiPrime))
+                return false;
+
+            if (cosXiPrime < cast(W) 0)
+                cosXiPrime = cast(W) 0;
+
+            const W r = hypot2(sinhEtaPrime, cosXiPrime);
+
+            if (r == cast(W) 0)
+            {
+                trace.newtonApplicable = false;
+                latitude = xiPrime < cast(W) 0 ? -halfPi!W : halfPi!W;
+                deltaLongitude = cast(W) 0;
+                return true;
+            }
+
+            deltaLongitude = atan2(sinhEtaPrime, cosXiPrime);
+
+            const W tauPrime = sin(xiPrime) / r;
+            W tau;
+            if (!geodeticTauInstrumented(
+                    tauPrime,
+                    _eccentricity,
+                    tau,
+                    trace))
+                return false;
+
+            latitude = atan(tau);
+
+            return isFiniteScalar(latitude)
+                && isFiniteScalar(deltaLongitude);
+        }
+    }
 
 
     W workingLatitudeRadians(const Latitude!T latitude) const
