@@ -781,8 +781,13 @@ five. Failure count was zero for `float`, `double`, and `real`. The sphere path
 was separately verified and requires exactly one zero-correction iteration for
 every Newton-applicable point.
 
-Mandatory work still includes the reproducible LDC release performance
-baseline and the required additional platform/architecture coverage.
+The reproducible LDC release performance baseline is also complete on the
+controlled x86_64 Linux reference platform. A second controlled run reproduced
+all recorded medians within 1.40 %, below the predeclared 3 % limit, while the
+benchmark numerical preflight showed no correctness regression.
+
+The remaining mandatory work before this ADR can be promoted to `Accepted` is
+the required additional platform/architecture coverage.
 
 ## Alternatives considered
 

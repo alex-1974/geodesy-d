@@ -1283,7 +1283,6 @@ properties, and the wider-than-double `real` precision-preservation check.
 
 TM validation as a whole is not yet complete. Outstanding mandatory work is:
 
-- reproducible LDC release performance baseline;
 - required additional platform/architecture coverage before stable release.
 
 ## Acceptance gates
@@ -1552,6 +1551,38 @@ This gate records evidence; it is not a requirement to beat every reference.
 
 PASS requires a reproducible LDC release benchmark with no correctness
 regression.
+
+Current status: **PASS on the controlled x86_64 Linux LDC reference platform**.
+
+The controlled baseline uses LDC 1.41.0 / D frontend 2.111.0 / LLVM 19.1.7,
+logical CPU 5 pinned at 2.6 GHz, `performance` governor, Turbo disabled,
+16384 points per corpus, and 21 timed rounds.
+
+The benchmark covers forward and reverse operation separately for:
+
+~~~text
+UTM-like
+ordinary TM
+wide TM
+~~~
+
+and measures native `float`, `double`, and `real` API paths.
+
+The binary64 same-process comparison includes:
+
+~~~text
+geodesy-d
+GeographicLib series
+GeographicLib exact
+PROJ tmerc +algo=poder_engsager
+~~~
+
+A second controlled run reproduced every recorded median within 1.40 %; the
+predeclared reproducibility limit was 3 %. The benchmark numerical preflight
+also completed without correctness regression.
+
+Detailed measurements and environment metadata are recorded in
+`docs/PERFORMANCE.md`.
 
 ## Performance benchmark design
 
