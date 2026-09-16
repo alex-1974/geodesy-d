@@ -314,6 +314,213 @@ The primary performance conclusion is the relative same-process comparison,
 not the absolute nanosecond value.
 
 
+## Transverse Mercator performance baseline
+
+The generic Transverse Mercator implementation was benchmarked after completion
+of the mandatory numerical, boundary, scalar, API/runtime, and reverse-Newton
+validation gates.
+
+The benchmark implementation is in:
+
+~~~text
+benchmarks/tm-reference/
+tools/benchmark-tm.sh
+~~~
+
+It measures bulk throughput through the public projection API. Reported
+`ns/op` values are amortized bulk-throughput measurements, not isolated
+single-operation dependency-chain latency.
+
+### Controlled environment
+
+The controlled reference run used:
+
+~~~text
+date:               2026-09-16
+geodesy-d commit:   53e133a439491bd3e3d7439e5357d51131b33303
+CPU:                Intel Core i7-9750H
+logical CPU:        5
+SMT sibling:        logical CPU 11, offline
+compiler:           LDC 1.41.0
+D frontend:         2.111.0
+LLVM:               19.1.7
+C++ compiler:       GCC 15.2.0
+PROJ:               9.7.1
+GeographicLib:      2.7
+D build:            release, -O3, -mcpu=native
+C++ build:          -O3 -DNDEBUG -march=native -std=c++17
+intel_pstate:       active
+governor:           performance
+minimum frequency:  2.6 GHz
+maximum frequency:  2.6 GHz
+Turbo:              disabled
+samples/corpus:     16384
+timed rounds:       21
+~~~
+
+CPU 5 was chosen because its SMT sibling, logical CPU 11, was offline. This
+avoids simultaneous sibling-thread execution on the benchmarked physical core.
+
+The CPU frequency was fixed at 2.6 GHz for the controlled measurement and the
+previous CPU-frequency state was restored after the benchmark.
+
+### Corpora
+
+Three deterministic corpora were measured:
+
+~~~text
+UTM-like:     abs(delta longitude) <= 3 degrees
+ordinary TM:  abs(delta longitude) <= 35 degrees
+wide TM:      35 <= abs(delta longitude) <= 60 degrees
+~~~
+
+The benchmark projection was WGS 84 with:
+
+~~~text
+latitude of natural origin:   0 degrees
+longitude of natural origin: 15 degrees
+scale factor:                 0.9996
+false easting:                500000 m
+false northing:               0 m
+~~~
+
+Input construction and reverse-fixture generation occurred before timed
+sections.
+
+### Native geodesy-d throughput
+
+Controlled-run medians were:
+
+~~~text
+scalar   corpus       forward ns/op   reverse ns/op
+
+float    UTM-like          405.988        626.843
+float    ordinary          429.553        645.959
+float    wide              445.630        662.488
+
+double   UTM-like          414.105        641.479
+double   ordinary          436.700        658.618
+double   wide              453.107        675.439
+
+real     UTM-like         1045.038       1437.952
+real     ordinary         1084.998       1457.428
+real     wide             1206.018       1509.851
+~~~
+
+`double` remains the normative performance scalar. The `float` and `real`
+measurements characterize the public scalar-specific API paths.
+
+### Same-process binary64 reference comparison
+
+The binary64 comparison used the same prepared coordinates and measured:
+
+- geodesy-d `double`;
+- GeographicLib 2.7 `TransverseMercator`;
+- GeographicLib 2.7 `TransverseMercatorExact`;
+- PROJ 9.7.1 `tmerc` with `+algo=poder_engsager`.
+
+The controlled-run medians were:
+
+~~~text
+UTM-like forward:
+    geodesy-d              413.849 ns/op
+    GeographicLib Series   558.875 ns/op   1.350x geodesy-d
+    GeographicLib Exact   4109.821 ns/op   9.931x geodesy-d
+    PROJ                   257.251 ns/op   0.622x geodesy-d
+
+UTM-like reverse:
+    geodesy-d              640.778 ns/op
+    GeographicLib Series   702.197 ns/op   1.096x geodesy-d
+    GeographicLib Exact   3602.722 ns/op   5.622x geodesy-d
+    PROJ                   301.300 ns/op   0.470x geodesy-d
+
+ordinary forward:
+    geodesy-d              436.707 ns/op
+    GeographicLib Series   593.372 ns/op   1.359x geodesy-d
+    GeographicLib Exact   4552.808 ns/op  10.425x geodesy-d
+    PROJ                   274.615 ns/op   0.629x geodesy-d
+
+ordinary reverse:
+    geodesy-d              657.837 ns/op
+    GeographicLib Series   716.095 ns/op   1.089x geodesy-d
+    GeographicLib Exact   4181.439 ns/op   6.356x geodesy-d
+    PROJ                   316.309 ns/op   0.481x geodesy-d
+
+wide forward:
+    geodesy-d              452.966 ns/op
+    GeographicLib Series   622.223 ns/op   1.374x geodesy-d
+    GeographicLib Exact   4811.298 ns/op  10.622x geodesy-d
+    PROJ                   284.985 ns/op   0.629x geodesy-d
+
+wide reverse:
+    geodesy-d              674.213 ns/op
+    GeographicLib Series   742.279 ns/op   1.101x geodesy-d
+    GeographicLib Exact   4701.941 ns/op   6.974x geodesy-d
+    PROJ                   319.690 ns/op   0.474x geodesy-d
+~~~
+
+These ratios compare public in-process hot paths. They are performance evidence,
+not an API or numerical-quality ranking.
+
+### Numerical preflight
+
+Before timing, the reference harness compares all implementations on the
+prepared benchmark coordinates.
+
+For geodesy-d versus GeographicLib Exact, maximum observed errors in the
+controlled run were:
+
+~~~text
+corpus       forward projected error   reverse ground error
+
+UTM-like          9.31322575e-09 m        7.08935191e-09 m
+ordinary          7.46511833e-09 m        7.19805980e-09 m
+wide              2.04467200e-08 m        6.56011237e-09 m
+~~~
+
+The preflight is only a benchmark sanity check. The normative numerical
+accuracy evidence remains the dedicated Transverse Mercator validation suite.
+
+### Reproducibility
+
+A second independently timed run was executed under the same controlled
+CPU/compiler/frequency configuration.
+
+Across all native scalar/corpus/direction medians and all same-process
+reference medians, the largest absolute run-to-run median difference was:
+
+~~~text
+1.40 %
+~~~
+
+The worst case was:
+
+~~~text
+native double ordinary reverse
+run 1: 658.618 ns/op
+run 2: 667.828 ns/op
+delta: +1.40 %
+~~~
+
+All measured median differences were below the predeclared 3 % reproducibility
+threshold.
+
+The geodesy-d medians inside the same-process binary64 reference comparison
+were especially stable:
+
+~~~text
+UTM-like forward:   +0.18 %
+UTM-like reverse:   +0.18 %
+ordinary forward:   +0.06 %
+ordinary reverse:   +0.28 %
+wide forward:       -0.03 %
+wide reverse:       +0.20 %
+~~~
+
+Together with the tightly clustered within-run quartiles in the controlled
+measurement, this establishes the reproducible LDC release performance
+baseline required by Gate TM-F.
+
 ## CI
 
 Normal CI should verify that benchmark code still builds.

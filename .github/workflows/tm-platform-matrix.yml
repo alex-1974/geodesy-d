@@ -1,0 +1,248 @@
+name: Transverse Mercator platform matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - "source/geodesy/**"
+      - "validation/**"
+      - "tools/validate-tm-*.sh"
+      - "dub.sdl"
+      - ".github/workflows/tm-platform-matrix.yml"
+
+  pull_request:
+    paths:
+      - "source/geodesy/**"
+      - "validation/**"
+      - "tools/validate-tm-*.sh"
+      - "dub.sdl"
+      - ".github/workflows/tm-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  # setup-dlang@v2 is currently still a Node-20-declared action.
+  # GitHub hosted runners are moving/forcing JavaScript actions to Node 24.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  tm-platform:
+    name: ${{ matrix.name }}
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            dc: dmd
+            experimental: false
+
+          # LDC 1.41 introduced the young Windows/AArch64 path.
+          # Keep this informational until it has demonstrated stable CI use.
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+          uname -a || true
+
+          "${{ matrix.dc }}" --version
+          dub --version
+
+      - name: Platform fingerprint
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -run validation/platform_fingerprint.d \
+            | tee platform-fingerprint.txt
+
+      - name: Library unit tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          dub test \
+            --compiler="${{ matrix.dc }}"
+
+      - name: TM API/runtime contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_api_runtime_validation.d
+
+      - name: TM represented-boundary property
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_boundary_property.d
+
+      - name: TM analytic sphere — double
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_sphere_crosscheck.d \
+            --structured
+
+      - name: TM analytic sphere — float
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_sphere_crosscheck.d \
+            --float-structured
+
+      - name: TM real platform characterization
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          mkdir -p .ci-work/real
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_real_validation.d \
+            --work-dir .ci-work/real \
+            --platform
+
+      - name: TM real precision preservation
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          if grep -q '^real_wider_than_double=true$' \
+              platform-fingerprint.txt; then
+
+            mkdir -p .ci-work/real-precision
+
+            "${{ matrix.dc }}" \
+              -i \
+              -Isource \
+              -run validation/transverse_mercator_real_validation.d \
+              --work-dir .ci-work/real-precision \
+              --precision
+          else
+            echo \
+              "SKIP: platform real has no precision beyond double."
+          fi
+
+      - name: TM real boundary
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          mkdir -p .ci-work/real-boundary
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_real_validation.d \
+            --work-dir .ci-work/real-boundary \
+            --boundary
+
+      - name: TM real analytic sphere
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          mkdir -p .ci-work/real-sphere
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_real_validation.d \
+            --work-dir .ci-work/real-sphere \
+            --sphere-structured
+
+      - name: TM reverse Newton
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          if [[ "${{ matrix.dc }}" == "ldc2" ]]; then
+            version_flag="--d-version=GeodesyTmNewtonValidation"
+          else
+            version_flag="-version=GeodesyTmNewtonValidation"
+          fi
+
+          "${{ matrix.dc }}" \
+            "$version_flag" \
+            -i \
+            -Isource \
+            -run validation/transverse_mercator_newton_validation.d \
+            --structured
