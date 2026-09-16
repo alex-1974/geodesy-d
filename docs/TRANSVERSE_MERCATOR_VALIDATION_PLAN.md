@@ -1169,14 +1169,13 @@ previous accuracy maxima.
 
 ### Remaining work
 
-The large structured/random Exact-reference sub-gates are complete for
-`double` and `float`, the independent spherical Transverse Mercator sub-gate is
-complete for both scalars, and the deterministic represented-coordinate
-reverse boundary/property sub-gate is complete.
+The numerical accuracy gates are complete for public `float`, `double`, and
+`real` on the validated x86_64 Linux DMD/LDC platform. This includes the
+independent spherical oracle, represented-coordinate reverse-boundary
+properties, and the wider-than-double `real` precision-preservation check.
 
 TM validation as a whole is not yet complete. Outstanding mandatory work is:
 
-- `real` validation with recorded platform/compiler precision properties;
 - remaining runtime/API gates;
 - reverse-Newton instrumentation required by this plan;
 - reproducible LDC release performance baseline;
@@ -1250,8 +1249,104 @@ failures = 0 inside supported domain
 
 ### Gate TM-D — real numerical accuracy
 
-Current status: **not yet run** for the required recorded `real` platform
-properties and Exact corpus.
+Current status: **PASS on the validated x86_64 Linux DMD/LDC platform**.
+
+The validated platform exposes a genuinely wider D `real`:
+
+~~~text
+real.sizeof   = 16
+real.mant_dig = 64
+real.dig      = 18
+real.epsilon  = 1.08420217248550443401e-19
+
+double.sizeof   = 8
+double.mant_dig = 53
+~~~
+
+DMD 2.111.0 and LDC 1.41.0 both report these properties. The production
+`real` path selects eighth-order coefficients.
+
+A dedicated precision-preservation probe constructs two `real` longitudes
+separated by `2^-58` radians. They collapse to the same binary64 value, while
+`TransverseMercator!real` preserves their distinction. The resulting projected
+difference agrees with the independent analytic `real` spherical oracle to the
+reported precision:
+
+~~~text
+cast(double) source longitudes equal: true
+production projected dE: 2.26236807066015899181e-11 m
+oracle projected dE:     2.26236807066015899181e-11 m
+differential residual:   0 m
+~~~
+
+The deterministic reverse-boundary/property gate also passes:
+
+~~~text
+represented boundary cases: 144
+boundary rejected: 0
+boundary residual > 1 mm: 0
+worst boundary residual: about 3e-13 m
+
+outside cases: 1008
+outside accepted beyond 1 mm: 0
+worst accepted outside residual: about 0.970051 mm
+~~~
+
+The independent analytic spherical `real` path passes the structured and
+500000-point deterministic pseudo-random corpora under both DMD and LDC.
+The random corpus worst absolute projected error is approximately
+`6.43e-12 m`.
+
+The ellipsoidal contract gate uses GeographicLib 2.7
+`TransverseMercatorExact` as an independent binary64 reference. The installed
+GeographicLib was built with `GEOGRAPHICLIB_PRECISION=2`, so this sub-gate
+verifies the public 1 mm contract rather than every extra bit of the wider D
+`real`. Production parameters remain full-width `real`; only the external
+reference is limited to binary64.
+
+Results:
+
+~~~text
+structured:
+  source points per compiler: 255423
+  forward comparisons:        255423
+  reverse comparisons:        255423
+  outside 1 mm target:        0
+
+  DMD worst absolute error:
+    0.00040720827837546 m
+  DMD worst ground-equivalent error:
+    0.000197241195835044 m
+
+  LDC worst absolute error:
+    0.000407208169236107 m
+  LDC worst ground-equivalent error:
+    0.000197241136467626 m
+
+random:
+  source points per compiler: 500000
+  projection profiles:        84
+  forward comparisons:        500000
+  reverse comparisons:        500000
+  outside 1 mm target:        0
+
+  DMD worst absolute error:
+    0.000391767033195987 m
+  DMD worst ground-equivalent error:
+    0.000191835823482898 m
+
+  LDC worst absolute error:
+    0.000391767043002733 m
+  LDC worst ground-equivalent error:
+    0.000191834013051923 m
+~~~
+
+The approximately 0.407 mm structured maximum is essentially the same
+wide-domain eighth-order truncation floor already observed for public `double`.
+The much smaller spherical `real` error and the explicit precision-preservation
+probe show that the wider arithmetic is active; increasing scalar precision
+does not remove the deliberately retained eighth-order series truncation at the
+synthetic `f = 0.01`, approximately +/-60-degree stress boundary.
 
 PASS requires:
 
@@ -1263,10 +1358,9 @@ ordinary-profile end-to-end error <= 1 mm
 failures = 0 inside supported domain
 ~~~
 
-For `real`, additionally compare the order-8 path against the exact reference
-and record the achieved maximum error. On wider-than-double platforms, record
-whether the wider arithmetic improves the binary64 result or is limited by
-series truncation/reference precision.
+All requirements above are satisfied on the validated x86_64 Linux DMD/LDC
+platform. Broader platform/architecture coverage remains a separate release
+gate because D `real` representation is target-dependent.
 
 ### Gate TM-E — API and runtime properties
 

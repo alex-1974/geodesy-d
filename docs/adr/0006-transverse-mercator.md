@@ -705,11 +705,78 @@ represented projected distance from the +60-degree boundary is approximately
 The large Exact and spherical structured/random corpora remained unchanged and
 passing after this classifier change.
 
-These results establish the selected `double`, `float`, spherical, and bounded
-reverse-domain numerical paths. They do **not** promote this ADR to `Accepted`.
-Mandatory work still includes `real` validation, runtime/API properties,
-reverse-Newton instrumentation, the reproducible LDC release performance
-baseline, and the required additional platform/architecture coverage.
+The public `real` numerical gate is now also complete on the validated
+x86_64 Linux DMD/LDC platform. Both compilers expose `real` as a 16-byte type
+with a 64-bit mantissa (`real.mant_dig = 64`) versus 53 bits for `double`.
+
+A dedicated precision-preservation probe uses two source longitudes separated
+by `2^-58` radians which collapse to the same binary64 value. The public
+`TransverseMercator!real` path preserves their distinction, and the projected
+difference agrees with an independent analytic spherical oracle evaluated
+entirely in D `real`.
+
+The analytic spherical `real` structured and 500000-point deterministic random
+corpora pass under both DMD and LDC. The random worst absolute projected error
+is approximately `6.43e-12 m`.
+
+The ellipsoidal `real` contract gate uses GeographicLib 2.7
+`TransverseMercatorExact`. The installed GeographicLib uses
+`GEOGRAPHICLIB_PRECISION=2`, so its `Math::real` is binary64. It is therefore
+used as a high-accuracy independent oracle for the public 1 mm contract, not as
+proof of every additional bit in D's wider `real`. Production projection and
+ellipsoid parameters remain full-width D `real`.
+
+Structured Exact results:
+
+~~~text
+DMD:
+  forward comparisons: 255423
+  reverse comparisons: 255423
+  outside 1 mm target: 0
+  worst absolute projected error: 0.00040720827837546 m
+  worst ground-equivalent error:  0.000197241195835044 m
+
+LDC:
+  forward comparisons: 255423
+  reverse comparisons: 255423
+  outside 1 mm target: 0
+  worst absolute projected error: 0.000407208169236107 m
+  worst ground-equivalent error:  0.000197241136467626 m
+~~~
+
+Deterministic pseudo-random Exact results over 84 projection profiles:
+
+~~~text
+DMD:
+  source points: 500000
+  forward comparisons: 500000
+  reverse comparisons: 500000
+  outside 1 mm target: 0
+  worst absolute projected error: 0.000391767033195987 m
+  worst ground-equivalent error:  0.000191835823482898 m
+
+LDC:
+  source points: 500000
+  forward comparisons: 500000
+  reverse comparisons: 500000
+  outside 1 mm target: 0
+  worst absolute projected error: 0.000391767043002733 m
+  worst ground-equivalent error:  0.000191834013051923 m
+~~~
+
+The approximately 0.407 mm structured maximum essentially matches the
+eighth-order wide-domain truncation floor already seen for `double`, while the
+spherical `real` path is several orders of magnitude more accurate. This is
+evidence that the wider arithmetic is preserved and that the extreme
+`f = 0.01`, approximately +/-60-degree ellipsoidal maximum is limited by the
+selected eighth-order series rather than scalar roundoff.
+
+These results establish the selected `float`, `double`, `real`, spherical, and
+bounded reverse-domain numerical paths on the currently validated platform.
+They do **not** promote this ADR to `Accepted`. Mandatory work still includes
+runtime/API properties, reverse-Newton instrumentation, the reproducible LDC
+release performance baseline, and the required additional platform/architecture
+coverage.
 
 ## Alternatives considered
 
