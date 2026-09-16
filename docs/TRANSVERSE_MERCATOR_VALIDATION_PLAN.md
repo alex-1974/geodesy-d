@@ -1176,7 +1176,6 @@ properties, and the wider-than-double `real` precision-preservation check.
 
 TM validation as a whole is not yet complete. Outstanding mandatory work is:
 
-- remaining runtime/API gates;
 - reverse-Newton instrumentation required by this plan;
 - reproducible LDC release performance baseline;
 - required additional platform/architecture coverage before stable release.
@@ -1364,13 +1363,82 @@ gate because D `real` representation is target-dependent.
 
 ### Gate TM-E — API and runtime properties
 
+Current status: **PASS on the validated x86_64 Linux DMD/LDC platform**.
+
+The non-throwing operational API is compile-time checked from a caller declared
+
+~~~d
+pure nothrow @safe @nogc
+~~~
+
+for each public scalar type: `float`, `double`, and `real`.
+
+The checked operational surface is:
+
+- `tryFromParameters`;
+- `isValid` and all public projection-parameter properties;
+- `tryForward`;
+- `tryReverse`.
+
+Because this complete call chain compiles from an `@nogc` caller, hidden GC
+allocation on the non-throwing operational hot path is rejected at compile
+time.
+
+The throwing convenience API is checked separately:
+
+- `fromParameters`;
+- `forward`;
+- `reverse`.
+
+These functions remain `@safe` but intentionally do not promise `nothrow` or
+`@nogc`, because their invalid-input paths construct and throw
+`GeodesyValueException`.
+
+Runtime validation covers:
+
+- default-invalid projection rejection;
+- invalid ellipsoid rejection;
+- projection flattening above `0.01`;
+- zero, negative, NaN, and infinite scale factors;
+- NaN and infinite false offsets;
+- non-polar forward input beyond the documented `+/-60 degree` longitude
+  domain;
+- reverse rejection of a represented projected point outside the documented
+  boundary budget;
+- correct throwing behaviour of the convenience wrappers.
+
+Determinism is checked with 100000 repeated forward and reverse evaluations per
+public scalar type. Every repeated result must be bit-identical in its public
+scalar representation to the first result.
+
+Observed result under both DMD and LDC:
+
+~~~text
+float:  PASS
+double: PASS
+real:   PASS
+RESULT: PASS
+~~~
+
+The normal library test suite also passes under both compilers:
+
+~~~text
+DMD: 11 modules passed unittests
+LDC: 11 modules passed unittests
+~~~
+
 PASS requires:
 
-- checked API attribute tests;
-- invalid-input tests;
-- zero hidden GC allocation on forward/reverse;
-- deterministic repeated results;
-- DMD/LDC build and test pass.
+~~~text
+checked operational API attributes
+invalid-input and throwing-semantics tests
+zero hidden GC allocation on the non-throwing operational hot path
+deterministic repeated results
+DMD/LDC build and test pass
+~~~
+
+All requirements above are satisfied on the validated x86_64 Linux DMD/LDC
+platform.
 
 ### Gate TM-F — performance baseline
 

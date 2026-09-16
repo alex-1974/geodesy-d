@@ -773,10 +773,9 @@ selected eighth-order series rather than scalar roundoff.
 
 These results establish the selected `float`, `double`, `real`, spherical, and
 bounded reverse-domain numerical paths on the currently validated platform.
-They do **not** promote this ADR to `Accepted`. Mandatory work still includes
-runtime/API properties, reverse-Newton instrumentation, the reproducible LDC
-release performance baseline, and the required additional platform/architecture
-coverage.
+They do **not** promote this ADR to `Accepted`. Mandatory work still includes reverse-Newton instrumentation, the reproducible
+LDC release performance baseline, and the required additional
+platform/architecture coverage.
 
 ## Alternatives considered
 
