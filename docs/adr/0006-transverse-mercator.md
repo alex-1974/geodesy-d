@@ -773,9 +773,16 @@ selected eighth-order series rather than scalar roundoff.
 
 These results establish the selected `float`, `double`, `real`, spherical, and
 bounded reverse-domain numerical paths on the currently validated platform.
-They do **not** promote this ADR to `Accepted`. Mandatory work still includes reverse-Newton instrumentation, the reproducible
-LDC release performance baseline, and the required additional
-platform/architecture coverage.
+They do **not** promote this ADR to `Accepted`. Reverse-Newton instrumentation is complete on the validated x86_64 Linux
+DMD/LDC platform. Across the structured corpus and a deterministic
+500000-point pseudo-random corpus per scalar, every accepted Newton-applicable
+reverse case converged within at most two iterations; the production limit is
+five. Failure count was zero for `float`, `double`, and `real`. The sphere path
+was separately verified and requires exactly one zero-correction iteration for
+every Newton-applicable point.
+
+Mandatory work still includes the reproducible LDC release performance
+baseline and the required additional platform/architecture coverage.
 
 ## Alternatives considered
 

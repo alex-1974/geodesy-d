@@ -796,22 +796,129 @@ that are harder to diagnose.
 
 ## Reverse Newton validation
 
-Instrument a validation-only build or harness to record:
+Current status: **PASS on the validated x86_64 Linux DMD/LDC platform**.
+
+A validation-only build guarded by `GeodesyTmNewtonValidation` records:
 
 - iteration count;
 - convergence residual;
+- scaled convergence residual;
 - maximum correction;
-- failure count.
+- failure count;
+- explicit Newton bypass for canonical pole cases.
 
-Test especially:
+The normal production build does not expose iteration counts and retains the
+ordinary `pure nothrow @safe @nogc` reverse path.
 
-- equator;
-- near-pole latitudes;
-- +/-60-degree longitude boundary;
-- all mandatory ellipsoids;
-- sphere path separately.
+The structured corpus covers all mandatory ellipsoids, including the synthetic
+`f = 0.01` stress ellipsoid and the Earth-sized sphere, with explicit equator,
+near-pole, and +/-60-degree longitude-boundary cases.
 
-The production code need not expose iteration counts.
+Structured corpus, per scalar:
+
+~~~text
+source points: 19344
+failures: 0
+
+float:
+  Newton applicable: 18592
+  pole bypasses:       752
+  1 iteration:        3030
+  2 iterations:      15562
+
+double:
+  Newton applicable: 18768
+  pole bypasses:       576
+  1 iteration:        3206
+  2 iterations:      15562
+
+real:
+  Newton applicable: 18768
+  pole bypasses:       576
+  1 iteration:        2906
+  2 iterations:      15862
+
+3, 4, or 5 iterations: 0 for every scalar
+~~~
+
+A deterministic pseudo-random corpus of 500000 source points per scalar was
+also run under both DMD and LDC.
+
+~~~text
+float:
+  1 iteration:  81128
+  2 iterations: 418872
+  failures:          0
+
+double:
+  1 iteration:  81128
+  2 iterations: 418872
+  failures:          0
+
+real:
+  1 iteration:  67304
+  2 iterations: 432696
+  failures:          0
+
+3, 4, or 5 iterations: 0 for every scalar
+~~~
+
+The observed random-corpus worst scaled residuals were:
+
+~~~text
+float:  5.971156618269122e-16
+double: 5.302314759822619e-16
+real:   2.997387720955114e-19
+~~~
+
+Absolute residuals can be numerically large relative to the scaled residual
+very near the poles because `tauPrime` itself becomes very large. The scaled
+residual is therefore the meaningful cross-case convergence diagnostic. DMD
+and LDC can report different absolute worst cases near this ill-conditioned
+limit while retaining the same iteration distribution and comparable scaled
+residuals.
+
+The largest observed Newton correction in the random corpus was approximately:
+
+~~~text
+float:  0.004775196690723008
+double: 0.004775180438714782
+real:   0.004775180438718520
+~~~
+
+All occurred on the synthetic `f = 0.01` stress ellipsoid near the pole.
+
+The sphere path was also reported separately. For every Newton-applicable
+structured spherical point:
+
+~~~text
+iterations:              exactly 1
+convergence residual:    0
+maximum Newton correction: 0
+failures:                0
+~~~
+
+Canonical pole representations bypass Newton as intended.
+
+The production limit is five iterations. Across the structured and
+pseudo-random validation corpora, the maximum observed requirement was two
+iterations.
+
+PASS requires:
+
+~~~text
+all accepted supported reverse inputs converge
+failure count = 0
+iteration count <= production maxIterations = 5
+finite convergence diagnostics
+all mandatory ellipsoids covered
+equator / near-pole / +/-60-degree stress cases covered
+sphere path separately verified
+DMD and LDC complete
+~~~
+
+All requirements above are satisfied on the validated x86_64 Linux DMD/LDC
+platform.
 
 No performance explanation may cite Newton iteration distribution unless this
 instrumentation was actually run.
@@ -1176,7 +1283,6 @@ properties, and the wider-than-double `real` precision-preservation check.
 
 TM validation as a whole is not yet complete. Outstanding mandatory work is:
 
-- reverse-Newton instrumentation required by this plan;
 - reproducible LDC release performance baseline;
 - required additional platform/architecture coverage before stable release.
 
