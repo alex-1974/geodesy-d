@@ -1,6 +1,6 @@
 # ADR-0006: Bounded Transverse Mercator for geodesy-d
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-14
 - Applies to: generic Transverse Mercator and EPSG method 9807
 - Supersedes: nothing
@@ -786,8 +786,45 @@ controlled x86_64 Linux reference platform. A second controlled run reproduced
 all recorded medians within 1.40 %, below the predeclared 3 % limit, while the
 benchmark numerical preflight showed no correctness regression.
 
-The remaining mandatory work before this ADR can be promoted to `Accepted` is
-the required additional platform/architecture coverage.
+The required additional platform/architecture coverage is now complete.
+
+The GitHub Actions platform matrix passed on Linux, Windows, and macOS across
+x86_64 and AArch64 targets. It also exercised three materially different D
+`real` representations: 53-bit, 64-bit, and 113-bit mantissas.
+
+The public `double` contract remained stable on every target, including targets
+without extended `real` precision. The wider-`real` precision-preservation gate
+also passed on both 64-bit-mantissa and 113-bit-mantissa targets.
+
+Together with the completed semantics, numerical-accuracy, boundary,
+API/runtime, reverse-Newton, and reproducible performance gates, this satisfies
+the acceptance criteria for the generic bounded Transverse Mercator design.
+
+ADR 0006 is therefore `Accepted`.
+
+### Multi-platform acceptance evidence
+
+The final portability gate was executed through GitHub Actions.
+
+~~~text
+Linux x86_64 / LDC       PASS   real mantissa 64
+Linux x86_64 / DMD       PASS   real mantissa 64
+Linux AArch64 / LDC      PASS   real mantissa 113
+
+Windows x86_64 / LDC     PASS   real mantissa 53
+Windows AArch64 / LDC    PASS   real mantissa 53
+
+macOS x86_64 / LDC       PASS   real mantissa 64
+macOS AArch64 / LDC      PASS   real mantissa 53
+~~~
+
+This is significant for the numerical contract because D `real` is explicitly
+target-dependent. The implementation succeeds when `real` aliases binary64
+precision, when it uses an extended 64-bit mantissa, and when it exposes a
+113-bit mantissa.
+
+No public `double` result depends on architecture-specific extended
+intermediates.
 
 ## Alternatives considered
 

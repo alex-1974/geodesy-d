@@ -1013,6 +1013,71 @@ If `real` precision differs by platform, record validation results separately.
 The public double contract must not depend on extended intermediates that happen
 to exist on one architecture.
 
+### Current multi-platform CI evidence
+
+The required additional platform/architecture validation is complete.
+
+GitHub Actions workflow run `35128854395` validated the Transverse Mercator
+implementation on three operating-system families and two instruction-set
+architectures:
+
+~~~text
+Linux   x86_64    LDC 1.41.0      PASS
+Linux   x86_64    DMD 2.111.0     PASS
+Linux   AArch64   LDC 1.41.0      PASS
+
+Windows x86_64    LDC 1.41.0      PASS
+Windows AArch64   LDC 1.41.0      PASS
+
+macOS   x86_64    LDC 1.41.0      PASS
+macOS   AArch64   LDC 1.41.0      PASS
+~~~
+
+The matrix exercises:
+
+- library unit tests;
+- TM API/runtime properties;
+- represented reverse-boundary properties;
+- analytic spherical `float` and `double` validation;
+- platform-specific `real` characterization;
+- `real` precision preservation when `real` is wider than `double`;
+- `real` boundary validation;
+- `real` analytic-sphere validation;
+- reverse-Newton structured validation.
+
+The observed D `real` representations differ materially by target:
+
+~~~text
+platform/compiler          sizeof(real)   mant_dig(real)   wider than double
+
+Linux x86_64 / LDC              16              64              yes
+Linux x86_64 / DMD              16              64              yes
+macOS x86_64 / LDC              16              64              yes
+
+Linux AArch64 / LDC             16             113              yes
+
+Windows x86_64 / LDC             8              53              no
+Windows AArch64 / LDC            8              53              no
+macOS AArch64 / LDC              8              53              no
+~~~
+
+All validated targets expose IEEE binary64-compatible public `double` with
+`sizeof(double) == 8` and `double.mant_dig == 53`.
+
+This matrix therefore covers all three relevant public-`real` cases observed by
+the project:
+
+1. `real` equal in precision to `double`;
+2. x87-style wider `real` with 64 mantissa bits;
+3. binary128-style wider `real` with 113 mantissa bits.
+
+The public `double` contract passes independently of the target-specific
+extended precision available to `real`.
+
+Windows AArch64 remains an informational/non-blocking CI entry for now because
+the LDC Windows-on-ARM64 path is comparatively young. Its successful result is
+recorded as additional evidence but is not required for the acceptance decision.
+
 ## Current structured-reference evidence
 
 The large GeographicLib 2.7 `TransverseMercatorExact` corpora are now complete
@@ -1281,9 +1346,9 @@ The numerical accuracy gates are complete for public `float`, `double`, and
 independent spherical oracle, represented-coordinate reverse-boundary
 properties, and the wider-than-double `real` precision-preservation check.
 
-TM validation as a whole is not yet complete. Outstanding mandatory work is:
-
-- required additional platform/architecture coverage before stable release.
+TM validation as a whole is complete for the current Transverse Mercator
+acceptance scope. The required additional platform/architecture coverage has
+been completed by the multi-platform GitHub Actions matrix described above.
 
 ## Acceptance gates
 
@@ -1463,8 +1528,8 @@ failures = 0 inside supported domain
 ~~~
 
 All requirements above are satisfied on the validated x86_64 Linux DMD/LDC
-platform. Broader platform/architecture coverage remains a separate release
-gate because D `real` representation is target-dependent.
+platform. Broader platform/architecture coverage is now complete. The CI matrix covers
+both equal-to-double and wider-than-double D `real` representations.
 
 ### Gate TM-E — API and runtime properties
 
