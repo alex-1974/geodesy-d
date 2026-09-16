@@ -8,9 +8,12 @@ module geodesy.projection.utm;
 
 import std.math : PI;
 
+import geodesy.angle : Latitude, Longitude;
+import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.projected : ProjectedCoordinate;
+import geodesy.projection.transverse_mercator : TransverseMercator;
 import geodesy.scalar : isGeodesyScalar;
 
 
@@ -380,6 +383,330 @@ if (isGeodesyScalar!T)
 }
 
 
+
+private T utmScaleFactor(T)()
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    /*
+     * Start from a real literal so `real` is not deliberately narrowed
+     * through binary64 before conversion to the requested public scalar.
+     */
+    return cast(T) 0.9996L;
+}
+
+
+private T utmFalseEasting(T)()
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return cast(T) 500_000;
+}
+
+
+private T utmFalseNorthing(T)(
+    const UtmHemisphere hemisphere)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return hemisphere == UtmHemisphere.south
+        ? cast(T) 10_000_000
+        : cast(T) 0;
+}
+
+
+private bool isSupportedUtmEllipsoid(T)(
+    const Ellipsoid!T ellipsoid)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return ellipsoid.isValid
+        && ellipsoid.semiMajorAxis >= cast(T) 6_000_000
+        && ellipsoid.semiMajorAxis <= cast(T) 7_000_000
+        && ellipsoid.flattening > cast(T) 0
+        && ellipsoid.flattening <= cast(T) 0.01L;
+}
+
+
+private bool isSupportedUtmLatitude(T)(
+    const Latitude!T latitude)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    const T radians = latitude.radians;
+
+    return radians >= integralDegreesToRadians!T(-80)
+        && radians < integralDegreesToRadians!T(84);
+}
+
+
+/**
+ * Prepared Universal Transverse Mercator projection for one explicit zone and
+ * north/south false-northing convention.
+ *
+ * UTM projection mathematics is delegated entirely to
+ * `TransverseMercator!T`. This type adds only the fixed UTM parameters,
+ * terrestrial-metre ellipsoid policy, zone, hemisphere, and UTM latitude
+ * bounds.
+ *
+ * The selected zone does not need to be the automatic standard zone for a
+ * geographic point. Explicit neighboring-zone use is therefore supported
+ * whenever the bounded Transverse Mercator longitude domain accepts it.
+ *
+ * The selected hemisphere is likewise an explicit false-northing convention;
+ * it is not required to match the sign of a source latitude.
+ */
+struct UtmProjection(T)
+if (isGeodesyScalar!T)
+{
+private:
+    Ellipsoid!T _ellipsoid;
+    UtmZone _zone;
+    UtmHemisphere _hemisphere = UtmHemisphere.north;
+    TransverseMercator!T _transverseMercator;
+
+public:
+    /** True when this value represents a supported prepared UTM projection. */
+    @property bool isValid() const
+        pure nothrow @safe @nogc
+    {
+        return isSupportedUtmEllipsoid(_ellipsoid)
+            && _zone.isValid
+            && isValidHemisphere(_hemisphere)
+            && _transverseMercator.isValid;
+    }
+
+    /**
+     * Prepare an explicit UTM zone without throwing.
+     *
+     * The ellipsoid must use metres numerically and satisfy:
+     *
+     *     6,000,000 <= a <= 7,000,000
+     *     0 < f <= 0.01
+     */
+    static bool tryFromZone(
+        const Ellipsoid!T ellipsoid,
+        const UtmZone zone,
+        const UtmHemisphere hemisphere,
+        out UtmProjection result)
+        pure nothrow @safe @nogc
+    {
+        if (!isSupportedUtmEllipsoid(ellipsoid)
+            || !zone.isValid
+            || !isValidHemisphere(hemisphere))
+            return false;
+
+        Latitude!T latitudeOfNaturalOrigin;
+        Longitude!T longitudeOfNaturalOrigin;
+
+        if (!Latitude!T.tryFromDegrees(
+                cast(T) 0,
+                latitudeOfNaturalOrigin)
+            || !Longitude!T.tryFromDegrees(
+                cast(T) zone.centralMeridianDegrees,
+                longitudeOfNaturalOrigin))
+            return false;
+
+        TransverseMercator!T transverseMercator;
+
+        if (!TransverseMercator!T.tryFromParameters(
+                ellipsoid,
+                latitudeOfNaturalOrigin,
+                longitudeOfNaturalOrigin,
+                utmScaleFactor!T(),
+                utmFalseEasting!T(),
+                utmFalseNorthing!T(hemisphere),
+                transverseMercator))
+            return false;
+
+        UtmProjection candidate;
+        candidate._ellipsoid = ellipsoid;
+        candidate._zone = zone;
+        candidate._hemisphere = hemisphere;
+        candidate._transverseMercator = transverseMercator;
+
+        if (!candidate.isValid)
+            return false;
+
+        result = candidate;
+        return true;
+    }
+
+    /** Prepare an explicit UTM zone or throw on invalid policy parameters. */
+    static UtmProjection fromZone(
+        const Ellipsoid!T ellipsoid,
+        const UtmZone zone,
+        const UtmHemisphere hemisphere)
+        @safe
+    {
+        UtmProjection result;
+
+        if (!tryFromZone(
+                ellipsoid,
+                zone,
+                hemisphere,
+                result))
+        {
+            throw new GeodesyValueException(
+                "UTM requires zone 1..60, a valid hemisphere, and an "
+                ~ "oblate terrestrial ellipsoid in metres with "
+                ~ "6000000 <= a <= 7000000 and 0 < f <= 0.01.");
+        }
+
+        return result;
+    }
+
+    /** Projection ellipsoid. */
+    @property Ellipsoid!T ellipsoid() const
+        pure nothrow @safe @nogc
+    {
+        return _ellipsoid;
+    }
+
+    /** Explicit UTM zone. */
+    @property UtmZone zone() const
+        pure nothrow @safe @nogc
+    {
+        return _zone;
+    }
+
+    /** Explicit north/south false-northing convention. */
+    @property UtmHemisphere hemisphere() const
+        pure nothrow @safe @nogc
+    {
+        return _hemisphere;
+    }
+
+    /** Fixed UTM latitude of natural origin: zero degrees. */
+    @property Latitude!T latitudeOfNaturalOrigin() const
+        pure nothrow @safe @nogc
+    {
+        return _transverseMercator.latitudeOfNaturalOrigin;
+    }
+
+    /** Zone central meridian. */
+    @property Longitude!T longitudeOfNaturalOrigin() const
+        pure nothrow @safe @nogc
+    {
+        return _transverseMercator.longitudeOfNaturalOrigin;
+    }
+
+    /** Fixed UTM natural-origin scale factor: 0.9996. */
+    @property T scaleFactorAtNaturalOrigin() const
+        pure nothrow @safe @nogc
+    {
+        return _transverseMercator.scaleFactorAtNaturalOrigin;
+    }
+
+    /** Fixed UTM false easting: 500000 metres. */
+    @property T falseEasting() const
+        pure nothrow @safe @nogc
+    {
+        return _transverseMercator.falseEasting;
+    }
+
+    /**
+     * UTM false northing in metres.
+     *
+     * North: 0
+     * South: 10000000
+     */
+    @property T falseNorthing() const
+        pure nothrow @safe @nogc
+    {
+        return _transverseMercator.falseNorthing;
+    }
+
+    /**
+     * Project a geographic coordinate in this explicit UTM zone.
+     *
+     * Geographic latitude must satisfy:
+     *
+     *     -80 degrees <= latitude < 84 degrees
+     *
+     * Zone and hemisphere are not recomputed from the source coordinate.
+     */
+    bool tryForward(
+        const GeographicCoordinate!T source,
+        out ProjectedCoordinate!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid
+            || !isSupportedUtmLatitude(source.latitude))
+            return false;
+
+        return _transverseMercator.tryForward(source, result);
+    }
+
+    /** Throwing convenience wrapper for `tryForward`. */
+    ProjectedCoordinate!T forward(
+        const GeographicCoordinate!T source) const
+        @safe
+    {
+        ProjectedCoordinate!T result;
+
+        if (!tryForward(source, result))
+        {
+            throw new GeodesyValueException(
+                "UTM forward projection failed, the source lies outside "
+                ~ "[-80, 84) degrees latitude, or outside the bounded "
+                ~ "Transverse Mercator longitude domain.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Reverse an explicitly zoned UTM projected coordinate.
+     *
+     * Results outside:
+     *
+     *     -80 degrees <= latitude < 84 degrees
+     *
+     * are rejected even if the underlying generic Transverse Mercator can
+     * mathematically produce them.
+     */
+    bool tryReverse(
+        const ProjectedCoordinate!T source,
+        out GeographicCoordinate!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        GeographicCoordinate!T candidate;
+
+        if (!_transverseMercator.tryReverse(
+                source,
+                candidate))
+            return false;
+
+        if (!isSupportedUtmLatitude(candidate.latitude))
+            return false;
+
+        result = candidate;
+        return true;
+    }
+
+    /** Throwing convenience wrapper for `tryReverse`. */
+    GeographicCoordinate!T reverse(
+        const ProjectedCoordinate!T source) const
+        @safe
+    {
+        GeographicCoordinate!T result;
+
+        if (!tryReverse(source, result))
+        {
+            throw new GeodesyValueException(
+                "UTM reverse projection failed, belongs outside "
+                ~ "[-80, 84) degrees latitude, or lies outside the "
+                ~ "bounded Transverse Mercator domain.");
+        }
+
+        return result;
+    }
+}
+
 unittest
 {
     import std.exception : assertThrown;
@@ -450,4 +777,78 @@ unittest
             UtmHemisphere.north,
             0.0,
             0.0));
+}
+
+
+unittest
+{
+    import std.exception : assertThrown;
+    import std.math : fabs;
+
+    import geodesy.ellipsoid : wgs84;
+
+    static assert(is(UtmProjection!float));
+    static assert(is(UtmProjection!double));
+    static assert(is(UtmProjection!real));
+
+    assert(!UtmProjection!double.init.isValid);
+
+    const ellipsoid = wgs84!double();
+    const zone33 = UtmZone.fromNumber(33);
+
+    const north = UtmProjection!double.fromZone(
+        ellipsoid,
+        zone33,
+        UtmHemisphere.north);
+
+    const south = UtmProjection!double.fromZone(
+        ellipsoid,
+        zone33,
+        UtmHemisphere.south);
+
+    assert(north.isValid);
+    assert(south.isValid);
+
+    assert(north.zone.number == 33);
+    assert(north.hemisphere == UtmHemisphere.north);
+    assert(north.latitudeOfNaturalOrigin.degrees == 0.0);
+    assert(fabs(north.longitudeOfNaturalOrigin.degrees - 15.0) < 1e-12);
+    assert(north.scaleFactorAtNaturalOrigin == 0.9996);
+    assert(north.falseEasting == 500_000.0);
+    assert(north.falseNorthing == 0.0);
+    assert(south.falseNorthing == 10_000_000.0);
+
+    const origin = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(15.0));
+
+    const northOrigin = north.forward(origin);
+    const southOrigin = south.forward(origin);
+
+    assert(northOrigin.easting == 500_000.0);
+    assert(northOrigin.northing == 0.0);
+    assert(southOrigin.easting == 500_000.0);
+    assert(southOrigin.northing == 10_000_000.0);
+
+    ProjectedCoordinate!double rejected;
+
+    const upperOutside = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(84.0),
+        Longitude!double.fromDegrees(15.0));
+
+    assert(!north.tryForward(upperOutside, rejected));
+
+    UtmProjection!double invalid;
+
+    assert(!UtmProjection!double.tryFromZone(
+        Ellipsoid!double.sphere(6_378_137.0),
+        zone33,
+        UtmHemisphere.north,
+        invalid));
+
+    assertThrown!GeodesyValueException(
+        UtmProjection!double.fromZone(
+            Ellipsoid!double.sphere(6_378_137.0),
+            zone33,
+            UtmHemisphere.north));
 }
