@@ -502,6 +502,72 @@ Norway-policy failures           = 0
 Svalbard-policy failures         = 0
 ~~~
 
+### UTM-A measured evidence
+
+UTM-A is complete.
+
+The pure UTM policy implementation was validated independently with both
+supported local compiler families:
+
+~~~text
+compiler          checks    failures    result
+
+DMD 2.111.x        2702         0       PASS
+LDC 1.41.x         2702         0       PASS
+~~~
+
+The validation covers all public scalar families:
+
+~~~text
+float
+double
+real
+~~~
+
+Measured policy coverage includes:
+
+- construction and rejection behavior for `UtmZone`;
+- all 60 zone numbers and all 60 central meridians;
+- structural validity of `UtmCoordinate!T`;
+- ordinary six-degree zone boundaries;
+- represented values immediately on both sides of every ordinary boundary;
+- `-180` and `+180` antimeridian canonicalization;
+- represented values immediately inside the antimeridian;
+- the lower `-80 degree` UTM latitude boundary;
+- the upper open `84 degree` UTM latitude boundary;
+- automatic north/south hemisphere selection around the equator;
+- Norway exception boundaries;
+- Svalbard exception boundaries;
+- represented neighboring values around all exception boundaries.
+
+An initial validator version applied `nextDown` / `nextUp` to degree values
+before conversion to radians. That test construction was invalid for the
+stored-coordinate contract because the subsequent degree-to-radian conversion
+can round a neighboring degree value back onto the exact represented radian
+boundary.
+
+The validator was corrected to:
+
+1. construct the exact policy boundary through the public degree-to-radian
+   representation;
+2. obtain adjacent represented values with `nextDown` / `nextUp` in the stored
+   radian domain;
+3. construct the test coordinate directly from those radian values.
+
+After that correction both compilers produced identical zero-failure results.
+
+The ordinary project unit-test suite also remained green on both DMD and LDC:
+
+~~~text
+12 modules passed unittests
+~~~
+
+Therefore:
+
+~~~text
+UTM-A  zone and policy semantics    PASS
+~~~
+
 ### Gate UTM-B — parameterization and TM delegation
 
 #### Goal
@@ -1211,7 +1277,7 @@ When UTM-A through UTM-F pass:
 Initial state:
 
 ~~~text
-UTM-A  zone and policy semantics              OPEN
+UTM-A  zone and policy semantics              PASS
 UTM-B  parameterization and TM delegation     OPEN
 UTM-C  independent differential validation    OPEN
 UTM-D  boundary/reversibility properties      OPEN
