@@ -723,6 +723,79 @@ neighboring-zone delegation
 ellipsoid-profile enforcement
 ~~~
 
+### UTM-B measured evidence
+
+UTM-B is complete.
+
+The prepared UTM projection and its delegation to the accepted generic
+Transverse Mercator implementation were validated with both local compiler
+families:
+
+~~~text
+compiler          checks    failures    result
+
+DMD 2.111.x       15918         0       PASS
+LDC 1.41.x        15918         0       PASS
+~~~
+
+The validation covers all public scalar families:
+
+~~~text
+float
+double
+real
+~~~
+
+Measured coverage includes:
+
+- construction of every zone from 1 through 60;
+- both north and south false-northing conventions;
+- all 120 zone/hemisphere parameter combinations;
+- exact zone central meridians;
+- fixed latitude of natural origin at zero;
+- fixed scale factor 0.9996;
+- fixed false easting of 500000 m;
+- false northing of 0 m in the north;
+- false northing of 10000000 m in the south;
+- projected natural-origin invariants for all zones and hemispheres;
+- exact forward delegation equivalence with `TransverseMercator!T`;
+- exact reverse delegation equivalence with `TransverseMercator!T`;
+- explicit neighboring-zone operation;
+- rejection of invalid zones and hemisphere values;
+- rejection of spherical ellipsoids;
+- rejection outside the terrestrial metre profile;
+- acceptance of the exact supported profile boundaries;
+- representative WGS 84, GRS 80, Airy 1830, Bessel 1841 and
+  International 1924 ellipsoids.
+
+For the delegation checks, UTM and generic Transverse Mercator were prepared
+from the same represented parameters. The validator therefore required exact
+equality of forward projected components and reverse geographic components,
+not merely tolerance-based agreement.
+
+The explicit neighboring-zone checks confirmed that `UtmProjection!T` does not
+recompute or replace the caller-selected zone.
+
+After UTM-B implementation, the earlier policy gate remained unchanged:
+
+~~~text
+UTM-A / DMD    2702 checks    0 failures    PASS
+UTM-A / LDC    2702 checks    0 failures    PASS
+~~~
+
+The normal project unit-test suite also remained green:
+
+~~~text
+DMD    12 modules passed unittests
+LDC    12 modules passed unittests
+~~~
+
+Therefore:
+
+~~~text
+UTM-B  parameterization and TM delegation    PASS
+~~~
+
 ### Gate UTM-C — independent differential validation
 
 #### Goal
@@ -1278,7 +1351,7 @@ Initial state:
 
 ~~~text
 UTM-A  zone and policy semantics              PASS
-UTM-B  parameterization and TM delegation     OPEN
+UTM-B  parameterization and TM delegation     PASS
 UTM-C  independent differential validation    OPEN
 UTM-D  boundary/reversibility properties      OPEN
 UTM-E  scalar/API/runtime properties          OPEN
