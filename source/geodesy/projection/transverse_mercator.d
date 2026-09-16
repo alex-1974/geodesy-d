@@ -908,27 +908,25 @@ private:
         return slack;
     }
 
-    W reverseLongitudeDomainSlack(const W latitude) const
+    bool reverseBoundaryExcursionWithinBudget(
+        const ProjectedCoordinate!T source,
+        const W latitude,
+        const W signedBoundaryDelta) const
         pure nothrow @safe @nogc
     {
-        W slack = longitudeDomainSlack();
-
         /*
-         * Reverse starts from a represented projected coordinate. Quantizing
-         * a valid boundary E/N pair can move the recovered longitude slightly
-         * outside +/-60 degrees, especially near the poles where longitude is
-         * ill-conditioned.
+         * Reverse starts from an already represented projected coordinate.
+         * Near the poles, longitude is ill-conditioned and an angular
+         * longitude slack is not a reliable proxy for represented E/N error.
          *
-         * For the published terrestrial accuracy profile, classify that
-         * representation-level excursion by physical east-west distance from
-         * the boundary meridian:
+         * For the ordinary terrestrial accuracy profile, classify a recovered
+         * point just outside the nominal +/-60 degree sheet by the quantity
+         * that the public contract actually constrains: represented projected
+         * distance to the public boundary point returned after clamping.
          *
-         *     N(phi) * cos(phi) * dLambda
-         *
-         * with N(phi) the prime-vertical radius of curvature.
-         *
-         * Outside the terrestrial profile, retain the existing angular /
-         * representational slack unchanged.
+         * This includes local Transverse Mercator scale automatically.
+         * N(phi) * cos(phi) * dLambda alone is too permissive when the local
+         * projected scale exceeds one, e.g. public float at k0 = 1.1.
          */
         const W a = cast(W) _ellipsoid.semiMajorAxis;
         const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
@@ -944,41 +942,87 @@ private:
             && fabs(falseNorthing) <= cast(W) 2 * a;
 
         if (!ordinaryTerrestrialProfile)
-            return slack;
+            return false;
+
+        Latitude!T boundaryLatitude;
+        if (!Latitude!T.tryFromRadians(
+                cast(T) latitude,
+                boundaryLatitude))
+            return false;
+
+        const W boundaryLongitudeRadians =
+            addLongitude(
+                cast(W) _longitudeOfNaturalOrigin.radians,
+                signedBoundaryDelta);
+
+        Longitude!T boundaryLongitude;
+        if (!Longitude!T.tryFromRadians(
+                cast(T) boundaryLongitudeRadians,
+                boundaryLongitude))
+            return false;
+
+        const GeographicCoordinate!T boundaryGeographic =
+            GeographicCoordinate!T.fromComponents(
+                boundaryLatitude,
+                boundaryLongitude);
+
+        ProjectedCoordinate!T boundaryProjected;
+        if (!tryForward(boundaryGeographic, boundaryProjected))
+            return false;
+
+        const W deltaEasting =
+            cast(W) source.easting
+            - cast(W) boundaryProjected.easting;
+        const W deltaNorthing =
+            cast(W) source.northing
+            - cast(W) boundaryProjected.northing;
+        const W projectedResidual =
+            hypot2(deltaEasting, deltaNorthing);
 
         static if (is(T == float))
             enum W linearBudget = cast(W) 2.0;
         else
             enum W linearBudget = cast(W) 0.001;
 
-        const W f = cast(W) _ellipsoid.flattening;
-        const W sinLatitude = sin(latitude);
-        const W eccentricitySquared =
-            f * (cast(W) 2 - f);
-        const W denominatorSquared =
-            cast(W) 1
-                - eccentricitySquared
-                    * sinLatitude
-                    * sinLatitude;
+        return isFiniteScalar(projectedResidual)
+            && projectedResidual <= linearBudget;
+    }
 
-        if (!(denominatorSquared > cast(W) 0))
-            return slack;
 
-        const W primeVerticalRadius =
-            a / sqrt(denominatorSquared);
-        const W parallelRadius =
-            fabs(primeVerticalRadius * cos(latitude));
+    bool reverseBoundaryExcursionAccepted(
+        const ProjectedCoordinate!T source,
+        const W latitude,
+        const W deltaLongitude) const
+        pure nothrow @safe @nogc
+    {
+        const W maxDelta = maxLongitudeDifference!W;
 
-        if (!(parallelRadius > cast(W) 0))
-            return slack;
+        const W a = cast(W) _ellipsoid.semiMajorAxis;
+        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
+        const W falseEasting = cast(W) _falseEasting;
+        const W falseNorthing = cast(W) _falseNorthing;
 
-        const W contractSlack =
-            linearBudget / parallelRadius;
+        const bool ordinaryTerrestrialProfile =
+            a >= cast(W) 6_000_000
+            && a <= cast(W) 7_000_000
+            && k0 >= cast(W) ordinaryScaleLowerBound!T()
+            && k0 <= cast(W) ordinaryScaleUpperBound!T()
+            && fabs(falseEasting) <= cast(W) 2 * a
+            && fabs(falseNorthing) <= cast(W) 2 * a;
 
-        if (contractSlack > slack)
-            slack = contractSlack;
+        if (!ordinaryTerrestrialProfile)
+        {
+            return fabs(deltaLongitude)
+                <= maxDelta + longitudeDomainSlack();
+        }
 
-        return slack;
+        const W signedBoundaryDelta =
+            deltaLongitude < cast(W) 0 ? -maxDelta : maxDelta;
+
+        return reverseBoundaryExcursionWithinBudget(
+            source,
+            latitude,
+            signedBoundaryDelta);
     }
 
 
@@ -1283,14 +1327,18 @@ public:
         else
         {
             const W maxDelta = maxLongitudeDifference!W;
-            const W domainSlack = reverseLongitudeDomainSlack(latitude);
-
-            if (fabs(deltaLongitude) > maxDelta + domainSlack)
-                return false;
 
             if (fabs(deltaLongitude) > maxDelta)
+            {
+                if (!reverseBoundaryExcursionAccepted(
+                        source,
+                        latitude,
+                        deltaLongitude))
+                    return false;
+
                 deltaLongitude =
                     deltaLongitude < cast(W) 0 ? -maxDelta : maxDelta;
+            }
         }
 
         const W longitude = addLongitude(
@@ -1730,6 +1778,39 @@ unittest
             endpointRecovered));
 
     }
+
+    /*
+     * Reverse domain-classification regression.
+     *
+     * Analytic spherical TM for R=6371000 m, lat=89 deg,
+     * lon0=15 deg, delta-lon=+60.001 deg, k0=1.1,
+     * rounded to ProjectedCoordinate!float.
+     *
+     * The represented projected point is about 2.2647 m from the
+     * represented +60 degree boundary. It therefore lies outside the
+     * public 2 m representation budget and must not be clamped to the
+     * boundary by reverse().
+     */
+    const floatOutsideBoundaryProjection =
+        TransverseMercator!float.fromParameters(
+            Ellipsoid!float.fromFlattening(
+                6_371_000.0f,
+                0.0f),
+            Latitude!float.fromDegrees(0.0f),
+            Longitude!float.fromDegrees(15.0f),
+            1.1f,
+            0.0f,
+            0.0f);
+
+    const floatOutsideBoundaryProjected =
+        ProjectedCoordinate!float.fromComponents(
+            105_931.0078125f,
+            10_947_138.0f);
+
+    GeographicCoordinate!float floatOutsideBoundaryRecovered;
+    assert(!floatOutsideBoundaryProjection.tryReverse(
+        floatOutsideBoundaryProjected,
+        floatOutsideBoundaryRecovered));
 
     // Projection-specific flattening bound.
     const tooFlat = Ellipsoid!double.fromFlattening(6_378_137.0, 0.02);
