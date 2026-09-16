@@ -80,6 +80,37 @@ printf 'CPU affinity:       logical CPU %s\n' "$cpu"
 governor="$(cat "/sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_governor" 2>/dev/null || echo unavailable)"
 no_turbo="$(cat /sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null || echo unavailable)"
 printf 'governor:           %s\n' "$governor"
+
+scaling_driver="$(
+    cat "/sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_driver"         2>/dev/null ||
+    echo unavailable
+)"
+
+scaling_min="$(
+    cat "/sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_min_freq"         2>/dev/null ||
+    echo unavailable
+)"
+
+scaling_max="$(
+    cat "/sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_max_freq"         2>/dev/null ||
+    echo unavailable
+)"
+
+cpuinfo_max="$(
+    cat "/sys/devices/system/cpu/cpu${cpu}/cpufreq/cpuinfo_max_freq"         2>/dev/null ||
+    echo unavailable
+)"
+
+intel_pstate_status="$(
+    cat /sys/devices/system/cpu/intel_pstate/status         2>/dev/null ||
+    echo unavailable
+)"
+
+printf 'scaling driver:     %s\n' "$scaling_driver"
+printf 'intel_pstate:       %s\n' "$intel_pstate_status"
+printf 'scaling min kHz:    %s\n' "$scaling_min"
+printf 'scaling max kHz:    %s\n' "$scaling_max"
+printf 'cpuinfo max kHz:    %s\n' "$cpuinfo_max"
 printf 'intel no_turbo:     %s\n' "$no_turbo"
 
 if [[ "${TM_BENCH_REQUIRE_CONTROLLED:-0}" == 1 ]]; then
@@ -91,6 +122,11 @@ if [[ "${TM_BENCH_REQUIRE_CONTROLLED:-0}" == 1 ]]; then
         echo "error: controlled run requires intel_pstate no_turbo=1 (observed '$no_turbo')" >&2
         exit 3
     }
+    if [[ "${TM_BENCH_REQUIRE_FIXED_FREQ:-0}" == 1         && "$scaling_min" != "$scaling_max" ]]; then
+        echo "error: fixed-frequency run requires scaling_min_freq == scaling_max_freq" >&2
+        echo "       observed min=$scaling_min max=$scaling_max" >&2
+        exit 3
+    fi
 elif [[ "$governor" != performance ]]; then
     echo "warning: governor is '$governor'; development run only, not controlled TM-F baseline." >&2
 fi
