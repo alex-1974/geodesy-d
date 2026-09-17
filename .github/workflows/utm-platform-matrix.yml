@@ -1,0 +1,156 @@
+name: UTM platform matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - "source/geodesy/**"
+      - "validation/utm_*.d"
+      - "tools/validate-utm-*.sh"
+      - "dub.sdl"
+      - ".github/workflows/utm-platform-matrix.yml"
+
+  pull_request:
+    paths:
+      - "source/geodesy/**"
+      - "validation/utm_*.d"
+      - "tools/validate-utm-*.sh"
+      - "dub.sdl"
+      - ".github/workflows/utm-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  # Match the accepted TM platform workflow.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  utm-platform:
+    name: ${{ matrix.name }}
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            dc: dmd
+            experimental: false
+
+          # Keep the young Windows/AArch64 LDC path informational,
+          # matching the accepted TM platform policy.
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+          uname -a || true
+
+          "${{ matrix.dc }}" --version
+          dub --version
+
+      - name: Platform fingerprint
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -run validation/platform_fingerprint.d \
+            | tee platform-fingerprint.txt
+
+      - name: Library unit tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          dub test \
+            --compiler="${{ matrix.dc }}"
+
+      - name: UTM zone and policy semantics
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          DC="${{ matrix.dc }}" \
+            ./tools/validate-utm-policy.sh
+
+      - name: UTM parameterization and TM delegation
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          DC="${{ matrix.dc }}" \
+            ./tools/validate-utm-parameterization.sh
+
+      - name: UTM boundary and reversibility properties
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          DC="${{ matrix.dc }}" \
+            ./tools/validate-utm-boundary.sh
+
+      - name: UTM API/runtime contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          DC="${{ matrix.dc }}" \
+            ./tools/validate-utm-api-runtime.sh
