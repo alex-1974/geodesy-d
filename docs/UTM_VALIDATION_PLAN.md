@@ -1,7 +1,7 @@
 # UTM validation plan
 
-**Status:** Accepted  
-**Branch:** `feature/utm`  
+**Status:** Accepted
+**Branch:** `feature/utm`
 **Depends on:** ADR-0006, ADR-0007
 
 ## Purpose
