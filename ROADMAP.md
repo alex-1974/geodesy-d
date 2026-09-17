@@ -162,13 +162,17 @@ geodetic ↔ geocentric conversion
 
 Subsequent scope, only after the core is verified:
 
-```text
-3-parameter geocentric translation
-7-parameter Helmert transformation
-Transverse Mercator
-UTM
-direct/inverse ellipsoidal geodesics
-```
+- [x] 3-parameter geocentric translation
+- [x] 7-parameter Helmert transformation
+- [x] bounded generic Transverse Mercator
+- [x] UTM policy and projection layer
+- [ ] direct/inverse ellipsoidal geodesics
+
+Transverse Mercator and UTM are now independently validated and accepted.
+
+The next major `geodesy-d` mathematical slice is direct/inverse ellipsoidal
+geodesics. Its design should begin with authoritative algorithm and API
+research before implementation.
 
 ### Explicit boundary
 
