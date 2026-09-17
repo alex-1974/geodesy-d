@@ -156,6 +156,8 @@ FUNCTIONS = (
     "A1m1f",
     "C1f",
     "C1pf",
+    "A2m1f",
+    "C2f",
     "A3coeff",
     "C3coeff",
 )
@@ -164,6 +166,8 @@ EXPECTED_COUNTS = {
     "A1m1f":  {6: 5,  7: 5,  8: 6},
     "C1f":    {6: 18, 7: 23, 8: 28},
     "C1pf":   {6: 18, 7: 23, 8: 28},
+    "A2m1f":  {6: 5,  7: 5,  8: 6},
+    "C2f":    {6: 18, 7: 23, 8: 28},
     "A3coeff": {6: 18, 7: 23, 8: 28},
     "C3coeff": {6: 45, 7: 69, 8: 98},
 }
@@ -219,6 +223,8 @@ names = {
     "A1m1f": "a1",
     "C1f": "c1",
     "C1pf": "c1p",
+    "A2m1f": "a2",
+    "C2f": "c2",
     "A3coeff": "a3",
     "C3coeff": "c3",
 }
@@ -373,7 +379,49 @@ W geodesicA1m1(W, int order)(const W eps)
 }}
 
 
-private void fillC1Like(W, size_t N)(
+private W a2FromCoefficients(W, size_t N)(
+    const W eps,
+    const int order,
+    const ref long[N] coefficients)
+    pure nothrow @safe @nogc
+{{
+    const int degree = order / 2;
+    const W eps2 = eps * eps;
+
+    const W t = rationalPolynomial!W(
+        coefficients,
+        0,
+        degree,
+        eps2);
+
+    return (t - eps) / (cast(W) 1 + eps);
+}}
+
+
+W geodesicA2m1(W, int order)(const W eps)
+    pure nothrow @safe @nogc
+{{
+    static assert(order >= 6 && order <= 8);
+
+    static if (order == 6)
+        return a2FromCoefficients!W(
+            eps,
+            order,
+            a2Order6);
+    else static if (order == 7)
+        return a2FromCoefficients!W(
+            eps,
+            order,
+            a2Order7);
+    else
+        return a2FromCoefficients!W(
+            eps,
+            order,
+            a2Order8);
+}}
+
+
+private void fillCSeriesLike(W, size_t N)(
     const W eps,
     const int order,
     const ref long[N] coefficients,
@@ -412,19 +460,19 @@ void fillGeodesicC1(W, int order)(
     static assert(order >= 6 && order <= 8);
 
     static if (order == 6)
-        fillC1Like!W(
+        fillCSeriesLike!W(
             eps,
             order,
             c1Order6,
             result);
     else static if (order == 7)
-        fillC1Like!W(
+        fillCSeriesLike!W(
             eps,
             order,
             c1Order7,
             result);
     else
-        fillC1Like!W(
+        fillCSeriesLike!W(
             eps,
             order,
             c1Order8,
@@ -440,22 +488,50 @@ void fillGeodesicC1p(W, int order)(
     static assert(order >= 6 && order <= 8);
 
     static if (order == 6)
-        fillC1Like!W(
+        fillCSeriesLike!W(
             eps,
             order,
             c1pOrder6,
             result);
     else static if (order == 7)
-        fillC1Like!W(
+        fillCSeriesLike!W(
             eps,
             order,
             c1pOrder7,
             result);
     else
-        fillC1Like!W(
+        fillCSeriesLike!W(
             eps,
             order,
             c1pOrder8,
+            result);
+}}
+
+
+void fillGeodesicC2(W, int order)(
+    const W eps,
+    ref W[9] result)
+    pure nothrow @safe @nogc
+{{
+    static assert(order >= 6 && order <= 8);
+
+    static if (order == 6)
+        fillCSeriesLike!W(
+            eps,
+            order,
+            c2Order6,
+            result);
+    else static if (order == 7)
+        fillCSeriesLike!W(
+            eps,
+            order,
+            c2Order7,
+            result);
+    else
+        fillCSeriesLike!W(
+            eps,
+            order,
+            c2Order8,
             result);
 }}
 
@@ -664,6 +740,39 @@ W geodesicSinCosSeries(W)(
     return sineSeries
         ? cast(W) 2 * sinX * cosX * y0
         : cosX * (y0 - y1);
+}}
+
+
+unittest
+{{
+    assert(geodesicA2m1!(double, 6)(0.0) == 0.0);
+    assert(geodesicA2m1!(double, 7)(0.0) == 0.0);
+    assert(geodesicA2m1!(double, 8)(0.0) == 0.0);
+
+    double[9] c2Order6Test;
+    double[9] c2Order7Test;
+    double[9] c2Order8Test;
+
+    fillGeodesicC2!(double, 6)(
+        0.0,
+        c2Order6Test);
+
+    fillGeodesicC2!(double, 7)(
+        0.0,
+        c2Order7Test);
+
+    fillGeodesicC2!(double, 8)(
+        0.0,
+        c2Order8Test);
+
+    foreach (value; c2Order6Test)
+        assert(value == 0.0);
+
+    foreach (value; c2Order7Test)
+        assert(value == 0.0);
+
+    foreach (value; c2Order8Test)
+        assert(value == 0.0);
 }}
 
 
