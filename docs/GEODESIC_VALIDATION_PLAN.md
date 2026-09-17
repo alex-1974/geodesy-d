@@ -297,6 +297,64 @@ positive-distance symmetry.
 GEO-A passes only when all public semantic questions in ADR-0008 are
 resolved.
 
+## GEO-A semantic research result
+
+The pre-implementation semantic probe was executed on 2026-09-17 against:
+
+~~~text
+GeographicLib 2.7
+GeographicLib::Geodesic
+GeographicLib::GeodesicExact
+PROJ 9.7.1 geodesic C API
+~~~
+
+All three implementations agreed on ordinary and difficult numerical
+semantics in the sampled cases.
+
+The probe also demonstrated that several degenerate azimuth results are
+representation-dependent rather than geometrically unique.
+
+Observed examples included:
+
+- coincident `(0,+0)` returning `180/180` azimuths;
+- an equivalent signed-zero coincidence returning `0/0`;
+- `+180/-180` longitude aliases selecting opposite signed azimuth endpoints;
+- same-pole coincident points returning azimuths derived from arbitrary pole
+  longitude differences;
+- exact antipodal cases selecting different but valid azimuth pairs
+  depending on `+180/-180` and signed-zero representation;
+- `+180`, `-180`, `+540`, and `-540` direct azimuth inputs preserving
+  different endpoint representations despite equivalent direction;
+- negative direct distance operating correctly along the signed geodesic;
+- antimeridian start aliases producing identical endpoint positions.
+
+GEO-A therefore freezes a geodesy-d-specific canonical public contract:
+
+~~~text
+longitude output      [-pi, +pi)
+azimuth output        [-pi, +pi)
+exact public zero     +0
++pi angular alias     -> -pi
+signed-zero aliases   -> mathematical zero
+~~~
+
+Inverse coincident surface points return:
+
+~~~text
+distance       = +0
+initialAzimuth = +0
+finalAzimuth   = +0
+~~~
+
+A direct zero-distance operation instead preserves the canonicalized supplied
+line direction.
+
+For non-unique shortest geodesics, distance is normative and the returned
+azimuth pair identifies one deterministic valid shortest geodesic.
+
+GEO-A remains an implementation gate until the geodesy-d production solver
+demonstrates these semantics.
+
 ## GEO-B — authoritative reference vectors
 
 Purpose:
@@ -663,7 +721,7 @@ CLI process startup must not be used as the numerical-kernel benchmark.
 Initial status:
 
 ~~~text
-GEO-A  contract and analytical semantics             OPEN
+GEO-A  contract and analytical semantics             OPEN (contract frozen)
 GEO-B  authoritative reference vectors               OPEN
 GEO-C  GeographicLib Exact differential validation   OPEN
 GEO-D  PROJ interoperability                         OPEN
@@ -676,22 +734,19 @@ ADR-0008 remains `Proposed` until every mandatory gate is `PASS`.
 
 ## Immediate next step
 
-Before production implementation, build GEO-A semantic probes against:
+GEO-A pre-implementation semantic research is complete and its public
+contract is frozen in ADR-0008.
 
-- analytical spherical cases;
-- current GeographicLib `Geodesic`;
-- current GeographicLib `GeodesicExact`;
-- PROJ where its public interface exposes the corresponding operation.
+The next step is to create the initial production `Geodesic!T` implementation
+and the executable GEO-A validation gate.
 
-The first probe must resolve:
+Implementation should begin with:
 
-- coincident-point azimuths;
-- exact antipodal tie breaking;
-- opposite-pole behavior;
-- signed zero;
-- azimuth canonicalization;
-- negative direct distance;
-- antimeridian output normalization.
+- prepared ellipsoid state and coefficient generation;
+- canonical angular input/output helpers;
+- direct solution;
+- inverse special cases and robust general solution;
+- explicit test-only inverse iteration instrumentation.
 
-Only after those semantics are recorded should the production
-`Geodesic!T` module be created.
+GEO-A becomes `PASS` only when the production implementation satisfies the
+frozen semantics under both DMD and LDC.

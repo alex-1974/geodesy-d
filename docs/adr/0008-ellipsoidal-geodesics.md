@@ -356,16 +356,60 @@ until separately validated.
 Repeated-point generation along very long or repeatedly wrapping geodesics
 belongs to a future `GeodesicLine` capability.
 
+## Angular canonicalization
+
+GeographicLib and PROJ deliberately preserve some IEEE and endpoint
+distinctions such as:
+
+~~~text
++0 versus -0
++180 degrees versus -180 degrees
++540 degrees versus -540 degrees
+~~~
+
+GEO-A research demonstrated that these distinctions can affect returned
+azimuths even when the represented mathematical direction or surface point
+is equivalent.
+
+geodesy-d deliberately does not expose those representation details as
+public geodesic semantics.
+
+Before entering the numerical kernel:
+
+- latitude zero is canonicalized to positive mathematical zero;
+- longitude zero is canonicalized to positive mathematical zero;
+- longitude is normalized to `[-pi, +pi)`;
+- input azimuth is normalized to `[-pi, +pi)`;
+- exact angular zero is canonicalized to positive mathematical zero.
+
+Therefore:
+
+~~~text
++pi azimuth      -> -pi
+-pi azimuth      -> -pi
++3*pi azimuth    -> -pi
+-3*pi azimuth    -> -pi
+
++2*pi azimuth    -> +0
+-2*pi azimuth    -> +0
+~~~
+
+Public outputs follow the same convention:
+
+~~~text
+longitude: [-pi, +pi)
+azimuth:   [-pi, +pi)
+exact zero: +0
+~~~
+
+Returned latitude zero is likewise canonicalized to positive mathematical
+zero.
+
+The sign bit of IEEE zero is not part of the public contract.
+
 ## Longitude semantics
 
 Public geographic results use the existing `Longitude!T` representation.
-
-Returned longitudes are canonicalized to the library's half-open normalized
-form:
-
-~~~text
-[-pi, +pi)
-~~~
 
 Longitude unrolling is not part of the first API because an unrolled
 longitude cannot be represented by `Longitude!T`.
@@ -377,13 +421,8 @@ separately if required.
 
 Input azimuth is an arbitrary finite `Angle!T`.
 
-The solver normalizes it internally.
-
-Returned azimuths are canonicalized to:
-
-~~~text
-[-pi, +pi)
-~~~
+The solver canonicalizes it according to the angular rules above before
+numerical evaluation.
 
 The first API reuses `Angle!T`.
 
@@ -399,56 +438,136 @@ Pole calculations are valid.
 Azimuth at a pole is understood by the standard limiting convention: keep
 longitude fixed and approach the pole along latitude.
 
-GEO-A must freeze exact public behavior for:
+Consequently, the longitude component supplied for a pole remains relevant
+to the directional reference frame for a non-coincident geodesic.
 
-- north pole;
-- south pole;
-- pole-to-pole paths;
-- paths beginning or ending at a pole.
+The solver must therefore not globally replace pole longitude with zero.
+
+This is distinct from positional identity: all longitudes at one pole
+represent the same surface point.
+
+If both inverse endpoints represent that same pole, the points are
+coincident and the coincident-point rule below applies.
+
+For paths between distinct points involving a pole, the normalized supplied
+pole longitude participates in the limiting azimuth convention.
+
+For opposite poles the shortest geodesic is not unique. The non-unique
+inverse rule below applies.
 
 ## Coincident and non-unique inverse solutions
 
-The inverse distance is uniquely defined even when the geodesic itself is
-not unique.
+### Coincident surface points
 
-Important non-unique cases include:
+Coincidence is a geometric property, not merely scalar component equality.
 
-- coincident points;
+Coincident points include:
+
+- equal latitude and equivalent longitude;
+- `+pi` and `-pi` longitude aliases;
+- any two coordinates at the north pole;
+- any two coordinates at the south pole.
+
+GEO-A research showed that GeographicLib and PROJ intentionally return
+representation-dependent azimuths for these cases.
+
+Examples included zero-distance inverse results with azimuths such as:
+
+~~~text
+0 degrees
+180 degrees
+-180 degrees
+57 degrees
+-123 degrees
+~~~
+
+depending only on signed zero, antimeridian representation, or the arbitrary
+longitude attached to a pole.
+
+geodesy-d deliberately does not expose that behavior.
+
+For coincident surface points, inverse returns exactly:
+
+~~~text
+distance       = +0
+initialAzimuth = +0
+finalAzimuth   = +0
+~~~
+
+This is a documented semantic divergence from GeographicLib and PROJ.
+
+### Zero-distance direct problem
+
+Direct distance zero is different from the inverse coincident-point case.
+
+A direct operation includes an explicitly supplied geodesic direction.
+
+Therefore for:
+
+~~~text
+distance == 0
+~~~
+
+the result is:
+
+- the canonicalized start position;
+- the canonicalized supplied initial azimuth as `finalAzimuth`.
+
+Thus a zero-distance direct operation preserves the specified line
+direction even though the endpoint position is unchanged.
+
+### Non-unique shortest geodesics
+
+Some distinct endpoint pairs admit multiple shortest geodesics.
+
+Important cases include:
+
 - opposite poles;
 - antipodal points on a sphere;
-- selected antipodal or near-antipodal configurations on an ellipsoid.
+- selected antipodal configurations on an oblate ellipsoid.
 
-`tryInverse` must not fail merely because more than one shortest geodesic
-exists.
+`tryInverse` must succeed for these cases.
 
-It must return:
+The returned distance is the shortest geodesic distance and is normative.
 
-- the shortest distance;
-- one deterministic canonical azimuth pair.
+The returned azimuth pair identifies one deterministic shortest geodesic,
+but the public API does not claim that the selected azimuth pair is the only
+geometrically valid solution.
 
-The exact tie-breaking convention for non-unique azimuths is not fixed by
-this Proposed ADR.
+Validation of genuinely non-unique cases therefore must not require equality
+with one arbitrary oracle azimuth pair.
 
-GEO-A must probe authoritative implementations and analytical symmetries and
-then record a deterministic geodesy-d convention before implementation is
-accepted.
+Instead it must verify:
 
-Tests for genuinely non-unique cases must not incorrectly require one
-arbitrary oracle azimuth when multiple azimuth pairs are mathematically
-valid.
+- the shortest distance against the independent oracle;
+- deterministic output for identical canonical inputs;
+- canonical public angle representation;
+- that the returned azimuth pair describes a valid shortest geodesic, for
+  example by independent direct reconstruction where appropriate.
+
+Equivalent input representations are canonicalized before solution.
+
+This prevents `+pi/-pi` aliases and signed-zero differences from selecting
+different public results merely because of IEEE representation.
+
+The solver is not required to enumerate all shortest geodesics.
 
 ## Signed zero
 
-IEEE signed zero must not accidentally become undocumented public policy.
+IEEE signed zero is an internal numerical detail only.
 
-Internal use of signed zero is permitted where needed for stable branch
-selection or limiting calculations.
+At public geodesic boundaries:
 
-GEO-A must determine which public zero-valued azimuth and longitude results
-are canonicalized to mathematical zero and where sign carries a necessary
-directional convention.
+~~~text
+angular -0 -> +0
+linear  -0 -> +0
+~~~
 
-Any retained signed-zero behavior must be documented explicitly.
+whenever the mathematical result is exactly zero.
+
+Internal signed zero may still be used temporarily where useful for stable
+numerical branch selection, but it must not leak into public result
+semantics.
 
 ## Inverse numerical strategy
 
@@ -583,13 +702,25 @@ Those capabilities remain separate future decisions.
 
 ## Open items before acceptance
 
-GEO-A must resolve and document:
+GEO-A research has resolved the initial edge-semantics questions:
 
-1. exact coincident-point azimuth convention;
-2. exact antipodal tie-breaking convention;
-3. signed-zero treatment at public boundaries;
-4. exact canonical azimuth interval endpoint behavior;
-5. behavior for direct distances outside the ordinary accuracy profile;
-6. final public names and result-type layout.
+- coincident-point behavior;
+- non-unique antipodal behavior;
+- signed-zero treatment;
+- azimuth canonicalization;
+- antimeridian canonicalization;
+- negative direct distance;
+- pole limiting semantics.
 
-These are contract questions, not implementation details.
+Remaining acceptance work is implementation and validation rather than
+unresolved mathematical policy.
+
+Before ADR acceptance the project must still confirm:
+
+1. final public names and result-type layout;
+2. measured scalar accuracy against the GEO-B/C/D corpora;
+3. bounded inverse iteration behavior under GEO-E;
+4. checked API attributes under GEO-F;
+5. compiler/platform behavior under GEO-G.
+
+ADR-0008 remains `Proposed` until those gates pass.
