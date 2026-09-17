@@ -12,6 +12,7 @@ public import geodesy.scalar;
 
 public import geodesy.conversion;
 public import geodesy.projection.transverse_mercator;
+public import geodesy.projection.utm;
 
 public import geodesy.transform.geocentric_translation;
 
