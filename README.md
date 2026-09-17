@@ -11,9 +11,7 @@ a CRS database or a replacement for the complete PROJ ecosystem.
 
 ## Status
 
-The first public release is `v0.1.0`.
-
-The v0.1 API provides:
+The released `v0.1.x` line provides:
 
 - strong `Angle`, `Latitude`, and `Longitude` value types;
 - reference ellipsoids;
@@ -24,8 +22,18 @@ The v0.1 API provides:
 - EPSG 1033 Position Vector 7-parameter Helmert transformations;
 - EPSG 1032 Coordinate Frame 7-parameter Helmert transformations.
 
-The public API is independently validated against published EPSG/IOGP
-reference vectors and PROJ.
+Current `main` additionally provides the unreleased projection layer:
+
+- bounded generic `TransverseMercator!T`;
+- Universal Transverse Mercator zone and hemisphere policy;
+- prepared `UtmProjection!T`;
+- tagged `UtmCoordinate!T`;
+- automatic standard-zone UTM forward projection;
+- explicit-zone and tagged reverse UTM operations.
+
+The public numerical operations are independently validated against appropriate
+authoritative references and mature external implementations including
+EPSG/IOGP reference material, GeographicLib, and PROJ.
 
 ## Installation
 
@@ -323,13 +331,13 @@ Coordinates do not embed CRS or datum metadata.
 
 ## Future scope
 
-Later milestones may add bounded geodetic operations such as:
+The next major mathematical capability under consideration is:
 
-- Transverse Mercator;
-- UTM;
 - direct and inverse ellipsoidal geodesics.
 
-These are not part of the v0.1 API.
+Broader CRS discovery, authority databases, UPS/MGRS policy, transformation
+grids, and coordinate-reference metadata remain outside the current projection
+layer and retain their documented cross-library responsibility boundaries.
 
 ## Building
 
@@ -365,6 +373,8 @@ Numerical validation policy and evidence are documented in:
 docs/VALIDATION.md
 docs/V0_1_READINESS.md
 docs/REFERENCES.md
+docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md
+docs/UTM_VALIDATION_PLAN.md
 ~~~
 
 Operation-specific documentation is available under:

@@ -6,7 +6,21 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Bounded generic Transverse Mercator projection for `float`, `double`, and
+  platform `real`.
+- Universal Transverse Mercator policy layer with strong zone and hemisphere
+  types, prepared projections, tagged coordinates, automatic standard-zone
+  forward projection, and explicit tagged reverse projection.
+- Standard Norway and Svalbard UTM zone exceptions.
+- Independent Transverse Mercator validation against exact GeographicLib
+  references and PROJ.
+- Independent UTM semantic validation against GeographicLib and represented-
+  model numerical differential validation against PROJ 9.7.1.
+- Multi-platform Transverse Mercator and UTM validation matrices covering
+  Linux, Windows, and macOS with DMD and LDC where supported.
+- ADR-0006 for bounded Transverse Mercator and ADR-0007 for UTM policy.
 
 ## [0.1.1] - 2026-09-13
 
