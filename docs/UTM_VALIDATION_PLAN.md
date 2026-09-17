@@ -800,138 +800,150 @@ UTM-B  parameterization and TM delegation    PASS
 
 #### Goal
 
-Verify complete UTM behavior against independent mature implementations.
+Verify UTM policy semantics and prepared-projection numerics against
+independent mature implementations.
 
-#### PROJ direct UTM comparison
-
-For every zone 1 through 60 compare geodesy-d with PROJ `utm`.
-
-Each zone should include representative points at:
+UTM-C is deliberately split into two complementary sub-gates:
 
 ~~~text
-central meridian
-ordinary western portion
-ordinary eastern portion
-northern latitude
-southern latitude
-high northern latitude where valid
-high southern latitude where valid
+UTM-C1  authoritative semantic cross-check
+UTM-C2  represented-model numerical differential cross-check
 ~~~
 
-Run both forward and reverse comparisons.
+#### UTM-C1 — authoritative semantic cross-check
 
-#### PROJ explicit-TM comparison
+GeographicLib UTM/UPS is used as the independent reference for standard-zone
+and explicit-zone semantics.
 
-For selected zones also compare UTM output against an explicit PROJ `tmerc`
-operation using:
+The deterministic corpus covers:
 
-~~~text
-lat_0 = 0
-lon_0 = zone central meridian
-k_0 = 0.9996
-x_0 = 500000
-y_0 = 0 or 10000000
-~~~
-
-This separately checks UTM parameter wiring.
-
-#### Norway and Svalbard
-
-Include external-reference points:
-
-- safely inside every special region;
-- exactly on every policy boundary;
-- immediately outside every policy boundary.
-
-Verify both:
-
-~~~text
-selected zone
-projected coordinate
-~~~
-
-#### Neighboring zones
-
-For representative points explicitly select:
-
-~~~text
-standard zone
-west neighbor
-east neighbor
-~~~
-
-where the bounded generic TM domain permits them.
-
-Compare with matching explicit-zone PROJ or GeographicLib operations.
-
-Automatic `tryForwardUtm` must still choose only the standard zone.
-
-#### Hemisphere override
-
-Explicitly test:
-
-~~~text
-negative latitude with northern convention
-positive latitude with southern convention
-equator with northern convention
-equator with southern convention
-~~~
-
-These are explicit projection-policy tests, not automatic-zone tests.
-
-Verify false-northing behavior against matching external parameterization.
-
-#### GeographicLib zone selection
-
-Compare standard-zone selection with GeographicLib across a deterministic corpus
-covering:
-
-- all 60 ordinary zones;
-- northern and southern hemispheres;
-- equator;
-- antimeridian;
+- the standard latitude interval `[-80, 84)`;
+- values immediately below and above the standard latitude boundaries;
+- all ordinary UTM zone behavior needed by the policy layer;
+- the antimeridian;
 - Norway;
 - Svalbard;
-- values close to -80 degrees;
-- values close to +84 degrees.
+- the equator;
+- explicit-zone operation outside the automatic standard latitude band;
+- explicit-zone operation near the inherited bounded-TM longitude limit;
+- ellipsoid-policy differences.
 
-For points outside the UTM latitude region, document the expected difference:
+The semantic comparison distinguishes projection semantics from
+GeographicLib UTM/UPS coordinate-envelope policy.
+
+In particular, the following intentional differences are part of the
+geodesy-d contract:
+
+- mathematical latitude zero is canonicalized to the northern hemisphere;
+  GeographicLib distinguishes signed `-0.0` and assigns it south;
+- `UtmProjection!T` does not impose GeographicLib UTM/UPS/MGRS-derived
+  projected-coordinate legality windows;
+- the geodesy-d Earth-size ellipsoid restriction is a defensive
+  unit/profile policy, not a normative UTM requirement.
+
+#### UTM-C2 — represented-model numerical differential cross-check
+
+PROJ Transverse Mercator is used as the numerical differential oracle.
+
+For every comparison, PROJ is parameterized with the mathematical model
+actually represented by the public scalar `T`:
+
+- represented semi-major axis;
+- represented flattening;
+- represented central meridian;
+- represented scale factor;
+- represented false easting;
+- represented false northing;
+- the geographic source point derived from the stored angular radians.
+
+This representation rule is especially important for `float`.
+
+The external oracle must interpret the angular values actually stored by
+`Latitude!float` and `Longitude!float`. It must not call the public
+`.degrees` property and then treat that additionally rounded float-degree
+value as the reference coordinate.
+
+The correct oracle conversion is conceptually:
 
 ~~~text
-GeographicLib may choose UPS
-geodesy-d UTM rejects
+stored T radians
+    -> promote to double
+    -> convert radians to degrees in double
+    -> external reference
 ~~~
+
+A separately rounded `float` degree value is not equivalent to the value
+consumed internally by `TransverseMercator!float`.
+
+The numerical corpus covers:
+
+- all 60 UTM zones;
+- both false-northing conventions;
+- WGS 84;
+- GRS 80;
+- International 1924;
+- Airy 1830;
+- `float`;
+- `double`;
+- `real`;
+- ordinary in-zone points;
+- cross-equator use;
+- explicit operation outside the standard automatic latitude band;
+- neighboring-zone use;
+- wide explicit longitude differences within the bounded generic-TM
+  contract.
+
+Forward comparison uses projected-coordinate distance.
+
+Reverse comparison starts from independently generated PROJ projected
+coordinates and measures the recovered represented geographic position.
+It is therefore not a geodesy-d self-round-trip test.
+
+#### Canonical PROJ UTM comparison
+
+A canonical PROJ `+proj=utm` comparison is useful diagnostic evidence, but it
+is not the scalar-accuracy gate for `float`.
+
+Canonical PROJ UTM parameters are represented in PROJ's working precision,
+whereas `UtmProjection!float` intentionally exposes a public float model.
+Comparing those directly therefore includes parameter-representation
+differences in addition to implementation error.
+
+The mandatory C2 numerical gate instead compares the same represented
+mathematical model on both sides.
 
 #### Accuracy targets
 
-Within the supported UTM profile inherit the accepted TM accuracy targets:
+Within the supported profile, inherit the accepted generic-TM targets:
 
 ~~~text
-float   <= 2 m
-double  <= 1 mm
-real    <= 1 mm
+float forward          <= 2 m
+float reverse          <= 4 m represented-position envelope
+
+double forward         <= 1 mm
+double reverse         <= 2 mm represented-position envelope
+
+real forward           <= 1 mm
+real reverse           <= 2 mm represented-position envelope
 ~~~
 
-Use ground-equivalent error where angular reverse error becomes poorly
-conditioned.
+Binary64 external oracles do not independently establish wider-than-binary64
+`real` precision.
 
-Binary64 external oracles do not independently prove wider-than-binary64
-`real` accuracy.
-
-The ADR-0006 wider-`real` evidence remains the numerical basis for that path.
+ADR-0006 and its wider-`real` validation remain the numerical basis for that
+additional precision claim.
 
 #### PASS criteria
 
 UTM-C passes when:
 
 ~~~text
-zone-selection mismatches          = 0
-reference errors outside target    = 0
-unexpected rejection               = 0
-unexpected acceptance              = 0
+semantic mismatches inside comparison scope = 0
+unexpected rejection                       = 0
+unexpected acceptance                      = 0
+numerical comparisons outside target       = 0
+non-finite reference/error values           = 0
 ~~~
-
-inside the defined comparison scope.
 
 ### Gate UTM-D — boundary and reversibility properties
 
@@ -1355,14 +1367,14 @@ When UTM-A through UTM-F pass:
 
 ## Acceptance matrix
 
-Initial state:
+Current status:
 
 ~~~text
 UTM-A  zone and policy semantics              PASS
 UTM-B  parameterization and TM delegation     PASS
-UTM-C  independent differential validation    OPEN
-UTM-D  boundary/reversibility properties      OPEN
-UTM-E  scalar/API/runtime properties          OPEN
+UTM-C  independent differential validation    PASS
+UTM-D  boundary/reversibility properties      PASS
+UTM-E  scalar/API/runtime properties          PASS
 UTM-F  platform/compiler coverage             OPEN
 ~~~
 
@@ -1413,6 +1425,140 @@ Those claims require separate design and validation.
 External implementations are evidence sources.
 
 They are not copied as the implementation specification for `geodesy-d`.
+
+## UTM-C result — independent reference validation
+
+UTM-C was executed as two independent reference gates.
+
+### UTM-C1 — semantic reference
+
+Reference implementation:
+
+~~~text
+GeographicLib 2.7
+~~~
+
+Validation sources:
+
+~~~text
+validation/utm_geographiclib_oracle.cpp
+validation/utm_reference_semantics.d
+tools/validate-utm-reference-semantics.sh
+~~~
+
+Local results:
+
+~~~text
+DMD:
+  checks=80
+  failures=0
+  PASS
+
+LDC:
+  checks=80
+  failures=0
+  PASS
+~~~
+
+Confirmed semantics include:
+
+- standard automatic UTM latitude region `[-80, 84)`;
+- `+180 degrees` normalization to `-180 degrees`, hence zone 1;
+- Norway exception boundaries;
+- Svalbard exception boundaries;
+- explicit fixed-zone operation outside the automatic standard latitude
+  band;
+- explicit hemisphere selection as a false-northing convention.
+
+The following intentional differences were confirmed and retained:
+
+1. GeographicLib assigns signed latitude `-0.0` to the southern hemisphere;
+   geodesy-d canonical mathematical zero uses the northern convention.
+
+2. GeographicLib UTM/UPS applies additional projected-coordinate legality
+   windows. For example, its UTM/UPS layer rejects a sufficiently high
+   explicit-zone northing near `89 degrees N`, while geodesy-d
+   `UtmProjection!T` continues to expose the underlying bounded fixed-zone
+   Transverse Mercator operation.
+
+3. PROJ accepts ellipsoidal UTM parameterizations outside terrestrial
+   Earth-size ranges. geodesy-d deliberately applies an Earth-size safety
+   policy because its current coordinate types do not encode linear-unit
+   metadata while UTM false offsets are defined in metres.
+
+### UTM-C2 — numerical reference
+
+Reference implementation:
+
+~~~text
+PROJ cct 9.7.1
+~~~
+
+Validation sources:
+
+~~~text
+validation/utm_proj_crosscheck.d
+tools/validate-utm-proj.sh
+~~~
+
+Corpus dimensions:
+
+~~~text
+60 zones
+x 2 hemisphere conventions
+x 4 ellipsoids
+= 480 prepared projection configurations
+
+11 geographic cases per configuration
+3 public scalar types
+
+per scalar:
+  forward comparisons = 5280
+  reverse comparisons = 5280
+
+total numerical differential comparisons = 31680
+~~~
+
+Both DMD and LDC produced the same reported worst cases.
+
+Measured worst results:
+
+~~~text
+float:
+  forward = 0.94856211 m
+    WGS84, zone 45, south convention, lat=85, lon=96
+
+  reverse = 1.25987045 m
+    International1924, zone 6, south convention, lat=45, lon=-112
+
+double:
+  forward = 5.60730443e-09 m
+  reverse = 4.53028094e-09 m
+
+real:
+  forward = 5.03689695e-09 m
+  reverse = 4.53010267e-09 m
+~~~
+
+All comparisons remained inside their configured envelopes.
+
+During validation, an apparent approximately 2 m float discrepancy was
+traced to the validation oracle performing an additional float
+radians-to-degrees rounding step.
+
+The production projection was unchanged.
+
+The corrected oracle converts the stored public-scalar radians to double
+before converting to degrees, matching the value actually consumed by the
+generic Transverse Mercator kernel.
+
+Result:
+
+~~~text
+UTM-C1 PASS
+UTM-C2 PASS
+UTM-C  PASS
+~~~
 
 ## UTM-E result — API/runtime contract
 

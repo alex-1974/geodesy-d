@@ -81,6 +81,98 @@ The lower boundary is closed and the upper boundary is open.
 
 UPS is deliberately not part of this ADR.
 
+## Resolved semantic boundaries
+
+Independent comparison with GeographicLib and PROJ resolved several policy
+boundaries which are part of this ADR.
+
+### Automatic standard-zone policy
+
+Automatic standard UTM selection applies only to:
+
+~~~text
+-80 degrees <= latitude < 84 degrees
+~~~
+
+The lower boundary is closed and the upper boundary is open.
+
+Longitude is normalized to the half-open interval:
+
+~~~text
+[-180 degrees, 180 degrees)
+~~~
+
+Therefore `+180 degrees` canonicalizes to `-180 degrees` and automatic
+selection returns zone 1.
+
+Norway and Svalbard exception rules use their defined half-open endpoint
+policy and are part of automatic standard-zone selection.
+
+Mathematical latitude zero selects the northern hemisphere convention.
+
+This deliberately differs from GeographicLib for IEEE signed `-0.0`:
+GeographicLib observes the sign bit and may select the southern convention,
+whereas geodesy-d treats zero as the mathematical value zero.
+
+### Explicit prepared projection policy
+
+`UtmProjection!T` is a prepared fixed-zone Transverse Mercator operation.
+
+Explicitly selecting a zone does not reapply automatic standard-zone policy.
+
+In particular, prepared forward and reverse operations:
+
+- preserve the selected zone;
+- preserve the selected hemisphere/false-northing convention;
+- do not recompute a standard zone from the geographic result;
+- do not switch hemisphere from the sign of latitude;
+- do not reject a coordinate merely because the represented geographic
+  latitude lies outside `[-80, 84)`.
+
+The inherited bounded generic Transverse Mercator longitude-domain contract
+remains authoritative.
+
+The hemisphere value is therefore a coordinate-system convention, not a
+latitude classifier.
+
+A northern convention may be used south of the equator and a southern
+convention may be used north of the equator when explicitly requested.
+
+### Projected-coordinate envelope
+
+GeographicLib UTM/UPS applies additional legal easting/northing windows
+designed for closed UTM/UPS operation and related MGRS conventions.
+
+`UtmProjection!T` deliberately does not adopt those windows.
+
+This library layer is a fixed-zone projection wrapper, not a UTM/UPS or MGRS
+coordinate-envelope validator.
+
+Such constraints may be introduced later by a distinct standards/profile
+layer if required.
+
+### Ellipsoid and linear-unit policy
+
+UTM is not intrinsically WGS 84-specific.
+
+The current geodesy-d UTM layer nevertheless requires an ellipsoidal,
+terrestrial-sized reference ellipsoid inside its documented support profile.
+
+In particular, the Earth-size restriction is a library safety policy, not a
+normative UTM rule.
+
+The reason is that `Ellipsoid!T` currently stores the semi-major axis in an
+implicit linear unit while UTM false easting and false northing are fixed in
+metres.
+
+Rejecting obviously non-terrestrial axis magnitudes prevents silently
+combining kilometre-like or otherwise incompatible axis values with
+metre-defined UTM offsets.
+
+Sphere rejection and the flattening support limit likewise belong to the
+current geodesy-d UTM/TM support contract; they are not claims about the
+abstract definition of UTM.
+
 ## Decision
 
 Implement UTM as a thin, explicit policy layer over
