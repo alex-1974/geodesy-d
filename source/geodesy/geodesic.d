@@ -29,6 +29,10 @@ import geodesy.angle :
 import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
+import geodesy.internal.geodesic_series :
+    fillGeodesicA3x,
+    fillGeodesicC3x,
+    geodesicSeriesOrderFor;
 import geodesy.scalar :
     isFiniteGeodesyScalar,
     isGeodesyScalar;
@@ -258,6 +262,14 @@ private:
 
     W _a = W.nan;
     W _f = W.nan;
+    W _f1 = W.nan;
+    W _b = W.nan;
+    W _e2 = W.nan;
+    W _ep2 = W.nan;
+    W _n = W.nan;
+
+    W[8] _a3x;
+    W[28] _c3x;
 
 public:
     /** True when this solver represents the supported ellipsoid profile. */
@@ -270,7 +282,17 @@ public:
             && _a > cast(W) 0
             && isFiniteGeodesyScalar(_f)
             && _f >= cast(W) 0
-            && _f <= cast(W) 0.01;
+            && _f <= cast(W) 0.01
+            && isFiniteGeodesyScalar(_f1)
+            && _f1 > cast(W) 0
+            && isFiniteGeodesyScalar(_b)
+            && _b > cast(W) 0
+            && isFiniteGeodesyScalar(_e2)
+            && _e2 >= cast(W) 0
+            && isFiniteGeodesyScalar(_ep2)
+            && _ep2 >= cast(W) 0
+            && isFiniteGeodesyScalar(_n)
+            && _n >= cast(W) 0;
     }
 
 
@@ -311,6 +333,31 @@ public:
         result._ellipsoid = ellipsoid;
         result._a = cast(W) ellipsoid.semiMajorAxis;
         result._f = cast(W) ellipsoid.flattening;
+
+        result._f1 = cast(W) 1 - result._f;
+        result._b = result._a * result._f1;
+
+        result._e2 =
+            result._f
+            * (cast(W) 2 - result._f);
+
+        result._ep2 =
+            result._e2
+            / (result._f1 * result._f1);
+
+        result._n =
+            result._f
+            / (cast(W) 2 - result._f);
+
+        enum int order = geodesicSeriesOrderFor!T;
+
+        fillGeodesicA3x!(W, order)(
+            result._n,
+            result._a3x);
+
+        fillGeodesicC3x!(W, order)(
+            result._n,
+            result._c3x);
 
         return result.isValid;
     }
@@ -646,6 +693,18 @@ unittest
 
     assert(wgsSolver.isValid);
     assert(!wgsSolver.isSphere);
+
+    const edgeEllipsoid =
+        Ellipsoid!double.fromFlattening(
+            7_000_000.0,
+            0.01);
+
+    const edgeSolver =
+        Geodesic!double.fromEllipsoid(
+            edgeEllipsoid);
+
+    assert(edgeSolver.isValid);
+    assert(!edgeSolver.isSphere);
 
     assert(!wgsSolver.tryDirect(
         origin,
