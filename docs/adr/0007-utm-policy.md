@@ -1,6 +1,6 @@
 # ADR-0007: UTM as a policy layer over bounded Transverse Mercator
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-16
 - Applies to: Universal Transverse Mercator policy and coordinate tagging
 - Depends on: ADR-0006

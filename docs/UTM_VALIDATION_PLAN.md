@@ -1375,10 +1375,62 @@ UTM-B  parameterization and TM delegation     PASS
 UTM-C  independent differential validation    PASS
 UTM-D  boundary/reversibility properties      PASS
 UTM-E  scalar/API/runtime properties          PASS
-UTM-F  platform/compiler coverage             OPEN
+UTM-F  platform/compiler coverage             PASS
 ~~~
 
 ADR-0007 remains `Proposed` while any mandatory acceptance gate is open.
+
+## UTM-F result — platform/compiler coverage
+
+UTM-F validates the UTM implementation on the same multi-platform policy used
+for the accepted generic Transverse Mercator implementation.
+
+Workflow:
+
+~~~text
+.github/workflows/utm-platform-matrix.yml
+~~~
+
+GitHub Actions run:
+
+~~~text
+run id: 35215283571
+commit: 41ba338129626a41c4f4dc73ad91d64aabc00ce5
+~~~
+
+Mandatory matrix results:
+
+~~~text
+Linux x86_64   / LDC 1.41.0  PASS
+Linux AArch64  / LDC 1.41.0  PASS
+Windows x86_64 / LDC 1.41.0  PASS
+macOS AArch64  / LDC 1.41.0  PASS
+macOS x86_64   / LDC 1.41.0  PASS
+Linux x86_64   / DMD 2.111.0 PASS
+~~~
+
+Each mandatory platform executed:
+
+- library unit tests;
+- UTM zone and policy semantics;
+- UTM parameterization and generic-TM delegation;
+- UTM boundary and reversibility properties;
+- UTM API/runtime contract.
+
+Windows AArch64 / LDC 1.41.0 is intentionally informational and does not
+block acceptance because the LDC Windows/AArch64 target remains a younger
+toolchain path.
+
+Independent GeographicLib and PROJ reference gates are deliberately not
+repeated in the platform matrix. Their role is covered by UTM-C; UTM-F
+establishes portability of the standalone geodesy-d implementation without
+external geodesy runtime dependencies.
+
+Result:
+
+~~~text
+UTM-F PASS
+~~~
 
 ## Release interpretation
 
