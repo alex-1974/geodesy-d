@@ -3,14 +3,15 @@
  *
  * The implementation contract is defined by ADR-0008.
  *
- * This initial implementation slice establishes:
+ * The current implementation provides:
  *
  * - prepared ellipsoid state;
  * - public angular canonicalization semantics;
- * - the exact spherical direct problem.
+ * - an analytical spherical direct path;
+ * - the Karney series direct solution for supported oblate ellipsoids.
  *
- * The general oblate-ellipsoid direct and inverse kernels are added in
- * subsequent slices before this module is aggregate-exported by `geodesy`.
+ * The inverse kernel is added in a subsequent slice before this module is
+ * aggregate-exported by `geodesy`.
  */
 module geodesy.geodesic;
 
@@ -19,7 +20,9 @@ import std.math :
     asin,
     atan2,
     cos,
-    sin;
+    hypot,
+    sin,
+    sqrt;
 
 import geodesy.angle :
     Angle,
@@ -31,8 +34,14 @@ import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
+    fillGeodesicC1,
+    fillGeodesicC1p,
+    fillGeodesicC3,
     fillGeodesicC3x,
-    geodesicSeriesOrderFor;
+    geodesicA1m1,
+    geodesicA3,
+    geodesicSeriesOrderFor,
+    geodesicSinCosSeries;
 import geodesy.scalar :
     isFiniteGeodesyScalar,
     isGeodesyScalar;
@@ -247,10 +256,10 @@ public:
  * No Earth-size restriction applies. Linear geodesic values use the same
  * unit as the ellipsoid semi-major axis.
  *
- * This first production slice implements the direct operation only for the
- * exact spherical case. The module is intentionally not aggregate-exported
- * until the general ellipsoidal implementation and mandatory validation
- * gates are complete.
+ * The direct operation supports the exact sphere and the full initial
+ * oblate-ellipsoid profile. The module remains intentionally outside the
+ * aggregate export until the inverse solver and its validation gates are
+ * complete.
  */
 struct Geodesic(T)
 if (isGeodesyScalar!T)
@@ -270,6 +279,317 @@ private:
 
     W[8] _a3x;
     W[28] _c3x;
+
+
+    bool tryDirectEllipsoid(
+        const W latitude1,
+        const W longitude1,
+        const W azimuth1,
+        const W s12,
+        out GeodesicDirectResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        enum int order = geodesicSeriesOrderFor!T;
+
+        W sinPhi1;
+        W cosPhi1;
+        W sinAlpha1;
+        W cosAlpha1;
+
+        sinCosCanonicalAngle!W(
+            latitude1,
+            sinPhi1,
+            cosPhi1);
+
+        sinCosCanonicalAngle!W(
+            azimuth1,
+            sinAlpha1,
+            cosAlpha1);
+
+        if (!isFiniteGeodesyScalar(sinPhi1)
+            || !isFiniteGeodesyScalar(cosPhi1)
+            || !isFiniteGeodesyScalar(sinAlpha1)
+            || !isFiniteGeodesyScalar(cosAlpha1))
+            return false;
+
+        /*
+         * Reduced latitude beta1:
+         *
+         *     tan(beta1) = (1 - f) tan(phi1)
+         *
+         * Normalize explicitly.  At a pole retain a tiny positive
+         * cosine so sigma/omega quadrants remain well defined.
+         */
+        W sinBeta1 = _f1 * sinPhi1;
+        W cosBeta1 = cosPhi1;
+
+        const W betaNorm =
+            hypot(sinBeta1, cosBeta1);
+
+        if (!isFiniteGeodesyScalar(betaNorm)
+            || betaNorm == cast(W) 0)
+            return false;
+
+        sinBeta1 /= betaNorm;
+        cosBeta1 /= betaNorm;
+
+        const W tiny = sqrt(W.min_normal);
+
+        if (cosBeta1 < tiny)
+            cosBeta1 = tiny;
+
+        /*
+         * Clairaut constant:
+         *
+         *     sin(alpha0) = sin(alpha1) cos(beta1)
+         */
+        const W sinAlpha0 =
+            sinAlpha1 * cosBeta1;
+
+        const W cosAlpha0 =
+            hypot(
+                cosAlpha1,
+                sinAlpha1 * sinBeta1);
+
+        W sinSigma1 = sinBeta1;
+        W cosSigma1 =
+            sinBeta1 != cast(W) 0
+                || cosAlpha1 != cast(W) 0
+                ? cosBeta1 * cosAlpha1
+                : cast(W) 1;
+
+        const W sigmaNorm =
+            hypot(sinSigma1, cosSigma1);
+
+        if (!isFiniteGeodesyScalar(sigmaNorm)
+            || sigmaNorm == cast(W) 0)
+            return false;
+
+        sinSigma1 /= sigmaNorm;
+        cosSigma1 /= sigmaNorm;
+
+        /*
+         * omega1 need not be normalized independently.
+         */
+        const W sinOmega1 =
+            sinAlpha0 * sinBeta1;
+
+        const W cosOmega1 =
+            sinBeta1 != cast(W) 0
+                || cosAlpha1 != cast(W) 0
+                ? cosBeta1 * cosAlpha1
+                : cast(W) 1;
+
+        const W k2 =
+            cosAlpha0 * cosAlpha0 * _ep2;
+
+        const W root =
+            sqrt(cast(W) 1 + k2);
+
+        const W eps =
+            k2
+            / (
+                cast(W) 2
+                * (cast(W) 1 + root)
+                + k2);
+
+        if (!isFiniteGeodesyScalar(k2)
+            || !isFiniteGeodesyScalar(root)
+            || !isFiniteGeodesyScalar(eps))
+            return false;
+
+        const W a1m1 =
+            geodesicA1m1!(W, order)(eps);
+
+        W[9] c1;
+        W[9] c1p;
+
+        fillGeodesicC1!(W, order)(
+            eps,
+            c1);
+
+        fillGeodesicC1p!(W, order)(
+            eps,
+            c1p);
+
+        const W b11 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma1,
+                cosSigma1,
+                c1,
+                order);
+
+        const W sinB11 = sin(b11);
+        const W cosB11 = cos(b11);
+
+        /*
+         * tau1 = sigma1 + B1(sigma1)
+         */
+        const W sinTau1 =
+            sinSigma1 * cosB11
+            + cosSigma1 * sinB11;
+
+        const W cosTau1 =
+            cosSigma1 * cosB11
+            - sinSigma1 * sinB11;
+
+        const W denominator =
+            _b * (cast(W) 1 + a1m1);
+
+        if (!isFiniteGeodesyScalar(denominator)
+            || denominator == cast(W) 0)
+            return false;
+
+        const W tau12 = s12 / denominator;
+
+        if (!isFiniteGeodesyScalar(tau12))
+            return false;
+
+        const W sinTau12 = sin(tau12);
+        const W cosTau12 = cos(tau12);
+
+        const W b12 =
+            -geodesicSinCosSeries!W(
+                true,
+                sinTau1 * cosTau12
+                    + cosTau1 * sinTau12,
+                cosTau1 * cosTau12
+                    - sinTau1 * sinTau12,
+                c1p,
+                order);
+
+        /*
+         * Invert the distance series.  The support profile is
+         * 0 <= f <= 0.01, so GeographicLib's >0.01 Newton
+         * correction is deliberately unnecessary here.
+         */
+        const W sigma12 =
+            tau12 - (b12 - b11);
+
+        const W sinSigma12 = sin(sigma12);
+        const W cosSigma12 = cos(sigma12);
+
+        W sinSigma2 =
+            sinSigma1 * cosSigma12
+            + cosSigma1 * sinSigma12;
+
+        W cosSigma2 =
+            cosSigma1 * cosSigma12
+            - sinSigma1 * sinSigma12;
+
+        W sinBeta2 =
+            cosAlpha0 * sinSigma2;
+
+        W cosBeta2 =
+            hypot(
+                sinAlpha0,
+                cosAlpha0 * cosSigma2);
+
+        if (cosBeta2 == cast(W) 0)
+        {
+            cosBeta2 = tiny;
+            cosSigma2 = tiny;
+        }
+
+        const W sinAlpha2 = sinAlpha0;
+        const W cosAlpha2 =
+            cosAlpha0 * cosSigma2;
+
+        const W latitude2 =
+            atan2(
+                sinBeta2,
+                _f1 * cosBeta2);
+
+        /*
+         * Auxiliary-sphere longitude difference.
+         */
+        const W sinOmega2 =
+            sinAlpha0 * sinSigma2;
+
+        const W cosOmega2 =
+            cosSigma2;
+
+        const W omega12 =
+            atan2(
+                sinOmega2 * cosOmega1
+                    - cosOmega2 * sinOmega1,
+                cosOmega2 * cosOmega1
+                    + sinOmega2 * sinOmega1);
+
+        W[9] c3;
+
+        fillGeodesicC3!(W, order)(
+            eps,
+            _c3x,
+            c3);
+
+        const W a3 =
+            geodesicA3!(W, order)(
+                eps,
+                _a3x);
+
+        const W a3c =
+            -_f * sinAlpha0 * a3;
+
+        const W b31 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma1,
+                cosSigma1,
+                c3,
+                order - 1);
+
+        const W b32 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma2,
+                cosSigma2,
+                c3,
+                order - 1);
+
+        const W lambda12 =
+            omega12
+            + a3c
+                * (
+                    sigma12
+                    + (b32 - b31));
+
+        const W longitude2 =
+            canonicalAngleRadians(
+                longitude1 + lambda12);
+
+        const W finalAzimuth =
+            atan2(
+                sinAlpha2,
+                cosAlpha2);
+
+        if (!isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+            || !isFiniteGeodesyScalar(finalAzimuth))
+            return false;
+
+        GeographicCoordinate!T endpoint;
+
+        if (!makeGeographicCoordinate(
+                cast(T) latitude2,
+                cast(T) longitude2,
+                endpoint))
+            return false;
+
+        const T canonicalFinalAzimuth =
+            canonicalAngleRadians(
+                cast(T) finalAzimuth);
+
+        result =
+            GeodesicDirectResult!T.fromComponents(
+                endpoint,
+                angleFromRadiansUnchecked(
+                    canonicalFinalAzimuth));
+
+        return true;
+    }
+
 
 public:
     /** True when this solver represents the supported ellipsoid profile. */
@@ -381,9 +701,8 @@ public:
     /**
      * Solve the direct geodesic problem without throwing.
      *
-     * This initial slice implements only the exact spherical case.
-     * General oblate ellipsoids deliberately return false until the Karney
-     * direct kernel is added.
+     * The spherical case is analytical.  Supported oblate ellipsoids use
+     * the Karney distance-series formulation prepared by this solver.
      */
     bool tryDirect(
         const GeographicCoordinate!T start,
@@ -395,13 +714,6 @@ public:
         result = GeodesicDirectResult!T.init;
 
         if (!isValid || !isFiniteGeodesyScalar(distance))
-            return false;
-
-        /*
-         * This is deliberately temporary branch-local behavior.
-         * The module is not yet aggregate-exported.
-         */
-        if (!isSphere)
             return false;
 
         const W latitude1 =
@@ -451,6 +763,28 @@ public:
             return true;
         }
 
+        /*
+         * At an exact pole the spherical closed form has an atan2(0, 0)
+         * longitude degeneracy.  The supplied pole longitude is part of
+         * the local azimuth frame under GEO-A, so use the line
+         * formulation here.  Its positive-tiny reduced-latitude cosine
+         * preserves that frame consistently.
+         *
+         * Zero distance has already been handled above and therefore
+         * retains its distinct public semantics.
+         */
+        const W hp = halfPi!W;
+
+        if (!isSphere
+            || latitude1 == hp
+            || latitude1 == -hp)
+            return tryDirectEllipsoid(
+                latitude1,
+                longitude1,
+                azimuth1,
+                s12,
+                result);
+
         W delta = s12 / _a;
 
         if (!isFiniteGeodesyScalar(delta))
@@ -493,9 +827,20 @@ public:
 
         const W latitude2 = asin(sinPhi2);
 
+        /*
+         * Algebraically cancel the common cos(phi1) factor from the
+         * standard great-circle longitude formula.  This avoids severe
+         * cancellation in
+         *
+         *     cos(delta) - sin(phi1) * sin(phi2)
+         *
+         * near either pole.  Exact pole starts have already been routed
+         * through the line formulation above.
+         */
         const W deltaLongitude = atan2(
-            sinAlpha1 * sinDelta * cosPhi1,
-            cosDelta - sinPhi1 * sinPhi2);
+            sinAlpha1 * sinDelta,
+            cosPhi1 * cosDelta
+                - sinPhi1 * sinDelta * cosAlpha1);
 
         const W longitude2 =
             canonicalAngleRadians(
@@ -706,9 +1051,90 @@ unittest
     assert(edgeSolver.isValid);
     assert(!edgeSolver.isSphere);
 
-    assert(!wgsSolver.tryDirect(
+    /*
+     * The equator is an exact geodesic.  Its longitude increment is
+     * distance / a, independent of flattening.
+     */
+    assert(wgsSolver.tryDirect(
         origin,
         Angle!double.fromDegrees(90.0),
+        1_000_000.0,
+        result));
+
+    assert(result.position.latitude.radians == 0.0);
+    assert(
+        fabs(
+            result.position.longitude.radians
+                - 1_000_000.0 / 6_378_137.0)
+        < 2e-15);
+    assert(
+        fabs(result.finalAzimuth.degrees - 90.0)
+        < 1e-12);
+
+    /*
+     * Negative distance follows the same oriented geodesic backward.
+     */
+    assert(wgsSolver.tryDirect(
+        origin,
+        Angle!double.fromDegrees(90.0),
+        -1_000_000.0,
+        result));
+
+    assert(result.position.latitude.radians == 0.0);
+    assert(
+        fabs(
+            result.position.longitude.radians
+                + 1_000_000.0 / 6_378_137.0)
+        < 2e-15);
+    assert(
+        fabs(result.finalAzimuth.degrees - 90.0)
+        < 1e-12);
+
+    /*
+     * A north-going meridian retains its longitude and azimuth.
+     */
+    assert(wgsSolver.tryDirect(
+        origin,
+        Angle!double.fromDegrees(0.0),
+        1_000_000.0,
+        result));
+
+    assert(result.position.latitude.degrees > 0.0);
+    assert(result.position.longitude.radians == 0.0);
+    assert(result.finalAzimuth.radians == 0.0);
+
+    /*
+     * Canonically equivalent antimeridian starts remain equivalent on an
+     * ellipsoid too.
+     */
+    assert(wgsSolver.tryDirect(
+        eastAntimeridian,
+        Angle!double.fromDegrees(90.0),
+        50_000.0,
+        eastResult));
+
+    assert(wgsSolver.tryDirect(
+        westAntimeridian,
+        Angle!double.fromDegrees(90.0),
+        50_000.0,
+        westResult));
+
+    assert(
+        eastResult.position.latitude.radians
+            == westResult.position.latitude.radians);
+    assert(
+        eastResult.position.longitude.radians
+            == westResult.position.longitude.radians);
+    assert(
+        eastResult.finalAzimuth.radians
+            == westResult.finalAzimuth.radians);
+
+    /*
+     * The inclusive upper flattening bound is executable.
+     */
+    assert(edgeSolver.tryDirect(
+        origin,
+        Angle!double.fromDegrees(45.0),
         1_000_000.0,
         result));
 }
