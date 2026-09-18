@@ -398,6 +398,88 @@ f near 0.01
 Reference vectors must retain enough decimal precision that a wide `real`
 test is not silently reduced to binary64 reference quality.
 
+
+### GEO-B validation result
+
+GEO-B is PASS.
+
+The authoritative-reference gate is backed by three permanent validator
+families, all passing under both DMD and LDC on the validated Linux x86-64
+environment:
+
+1. `research/geodesics/validate_reference_vectors.py`
+   - 33 deterministic WGS84 rows selected from GeographicLib's official
+     500,000-row `GeodTest.dat` high-precision corpus;
+   - ordinary short/regional/intercontinental, near-antipodal, very-short,
+     near-polar, opposite-pole, nearly-meridional, nearly-equatorial, and
+     vertex-near cases;
+   - analytical sphere cases and published GeographicLib examples;
+   - decimal reference strings are parsed directly into D `real`.
+
+2. `research/geodesics/validate_f001_reference_vectors.py`
+   - 26 high-precision boundary-ellipsoid cases: 12 direct and 14 inverse;
+   - `a = 7000000`, `f = 0.01`;
+   - generated with GeographicLib 2.7 `GeodesicExact`,
+     `GEOGRAPHICLIB_PRECISION=5`, and `GEOGRAPHICLIB_DIGITS=512`;
+   - GeographicLib source pinned to commit
+     `475cbde5b8528a6294dfeb054bc177d90be9f7bb`.
+
+3. `research/geodesics/validate_regression_vectors.py`
+   - 11 explicit historical GeographicLib geodesic regressions;
+   - includes short-line, endpoint-at-pole, backwards-from-pole negative
+     distance, near-antipodal roundoff/symmetry, signed-zero, antimeridian,
+     NGS non-convergence, and directed-rounding cases;
+   - expected values regenerated with the same qualified 512-bit MPFR
+     `GeodesicExact` oracle.
+
+Observed worst errors across the three reference families remain far below the
+provisional `double`/wide-`real` ceilings:
+
+~~~text
+WGS84 official subset
+    double
+        max direct position angle       7.31102e-16 rad
+        max direct tangent angle        7.86885e-16 rad
+        max inverse normalized distance 1.00131e-15
+        max inverse closure angle       9.09301e-16 rad
+
+    real (x86-64, mant_dig == 64, order 7)
+        max direct position angle       5.50571e-19 rad
+        max direct tangent angle        6.22707e-19 rad
+        max inverse normalized distance 2.85191e-19
+        max inverse closure angle       4.32199e-19 rad
+
+f = 0.01 MPFR Exact subset
+    double
+        max direct position angle       4.62367e-16 rad
+        max direct tangent angle        5.24446e-16 rad
+        max inverse normalized distance 5.74411e-16
+        max inverse closure angle       7.41716e-16 rad
+
+    real (x86-64, mant_dig == 64, order 7)
+        max direct position angle       6.92241e-19 rad
+        max direct tangent angle        6.61719e-19 rad
+        max inverse normalized distance 5.19711e-19
+        max inverse closure angle       1.51813e-18 rad
+
+documented GeographicLib regressions
+    double
+        max direct position angle       4.41679e-17 rad
+        max direct tangent angle        1.73724e-16 rad
+        max inverse normalized distance 6.43962e-16
+        max inverse closure angle       7.03120e-16 rad
+
+    real (x86-64, mant_dig == 64, order 7)
+        max direct position angle       1.10010e-19 rad
+        max direct tangent angle        3.63652e-19 rad
+        max inverse normalized distance 2.85191e-19
+        max inverse closure angle       3.42068e-19 rad
+~~~
+
+The reference datasets and provenance files are committed, so normal GEO-B
+validation does not require GeographicLib or MPFR at runtime. MPFR is needed
+only to regenerate the synthetic high-precision reference data.
+
 ## GEO-C — GeographicLib Exact differential validation
 
 Purpose:
@@ -787,7 +869,7 @@ Current status:
 
 ~~~text
 GEO-A  contract and analytical semantics             PASS
-GEO-B  authoritative reference vectors               OPEN
+GEO-B  authoritative reference vectors               PASS
 GEO-C  GeographicLib Exact differential validation   PARTIAL
 GEO-D  PROJ interoperability                         OPEN
 GEO-E  adversarial inverse/convergence                PARTIAL
@@ -797,6 +879,11 @@ GEO-G  platform/compiler/real-width coverage          PARTIAL
 
 Status rationale:
 
+- GEO-B passes the authoritative-reference requirement with the official
+  GeographicLib WGS84 high-precision subset, a 512-bit MPFR
+  `GeodesicExact` corpus at `f = 0.01`, explicit documented GeographicLib
+  regression cases, analytical sphere cases, and published examples; all
+  permanent GEO-B validators pass under DMD and LDC.
 - GEO-C already has strong exact differential evidence, but the plan's complete
   scalar/ellipsoid corpus, including the larger final corpus, has not yet been
   executed in full.
@@ -813,14 +900,13 @@ ADR-0008 remains `Proposed` until every mandatory gate is `PASS`.
 
 ## Immediate next step
 
-The production direct/inverse slice and GEO-A contract are complete.
+The production direct/inverse slice, GEO-A contract, and GEO-B authoritative-reference gate are complete.
 
 The next acceptance work should close the remaining gates without changing the
 validated mathematical core unless new evidence exposes a defect:
 
-1. GEO-B authoritative/high-precision reference vectors;
-2. GEO-C completion for the full scalar/ellipsoid corpus;
-3. GEO-D PROJ interoperability;
-4. GEO-E instrumentation closure and targeted adversarial expansion;
-5. GEO-F deterministic runtime stress;
-6. GEO-G portable compiler/platform and `real`-width matrix.
+1. GEO-C completion for the full scalar/ellipsoid corpus;
+2. GEO-D PROJ interoperability;
+3. GEO-E instrumentation closure and targeted adversarial expansion;
+4. GEO-F deterministic runtime stress;
+5. GEO-G portable compiler/platform and `real`-width matrix.
