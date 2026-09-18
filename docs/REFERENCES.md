@@ -243,6 +243,70 @@ documentation. ADRs document why an implementation was selected; API/Ddoc
 documents what mathematical method the current implementation uses.
 
 
+## Ellipsoidal geodesics
+
+### Karney 2013
+
+Primary mathematical reference for the direct and inverse geodesic algorithms:
+
+Charles F. F. Karney,
+"Algorithms for geodesics",
+Journal of Geodesy 87, 43-55 (2013).
+
+DOI:
+
+```text
+10.1007/s00190-012-0578-z
+```
+
+The geodesy-d implementation follows the Karney algorithm family: the
+auxiliary-sphere formulation, series expansions, robust inverse starting
+strategy, and safeguarded Newton/bracketing solution.
+
+Vincenty's direct/inverse algorithms are not the production basis.
+
+### GeographicLib implementation reference
+
+GeographicLib is used in two distinct roles:
+
+1. `Geodesic` is an implementation/provenance reference for coefficient
+   structure, special cases, inverse starting logic, and numerical safeguards.
+2. `GeodesicExact` is the preferred independent differential oracle because it
+   solves the same geodesic problem with a numerically distinct
+   elliptic-integral formulation.
+
+The implementation/reference source pinned during this development slice was:
+
+```text
+GeographicLib 2.7
+source commit:
+475cbde5b8528a6294dfeb054bc177d90be9f7bb
+```
+
+The production library does not link to or require GeographicLib.
+
+Committed research validators include:
+
+```text
+research/geodesics/validate_direct.py
+research/geodesics/validate_inverse_solver.py
+research/geodesics/validate_inverse_dispatch.py
+research/geodesics/validate_public_inverse.py
+```
+
+The current exact-oracle evidence and remaining acceptance gates are recorded
+in `docs/GEODESIC_VALIDATION_PLAN.md`.
+
+### PROJ interoperability role
+
+PROJ is an interoperability reference for the geodesic surface, but its
+geodesic implementation shares Karney/GeographicLib lineage and therefore is
+not treated as a mathematically independent oracle.
+
+The dedicated GEO-D geodesic interoperability gate remains part of the
+acceptance program and must be recorded separately from GeographicLib Exact
+validation.
+
 ## Geocentric frame transformations
 
 - EPSG method 1031 — Geocentric translations (geocentric domain)

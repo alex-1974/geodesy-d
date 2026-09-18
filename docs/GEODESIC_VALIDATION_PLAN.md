@@ -1,6 +1,6 @@
 # Ellipsoidal geodesic validation plan
 
-- Status: Planned
+- Status: In progress
 - Branch: `research/geodesics`
 - Depends on: ADR-0008
 - Target: direct and inverse ellipsoidal geodesics
@@ -10,7 +10,7 @@
 This document defines the evidence required before the geodesy-d direct and
 inverse ellipsoidal geodesic implementation can be considered accepted.
 
-The intended implementation follows the Karney geodesic algorithm family.
+The implemented solver follows the Karney geodesic algorithm family.
 
 Validation must therefore demonstrate more than self-consistency.
 
@@ -159,7 +159,14 @@ stored float radians
 because that introduces an additional rounding step not present in the
 production operation.
 
-This rule is inherited from the Transverse Mercator validation experience.
+Exact public cardinal values are a special case. A public `float` value
+representing `0`, `+/-pi/2`, or `+/-pi` is interpreted according to the
+library's exact public cardinal semantics before conversion to the oracle.
+This prevents widening artifacts such as `float(pi)` from being mistaken for a
+longitude slightly beyond mathematical `pi`.
+
+This rule is inherited from the Transverse Mercator validation experience and
+was strengthened during public geodesic validation.
 
 ## Error metrics
 
@@ -352,8 +359,9 @@ line direction.
 For non-unique shortest geodesics, distance is normative and the returned
 azimuth pair identifies one deterministic valid shortest geodesic.
 
-GEO-A remains an implementation gate until the geodesy-d production solver
-demonstrates these semantics.
+GEO-A is PASS: the production solver and public API demonstrate these
+semantics under both DMD and LDC, including coincident pole/antimeridian aliases
+and canonical positive-zero results.
 
 ## GEO-B — authoritative reference vectors
 
@@ -716,37 +724,103 @@ After correctness acceptance, a benchmark may compare:
 
 CLI process startup must not be used as the numerical-kernel benchmark.
 
-## Acceptance matrix
+## Current validation evidence
 
-Initial status:
+The implementation-stage reference run on 2026-09-18 produced the following
+committed/reproducible evidence with GeographicLib 2.7 `GeodesicExact`:
 
 ~~~text
-GEO-A  contract and analytical semantics             OPEN (contract frozen)
-GEO-B  authoritative reference vectors               OPEN
-GEO-C  GeographicLib Exact differential validation   OPEN
-GEO-D  PROJ interoperability                         OPEN
-GEO-E  adversarial inverse/convergence                OPEN
-GEO-F  API/runtime contract                          OPEN
-GEO-G  platform/compiler/real-width coverage          OPEN
+direct differential validator
+    1526 deterministic double cases
+    max normalized endpoint error     7.2278158967109059e-15
+    max final azimuth error            2.9267092107734656e-14 rad
+
+inverse dispatcher validator
+    2352 deterministic cases
+    all five dispatcher classes exercised:
+        coincidence
+        meridian
+        equator
+        general short line
+        general Newton
+    max normalized distance error      4.992850577423269e-11
+    max exact-direct closure           2.7849784688640372e-15 rad
+    max solver iterations              5
+
+public inverse validator
+    2352 cases per public scalar
+    7056 total public-API cases
+
+    float
+        max normalized distance error  1.5689076873612841e-7
+        max exact-direct closure       1.5689076931157901e-7 rad
+        max Earth-fixed tangent error  2.0112855299844871e-7 rad
+
+    double
+        max normalized distance error  4.9988735373318605e-11
+        max exact-direct closure       2.4279387088187486e-15 rad
+        max Earth-fixed tangent error  2.4696224302280499e-15 rad
+
+    real (x86-64, mant_dig == 64, order 7)
+        max normalized distance error  4.9988735373318605e-11
+        max exact-direct closure       2.1801050582500446e-15 rad
+        max Earth-fixed tangent error  2.2206195148221764e-15 rad
 ~~~
+
+The public inverse validator uses Earth-fixed 3D tangent direction as the
+normative endpoint-direction metric. Raw local azimuth remains diagnostic
+because azimuth coordinates become ill-conditioned close to a geographic pole.
+
+The same reference run also passed:
+
+- all current library unit tests under DMD and LDC (`19 modules`);
+- an aggregate consumer compiled with DMD and LDC using only `import geodesy;`;
+- the public GEO-A cardinal and coincident-point semantics;
+- `git diff --check`.
+
+These results are strong implementation evidence but do not waive validation
+requirements that have not yet been executed.
+
+## Acceptance matrix
+
+Current status:
+
+~~~text
+GEO-A  contract and analytical semantics             PASS
+GEO-B  authoritative reference vectors               OPEN
+GEO-C  GeographicLib Exact differential validation   PARTIAL
+GEO-D  PROJ interoperability                         OPEN
+GEO-E  adversarial inverse/convergence                PARTIAL
+GEO-F  API/runtime contract                          PARTIAL
+GEO-G  platform/compiler/real-width coverage          PARTIAL
+~~~
+
+Status rationale:
+
+- GEO-C already has strong exact differential evidence, but the plan's complete
+  scalar/ellipsoid corpus, including the larger final corpus, has not yet been
+  executed in full.
+- GEO-E has exercised all dispatcher classes, difficult near-antipodal cases,
+  and bounded convergence with a measured maximum of five solver iterations;
+  the full instrumentation requirements remain to be closed.
+- GEO-F has the checked public API, attributes, invalid-state behavior, unit
+  tests, and aggregate compile contract; the specified large deterministic
+  runtime-stress workload remains open.
+- GEO-G currently has Linux x86-64 DMD/LDC evidence. The broader portable matrix
+  and additional `real` widths remain open.
 
 ADR-0008 remains `Proposed` until every mandatory gate is `PASS`.
 
 ## Immediate next step
 
-GEO-A pre-implementation semantic research is complete and its public
-contract is frozen in ADR-0008.
+The production direct/inverse slice and GEO-A contract are complete.
 
-The next step is to create the initial production `Geodesic!T` implementation
-and the executable GEO-A validation gate.
+The next acceptance work should close the remaining gates without changing the
+validated mathematical core unless new evidence exposes a defect:
 
-Implementation should begin with:
-
-- prepared ellipsoid state and coefficient generation;
-- canonical angular input/output helpers;
-- direct solution;
-- inverse special cases and robust general solution;
-- explicit test-only inverse iteration instrumentation.
-
-GEO-A becomes `PASS` only when the production implementation satisfies the
-frozen semantics under both DMD and LDC.
+1. GEO-B authoritative/high-precision reference vectors;
+2. GEO-C completion for the full scalar/ellipsoid corpus;
+3. GEO-D PROJ interoperability;
+4. GEO-E instrumentation closure and targeted adversarial expansion;
+5. GEO-F deterministic runtime stress;
+6. GEO-G portable compiler/platform and `real`-width matrix.

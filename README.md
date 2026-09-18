@@ -329,11 +329,47 @@ Coordinates do not embed CRS or datum metadata.
 
 `geodesy-d` therefore remains useful independently of a complete CRS engine.
 
+## Ellipsoidal geodesics
+
+`geodesy-d` now provides a prepared `Geodesic!T` solver for direct and inverse
+surface geodesics on spheres and supported oblate ellipsoids:
+
+~~~text
+a > 0
+0 <= f <= 0.01
+~~~
+
+The public surface includes:
+
+~~~d
+Geodesic!T
+GeodesicDirectResult!T
+GeodesicInverseResult!T
+
+tryDirect(...)
+tryInverse(...)
+~~~
+
+for `float`, `double`, and platform `real`.
+
+The implementation follows the Karney geodesic algorithm family and does not
+require GeographicLib or PROJ at runtime. GeographicLib 2.7
+`GeodesicExact` is used as an independent numerical oracle in the research
+validation harnesses.
+
+Public geodesic semantics canonicalize longitude and azimuth to `[-pi,+pi)`.
+Coincident inverse endpoints return canonical `(+0,+0,+0)` for distance,
+initial azimuth, and final azimuth.
+
+The first public slice intentionally does not include `GeodesicLine`, reduced
+length, geodesic scales, geodesic area, polygon accumulation, longitude
+unrolling, or prolate ellipsoids. See ADR-0008 and the geodesic validation plan
+for the exact support and acceptance contract.
+
 ## Future scope
 
-The next major mathematical capability under consideration is:
-
-- direct and inverse ellipsoidal geodesics.
+Extended geodesic operations remain future work and should be added only when
+a concrete consumer justifies them.
 
 Broader CRS discovery, authority databases, UPS/MGRS policy, transformation
 grids, and coordinate-reference metadata remain outside the current projection
@@ -375,6 +411,7 @@ docs/V0_1_READINESS.md
 docs/REFERENCES.md
 docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md
 docs/UTM_VALIDATION_PLAN.md
+docs/GEODESIC_VALIDATION_PLAN.md
 ~~~
 
 Operation-specific documentation is available under:

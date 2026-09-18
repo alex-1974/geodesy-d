@@ -59,8 +59,22 @@ EPSG 1033  Position Vector Helmert 7P
 EPSG 1032  Coordinate Frame Helmert 7P
 ```
 
-Projection mathematics and ellipsoidal geodesics remain later milestones and
-are not v0.1 release blockers.
+Projection mathematics and ellipsoidal geodesics were intentionally not
+v0.1 release blockers.
+
+## Current post-v0.1 implementation
+
+The current development line additionally contains:
+
+```text
+bounded generic Transverse Mercator
+UTM policy/projection layer
+direct and inverse ellipsoidal geodesics
+```
+
+The geodesic slice is publicly exported and implementation-complete. Its
+broader acceptance program remains in progress under ADR-0008 and
+`docs/GEODESIC_VALIDATION_PLAN.md`.
 
 ## Current and planned layering
 
@@ -80,10 +94,9 @@ source/geodesy/
 │   ├── geocentric_translation.d # EPSG 1031
 │   └── helmert.d                 # EPSG 1032 / 1033
 ├── projection/
-│   ├── transverse_mercator.d     # later
-│   └── utm.d                     # later
-└── geodesic/
-    └── ...                       # later
+│   ├── transverse_mercator.d     # implemented
+│   └── utm.d                     # implemented
+└── geodesic.d                    # implemented direct/inverse solver
 ```
 
 The layout is not an API commitment. Modules should be added only when a real implementation requires them.
@@ -151,6 +164,12 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/adr/0002-core-type-and-unit-model.md` — core type/unit model.
 - `docs/adr/0003-helmert-rotation-conventions.md` — EPSG 1032/1033 convention model.
 - `docs/adr/0004-invalid-ellipsoid-default-state.md` — `Ellipsoid.init` semantics.
+- `docs/adr/0006-transverse-mercator.md` — bounded Transverse Mercator.
+- `docs/adr/0007-utm-policy.md` — UTM policy.
+- `docs/adr/0008-ellipsoidal-geodesics.md` — direct/inverse geodesic contract.
+- `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` — Transverse Mercator validation.
+- `docs/UTM_VALIDATION_PLAN.md` — UTM validation.
+- `docs/GEODESIC_VALIDATION_PLAN.md` — geodesic acceptance program and evidence.
 - `docs/operations/geographic-geocentric.md` — EPSG 9602.
 - `docs/operations/geocentric-translation.md` — EPSG 1031.
 - `docs/operations/helmert-7p.md` — EPSG 1032/1033.

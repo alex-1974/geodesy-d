@@ -8,6 +8,18 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ### Added
 
+- Prepared Karney-family `Geodesic!T` solver for direct and inverse surface
+  geodesics on spheres and supported oblate ellipsoids (`0 <= f <= 0.01`).
+- Public `GeodesicDirectResult!T` and `GeodesicInverseResult!T` APIs for
+  `float`, `double`, and platform `real`, exported through `import geodesy;`.
+- Robust inverse handling for coincident, meridional, equatorial, short-line,
+  near-antipodal, antipodal, polar, and general Newton/bracketed cases.
+- Canonical public geodesic angle semantics using `[-pi,+pi)`, including
+  canonical positive zero and representation-independent coincident inverse
+  results.
+- GeographicLib 2.7 `GeodesicExact` differential research harnesses for direct,
+  canonical inverse-dispatch, and public inverse validation.
+- ADR-0008 and the ellipsoidal geodesic validation plan.
 - Bounded generic Transverse Mercator projection for `float`, `double`, and
   platform `real`.
 - Universal Transverse Mercator policy layer with strong zone and hemisphere

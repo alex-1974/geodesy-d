@@ -1,6 +1,6 @@
 # d-geospatial Roadmap
 
-**Status:** Foundation complete; `geodesy-d` architecture starting  
+**Status:** Foundation established; core libraries in active development
 **Scope:** Independent reusable D libraries only
 
 ## Objective
@@ -166,13 +166,21 @@ Subsequent scope, only after the core is verified:
 - [x] 7-parameter Helmert transformation
 - [x] bounded generic Transverse Mercator
 - [x] UTM policy and projection layer
-- [ ] direct/inverse ellipsoidal geodesics
+- [x] direct/inverse ellipsoidal geodesics
 
-Transverse Mercator and UTM are now independently validated and accepted.
+Transverse Mercator and UTM are independently validated and accepted.
 
-The next major `geodesy-d` mathematical slice is direct/inverse ellipsoidal
-geodesics. Its design should begin with authoritative algorithm and API
-research before implementation.
+The first direct/inverse geodesic implementation is complete and publicly
+exported. It uses the Karney algorithm family, supports `float`, `double`, and
+platform `real`, and covers spheres plus oblate ellipsoids with
+`0 <= f <= 0.01`.
+
+Implementation completion does not by itself close ADR-0008 acceptance.
+The remaining independent-reference, interoperability, runtime-stress, and
+multi-platform gates are tracked in `docs/GEODESIC_VALIDATION_PLAN.md`.
+
+Extended capabilities such as `GeodesicLine`, reduced length, geodesic scales,
+area, longitude unrolling, and polygon accumulation remain future work.
 
 ### Explicit boundary
 

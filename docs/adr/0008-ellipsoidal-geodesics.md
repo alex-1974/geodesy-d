@@ -2,6 +2,8 @@
 
 - Status: Proposed
 - Date: 2026-09-17
+- Implementation status: public direct/inverse slice complete as of 2026-09-18;
+  remaining acceptance gates are tracked in `docs/GEODESIC_VALIDATION_PLAN.md`
 - Applies to: direct and inverse geodesic calculations on a reference ellipsoid
 - Depends on: ADR-0001, ADR-0002
 - Supersedes: nothing
@@ -11,8 +13,8 @@
 `geodesy-d` now provides independently validated geodetic coordinate,
 reference-frame, Transverse Mercator, and UTM mathematics.
 
-The next mathematical capability is the solution of the classical
-ellipsoidal geodesic problems:
+The classical direct and inverse ellipsoidal geodesic problems are now
+implemented as a public `geodesy-d` capability:
 
 ~~~text
 direct problem
@@ -257,11 +259,12 @@ Public float inputs are first represented as float and are then promoted to
 double working precision. This is consistent with the accepted
 Transverse Mercator scalar policy.
 
-The validation program may tighten this mapping before ADR acceptance if
-measured evidence shows a better mapping.
+Validation has retained this mapping. In particular, x86-64 extended
+`real` with `mant_dig == 64` uses order 7, while public `float` is evaluated in
+double working precision.
 
-It must not reduce the documented accuracy contract without an explicit
-decision.
+The mapping must not be weakened without an explicit decision and renewed
+validation.
 
 ## Direct result
 
@@ -300,7 +303,7 @@ point 2 and its continuation at point 2.
 
 ## Operational API
 
-The expected checked surface is conceptually:
+The implemented checked surface is:
 
 ~~~d
 bool tryDirect(
@@ -317,17 +320,15 @@ bool tryInverse(
     const pure nothrow @safe @nogc;
 ~~~
 
-Throwing convenience operations should mirror these as:
+Throwing `direct(...)` and `inverse(...)` convenience operations are not
+part of the initial public geodesic surface.
 
-~~~d
-direct(...)
-inverse(...)
-~~~
+The prepared solver retains the existing throwing `fromEllipsoid(...)`
+construction convenience, while numerical direct/inverse operations are
+exposed through their checked `try...` forms. A later convenience layer may be
+added only if a concrete consumer justifies it.
 
-using `GeodesyValueException` for invalid solver state, non-finite scalar
-inputs, or a numerical failure that the checked API reports as `false`.
-
-Exact public naming is not accepted until GEO-A validates the API contract.
+GEO-A validated the public names and result layout implemented above.
 
 ## Direct-distance semantics
 
@@ -700,9 +701,10 @@ It also creates a foundation for later:
 
 Those capabilities remain separate future decisions.
 
-## Open items before acceptance
+## Acceptance status
 
-GEO-A research has resolved the initial edge-semantics questions:
+GEO-A research resolved the initial edge-semantics questions, and the production
+implementation now demonstrates those semantics through the public API:
 
 - coincident-point behavior;
 - non-unique antipodal behavior;
@@ -710,17 +712,20 @@ GEO-A research has resolved the initial edge-semantics questions:
 - azimuth canonicalization;
 - antimeridian canonicalization;
 - negative direct distance;
-- pole limiting semantics.
+- pole limiting semantics;
+- final public names and result-type layout.
 
-Remaining acceptance work is implementation and validation rather than
-unresolved mathematical policy.
+The direct and inverse implementation, inverse dispatch/canonicalization, public
+`float`/`double`/`real` API, and aggregate `import geodesy;` export are complete.
 
-Before ADR acceptance the project must still confirm:
+Independent GeographicLib 2.7 `GeodesicExact` differential harnesses also
+provide strong GEO-C and adversarial inverse evidence. However, implementation
+completion is intentionally distinct from ADR acceptance.
 
-1. final public names and result-type layout;
-2. measured scalar accuracy against the GEO-B/C/D corpora;
-3. bounded inverse iteration behavior under GEO-E;
-4. checked API attributes under GEO-F;
-5. compiler/platform behavior under GEO-G.
+The remaining acceptance program includes the gates still marked OPEN or
+PARTIAL in `docs/GEODESIC_VALIDATION_PLAN.md`, notably authoritative external
+reference vectors, PROJ interoperability, the full API/runtime stress contract,
+and the portable compiler/platform matrix.
 
-ADR-0008 remains `Proposed` until those gates pass.
+ADR-0008 therefore remains `Proposed` until every mandatory validation-plan
+gate is `PASS`.
