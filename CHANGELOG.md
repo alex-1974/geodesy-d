@@ -34,6 +34,17 @@ The project follows Semantic Versioning from the first tagged public release.
   Linux, Windows, and macOS with DMD and LDC where supported.
 - ADR-0006 for bounded Transverse Mercator and ADR-0007 for UTM policy.
 
+### Changed
+
+- Reconciled repository documentation with `d-geospatial-workspace` after the
+  workspace reorganization.
+- Replaced the inherited workspace roadmap and design-principles snapshot with
+  `geodesy-d`-specific project documents.
+- Clarified the package minimum D frontend as 2.111.0 independently of the
+  surrounding workspace toolchain.
+- Recorded current sibling-library boundaries without changing the
+  `geodesy-d` numerical or public-API scope.
+
 ## [0.1.1] - 2026-09-13
 
 ### Fixed

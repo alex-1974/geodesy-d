@@ -52,5 +52,8 @@ separate measured accuracy/performance justification.
 
 ## Compiler baseline
 
-The workspace baseline for v0.1 is D frontend **2.112.1**. DMD and LDC are
-required CI compilers; GDC is best effort.
+The package minimum is D frontend **2.111.0**, matching `dub.sdl`.
+DMD and LDC are required CI compiler families; GDC remains best effort.
+
+A newer compiler used by the surrounding workspace does not by itself raise
+the published `geodesy-d` minimum frontend requirement.

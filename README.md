@@ -432,7 +432,7 @@ The more detailed development and architecture overview remains in:
 docs/README.md
 ~~~
 
-When developed inside the wider `d-geospatial` workspace, shared workspace
+When developed inside `d-geospatial-workspace`, current shared workspace
 context is available locally under `.workspace/`.
 
 That directory is not part of the `geodesy-d` repository or published DUB

@@ -103,7 +103,12 @@ The layout is not an API commitment. Modules should be added only when a real im
 
 ## Design principles
 
-The workspace-wide `DESIGN_PRINCIPLES.md` applies unchanged. For `geodesy-d`, several consequences are especially important:
+The current shared workspace principles are available locally under
+`.workspace/DESIGN_PRINCIPLES.md`. The repository-level
+`DESIGN_PRINCIPLES.md` records the additional principles specific to
+`geodesy-d`.
+
+Several consequences are especially important:
 
 - semantic value types are preferred over naked numeric tuples;
 - materially different coordinate domains must not be implicitly interchangeable;
@@ -156,7 +161,7 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 
 ## Documentation
 
-- `docs/API.md` — v0.1 public API baseline.
+- `docs/API.md` — released public baseline plus current unreleased public surfaces.
 - `docs/VALIDATION.md` — compiler and independent PROJ validation policy.
 - `docs/V0_1_READINESS.md` — release gate checklist.
 - `docs/REFERENCES.md` — reference hierarchy and validation sources.
@@ -174,7 +179,9 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/operations/geocentric-translation.md` — EPSG 1031.
 - `docs/operations/helmert-7p.md` — EPSG 1032/1033.
 
-The workspace `ROADMAP.md` remains the authoritative project roadmap.
+The repository-level `ROADMAP.md` is authoritative for `geodesy-d`.
+The workspace-wide coordination roadmap is available locally as
+`.workspace/ROADMAP.md`.
 
 
 ## Release readiness

@@ -18,5 +18,5 @@ __dummy.html
 
 /patch/
 
-# Local d-geospatial workspace context
+# Local d-geospatial-workspace context
 .workspace/

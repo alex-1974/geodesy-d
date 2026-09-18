@@ -2,10 +2,15 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-09
+- **Amended:** 2026-09-19 — workspace naming and current sibling-library
+  status were reconciled after the workspace reorganization; the
+  `geodesy-d` scope decision itself is unchanged.
 
 ## Context
 
-The `d-geospatial` workspace separates general geometry, geodetic mathematics, geographic reference encodings, and full CRS infrastructure into independent libraries.
+`d-geospatial-workspace` coordinates independent libraries for general
+geometry, geodetic mathematics, geographic reference encodings, raster/image
+processing, OpenStreetMap data, and broader CRS infrastructure.
 
 An earlier pure-D prototype (`coordinate`) combined geographic coordinates, ECEF, UTM/MGRS, datum and ellipsoid catalogues, geocodes, parsing, and transformation algorithms in one package. That prototype demonstrated that useful geodetic mathematics can be implemented in D, but it also showed the cost of mixing several separate domains into one library.
 
