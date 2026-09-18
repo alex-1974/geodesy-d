@@ -321,7 +321,7 @@ It deliberately does not own:
 
 ~~~text
 general Euclidean geometry / polygon topology     -> geo-d
-MGRS / Geohash / Open Location Code              -> georef-d
+MGRS / Geohash / Open Location Code              -> locationref-d
 EPSG database / WKT / PROJJSON / grid resources  -> proj-d
 ~~~
 

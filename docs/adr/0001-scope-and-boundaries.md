@@ -41,11 +41,11 @@ other bounded geodetic operations
 `geodesy-d` does **not** own:
 
 - general-purpose Euclidean geometry, polygon topology, clipping, or spatial predicates (`geo-d`);
-- MGRS, Geohash, Open Location Code / Plus Codes, or similar compact/discrete geographic reference systems (`georef-d`);
+- MGRS, Geohash, Open Location Code / Plus Codes, or similar compact/discrete geographic reference systems (`locationref-d`);
 - EPSG/authority databases, CRS discovery, WKT/PROJJSON parsing, grid-resource management, or automatic transformation-path selection (`proj-d` / PROJ);
 - application, rendering, GUI, logging, or storage frameworks.
 
-UTM belongs to `geodesy-d` because it is a standardized application of map-projection mathematics. MGRS belongs to `georef-d` because it is a discrete reference/coding system built on UTM.
+UTM belongs to `geodesy-d` because it is a standardized application of map-projection mathematics. MGRS belongs to `locationref-d` because it is a discrete reference/coding system built on UTM.
 
 A projected coordinate may be adapted to a `geo-d` point, but the initial `geodesy-d` core does not depend on `geo-d`. Direct coupling may be introduced later only if real consumers demonstrate a clear benefit over explicit adapters.
 
@@ -58,7 +58,7 @@ A projected coordinate may be adapted to a `geo-d` point, but the initial `geode
 - the public API can model geodetic semantics explicitly instead of exposing raw numeric tuples;
 - the library remains small enough for independent numerical validation;
 - PROJ can still be used through `proj-d` when full CRS/authority/grid infrastructure is required;
-- `georef-d` gets a clean mathematical dependency for MGRS without pulling geocoding concerns into the geodetic core.
+- `locationref-d` gets a clean mathematical dependency for MGRS without pulling geocoding concerns into the geodetic core.
 
 ### Negative / trade-offs
 
@@ -83,7 +83,7 @@ Rejected. Authority databases, WKT/PROJJSON, transformation discovery, grids, an
 
 ### Keep MGRS, Geohash and Plus Codes inside geodesy-d
 
-Rejected because these are reference/coding systems rather than the mathematical geodetic core. They belong to `georef-d`.
+Rejected because these are reference/coding systems rather than the mathematical geodetic core. They belong to `locationref-d`.
 
 ## Follow-up
 

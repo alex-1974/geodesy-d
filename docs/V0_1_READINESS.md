@@ -79,7 +79,7 @@ Those belong to later milestones or other libraries.
 ### Architecture
 
 - [x] Pure-D bounded mathematical scope defined.
-- [x] `geo-d`, `geodesy-d`, `georef-d`, and `proj-d` responsibilities separated.
+- [x] `geo-d`, `geodesy-d`, `locationref-d`, and `proj-d` responsibilities separated.
 - [x] Core type/unit model accepted in ADR-0002.
 - [x] Helmert convention model accepted in ADR-0003.
 - [x] No mandatory dependency on PROJ or another native geospatial library.

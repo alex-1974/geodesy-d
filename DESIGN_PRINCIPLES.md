@@ -443,7 +443,7 @@ The workspace deliberately separates four related but distinct domains:
 
 - **`geo-d`** provides coordinate-system-agnostic Euclidean geometry. Its coordinates carry no implicit geographic, geodetic, CRS, unit or Earth-model semantics.
 - **`geodesy-d`** provides pure-D mathematical types and algorithms whose meaning depends on the Earth, a reference ellipsoid, geographic/geocentric coordinates, frame transformations or map projections.
-- **`georef-d`** provides compact or discrete geographic reference/coding systems such as MGRS, Geohash and Open Location Code.
+- **`locationref-d`** provides compact or discrete geographic reference/coding systems such as MGRS, Geohash and Open Location Code.
 - **`proj-d`** provides integration with PROJ for the broader CRS/authority ecosystem, including CRS definitions, operation selection, authority metadata, grids and related native infrastructure.
 
 Examples of intended ownership:
@@ -452,7 +452,7 @@ Examples of intended ownership:
 Point2 / Vector2 / Polygon         → geo-d
 Latitude / Longitude / Ellipsoid   → geodesy-d
 ECEF / Helmert / UTM               → geodesy-d
-MGRS / Geohash / Plus Code         → georef-d
+MGRS / Geohash / Plus Code         → locationref-d
 EPSG database / WKT / grid shifts  → proj-d
 ```
 

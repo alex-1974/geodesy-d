@@ -32,7 +32,7 @@ A new package should appear only when:
 - [x] Define compiler policy.
 - [x] Define licence strategy.
 - [x] Define minimum CI/quality expectations.
-- [x] Define the `geo-d` / `geodesy-d` / `georef-d` / `proj-d` responsibility boundary.
+- [x] Define the `geo-d` / `geodesy-d` / `locationref-d` / `proj-d` responsibility boundary.
 - [x] Finalise workspace `README.md`.
 - [x] Finalise workspace `ROADMAP.md`.
 
@@ -53,7 +53,7 @@ Repository / DUB       Module root
 
 geodesy-d              geodesy
 geo-d                  geo
-georef-d               georef
+locationref-d               locationref
 raster-d               raster
 spatial-d              spatial
 proj-d                  proj
@@ -195,7 +195,7 @@ It does **not** own:
 - transformation grid management;
 - MGRS, Geohash or Plus Code encodings.
 
-Those responsibilities belong respectively to `geo-d`, `proj-d` and `georef-d`.
+Those responsibilities belong respectively to `geo-d`, `proj-d` and `locationref-d`.
 
 ### Design questions
 
@@ -527,12 +527,12 @@ Once the lower layers have proven themselves in real use, higher-level geospatia
 Primary candidates:
 
 ```text
-georef-d
+locationref-d
 osm-d
 ```
 
 
-## `georef-d`
+## `locationref-d`
 
 ### Goal
 
@@ -550,7 +550,7 @@ MGRS may depend on the UTM implementation from `geodesy-d`. Geohash and Open Loc
 
 ### Important boundary
 
-`georef-d` encodes or decodes geographic locations/references. It does not provide:
+`locationref-d` encodes or decodes geographic locations/references. It does not provide:
 
 - address geocoding;
 - a CRS/authority database;
@@ -798,7 +798,7 @@ The current intended sequence is:
        ↓
 6. Add proj-d / gdal-d native integration
        ↓
-7. Add georef-d and other domain libraries when their dependencies are stable
+7. Add locationref-d and other domain libraries when their dependencies are stable
 ```
 
 The first active library is therefore `geodesy-d`. Its first implementation milestone is deliberately limited to angle/coordinate/ellipsoid types and geodetic ↔ geocentric conversion.
