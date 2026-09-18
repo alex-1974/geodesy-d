@@ -32,6 +32,8 @@ import geodesy.angle :
 import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
+import geodesy.internal.geodesic_inverse_dispatch :
+    geodesicInverseDispatch;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
     fillGeodesicC1,
@@ -88,6 +90,68 @@ if (isGeodesyScalar!T)
     return value == cast(T) 0
         ? cast(T) 0
         : value;
+}
+
+
+/**
+ * Lift a public latitude into the working scalar without losing exact
+ * cardinal semantics at 0 and the geographic poles.
+ *
+ * This matters for `float`: float(pi/2) widened to double is not exactly
+ * double(pi/2).
+ */
+private WorkingScalar!T workingLatitudeRadians(T)(
+    const T radians)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = WorkingScalar!T;
+
+    if (radians == cast(T) 0)
+        return cast(W) 0;
+
+    if (radians == halfPi!T)
+        return halfPi!W;
+
+    if (radians == -halfPi!T)
+        return -halfPi!W;
+
+    return cast(W) radians;
+}
+
+
+/**
+ * Canonicalize an arbitrary public angle in T first, then lift it into W
+ * while preserving exact cardinal values.
+ *
+ * Public scalar semantics own the representation boundary. In particular,
+ * float(+pi) and float(-pi) must denote the same canonical -pi meridian even
+ * though widening float(pi) to double no longer equals double(pi).
+ */
+private WorkingScalar!T workingCanonicalAngleRadians(T)(
+    const T radians)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = WorkingScalar!T;
+
+    const T canonical =
+        canonicalAngleRadians!T(
+            radians);
+
+    if (canonical == cast(T) 0)
+        return cast(W) 0;
+
+    if (canonical == halfPi!T)
+        return halfPi!W;
+
+    if (canonical == -halfPi!T)
+        return -halfPi!W;
+
+    if (canonical == -pi!T)
+        return -pi!W;
+
+    return cast(W) canonical;
 }
 
 
@@ -237,6 +301,71 @@ public:
         return _position;
     }
 
+    @property Angle!T finalAzimuth() const
+        pure nothrow @safe @nogc
+    {
+        return _finalAzimuth;
+    }
+}
+
+
+/**
+ * Result of an inverse geodesic operation.
+ *
+ * `initialAzimuth` is the forward azimuth at the start point.
+ * `finalAzimuth` is the forward azimuth of the same oriented geodesic at the
+ * endpoint, i.e. the heading obtained by continuing beyond the endpoint.
+ *
+ * For coincident endpoints GEO-A defines a unique canonical result:
+ *
+ *     distance       = +0
+ *     initialAzimuth = +0
+ *     finalAzimuth   = +0
+ */
+struct GeodesicInverseResult(T)
+if (isGeodesyScalar!T)
+{
+private:
+    T _distance = 0;
+    Angle!T _initialAzimuth;
+    Angle!T _finalAzimuth;
+
+    static GeodesicInverseResult fromComponents(
+        const T distance,
+        const Angle!T initialAzimuth,
+        const Angle!T finalAzimuth)
+        pure nothrow @safe @nogc
+    {
+        GeodesicInverseResult result;
+        result._distance = distance;
+        result._initialAzimuth = initialAzimuth;
+        result._finalAzimuth = finalAzimuth;
+        return result;
+    }
+
+public:
+    /**
+     * Shortest geodesic distance in the same linear unit as the ellipsoid
+     * semi-major axis.
+     */
+    @property T distance() const
+        pure nothrow @safe @nogc
+    {
+        return _distance;
+    }
+
+    /** Forward azimuth at the start point, canonicalized to [-pi,+pi). */
+    @property Angle!T initialAzimuth() const
+        pure nothrow @safe @nogc
+    {
+        return _initialAzimuth;
+    }
+
+    /**
+     * Forward azimuth at the endpoint, canonicalized to [-pi,+pi).
+     *
+     * This is not the back azimuth.
+     */
     @property Angle!T finalAzimuth() const
         pure nothrow @safe @nogc
     {
@@ -717,15 +846,16 @@ public:
             return false;
 
         const W latitude1 =
-            canonicalZero(cast(W) start.latitude.radians);
+            workingLatitudeRadians!T(
+                start.latitude.radians);
 
         const W longitude1 =
-            canonicalAngleRadians(
-                cast(W) start.longitude.radians);
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
 
         const W azimuth1 =
-            canonicalAngleRadians(
-                cast(W) initialAzimuth.radians);
+            workingCanonicalAngleRadians!T(
+                initialAzimuth.radians);
 
         const W s12 = cast(W) distance;
 
@@ -876,6 +1006,103 @@ public:
                 endpoint,
                 angleFromRadiansUnchecked(
                     canonicalFinalAzimuth));
+
+        return true;
+    }
+
+
+    /**
+     * Solve the inverse geodesic problem without throwing.
+     *
+     * Returns the shortest geodesic distance and the forward azimuth at each
+     * endpoint. All public azimuths use GEO-A's canonical [-pi,+pi)
+     * representation.
+     *
+     * Coincident endpoints return the unique canonical result (+0,+0,+0).
+     */
+    bool tryInverse(
+        const GeographicCoordinate!T start,
+        const GeographicCoordinate!T end,
+        out GeodesicInverseResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result =
+            GeodesicInverseResult!T.init;
+
+        if (!isValid)
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W latitude2 =
+            workingLatitudeRadians!T(
+                end.latitude.radians);
+
+        const W longitude2 =
+            workingCanonicalAngleRadians!T(
+                end.longitude.radians);
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+        )
+            return false;
+
+        enum int order =
+            geodesicSeriesOrderFor!T;
+
+        const inverse =
+            geodesicInverseDispatch!(
+                W,
+                order)(
+                    _a,
+                    _f,
+                    _f1,
+                    _b,
+                    _ep2,
+                    _n,
+                    _a3x,
+                    _c3x,
+                    latitude1,
+                    longitude1,
+                    latitude2,
+                    longitude2);
+
+        const T distance =
+            canonicalZero(
+                cast(T) inverse.distance);
+
+        const T initialAzimuth =
+            canonicalAngleRadians(
+                cast(T) inverse.initialAzimuth);
+
+        const T finalAzimuth =
+            canonicalAngleRadians(
+                cast(T) inverse.finalAzimuth);
+
+        if (
+            !isFiniteGeodesyScalar(distance)
+            || distance < cast(T) 0
+            || !isFiniteGeodesyScalar(initialAzimuth)
+            || !isFiniteGeodesyScalar(finalAzimuth)
+        )
+            return false;
+
+        result =
+            GeodesicInverseResult!T.fromComponents(
+                distance,
+                angleFromRadiansUnchecked(
+                    initialAzimuth),
+                angleFromRadiansUnchecked(
+                    finalAzimuth));
 
         return true;
     }
@@ -1137,4 +1364,324 @@ unittest
         Angle!double.fromDegrees(45.0),
         1_000_000.0,
         result));
+}
+
+
+unittest
+{
+    import std.math :
+        PI,
+        fabs,
+        signbit;
+    import std.meta : AliasSeq;
+
+    /*
+     * Public inverse API: representative WGS84 path.
+     */
+    const wgs84 =
+        Ellipsoid!double.fromFlattening(
+            6_378_137.0,
+            1.0 / 298.257223563);
+
+    const solver =
+        Geodesic!double.fromEllipsoid(wgs84);
+
+    const vienna =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+
+    const newYork =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(40.7128),
+            Longitude!double.fromDegrees(-74.0060));
+
+    GeodesicInverseResult!double inverse;
+
+    assert(
+        solver.tryInverse(
+            vienna,
+            newYork,
+            inverse));
+
+    assert(inverse.distance > 6_000_000.0);
+    assert(inverse.distance < 7_000_000.0);
+
+    assert(
+        inverse.initialAzimuth.radians
+            >= -cast(double) PI
+        && inverse.initialAzimuth.radians
+            < cast(double) PI);
+
+    assert(
+        inverse.finalAzimuth.radians
+            >= -cast(double) PI
+        && inverse.finalAzimuth.radians
+            < cast(double) PI);
+
+    /*
+     * Direct/inverse closure through the public APIs.
+     */
+    GeodesicDirectResult!double direct;
+
+    assert(
+        solver.tryDirect(
+            vienna,
+            inverse.initialAzimuth,
+            inverse.distance,
+            direct));
+
+    assert(
+        fabs(
+            direct.position.latitude.radians
+            - newYork.latitude.radians)
+        < 2e-13);
+
+    double longitudeError =
+        direct.position.longitude.radians
+        - newYork.longitude.radians;
+
+    if (longitudeError >= cast(double) PI)
+        longitudeError -= cast(double) 2 * PI;
+    else if (longitudeError < -cast(double) PI)
+        longitudeError += cast(double) 2 * PI;
+
+    assert(
+        fabs(longitudeError)
+        < 2e-13);
+
+    assert(
+        fabs(
+            canonicalAngleRadians(
+                direct.finalAzimuth.radians
+                - inverse.finalAzimuth.radians))
+        < 2e-13);
+
+    /*
+     * GEO-A coincidence: all outputs are canonical positive zero.
+     */
+    GeodesicInverseResult!double coincident;
+
+    assert(
+        solver.tryInverse(
+            vienna,
+            vienna,
+            coincident));
+
+    assert(coincident.distance == 0.0);
+    assert(coincident.initialAzimuth.radians == 0.0);
+    assert(coincident.finalAzimuth.radians == 0.0);
+
+    assert(!signbit(coincident.distance));
+    assert(!signbit(coincident.initialAzimuth.radians));
+    assert(!signbit(coincident.finalAzimuth.radians));
+
+    /*
+     * +pi and -pi are the same public start/end meridian.
+     */
+    const eastAntimeridian =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(20.0),
+            Longitude!double.fromDegrees(180.0));
+
+    const westAntimeridian =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(20.0),
+            Longitude!double.fromDegrees(-180.0));
+
+    GeodesicInverseResult!double antimeridianCoincidence;
+
+    assert(
+        solver.tryInverse(
+            eastAntimeridian,
+            westAntimeridian,
+            antimeridianCoincidence));
+
+    assert(antimeridianCoincidence.distance == 0.0);
+    assert(antimeridianCoincidence.initialAzimuth.radians == 0.0);
+    assert(antimeridianCoincidence.finalAzimuth.radians == 0.0);
+
+    /*
+     * Public float cardinal semantics survive widening to the double working
+     * scalar: +/-180 degrees are the same meridian.
+     */
+    {
+        const floatSolver =
+            Geodesic!float.fromEllipsoid(
+                Ellipsoid!float.sphere(
+                    6_371_000.0f));
+
+        const east =
+            GeographicCoordinate!float.fromComponents(
+                Latitude!float.fromDegrees(20.0f),
+                Longitude!float.fromDegrees(180.0f));
+
+        const west =
+            GeographicCoordinate!float.fromComponents(
+                Latitude!float.fromDegrees(20.0f),
+                Longitude!float.fromDegrees(-180.0f));
+
+        GeodesicInverseResult!float sameMeridian;
+
+        assert(
+            floatSolver.tryInverse(
+                east,
+                west,
+                sameMeridian));
+
+        assert(sameMeridian.distance == 0.0f);
+        assert(sameMeridian.initialAzimuth.radians == 0.0f);
+        assert(sameMeridian.finalAzimuth.radians == 0.0f);
+
+        const northPoleEast =
+            GeographicCoordinate!float.fromComponents(
+                Latitude!float.fromDegrees(90.0f),
+                Longitude!float.fromDegrees(45.0f));
+
+        const northPoleWest =
+            GeographicCoordinate!float.fromComponents(
+                Latitude!float.fromDegrees(90.0f),
+                Longitude!float.fromDegrees(-135.0f));
+
+        GeodesicInverseResult!float samePole;
+
+        assert(
+            floatSolver.tryInverse(
+                northPoleEast,
+                northPoleWest,
+                samePole));
+
+        assert(samePole.distance == 0.0f);
+        assert(samePole.initialAzimuth.radians == 0.0f);
+        assert(samePole.finalAzimuth.radians == 0.0f);
+
+        GeodesicDirectResult!float poleDirect;
+
+        assert(
+            floatSolver.tryDirect(
+                northPoleEast,
+                Angle!float.fromDegrees(0.0f),
+                1000.0f,
+                poleDirect));
+
+        assert(
+            isFiniteGeodesyScalar(
+                poleDirect.position.latitude.radians));
+
+        assert(
+            isFiniteGeodesyScalar(
+                poleDirect.position.longitude.radians));
+
+        assert(
+            isFiniteGeodesyScalar(
+                poleDirect.finalAzimuth.radians));
+    }
+
+    /*
+     * Sphere equator: exact quarter circumference and eastward azimuth.
+     */
+    const sphereSolver =
+        Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.sphere(
+                6_371_000.0));
+
+    const equator0 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(0.0));
+
+    const equator90 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(90.0));
+
+    GeodesicInverseResult!double equator;
+
+    assert(
+        sphereSolver.tryInverse(
+            equator0,
+            equator90,
+            equator));
+
+    assert(
+        fabs(
+            equator.distance
+            - 6_371_000.0
+                * cast(double) PI
+                / 2.0)
+        < 1e-8);
+
+    assert(
+        fabs(
+            equator.initialAzimuth.radians
+            - cast(double) PI / 2.0)
+        < 1e-15);
+
+    assert(
+        fabs(
+            equator.finalAzimuth.radians
+            - cast(double) PI / 2.0)
+        < 1e-15);
+
+    /*
+     * Invalid prepared solver follows tryDirect's false/result-init pattern.
+     */
+    GeodesicInverseResult!double invalidResult;
+
+    assert(
+        !Geodesic!double.init.tryInverse(
+            vienna,
+            newYork,
+            invalidResult));
+
+    assert(invalidResult.distance == 0.0);
+    assert(invalidResult.initialAzimuth.radians == 0.0);
+    assert(invalidResult.finalAzimuth.radians == 0.0);
+
+    /*
+     * Instantiate the public API for every supported scalar family.
+     */
+    static foreach (
+        Scalar;
+        AliasSeq!(float, double, real))
+    {
+        {
+            const ellipsoid =
+                Ellipsoid!Scalar.fromFlattening(
+                    cast(Scalar) 6_378_137.0,
+                    cast(Scalar) (
+                        1.0 / 298.257223563
+                    ));
+
+            const typedSolver =
+                Geodesic!Scalar.fromEllipsoid(
+                    ellipsoid);
+
+            const start =
+                GeographicCoordinate!Scalar.fromComponents(
+                    Latitude!Scalar.fromDegrees(
+                        cast(Scalar) -30),
+                    Longitude!Scalar.fromDegrees(
+                        cast(Scalar) 15));
+
+            const end =
+                GeographicCoordinate!Scalar.fromComponents(
+                    Latitude!Scalar.fromDegrees(
+                        cast(Scalar) 42),
+                    Longitude!Scalar.fromDegrees(
+                        cast(Scalar) 120));
+
+            GeodesicInverseResult!Scalar typedResult;
+
+            assert(
+                typedSolver.tryInverse(
+                    start,
+                    end,
+                    typedResult));
+
+            assert(
+                typedResult.distance
+                    > cast(Scalar) 0);
+        }
+    }
 }
