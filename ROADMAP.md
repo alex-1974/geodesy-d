@@ -25,13 +25,13 @@ The released baseline provides:
 The current `main` branch additionally contains the accepted but unreleased:
 
 - bounded generic Transverse Mercator implementation;
-- UTM policy and projection layer.
+- UTM policy and projection layer;
+- first public direct/inverse ellipsoidal geodesic slice.
 
-The current `research/geodesics` development branch additionally contains the
-first public direct/inverse ellipsoidal geodesic slice.
-
-That geodesic implementation is code-complete for its current first-slice API,
-and the technical acceptance program defined by ADR-0008 is now complete.
+The geodesic implementation is code-complete for its current first-slice API,
+and the technical acceptance program defined by ADR-0008 is complete. PR #10
+integrated the accepted slice into `main`; PR #11 subsequently synchronized
+the D language-practice documentation and public API compatibility contracts.
 
 ADR-0008 is now:
 
@@ -66,12 +66,13 @@ correctness, numerical, semantic, API, or performance defect.
 
 ## Immediate sequence
 
-The geodesic qualification gates and ADR-0008 acceptance are complete.
+The geodesic qualification gates, ADR-0008 acceptance, and integration into
+`main` are complete.
 
 Continue in this order:
 
-1. treat integration into `main` and release planning as explicit project
-   decisions rather than automatic consequences of validation;
+1. treat release planning as an explicit project decision rather than an
+   automatic consequence of validation or integration;
 2. preserve the accepted direct/inverse semantics unless new correctness,
    numerical, API, or performance evidence justifies a change;
 3. do not add deferred geodesic functionality without a concrete consumer or
