@@ -717,6 +717,92 @@ Acceptance requires:
 The final production iteration limit must be justified by observed evidence
 plus explicit safety margin.
 
+### GEO-E acceptance result
+
+GEO-E is **PASS**.
+
+The production inverse solver now exposes internal validation diagnostics for
+start classification, dispatcher classification, Newton iteration count,
+bracket-midpoint safeguarding, and explicit convergence status. These
+diagnostics do not change the public geodesic API.
+
+The accepted deterministic adversarial corpus uses seed `0x47454F45`, six
+profiles, all three public scalar models, and 2000 cases per required
+adversarial class. The resulting population is 16007 cases per scalar/profile,
+or 288126 cases per compiler. Every payload is executed twice identically.
+
+DMD and LDC produced identical global path coverage and identical observed
+solver maxima. The accepted full run directly exercised:
+
+~~~text
+dispatcher:
+    coincidence       6684
+    meridian         14742
+    equator             18
+    generalShort     11852
+    generalNewton   254830
+
+start:
+    none              21444
+    shortLine         11852
+    spherical        206849
+    antipodal         24322
+    antipodalAstroid  23659
+~~~
+
+The worst accepted convergence behavior was:
+
+~~~text
+max solver iterations:       12
+max bracket midpoint count:  10
+non-convergence:              0
+deterministic mismatches:     0
+~~~
+
+The same large adversarial corpus was then compared directly against
+`GeographicLib::GeodesicExact`. There are 288126 exact-oracle comparisons per
+compiler and 576252 across DMD + LDC.
+
+Accepted global maxima:
+
+~~~text
+normalized inverse distance error
+    3.1478910906506436e-15
+
+exact-direct endpoint closure angle
+    3.0324792329808581e-15 rad
+
+well-conditioned final forward azimuth error
+    1.6651835466063858e-10 rad
+~~~
+
+The production limits remain unchanged:
+
+~~~text
+maxNewtonIterations = 20
+maxIterations = 20 + W.mant_dig + 10
+~~~
+
+The observed maximum of 12 iterations stays below the primary Newton window of
+20; the mantissa-dependent total bound retains an additional defensive margin
+for safeguarded fallback.
+
+Accepted evidence:
+
+~~~text
+research/geodesics/data/geoe_acceptance_20260919T092706Z.log
+SHA-256:
+9c2c714bf613f301201d5c74302699e26718a6e7a12c48a1287af7133c261aad
+
+research/geodesics/data/geoe_exact_acceptance_20260919T094714Z.log
+SHA-256:
+f67ca368e02b9afc73c1ff88bb24b0a21d4f84b3683792cd243db71231454883
+
+research/geodesics/data/GEO_E_PROVENANCE.md
+~~~
+
+The exact-oracle acceptance timestamp is `20260919T094714Z`.
+
 ## GEO-F — API and runtime contract
 
 Purpose:
@@ -962,7 +1048,7 @@ GEO-A  contract and analytical semantics             PASS
 GEO-B  authoritative reference vectors               PASS
 GEO-C  GeographicLib Exact differential validation   PASS
 GEO-D  PROJ interoperability                         PASS
-GEO-E  adversarial inverse/convergence                PARTIAL
+GEO-E  adversarial inverse/convergence                PASS
 GEO-F  API/runtime contract                          PARTIAL
 GEO-G  platform/compiler/real-width coverage          PARTIAL
 ~~~
@@ -974,12 +1060,12 @@ Status rationale:
   `GeodesicExact` corpus at `f = 0.01`, explicit documented GeographicLib
   regression cases, analytical sphere cases, and published examples; all
   permanent GEO-B validators pass under DMD and LDC.
-- GEO-C already has strong exact differential evidence, but the plan's complete
-  scalar/ellipsoid corpus, including the larger final corpus, has not yet been
-  executed in full.
-- GEO-E has exercised all dispatcher classes, difficult near-antipodal cases,
-  and bounded convergence with a measured maximum of five solver iterations;
-  the full instrumentation requirements remain to be closed.
+- GEO-C passes the accepted Exact/MPFR differential gate.
+- GEO-D passes the PROJ public-API interoperability gate.
+- GEO-E passes the adversarial/convergence gate with explicit internal
+  instrumentation, direct bracket-midpoint observations, zero unexpected
+  non-convergence, deterministic repeat behavior, and identical-corpus
+  `GeographicLib::GeodesicExact` agreement.
 - GEO-F has the checked public API, attributes, invalid-state behavior, unit
   tests, and aggregate compile contract; the specified large deterministic
   runtime-stress workload remains open.
@@ -990,13 +1076,12 @@ ADR-0008 remains `Proposed` until every mandatory gate is `PASS`.
 
 ## Immediate next step
 
-The production direct/inverse slice, GEO-A contract, and GEO-B authoritative-reference gate are complete.
+GEO-A through GEO-E are complete.
 
-The next acceptance work should close the remaining gates without changing the
-validated mathematical core unless new evidence exposes a defect:
+The remaining mandatory work should proceed without changing the validated
+mathematical core unless new evidence exposes a defect:
 
-1. GEO-C completion for the full scalar/ellipsoid corpus;
-2. GEO-D PROJ interoperability;
-3. GEO-E instrumentation closure and targeted adversarial expansion;
-4. GEO-F deterministic runtime stress;
-5. GEO-G portable compiler/platform and `real`-width matrix.
+1. GEO-F deterministic runtime/API stress and allocation/attribute checks;
+2. GEO-G portable compiler/platform and `real`-width coverage;
+3. only after every mandatory gate is PASS, decide whether ADR-0008 may move
+   from `Proposed` to `Accepted`.

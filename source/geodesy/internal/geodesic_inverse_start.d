@@ -149,6 +149,21 @@ W geodesicAstroid(W)(
 }
 
 
+/**
+ * Internal initial-estimate path selected by the inverse-start routine.
+ *
+ * This is diagnostic state for validation; it is not public API.
+ */
+enum GeodesicInverseStartKind : ubyte
+{
+    none,
+    shortLine,
+    spherical,
+    antipodal,
+    antipodalAstroid,
+}
+
+
 struct GeodesicInverseStartResult(W)
 {
     /**
@@ -170,6 +185,8 @@ struct GeodesicInverseStartResult(W)
      * Mean dn approximation used by the completed short-line path.
      */
     W dnm;
+
+    GeodesicInverseStartKind kind;
 
     @property bool needsNewton() const
         pure nothrow @safe @nogc
@@ -261,6 +278,9 @@ GeodesicInverseStartResult!W geodesicInverseStart(
     W cosOmega12;
 
     W dnm = zero;
+
+    bool usedAntipodalStart = false;
+    bool usedAstroidStart = false;
 
     if (shortLine)
     {
@@ -367,6 +387,8 @@ GeodesicInverseStartResult!W geodesicInverseStart(
     }
     else
     {
+        usedAntipodalStart = true;
+
         const W lambda12x =
             atan2(
                 -sinLambda12,
@@ -428,6 +450,8 @@ GeodesicInverseStartResult!W geodesicInverseStart(
         }
         else
         {
+            usedAstroidStart = true;
+
             const W k =
                 geodesicAstroid(
                     x,
@@ -472,13 +496,27 @@ GeodesicInverseStartResult!W geodesicInverseStart(
         cosAlpha1 = zero;
     }
 
+    const GeodesicInverseStartKind kind =
+        sigma12 >= zero
+            ? GeodesicInverseStartKind.shortLine
+            : (
+                usedAstroidStart
+                    ? GeodesicInverseStartKind.antipodalAstroid
+                    : (
+                        usedAntipodalStart
+                            ? GeodesicInverseStartKind.antipodal
+                            : GeodesicInverseStartKind.spherical
+                    )
+            );
+
     return GeodesicInverseStartResult!W(
         sigma12,
         sinAlpha1,
         cosAlpha1,
         sinAlpha2,
         cosAlpha2,
-        dnm);
+        dnm,
+        kind);
 }
 
 

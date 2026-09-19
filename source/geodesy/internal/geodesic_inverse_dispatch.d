@@ -14,6 +14,9 @@
  */
 module geodesy.internal.geodesic_inverse_dispatch;
 
+import geodesy.internal.geodesic_inverse_start :
+    GeodesicInverseStartKind;
+
 import std.math :
     PI,
     atan2,
@@ -57,6 +60,12 @@ struct GeodesicInverseDispatchResult(W)
     uint iterations;
 
     GeodesicInverseDispatchKind kind;
+
+    GeodesicInverseStartKind startKind;
+
+    uint bracketMidpointCount;
+
+    bool converged;
 }
 
 
@@ -691,6 +700,15 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     GeodesicInverseDispatchKind kind =
         GeodesicInverseDispatchKind.meridian;
 
+    GeodesicInverseStartKind startKind =
+        GeodesicInverseStartKind.none;
+
+    uint bracketMidpointCount =
+        0;
+
+    bool converged =
+        true;
+
     bool meridian =
         latitude1 == -hp
         || sinLongitude12 == zero;
@@ -877,6 +895,15 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         iterations =
             general.iterations;
 
+        startKind =
+            general.startKind;
+
+        bracketMidpointCount =
+            general.bracketMidpointCount;
+
+        converged =
+            general.converged;
+
         kind =
             general.shortLine
                 ? GeodesicInverseDispatchKind.generalShort
@@ -936,7 +963,10 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             zero,
             zero,
             0,
-            GeodesicInverseDispatchKind.coincidence);
+            GeodesicInverseDispatchKind.coincidence,
+            GeodesicInverseStartKind.none,
+            0,
+            true);
     }
 
     const W initialAzimuth =
@@ -957,7 +987,10 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         finalAzimuth,
         sigma12,
         iterations,
-        kind);
+        kind,
+        startKind,
+        bracketMidpointCount,
+        converged);
 }
 
 

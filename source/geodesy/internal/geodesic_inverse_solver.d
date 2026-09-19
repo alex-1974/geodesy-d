@@ -19,6 +19,7 @@ import std.math :
     sqrt;
 
 import geodesy.internal.geodesic_inverse_start :
+    GeodesicInverseStartKind,
     geodesicInverseStart;
 
 import geodesy.internal.geodesic_lambda12 :
@@ -70,6 +71,12 @@ struct GeodesicCanonicalInverseResult(W)
     uint iterations;
 
     bool shortLine;
+
+    GeodesicInverseStartKind startKind;
+
+    uint bracketMidpointCount;
+
+    bool converged;
 }
 
 
@@ -169,6 +176,9 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
             zero,
             zero,
             0,
+            true,
+            start.kind,
+            0,
             true);
     }
 
@@ -192,6 +202,12 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
 
     uint iteration =
         0;
+
+    uint bracketMidpointCount =
+        0;
+
+    bool converged =
+        false;
 
     GeodesicLambda12Result!W current;
 
@@ -253,9 +269,8 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
         const W residual =
             current.lambdaResidual;
 
-        if (
-            tripBracket
-            || !(
+        const bool residualAccepted =
+            !(
                 fabs(residual)
                 >= (
                     tripNewton
@@ -263,9 +278,17 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
                     : one
                 )
                     * tol0
-            )
+            );
+
+        if (
+            tripBracket
+            || residualAccepted
             || iteration == maxIterations)
         {
+            converged =
+                tripBracket
+                || residualAccepted;
+
             break;
         }
 
@@ -357,6 +380,8 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
          * Newton was unsuitable.  Continue with the midpoint of the current
          * bracket.
          */
+        ++bracketMidpointCount;
+
         sinAlpha1 =
             (
                 sinAlpha1Lower
@@ -457,7 +482,10 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
         current.eps,
         current.deltaOmega12,
         iteration,
-        false);
+        false,
+        start.kind,
+        bracketMidpointCount,
+        converged);
 }
 
 
