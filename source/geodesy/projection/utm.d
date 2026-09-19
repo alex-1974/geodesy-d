@@ -1,8 +1,9 @@
 /**
- * Universal Transverse Mercator policy types and standard zone selection.
+ * Universal Transverse Mercator policy, coordinate tagging, and projection.
  *
- * Numerical projection is deliberately not implemented here yet. UTM
- * projection delegation is added only after the pure policy gate has passed.
+ * Numerical projection is delegated to the accepted bounded
+ * `TransverseMercator!T` implementation. This module owns UTM zone,
+ * hemisphere, fixed-parameter, and standard automatic-zone policy.
  */
 module geodesy.projection.utm;
 

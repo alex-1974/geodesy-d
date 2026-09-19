@@ -422,6 +422,68 @@ documented robust and canonical inverse semantics, but the same absolute
 accuracy envelope is not claimed.
 
 
+## Accepted post-v0.1 operation validation
+
+The release-baseline validation above is supplemented by operation-specific
+acceptance programs for the public post-v0.1 numerical surfaces.
+
+### Transverse Mercator
+
+Bounded generic Transverse Mercator is accepted under ADR-0006.
+
+`docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` is the authoritative detailed
+record for its analytical, reference, differential, boundary, scalar, and
+platform evidence.
+
+The permanent hosted matrix is:
+
+~~~text
+.github/workflows/tm-platform-matrix.yml
+~~~
+
+### UTM
+
+The UTM policy/projection layer is accepted under ADR-0007 and delegates all
+projection mathematics to the accepted bounded Transverse Mercator
+implementation.
+
+`docs/UTM_VALIDATION_PLAN.md` is the authoritative detailed record for zone
+policy, exceptions, parameterization, boundary/reversibility, external
+differential, API/runtime, and platform evidence.
+
+The permanent hosted matrix is:
+
+~~~text
+.github/workflows/utm-platform-matrix.yml
+~~~
+
+### Ellipsoidal geodesics
+
+The initial direct/inverse ellipsoidal geodesic surface is accepted under
+ADR-0008.
+
+`docs/GEODESIC_VALIDATION_PLAN.md` records the complete GEO-A through GEO-G
+program:
+
+~~~text
+GEO-A  contract and analytical semantics             PASS
+GEO-B  authoritative reference vectors               PASS
+GEO-C  GeographicLib Exact differential validation   PASS
+GEO-D  PROJ interoperability                         PASS
+GEO-E  adversarial inverse/convergence                PASS
+GEO-F  API/runtime contract                          PASS
+GEO-G  platform/compiler/real-width coverage          PASS
+~~~
+
+The permanent hosted matrix is:
+
+~~~text
+.github/workflows/geodesic-platform-matrix.yml
+~~~
+
+GeographicLib and PROJ remain validation/reference infrastructure rather than
+runtime dependencies of the geodesic implementation.
+
 ## CI integration
 
 Normal DMD/LDC compiler gates run in `.github/workflows/ci.yml`.

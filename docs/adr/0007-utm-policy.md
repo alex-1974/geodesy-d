@@ -837,8 +837,8 @@ confused with the north/south UTM false-northing convention.
 
 ## Validation requirement
 
-This ADR remains `Proposed` until the requirements in
-`docs/UTM_VALIDATION_PLAN.md` pass.
+Acceptance required the requirements in `docs/UTM_VALIDATION_PLAN.md`
+to pass. That validation program is complete and this ADR is `Accepted`.
 
 Validation must demonstrate:
 
