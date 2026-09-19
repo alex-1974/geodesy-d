@@ -252,8 +252,8 @@ mantissa width; on the validated Linux x86-64 environment
 The first slice does not expose `GeodesicLine`, reduced length, geodesic
 scales, area, longitude unrolling, polygon accumulation, or prolate ellipsoids.
 
-See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the numerical,
-canonicalization, and remaining acceptance contract.
+See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
+numerical, canonicalization, and validation contract.
 
 ## Public API contract
 
@@ -269,9 +269,10 @@ their hot-path attributes, mutable parameter leakage is rejected,
 package/private helpers remain inaccessible, and Helmert convention selection
 cannot be omitted.
 
-The current geodesic aggregate surface has additionally been compile-checked
-under DMD and LDC using only `import geodesy;`. Extension of the permanent
-generic API-contract/stress gate is tracked as GEO-F in
-`docs/GEODESIC_VALIDATION_PLAN.md`.
+The current geodesic aggregate surface is part of the permanent public API
+contract and is compile-checked under DMD and LDC using only `import geodesy;`.
+GEO-F additionally validates the checked geodesic API/runtime contract, and the
+hosted GEO-G matrix repeats the public API contract across the accepted
+platform/compiler matrix.
 
-Normal CI runs the existing contract for DMD and LDC.
+Normal CI runs the aggregate contract for DMD and LDC.

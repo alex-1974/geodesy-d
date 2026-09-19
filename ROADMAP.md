@@ -33,14 +33,15 @@ first public direct/inverse ellipsoidal geodesic slice.
 That geodesic implementation is code-complete for its current first-slice API,
 and the technical acceptance program defined by ADR-0008 is now complete.
 
-ADR-0008 remains:
+ADR-0008 is now:
 
 ```text
-Status: Proposed
+Status: Accepted
 ```
 
-only until the explicit project governance decision on promotion to
-`Accepted`.
+The accepted scope is the validated first direct/inverse public slice. Deferred
+geodesic capabilities remain future work and require their own consumer or
+research justification.
 
 ## Geodesic acceptance state
 
@@ -65,14 +66,14 @@ correctness, numerical, semantic, API, or performance defect.
 
 ## Immediate sequence
 
-The geodesic qualification gates are complete.
+The geodesic qualification gates and ADR-0008 acceptance are complete.
 
 Continue in this order:
 
-1. make the explicit ADR-0008 decision on promotion from `Proposed` to
-   `Accepted`;
-2. treat branch publication, integration into `main`, and release planning as
-   explicit project decisions rather than automatic consequences of validation;
+1. treat integration into `main` and release planning as explicit project
+   decisions rather than automatic consequences of validation;
+2. preserve the accepted direct/inverse semantics unless new correctness,
+   numerical, API, or performance evidence justifies a change;
 3. do not add deferred geodesic functionality without a concrete consumer or
    separately justified research result.
 

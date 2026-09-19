@@ -72,8 +72,8 @@ UTM policy/projection layer
 direct and inverse ellipsoidal geodesics
 ```
 
-The geodesic slice is publicly exported and implementation-complete. Its
-broader acceptance program remains in progress under ADR-0008 and
+The geodesic slice is publicly exported, implementation-complete, and
+accepted under ADR-0008. GEO-A through GEO-G are complete in
 `docs/GEODESIC_VALIDATION_PLAN.md`.
 
 ## Current and planned layering

@@ -1,9 +1,9 @@
 # ADR-0008: Direct and inverse ellipsoidal geodesics
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-17
-- Implementation status: public direct/inverse slice complete as of 2026-09-18;
-  remaining acceptance gates are tracked in `docs/GEODESIC_VALIDATION_PLAN.md`
+- Implementation status: public direct/inverse slice accepted as of 2026-09-19;
+  GEO-A through GEO-G are complete in `docs/GEODESIC_VALIDATION_PLAN.md`
 - Applies to: direct and inverse geodesic calculations on a reference ellipsoid
 - Depends on: ADR-0001, ADR-0002
 - Supersedes: nothing
@@ -703,29 +703,35 @@ Those capabilities remain separate future decisions.
 
 ## Acceptance status
 
-GEO-A research resolved the initial edge-semantics questions, and the production
-implementation now demonstrates those semantics through the public API:
+**Accepted on 2026-09-19.**
 
-- coincident-point behavior;
-- non-unique antipodal behavior;
-- signed-zero treatment;
-- azimuth canonicalization;
-- antimeridian canonicalization;
-- negative direct distance;
-- pole limiting semantics;
-- final public names and result-type layout.
+The first public direct/inverse geodesic slice satisfies every mandatory gate
+defined by `docs/GEODESIC_VALIDATION_PLAN.md`:
 
-The direct and inverse implementation, inverse dispatch/canonicalization, public
-`float`/`double`/`real` API, and aggregate `import geodesy;` export are complete.
+~~~text
+GEO-A  contract and analytical semantics             PASS
+GEO-B  authoritative reference vectors               PASS
+GEO-C  GeographicLib Exact differential validation   PASS
+GEO-D  PROJ interoperability                         PASS
+GEO-E  adversarial inverse/convergence                PASS
+GEO-F  API/runtime contract                          PASS
+GEO-G  platform/compiler/real-width coverage          PASS
+~~~
 
-Independent GeographicLib 2.7 `GeodesicExact` differential harnesses also
-provide strong GEO-C and adversarial inverse evidence. However, implementation
-completion is intentionally distinct from ADR acceptance.
+The accepted GEO-G hosted matrix is GitHub Actions run `35442370160` on commit
+`95f851cf0704386a34fc1cf84de4c8c5db5e5031`. The durable run extract and
+provenance are stored in:
 
-The remaining acceptance program includes the gates still marked OPEN or
-PARTIAL in `docs/GEODESIC_VALIDATION_PLAN.md`, notably authoritative external
-reference vectors, PROJ interoperability, the full API/runtime stress contract,
-and the portable compiler/platform matrix.
+~~~text
+research/geodesics/data/geog_acceptance_20260919T121600Z.log
+research/geodesics/data/GEO_G_PROVENANCE.md
+~~~
 
-ADR-0008 therefore remains `Proposed` until every mandatory validation-plan
-gate is `PASS`.
+Acceptance applies only to the direct/inverse surface and semantics specified
+by this ADR. Deferred functionality such as `GeodesicLine`, reduced length,
+geodesic scales, area, longitude unrolling, polygon accumulation,
+intersections, rhumb lines, and prolate ellipsoids remains outside this
+decision.
+
+Acceptance does not itself imply integration into `main`, release publication,
+or expansion of the public API. Those remain separate project decisions.
