@@ -604,6 +604,72 @@ Required coverage:
 Any semantic difference between PROJ and geodesy-d must be recorded rather
 than hidden by the test harness.
 
+### GEO-D acceptance result
+
+GEO-D is **PASS**.
+
+The accepted interoperability run used PROJ 9.7.1 through its double-based
+geodesic C API as an external validation dependency only. PROJ remains absent
+from the `geodesy-d` DUB, build, link, runtime, and production-source
+dependency surface.
+
+The accepted harness uses exact IEEE-754 binary64 bit-pattern input transport
+and radians. For public `real`, interoperability inputs are deliberately
+restricted to the exact binary64 subset:
+
+~~~text
+binary64 bits -> double -> exact widening to D real
+~~~
+
+A full transport audit covered 128063 unique binary64 values per compiler with
+zero mismatches. Wider-than-binary64 `real` precision remains GEO-C evidence.
+
+The public-real maximum-flattening profile uses
+`nextDown(binary64(0.01))`, because exact widening of `binary64(0.01)` is
+slightly greater than the more precise real-valued `f <= 0.01` boundary. The
+same represented flattening is supplied to PROJ; no production tolerance or
+support contract changes.
+
+The deterministic full run used seed `0x47454F44`, eight ellipsoid profiles,
+2000 generated cases plus six fixed cases per profile and operation, and all
+three public scalar models under both DMD and LDC:
+
+~~~text
+per compiler:
+    48144 Direct public-API cases
+    48144 Inverse public-API cases
+    96288 total
+
+DMD + LDC:
+    192576 public-API differential cases
+~~~
+
+Coverage includes sphere, WGS84, GRS80, International 1924, Airy 1830,
+`f = 0.005`, the supported maximum-flattening profile, unit scale, ordinary,
+short, polar, dateline, long-direct, and difficult near-antipodal cases.
+
+The comparison uses endpoint position, Earth-fixed tangent direction, inverse
+distance, and conditioned short/near-antipodal direction metrics. Coincident
+and geometrically non-unique inverse azimuths are not treated as normative
+PROJ equality requirements.
+
+The accepted execution and provenance are committed as:
+
+~~~text
+research/geodesics/data/geod_acceptance_20260919T084049Z.log
+research/geodesics/data/GEO_D_PROVENANCE.md
+~~~
+
+Acceptance log SHA-256:
+
+~~~text
+f45eedd052cc210e54cb696c852dee104b51167e952ab5165bd978045d279d0a
+~~~
+
+PROJ serves here as an interoperability oracle rather than an independent
+mathematical oracle. GEO-B and GEO-C retain the independent numerical-evidence
+role.
+
 ## GEO-E — adversarial inverse and convergence validation
 
 Purpose:
@@ -895,7 +961,7 @@ Current status:
 GEO-A  contract and analytical semantics             PASS
 GEO-B  authoritative reference vectors               PASS
 GEO-C  GeographicLib Exact differential validation   PASS
-GEO-D  PROJ interoperability                         OPEN
+GEO-D  PROJ interoperability                         PASS
 GEO-E  adversarial inverse/convergence                PARTIAL
 GEO-F  API/runtime contract                          PARTIAL
 GEO-G  platform/compiler/real-width coverage          PARTIAL
