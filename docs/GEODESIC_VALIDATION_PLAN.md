@@ -851,6 +851,66 @@ Runtime stress should include at least:
 
 or an equivalent workload justified by measured runtime.
 
+### GEO-F acceptance result
+
+GEO-F is **PASS**.
+
+The permanent validator
+`validation/geodesic_api_runtime_validation.d` exercises the complete checked
+geodesic operational surface from a function declared:
+
+~~~text
+pure nothrow @safe @nogc
+~~~
+
+The checked contract includes solver construction and properties, direct and
+inverse operations, and every public result accessor. The throwing
+`fromEllipsoid` convenience constructor is validated separately from an
+`@safe` caller and its invalid-input path is required to throw
+`GeodesyValueException`.
+
+For each of `float`, `double`, and `real`, the accepted runtime gate verifies:
+
+- invalid default-solver behavior;
+- invalid and unsupported ellipsoid rejection;
+- `NaN`, `+Inf`, and `-Inf` direct-distance rejection;
+- clearing of previously successful result values on failed checked calls;
+- deterministic repeated direct results;
+- deterministic repeated inverse results.
+
+Runtime stress per compiler is:
+
+~~~text
+300000 direct calls
+300000 inverse calls
+600000 checked calls
+~~~
+
+Across DMD and LDC:
+
+~~~text
+600000 direct calls
+600000 inverse calls
+1200000 checked calls
+deterministic mismatches: 0
+runtime failures: 0
+~~~
+
+The existing aggregate public API compile contract is also extended to include
+the geodesic types and checked/throwing surfaces.
+
+Accepted evidence:
+
+~~~text
+research/geodesics/data/geof_acceptance_20260919T105217Z.log
+SHA-256:
+4b8f4e975af69bb6009a5c3f7895d3589b5ee05113724e04906b631ffeb404a6
+
+research/geodesics/data/GEO_F_PROVENANCE.md
+~~~
+
+Acceptance timestamp: `20260919T105217Z`.
+
 ## GEO-G — platform/compiler and real-width validation
 
 Mandatory portable matrix should follow the accepted TM/UTM platform policy
@@ -1049,7 +1109,7 @@ GEO-B  authoritative reference vectors               PASS
 GEO-C  GeographicLib Exact differential validation   PASS
 GEO-D  PROJ interoperability                         PASS
 GEO-E  adversarial inverse/convergence                PASS
-GEO-F  API/runtime contract                          PARTIAL
+GEO-F  API/runtime contract                          PASS
 GEO-G  platform/compiler/real-width coverage          PARTIAL
 ~~~
 
@@ -1066,9 +1126,11 @@ Status rationale:
   instrumentation, direct bracket-midpoint observations, zero unexpected
   non-convergence, deterministic repeat behavior, and identical-corpus
   `GeographicLib::GeodesicExact` agreement.
-- GEO-F has the checked public API, attributes, invalid-state behavior, unit
-  tests, and aggregate compile contract; the specified large deterministic
-  runtime-stress workload remains open.
+- GEO-F passes the API/runtime gate: the complete checked geodesic surface
+  compiles from `pure nothrow @safe @nogc`, invalid/failure result semantics
+  are executable, the throwing constructor retains `GeodesyValueException`,
+  and DMD/LDC each complete 100000 direct plus 100000 inverse repetitions for
+  every public scalar.
 - GEO-G currently has Linux x86-64 DMD/LDC evidence. The broader portable matrix
   and additional `real` widths remain open.
 
@@ -1076,12 +1138,13 @@ ADR-0008 remains `Proposed` until every mandatory gate is `PASS`.
 
 ## Immediate next step
 
-GEO-A through GEO-E are complete.
+GEO-A through GEO-F are complete.
 
-The remaining mandatory work should proceed without changing the validated
-mathematical core unless new evidence exposes a defect:
+The validated mathematical core should remain unchanged unless new evidence
+exposes a defect.
 
-1. GEO-F deterministic runtime/API stress and allocation/attribute checks;
-2. GEO-G portable compiler/platform and `real`-width coverage;
-3. only after every mandatory gate is PASS, decide whether ADR-0008 may move
-   from `Proposed` to `Accepted`.
+The remaining mandatory work is:
+
+1. complete GEO-G portable compiler/platform and `real`-width coverage;
+2. only after GEO-G is PASS, decide whether ADR-0008 may move from `Proposed`
+   to `Accepted`.

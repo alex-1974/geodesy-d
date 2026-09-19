@@ -44,7 +44,7 @@ Status: Proposed
 The authoritative status is maintained in
 `docs/GEODESIC_VALIDATION_PLAN.md`.
 
-Current state after GEO-E:
+Current state after GEO-F:
 
 ```text
 GEO-A  contract and analytical semantics             PASS
@@ -52,7 +52,7 @@ GEO-B  authoritative reference vectors               PASS
 GEO-C  GeographicLib Exact differential validation   PASS
 GEO-D  PROJ interoperability                         PASS
 GEO-E  adversarial inverse/convergence                PASS
-GEO-F  API/runtime contract                           PARTIAL
+GEO-F  API/runtime contract                           PASS
 GEO-G  platform/compiler/real-width coverage          PARTIAL
 ```
 
@@ -64,11 +64,10 @@ correctness, numerical, semantic, API, or performance defect.
 
 Resume geodesic qualification in this order:
 
-1. complete GEO-F deterministic runtime/API stress;
-2. complete GEO-G portable compiler/platform and `real`-width coverage;
-3. only after every mandatory gate is PASS, decide whether ADR-0008 may move
+1. complete GEO-G portable compiler/platform and `real`-width coverage;
+2. only after every mandatory gate is PASS, decide whether ADR-0008 may move
    from `Proposed` to `Accepted`;
-4. treat branch publication, integration into `main`, and release planning as
+3. treat branch publication, integration into `main`, and release planning as
    explicit project decisions rather than automatic consequences of validation.
 
 ## Existing accepted post-v0.1 work

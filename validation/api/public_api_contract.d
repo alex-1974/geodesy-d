@@ -14,6 +14,11 @@ static assert(is(Ellipsoid!double));
 static assert(is(GeodeticCoordinate!double));
 static assert(is(GeocentricCoordinate!double));
 static assert(is(GeocentricTranslation!double));
+static assert(is(Geodesic!float));
+static assert(is(Geodesic!double));
+static assert(is(Geodesic!real));
+static assert(is(GeodesicDirectResult!double));
+static assert(is(GeodesicInverseResult!double));
 
 static assert(is(PositionVectorHelmert!double ==
     Helmert7!(double, HelmertConvention.positionVector)));
@@ -83,6 +88,70 @@ private void checkedApiContract()
     GeocentricCoordinate!double cfTarget;
     tryApplyCoordinateFrameHelmert(geocentric, cf, cfTarget);
 
+    Geodesic!double geodesic;
+
+    Geodesic!double.tryFromEllipsoid(
+        ellipsoid,
+        geodesic);
+
+    const geodesicValid =
+        geodesic.isValid;
+
+    const geodesicSphere =
+        geodesic.isSphere;
+
+    const geodesicEllipsoid =
+        geodesic.ellipsoid;
+
+    const geographicStart =
+        GeographicCoordinate!double.fromComponents(
+            latitude,
+            longitude);
+
+    const geographicEnd =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.init,
+            Longitude!double.init);
+
+    GeodesicDirectResult!double directResult;
+
+    geodesic.tryDirect(
+        geographicStart,
+        angle,
+        1000.0,
+        directResult);
+
+    const directPosition =
+        directResult.position;
+
+    const directFinalAzimuth =
+        directResult.finalAzimuth;
+
+    GeodesicInverseResult!double inverseResult;
+
+    geodesic.tryInverse(
+        geographicStart,
+        geographicEnd,
+        inverseResult);
+
+    const inverseDistance =
+        inverseResult.distance;
+
+    const inverseInitialAzimuth =
+        inverseResult.initialAzimuth;
+
+    const inverseFinalAzimuth =
+        inverseResult.finalAzimuth;
+
+    cast(void) geodesicValid;
+    cast(void) geodesicSphere;
+    cast(void) geodesicEllipsoid;
+    cast(void) directPosition;
+    cast(void) directFinalAzimuth;
+    cast(void) inverseDistance;
+    cast(void) inverseInitialAzimuth;
+    cast(void) inverseFinalAzimuth;
+
     cast(void) angle;
     cast(void) normalized;
     cast(void) longitudeAngle;
@@ -112,7 +181,9 @@ private void throwingApiContract()
     auto pvTarget = applyPositionVectorHelmert(geocentric, pv);
     auto cf = toCoordinateFrame(pv);
     auto cfTarget = applyCoordinateFrameHelmert(geocentric, cf);
+    auto geodesic = Geodesic!double.fromEllipsoid(ellipsoid);
     GeodesyValueException exception = new GeodesyValueException("contract");
     cast(void) angle; cast(void) geodeticAgain; cast(void) shifted;
-    cast(void) pvTarget; cast(void) cfTarget; cast(void) exception;
+    cast(void) pvTarget; cast(void) cfTarget; cast(void) geodesic;
+    cast(void) exception;
 }
