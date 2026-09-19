@@ -192,6 +192,92 @@ private W polynomialFromScalars(W, size_t N)(
 }
 
 
+
+/*
+ * Compile-time-specialized polynomial path for fixed-order C series.
+ *
+ * Unlike rationalPolynomial(), offset and degree are template arguments.
+ * This allows the compiler to eliminate the small Horner loops and bounds
+ * calculations when geodesic series order is known at compile time.
+ *
+ * Arithmetic order is intentionally unchanged.
+ */
+private W polynomialFromIntegersStatic(
+    W,
+    size_t offset,
+    int degree,
+    size_t N)(
+    const ref long[N] coefficients,
+    const W x)
+    pure nothrow @safe @nogc
+{
+    static assert(degree >= 0);
+    static assert(
+        offset + cast(size_t) degree < N);
+
+    W result =
+        cast(W) coefficients[offset];
+
+    static foreach (i; 1 .. degree + 1)
+    {
+        result =
+            result * x
+            + cast(W) coefficients[offset + i];
+    }
+
+    return result;
+}
+
+
+private W rationalPolynomialStatic(
+    W,
+    size_t offset,
+    int degree,
+    size_t N)(
+    const ref long[N] coefficients,
+    const W x)
+    pure nothrow @safe @nogc
+{
+    static assert(
+        offset
+            + cast(size_t) degree
+            + 1
+        < N);
+
+    return polynomialFromIntegersStatic!(
+            W,
+            offset,
+            degree)(
+                coefficients,
+                x)
+        / cast(W) coefficients[
+            offset
+            + cast(size_t) degree
+            + 1];
+}
+
+
+template cSeriesOffset(
+    int order,
+    int l)
+{
+    static if (l <= 1)
+    {
+        enum size_t cSeriesOffset = 0;
+    }
+    else
+    {
+        enum size_t cSeriesOffset =
+            cSeriesOffset!(
+                order,
+                l - 1)
+            + cast(size_t) (
+                (order - (l - 1)) / 2)
+            + 2;
+    }
+}
+
+
 private W a1FromCoefficients(W, size_t N)(
     const W eps,
     const int order,
@@ -276,32 +362,41 @@ W geodesicA2m1(W, int order)(const W eps)
 }
 
 
-private void fillCSeriesLike(W, size_t N)(
+private void fillCSeriesLike(
+    W,
+    int order,
+    size_t N)(
     const W eps,
-    const int order,
     const ref long[N] coefficients,
     ref W[9] result)
     pure nothrow @safe @nogc
 {
+    static assert(
+        order >= 6 && order <= 8);
+
     result[] = cast(W) 0;
 
-    const W eps2 = eps * eps;
-    W multiplier = eps;
-    size_t offset = 0;
+    const W eps2 =
+        eps * eps;
 
-    for (int l = 1; l <= order; ++l)
+    W multiplier =
+        eps;
+
+    static foreach (
+        l;
+        1 .. order + 1)
     {
-        const int degree = (order - l) / 2;
-
         result[l] =
             multiplier
-            * rationalPolynomial!W(
-                coefficients,
-                offset,
-                degree,
-                eps2);
+            * rationalPolynomialStatic!(
+                W,
+                cSeriesOffset!(
+                    order,
+                    l),
+                (order - l) / 2)(
+                    coefficients,
+                    eps2);
 
-        offset += cast(size_t) degree + 2;
         multiplier *= eps;
     }
 }
@@ -315,21 +410,24 @@ void fillGeodesicC1(W, int order)(
     static assert(order >= 6 && order <= 8);
 
     static if (order == 6)
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c1Order6,
             result);
     else static if (order == 7)
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c1Order7,
             result);
     else
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c1Order8,
             result);
 }
@@ -343,21 +441,24 @@ void fillGeodesicC1p(W, int order)(
     static assert(order >= 6 && order <= 8);
 
     static if (order == 6)
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c1pOrder6,
             result);
     else static if (order == 7)
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c1pOrder7,
             result);
     else
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c1pOrder8,
             result);
 }
@@ -371,21 +472,24 @@ void fillGeodesicC2(W, int order)(
     static assert(order >= 6 && order <= 8);
 
     static if (order == 6)
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c2Order6,
             result);
     else static if (order == 7)
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c2Order7,
             result);
     else
-        fillCSeriesLike!W(
+        fillCSeriesLike!(
+            W,
+            order)(
             eps,
-            order,
             c2Order8,
             result);
 }
