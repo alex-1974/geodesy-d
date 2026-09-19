@@ -11,7 +11,7 @@ workspace is available locally under `.workspace/ROADMAP.md`.
 The released line is:
 
 ```text
-v0.1.1
+v0.2.0
 ```
 
 The released baseline provides:
@@ -20,10 +20,7 @@ The released baseline provides:
 - reference ellipsoids;
 - EPSG 9602 geographic/geocentric conversion;
 - EPSG 1031 geocentric translation;
-- EPSG 1032/1033 static Helmert transformations.
-
-The current `main` branch additionally contains the accepted but unreleased:
-
+- EPSG 1032/1033 static Helmert transformations;
 - bounded generic Transverse Mercator implementation;
 - UTM policy and projection layer;
 - first public direct/inverse ellipsoidal geodesic slice.
@@ -64,21 +61,21 @@ The mathematical production core should not be changed merely to continue the
 validation program. A core change is justified only when new evidence exposes a
 correctness, numerical, semantic, API, or performance defect.
 
-## Immediate sequence
+## Post-v0.2 sequence
 
-The geodesic qualification gates, ADR-0008 acceptance, and integration into
-`main` are complete.
+The geodesic qualification gates, ADR-0008 acceptance, integration into
+`main`, and the first evidence-driven geodesic performance cycle are complete.
 
 Continue in this order:
 
-1. treat release planning as an explicit project decision rather than an
-   automatic consequence of validation or integration;
-2. preserve the accepted direct/inverse semantics unless new correctness,
+1. preserve the accepted direct/inverse semantics unless new correctness,
    numerical, API, or performance evidence justifies a change;
-3. do not add deferred geodesic functionality without a concrete consumer or
-   separately justified research result.
+2. do not add deferred geodesic functionality without a concrete consumer or
+   separately justified research result;
+3. require new optimization work to begin from fresh profiling or concrete
+   consumer evidence.
 
-## Existing accepted post-v0.1 work
+## v0.2.0 numerical surfaces
 
 ### EPSG 9602 reverse
 
@@ -172,9 +169,9 @@ Broad `@fastmath` is not a library policy.
 
 ## Release policy
 
-`v0.1.x` remains the released compatibility baseline.
+`v0.2.0` is the released compatibility baseline.
 
-Post-v0.1 functionality is not considered release-ready merely because its
+Post-v0.2 functionality is not considered release-ready merely because its
 implementation exists. Each major numerical slice must satisfy its own
 documented acceptance contract.
 

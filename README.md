@@ -11,7 +11,7 @@ a CRS database or a replacement for the complete PROJ ecosystem.
 
 ## Status
 
-The released `v0.1.x` line provides:
+The `v0.2.0` release line provides:
 
 - strong `Angle`, `Latitude`, and `Longitude` value types;
 - reference ellipsoids;
@@ -20,11 +20,7 @@ The released `v0.1.x` line provides:
 - EPSG 9602 geographic/geocentric conversion;
 - EPSG 1031 geocentric translation;
 - EPSG 1033 Position Vector 7-parameter Helmert transformations;
-- EPSG 1032 Coordinate Frame 7-parameter Helmert transformations.
-
-Current `main` additionally provides the accepted but unreleased post-v0.1
-numerical surfaces:
-
+- EPSG 1032 Coordinate Frame 7-parameter Helmert transformations;
 - bounded generic `TransverseMercator!T`;
 - Universal Transverse Mercator zone and hemisphere policy;
 - prepared `UtmProjection!T`;
@@ -209,7 +205,7 @@ Its exact inverse negates the three translation parameters.
 
 ## Helmert transformations
 
-The v0.1 API supports both EPSG static 7-parameter Helmert conventions:
+The public API supports both EPSG static 7-parameter Helmert conventions:
 
 ~~~text
 EPSG 1033  Position Vector
@@ -233,7 +229,7 @@ Canonical rotation values are `Angle!T` values in radians.
 The EPSG-style construction interface accepts rotations in arc-seconds and
 scale difference in parts per million.
 
-No 7-parameter inverse shortcut is exposed in v0.1.
+No 7-parameter inverse shortcut is currently exposed.
 
 ## Scalar model
 
@@ -289,29 +285,31 @@ Non-trivial geodetic operations are validated using combinations of:
 - randomized comparison against independent implementations;
 - regression cases for discovered numerical defects.
 
-For v0.1, PROJ is used as an independent validation oracle only. It is not a
-runtime dependency.
+PROJ is used as an independent validation oracle only. It is not a runtime
+dependency.
 
 ## Validation
 
-The v0.1 release was validated with:
+The v0.2.0 release is validated with:
 
-- DMD;
-- LDC;
+- DMD and LDC;
 - the public API compile contract;
 - published EPSG/IOGP reference vectors;
-- PROJ 9.7.1 differential validation.
+- GeographicLib 2.7 reference and differential validation;
+- PROJ 9.7.1 differential validation;
+- multi-platform validation matrices for Transverse Mercator, UTM, and
+  ellipsoidal geodesics.
 
-The extended fixed-seed differential suite passed:
+The original v0.1 extended fixed-seed differential suite passed:
 
 ~~~text
 2037 / 2037 scalar comparisons
 ~~~
 
-against PROJ 9.7.1.
+against PROJ 9.7.1 and remains part of the regression history.
 
-PROJ remains independent validation infrastructure rather than a dependency of
-the library.
+PROJ and GeographicLib remain independent validation infrastructure rather
+than runtime dependencies of the library.
 
 ## Responsibility boundary
 

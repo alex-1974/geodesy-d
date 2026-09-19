@@ -6,6 +6,8 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-19
+
 ### Added
 
 - Prepared Karney-family `Geodesic!T` solver for direct and inverse surface
@@ -33,6 +35,8 @@ The project follows Semantic Versioning from the first tagged public release.
 - Multi-platform Transverse Mercator and UTM validation matrices covering
   Linux, Windows, and macOS with DMD and LDC where supported.
 - ADR-0006 for bounded Transverse Mercator and ADR-0007 for UTM policy.
+- Reproducible geodesic profiling and same-process GeographicLib/PROJ
+  reference benchmarking, including explicit CPU/SMT environment reporting.
 
 ### Changed
 
@@ -44,6 +48,18 @@ The project follows Semantic Versioning from the first tagged public release.
   surrounding workspace toolchain.
 - Recorded current sibling-library boundaries without changing the
   `geodesy-d` numerical or public-API scope.
+- Specialized fixed-order geodesic C1, C1p, and C2 series evaluation at
+  compile time without changing the accepted numerical semantics.
+
+### Validation
+
+- Completed the GEO-A through GEO-G geodesic acceptance program.
+- Validated the accepted geodesic slice across Linux, Windows, and macOS with
+  DMD and LDC where supported.
+- Retained independent differential validation against GeographicLib 2.7 and
+  PROJ 9.7.1.
+- Confirmed the geodesic series specialization with identical numerical
+  preflight output and controlled paired A/B measurements.
 
 ## [0.1.1] - 2026-09-13
 
