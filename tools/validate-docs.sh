@@ -47,8 +47,8 @@ grep -q '^MIT License' "$repo/LICENSE" || {
 # Implementation-sequencing wording that would be misleading in the v0.1
 # release-facing documentation.
 if grep -RniE \
-  'Frame transformations follow next|The next layer adds:|## Still pending|No stable public API exists yet|Initial implementation phase' \
-  "$repo/docs/README.md" "$repo/docs/operations"; then
+  'Frame transformations follow next|The next layer adds:|## Still pending|No stable public API exists yet|Initial implementation phase|The inverse kernel is added in a subsequent slice' \
+  "$repo/docs/README.md" "$repo/docs/operations" "$repo/source/geodesy/geodesic.d"; then
   echo "FAIL: stale implementation-sequencing wording remains" >&2
   exit 1
 fi

@@ -8,6 +8,18 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ### Added
 
+- Prepared Karney-family `Geodesic!T` solver for direct and inverse surface
+  geodesics on spheres and supported oblate ellipsoids (`0 <= f <= 0.01`).
+- Public `GeodesicDirectResult!T` and `GeodesicInverseResult!T` APIs for
+  `float`, `double`, and platform `real`, exported through `import geodesy;`.
+- Robust inverse handling for coincident, meridional, equatorial, short-line,
+  near-antipodal, antipodal, polar, and general Newton/bracketed cases.
+- Canonical public geodesic angle semantics using `[-pi,+pi)`, including
+  canonical positive zero and representation-independent coincident inverse
+  results.
+- GeographicLib 2.7 `GeodesicExact` differential research harnesses for direct,
+  canonical inverse-dispatch, and public inverse validation.
+- ADR-0008 and the ellipsoidal geodesic validation plan.
 - Bounded generic Transverse Mercator projection for `float`, `double`, and
   platform `real`.
 - Universal Transverse Mercator policy layer with strong zone and hemisphere
@@ -21,6 +33,17 @@ The project follows Semantic Versioning from the first tagged public release.
 - Multi-platform Transverse Mercator and UTM validation matrices covering
   Linux, Windows, and macOS with DMD and LDC where supported.
 - ADR-0006 for bounded Transverse Mercator and ADR-0007 for UTM policy.
+
+### Changed
+
+- Reconciled repository documentation with `d-geospatial-workspace` after the
+  workspace reorganization.
+- Replaced the inherited workspace roadmap and design-principles snapshot with
+  `geodesy-d`-specific project documents.
+- Clarified the package minimum D frontend as 2.111.0 independently of the
+  surrounding workspace toolchain.
+- Recorded current sibling-library boundaries without changing the
+  `geodesy-d` numerical or public-API scope.
 
 ## [0.1.1] - 2026-09-13
 

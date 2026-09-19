@@ -14,6 +14,17 @@ static assert(is(Ellipsoid!double));
 static assert(is(GeodeticCoordinate!double));
 static assert(is(GeocentricCoordinate!double));
 static assert(is(GeocentricTranslation!double));
+static assert(is(ProjectedCoordinate!double));
+static assert(is(TransverseMercator!double));
+static assert(is(UtmZone));
+static assert(is(UtmCoordinate!double));
+static assert(is(UtmProjection!double));
+static assert(is(typeof(UtmHemisphere.north) == UtmHemisphere));
+static assert(is(Geodesic!float));
+static assert(is(Geodesic!double));
+static assert(is(Geodesic!real));
+static assert(is(GeodesicDirectResult!double));
+static assert(is(GeodesicInverseResult!double));
 
 static assert(is(PositionVectorHelmert!double ==
     Helmert7!(double, HelmertConvention.positionVector)));
@@ -83,6 +94,70 @@ private void checkedApiContract()
     GeocentricCoordinate!double cfTarget;
     tryApplyCoordinateFrameHelmert(geocentric, cf, cfTarget);
 
+    Geodesic!double geodesic;
+
+    Geodesic!double.tryFromEllipsoid(
+        ellipsoid,
+        geodesic);
+
+    const geodesicValid =
+        geodesic.isValid;
+
+    const geodesicSphere =
+        geodesic.isSphere;
+
+    const geodesicEllipsoid =
+        geodesic.ellipsoid;
+
+    const geographicStart =
+        GeographicCoordinate!double.fromComponents(
+            latitude,
+            longitude);
+
+    const geographicEnd =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.init,
+            Longitude!double.init);
+
+    GeodesicDirectResult!double directResult;
+
+    geodesic.tryDirect(
+        geographicStart,
+        angle,
+        1000.0,
+        directResult);
+
+    const directPosition =
+        directResult.position;
+
+    const directFinalAzimuth =
+        directResult.finalAzimuth;
+
+    GeodesicInverseResult!double inverseResult;
+
+    geodesic.tryInverse(
+        geographicStart,
+        geographicEnd,
+        inverseResult);
+
+    const inverseDistance =
+        inverseResult.distance;
+
+    const inverseInitialAzimuth =
+        inverseResult.initialAzimuth;
+
+    const inverseFinalAzimuth =
+        inverseResult.finalAzimuth;
+
+    cast(void) geodesicValid;
+    cast(void) geodesicSphere;
+    cast(void) geodesicEllipsoid;
+    cast(void) directPosition;
+    cast(void) directFinalAzimuth;
+    cast(void) inverseDistance;
+    cast(void) inverseInitialAzimuth;
+    cast(void) inverseFinalAzimuth;
+
     cast(void) angle;
     cast(void) normalized;
     cast(void) longitudeAngle;
@@ -92,6 +167,101 @@ private void checkedApiContract()
     cast(void) e2; cast(void) ep2; cast(void) n;
     cast(void) inverseShift; cast(void) pvAgain;
 }
+
+
+private void projectionApiContract()
+    pure nothrow @safe @nogc
+{
+    Ellipsoid!double ellipsoid;
+    Ellipsoid!double.tryFromInverseFlattening(
+        6_378_137.0,
+        298.257223563,
+        ellipsoid);
+
+    Latitude!double latitude0;
+    Longitude!double longitude15;
+    Latitude!double.tryFromDegrees(0.0, latitude0);
+    Longitude!double.tryFromDegrees(15.0, longitude15);
+
+    const source =
+        GeographicCoordinate!double.fromComponents(
+            latitude0,
+            longitude15);
+
+    ProjectedCoordinate!double projectedCoordinate;
+    ProjectedCoordinate!double.tryFromComponents(
+        500_000.0,
+        0.0,
+        projectedCoordinate);
+
+    TransverseMercator!double tm;
+    TransverseMercator!double.tryFromParameters(
+        ellipsoid,
+        latitude0,
+        longitude15,
+        0.9996,
+        500_000.0,
+        0.0,
+        tm);
+
+    ProjectedCoordinate!double tmProjected;
+    tm.tryForward(source, tmProjected);
+
+    GeographicCoordinate!double tmReversed;
+    tm.tryReverse(tmProjected, tmReversed);
+
+    UtmZone zone;
+    UtmZone.tryFromNumber(33, zone);
+
+    UtmCoordinate!double tagged;
+    UtmCoordinate!double.tryFromComponents(
+        zone,
+        UtmHemisphere.north,
+        500_000.0,
+        0.0,
+        tagged);
+
+    UtmProjection!double utm;
+    UtmProjection!double.tryFromZone(
+        ellipsoid,
+        zone,
+        UtmHemisphere.north,
+        utm);
+
+    ProjectedCoordinate!double utmProjected;
+    utm.tryForward(source, utmProjected);
+
+    GeographicCoordinate!double utmReversed;
+    utm.tryReverse(utmProjected, utmReversed);
+
+    UtmZone selectedZone;
+    UtmHemisphere selectedHemisphere;
+    tryStandardUtmZone(
+        source,
+        selectedZone,
+        selectedHemisphere);
+
+    UtmCoordinate!double automatic;
+    tryForwardUtm(
+        ellipsoid,
+        source,
+        automatic);
+
+    GeographicCoordinate!double automaticReversed;
+    tryReverseUtm(
+        ellipsoid,
+        automatic,
+        automaticReversed);
+
+    cast(void) projectedCoordinate;
+    cast(void) tmReversed;
+    cast(void) tagged;
+    cast(void) utmReversed;
+    cast(void) selectedZone;
+    cast(void) selectedHemisphere;
+    cast(void) automaticReversed;
+}
+
 
 private void throwingApiContract()
     @safe
@@ -112,7 +282,9 @@ private void throwingApiContract()
     auto pvTarget = applyPositionVectorHelmert(geocentric, pv);
     auto cf = toCoordinateFrame(pv);
     auto cfTarget = applyCoordinateFrameHelmert(geocentric, cf);
+    auto geodesic = Geodesic!double.fromEllipsoid(ellipsoid);
     GeodesyValueException exception = new GeodesyValueException("contract");
     cast(void) angle; cast(void) geodeticAgain; cast(void) shifted;
-    cast(void) pvTarget; cast(void) cfTarget; cast(void) exception;
+    cast(void) pvTarget; cast(void) cfTarget; cast(void) geodesic;
+    cast(void) exception;
 }

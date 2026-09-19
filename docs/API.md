@@ -1,4 +1,8 @@
-# geodesy-d public API — v0.1 baseline
+# geodesy-d public API
+
+The tagged `v0.1.0` surface remains the historical release baseline. This
+document also records public APIs added on the current unreleased development
+line when their implementation surface has stabilized.
 
 ## Aggregate import
 
@@ -7,7 +11,9 @@ import geodesy;
 ```
 
 `source/geodesy/package.d` is the intentional public aggregation surface.
-The v0.1 API contract is compiled through this aggregate import.
+The tagged v0.1 API contract is compiled through this aggregate import, and
+post-v0.1 public modules are added here only after their implementation gate has
+passed.
 
 ## Public scalar policy
 
@@ -158,6 +164,97 @@ dimensionless fraction. The EPSG-style factory accepts arc-seconds and ppm.
 `pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is exposed in
 v0.1.
 
+## Ellipsoidal geodesics — current unreleased surface
+
+The current development line exports the geodesic API through the aggregate:
+
+```d
+import geodesy;
+```
+
+Public types:
+
+```text
+Geodesic<T>
+GeodesicDirectResult<T>
+GeodesicInverseResult<T>
+```
+
+Prepared solver construction follows the checked/throwing factory pattern:
+
+```d
+static bool Geodesic!T.tryFromEllipsoid(
+    const Ellipsoid!T ellipsoid,
+    out Geodesic!T result)
+    pure nothrow @safe @nogc;
+
+static Geodesic!T Geodesic!T.fromEllipsoid(
+    const Ellipsoid!T ellipsoid)
+    @safe;
+```
+
+The operational surface is deliberately checked-only in the first geodesic
+slice:
+
+```d
+bool tryDirect(
+    const GeographicCoordinate!T start,
+    const Angle!T initialAzimuth,
+    const T distance,
+    out GeodesicDirectResult!T result) const
+    pure nothrow @safe @nogc;
+
+bool tryInverse(
+    const GeographicCoordinate!T start,
+    const GeographicCoordinate!T end,
+    out GeodesicInverseResult!T result) const
+    pure nothrow @safe @nogc;
+```
+
+`GeodesicDirectResult!T` contains the endpoint position and the forward azimuth
+of the same oriented geodesic at that endpoint.
+
+`GeodesicInverseResult!T` contains:
+
+```text
+distance
+initialAzimuth
+finalAzimuth
+```
+
+where `finalAzimuth` is the forward direction of the selected oriented
+geodesic continuing beyond the endpoint, not the back azimuth.
+
+Initial support profile:
+
+```text
+a > 0
+0 <= f <= 0.01
+T = float | double | real
+```
+
+Linear results use the same unit as the ellipsoid semi-major axis.
+
+Public longitude and azimuth results are canonicalized to `[-pi,+pi)`.
+Coincident inverse surface points return exactly:
+
+```text
+distance       = +0
+initialAzimuth = +0
+finalAzimuth   = +0
+```
+
+Public `float` geodesics use double working precision. `double` uses order-6
+Karney series. Platform `real` selects order 6, 7, or 8 according to its
+mantissa width; on the validated Linux x86-64 environment
+`real.mant_dig == 64`, so order 7 is used.
+
+The first slice does not expose `GeodesicLine`, reduced length, geodesic
+scales, area, longitude unrolling, polygon accumulation, or prolate ellipsoids.
+
+See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
+numerical, canonicalization, and validation contract.
+
 ## Public API contract
 
 Run:
@@ -166,9 +263,16 @@ Run:
 tools/validate-api.sh
 ```
 
-The contract verifies externally that aggregate `import geodesy;` exposes the
-intended surface, checked APIs retain their hot-path attributes, mutable
-parameter leakage is rejected, package/private helpers remain inaccessible,
-and Helmert convention selection cannot be omitted.
+The tagged v0.1 contract verifies externally that aggregate
+`import geodesy;` exposes its intended baseline surface, checked APIs retain
+their hot-path attributes, mutable parameter leakage is rejected,
+package/private helpers remain inaccessible, and Helmert convention selection
+cannot be omitted.
 
-Normal CI runs the contract for DMD and LDC.
+The current geodesic aggregate surface is part of the permanent public API
+contract and is compile-checked under DMD and LDC using only `import geodesy;`.
+GEO-F additionally validates the checked geodesic API/runtime contract, and the
+hosted GEO-G matrix repeats the public API contract across the accepted
+platform/compiler matrix.
+
+Normal CI runs the aggregate contract for DMD and LDC.
