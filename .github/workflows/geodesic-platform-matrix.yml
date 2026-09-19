@@ -1,0 +1,175 @@
+name: Geodesic platform matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - "source/geodesy/**"
+      - "validation/geodesic_*.d"
+      - "validation/api/**"
+      - "tools/validate-api.sh"
+      - "dub.sdl"
+      - ".github/workflows/geodesic-platform-matrix.yml"
+
+  pull_request:
+    paths:
+      - "source/geodesy/**"
+      - "validation/geodesic_*.d"
+      - "validation/api/**"
+      - "tools/validate-api.sh"
+      - "dub.sdl"
+      - ".github/workflows/geodesic-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  # Match the accepted TM/UTM platform workflows.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  geodesic-platform:
+    name: ${{ matrix.name }}
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            dc: dmd
+            experimental: false
+
+          # Keep Windows/AArch64 informational, matching TM/UTM policy.
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+          uname -a || true
+
+          "${{ matrix.dc }}" --version
+          dub --version
+
+      - name: Platform fingerprint
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -run validation/platform_fingerprint.d \
+            | tee platform-fingerprint.txt
+
+      - name: Library unit tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          dub test \
+            --compiler="${{ matrix.dc }}" \
+            --force
+
+      - name: Public API contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          DC="${{ matrix.dc }}" \
+            bash tools/validate-api.sh
+
+      - name: GEO-A portable semantic gate
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/geodesic_portable_semantics.d
+
+      - name: Portable analytical/property gate
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/geodesic_portable_properties.d
+
+      - name: D real precision preservation
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/geodesic_real_precision_validation.d \
+            | tee geodesic-real-precision.txt
+
+      - name: GEO-F API/runtime gate
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run validation/geodesic_api_runtime_validation.d
