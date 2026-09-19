@@ -31,20 +31,23 @@ The current `research/geodesics` development branch additionally contains the
 first public direct/inverse ellipsoidal geodesic slice.
 
 That geodesic implementation is code-complete for its current first-slice API,
-but the broader acceptance program defined by ADR-0008 is not yet complete.
+and the technical acceptance program defined by ADR-0008 is now complete.
 
-ADR-0008 therefore remains:
+ADR-0008 remains:
 
 ```text
 Status: Proposed
 ```
+
+only until the explicit project governance decision on promotion to
+`Accepted`.
 
 ## Geodesic acceptance state
 
 The authoritative status is maintained in
 `docs/GEODESIC_VALIDATION_PLAN.md`.
 
-Current state after GEO-F:
+Current state after GEO-G:
 
 ```text
 GEO-A  contract and analytical semantics             PASS
@@ -53,7 +56,7 @@ GEO-C  GeographicLib Exact differential validation   PASS
 GEO-D  PROJ interoperability                         PASS
 GEO-E  adversarial inverse/convergence                PASS
 GEO-F  API/runtime contract                           PASS
-GEO-G  platform/compiler/real-width coverage          PARTIAL
+GEO-G  platform/compiler/real-width coverage          PASS
 ```
 
 The mathematical production core should not be changed merely to continue the
@@ -62,13 +65,16 @@ correctness, numerical, semantic, API, or performance defect.
 
 ## Immediate sequence
 
-Resume geodesic qualification in this order:
+The geodesic qualification gates are complete.
 
-1. complete GEO-G portable compiler/platform and `real`-width coverage;
-2. only after every mandatory gate is PASS, decide whether ADR-0008 may move
-   from `Proposed` to `Accepted`;
-3. treat branch publication, integration into `main`, and release planning as
-   explicit project decisions rather than automatic consequences of validation.
+Continue in this order:
+
+1. make the explicit ADR-0008 decision on promotion from `Proposed` to
+   `Accepted`;
+2. treat branch publication, integration into `main`, and release planning as
+   explicit project decisions rather than automatic consequences of validation;
+3. do not add deferred geodesic functionality without a concrete consumer or
+   separately justified research result.
 
 ## Existing accepted post-v0.1 work
 

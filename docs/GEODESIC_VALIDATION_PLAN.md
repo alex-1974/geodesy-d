@@ -1,6 +1,6 @@
 # Ellipsoidal geodesic validation plan
 
-- Status: In progress
+- Status: Complete
 - Branch: `research/geodesics`
 - Depends on: ADR-0008
 - Target: direct and inverse ellipsoidal geodesics
@@ -956,6 +956,42 @@ where practical.
 A platform with wider `real` must demonstrate that intermediate calculations
 retain wider precision.
 
+### GEO-G acceptance result
+
+GEO-G is **PASS**.
+
+The accepted hosted matrix is GitHub Actions run `35442370160` on commit
+`95f851cf0704386a34fc1cf84de4c8c5db5e5031`.
+
+All six mandatory targets passed library unit tests, the aggregate public API
+contract, GEO-A portable semantics, the portable analytical/property gate, the
+D `real` precision-preservation gate, and GEO-F API/runtime validation:
+
+~~~text
+Linux x86_64 / LDC 1.41.0      PASS   real.mant_dig = 64
+Linux AArch64 / LDC 1.41.0     PASS   real.mant_dig = 113
+Windows x86_64 / LDC 1.41.0    PASS   real.mant_dig = 53
+macOS AArch64 / LDC 1.41.0     PASS   real.mant_dig = 53
+macOS x86_64 / LDC 1.41.0      PASS   real.mant_dig = 64
+Linux x86_64 / DMD 2.111.0     PASS   real.mant_dig = 64
+~~~
+
+The wider-`real` direct/inverse precision witnesses passed on both
+64-bit-mantissa and 113-bit-mantissa targets. The binary64-class targets
+correctly take the no-wider-precision path.
+
+The informational Windows/AArch64 workflow entry also completed successfully,
+but its D executable fingerprint reported `architecture=x86_64`; it is
+therefore not counted as native Windows/AArch64 evidence. This does not affect
+the mandatory matrix.
+
+The complete run extract and provenance are committed in:
+
+~~~text
+research/geodesics/data/geog_acceptance_20260919T121600Z.log
+research/geodesics/data/GEO_G_PROVENANCE.md
+~~~
+
 ## Property tests
 
 Property testing supplements independent reference comparison.
@@ -1110,7 +1146,7 @@ GEO-C  GeographicLib Exact differential validation   PASS
 GEO-D  PROJ interoperability                         PASS
 GEO-E  adversarial inverse/convergence                PASS
 GEO-F  API/runtime contract                          PASS
-GEO-G  platform/compiler/real-width coverage          PARTIAL
+GEO-G  platform/compiler/real-width coverage          PASS
 ~~~
 
 Status rationale:
@@ -1131,20 +1167,22 @@ Status rationale:
   are executable, the throwing constructor retains `GeodesyValueException`,
   and DMD/LDC each complete 100000 direct plus 100000 inverse repetitions for
   every public scalar.
-- GEO-G currently has Linux x86-64 DMD/LDC evidence. The broader portable matrix
-  and additional `real` widths remain open.
+- GEO-G passes the hosted compiler/platform gate on all six mandatory targets
+  and covers `real.mant_dig` values 53, 64, and 113. Wider-than-binary64
+  precision preservation passes on the 64- and 113-bit-mantissa targets.
 
-ADR-0008 remains `Proposed` until every mandatory gate is `PASS`.
+All mandatory GEO-A through GEO-G gates are now `PASS`.
+
+ADR-0008 remains `Proposed` until the project makes the explicit governance
+decision to promote it to `Accepted`.
 
 ## Immediate next step
 
-GEO-A through GEO-F are complete.
+The technical validation program for the initial direct/inverse geodesic slice
+is complete.
 
 The validated mathematical core should remain unchanged unless new evidence
 exposes a defect.
 
-The remaining mandatory work is:
-
-1. complete GEO-G portable compiler/platform and `real`-width coverage;
-2. only after GEO-G is PASS, decide whether ADR-0008 may move from `Proposed`
-   to `Accepted`.
+The next step is the explicit ADR-0008 acceptance decision. Branch integration,
+publication, and release planning remain separate project decisions.
