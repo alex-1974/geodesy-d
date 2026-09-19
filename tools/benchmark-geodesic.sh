@@ -38,7 +38,21 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 bridge_o="$tmp/geodesic_reference_bridge.o"
-binary="$tmp/geodesy-d-geodesic-reference"
+
+binary="${GEODESIC_BENCH_BINARY:-$tmp/geodesy-d-geodesic-reference}"
+
+mkdir -p "$(dirname "$binary")"
+
+d_flags=(
+    -release
+    -enable-inlining
+    -O3
+    -mcpu=native
+)
+
+if [[ "${GEODESIC_BENCH_PROFILE_DEBUG:-0}" == 1 ]]; then
+    d_flags+=(-g)
+fi
 
 mapfile -t geodesy_sources < <(
     find "$repo/source/geodesy" \
@@ -83,7 +97,7 @@ printf 'GeographicLib:      %s\n' \
 printf 'PROJ:               %s\n' \
     "$(pkg-config --modversion proj)"
 printf 'build flags D:      %s\n' \
-    '-release -enable-inlining -O3 -mcpu=native'
+    "${d_flags[*]}"
 printf 'build flags C++:    %s\n' \
     '-O3 -DNDEBUG -march=native -std=c++17'
 printf 'CPU affinity:       logical CPU %s\n' "$cpu"
@@ -153,10 +167,7 @@ echo '=== compiling GeographicLib/PROJ bridge ==='
 echo '=== compiling D benchmark ==='
 
 "$dc" \
-    -release \
-    -enable-inlining \
-    -O3 \
-    -mcpu=native \
+    "${d_flags[@]}" \
     -I"$repo/source" \
     "$bench/source/app.d" \
     "${geodesy_sources[@]}" \
@@ -168,6 +179,12 @@ echo '=== compiling D benchmark ==='
 
 echo
 
+if [[ "${GEODESIC_BENCH_BUILD_ONLY:-0}" == 1 ]]; then
+    echo "=== build only ==="
+    echo "binary: $binary"
+    exit 0
+fi
+
 runs="${GEODESIC_BENCH_RUNS:-1}"
 
 [[ "$runs" =~ ^[1-9][0-9]*$ ]] || {
@@ -177,7 +194,7 @@ runs="${GEODESIC_BENCH_RUNS:-1}"
 
 for ((run = 1; run <= runs; ++run)); do
     echo "=== running on logical CPU $cpu: process run $run/$runs ==="
-    taskset -c "$cpu" "$binary"
+    taskset -c "$cpu" "$binary" "$@"
 
     if ((run < runs)); then
         echo

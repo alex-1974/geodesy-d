@@ -1173,6 +1173,74 @@ void benchmarkDirectThreeWay(
 }
 
 
+
+void profileInverseOrdinary(
+    const Geodesic!double solver,
+    const InverseCase[] cases)
+{
+    enum size_t profileRounds = 128;
+
+    double localSink = 0.0;
+
+    /*
+     * One untimed warm-up traversal before the profiling workload.
+     */
+    foreach (const ref item; cases)
+    {
+        GeodesicInverseResult!double result;
+
+        if (solver.tryInverse(
+                item.start,
+                item.end,
+                result))
+            localSink += fingerprint(result);
+        else
+            localSink += 1.0e100;
+    }
+
+    /*
+     * Deliberately no StopWatch here.
+     *
+     * perf observes only the prepared geodesy-d inverse workload plus
+     * the minimal loop/fingerprint machinery required to keep results live.
+     */
+    foreach (_; 0 .. profileRounds)
+    {
+        foreach (const ref item; cases)
+        {
+            GeodesicInverseResult!double result;
+
+            if (solver.tryInverse(
+                    item.start,
+                    item.end,
+                    result))
+                localSink += fingerprint(result);
+            else
+                localSink += 1.0e100;
+        }
+    }
+
+    benchmarkSink += localSink;
+
+    writeln("=== geodesy-d profiling mode ===");
+
+    writefln(
+        "corpus:             INVERSE / ordinary-global");
+
+    writefln(
+        "samples per round:  %s",
+        cases.length);
+
+    writefln(
+        "profile rounds:     %s",
+        profileRounds);
+
+    writefln(
+        "profile operations: %s",
+        profileRounds * cases.length);
+}
+
+
 void benchmarkInverseThreeWay(
     const char[] label,
     const Geodesic!double solver,
@@ -1229,13 +1297,42 @@ void benchmarkInverseThreeWay(
 }
 
 
-void main()
+void main(string[] args)
 {
+    if (args.length > 2
+        || (args.length == 2
+            && args[1] != "--profile-inverse-ordinary"))
+        throw new Exception(
+            "usage: geodesic-reference "
+            ~ "[--profile-inverse-ordinary]");
+
+    const bool profileInverseOrdinaryOnly =
+        args.length == 2;
+
     const earth = wgs84!double();
 
     const solver =
         Geodesic!double.fromEllipsoid(
             earth);
+
+    if (profileInverseOrdinaryOnly)
+    {
+        auto inverseOrdinary =
+            new InverseCase[sampleCount];
+
+        fillInverseOrdinary(
+            inverseOrdinary);
+
+        profileInverseOrdinary(
+            solver,
+            inverseOrdinary);
+
+        writefln(
+            "sink: %.17g",
+            benchmarkSink);
+
+        return;
+    }
 
     void* reference =
         geodesic_reference_create(
