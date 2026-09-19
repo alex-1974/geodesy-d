@@ -22,14 +22,16 @@ The released `v0.1.x` line provides:
 - EPSG 1033 Position Vector 7-parameter Helmert transformations;
 - EPSG 1032 Coordinate Frame 7-parameter Helmert transformations.
 
-Current `main` additionally provides the unreleased projection layer:
+Current `main` additionally provides the accepted but unreleased post-v0.1
+numerical surfaces:
 
 - bounded generic `TransverseMercator!T`;
 - Universal Transverse Mercator zone and hemisphere policy;
 - prepared `UtmProjection!T`;
 - tagged `UtmCoordinate!T`;
 - automatic standard-zone UTM forward projection;
-- explicit-zone and tagged reverse UTM operations.
+- explicit-zone and tagged reverse UTM operations;
+- prepared direct/inverse ellipsoidal `Geodesic!T` solver.
 
 The public numerical operations are independently validated against appropriate
 authoritative references and mature external implementations including
