@@ -7,11 +7,11 @@
  *
  * - prepared ellipsoid state;
  * - public angular canonicalization semantics;
- * - an analytical spherical direct path;
- * - the Karney series direct solution for supported oblate ellipsoids.
+ * - analytical spherical geodesic handling;
+ * - the Karney series direct solution for supported oblate ellipsoids;
+ * - robust Karney-style inverse dispatch and safeguarded iteration.
  *
- * The inverse kernel is added in a subsequent slice before this module is
- * aggregate-exported by `geodesy`.
+ * The public direct and inverse surface is aggregate-exported by `geodesy`.
  */
 module geodesy.geodesic;
 

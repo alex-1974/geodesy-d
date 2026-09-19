@@ -43,8 +43,11 @@ The initial benchmark set covers:
 - EPSG 1033 Position Vector Helmert;
 - EPSG 1032 Coordinate Frame Helmert.
 
-Future algorithms, including Transverse Mercator, UTM and ellipsoidal
-geodesics, must acquire benchmarks as part of their implementation.
+Performance-sensitive algorithms should acquire reproducible benchmark
+baselines as part of integration and release readiness. An operation-specific
+validation plan may explicitly make performance non-gating for initial
+correctness acceptance. In that case, no performance claim or optimisation is
+accepted until an appropriate baseline exists.
 
 ## Measurement rules
 

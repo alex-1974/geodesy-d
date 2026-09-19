@@ -20,6 +20,8 @@ compile() {
 
 echo "Public API positive contract ($dc)..."
 compile "$repo/validation/api/public_api_contract.d" "$tmp/public_api_contract.o"
+echo "Named-argument source compatibility ($dc)..."
+compile "$repo/validation/api/named_arguments_contract.d" "$tmp/named_arguments_contract.o"
 
 expect_rejected() {
     local source="$1"
