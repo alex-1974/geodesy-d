@@ -102,6 +102,15 @@ printf 'build flags C++:    %s\n' \
     '-O3 -DNDEBUG -march=native -std=c++17'
 printf 'CPU affinity:       logical CPU %s\n' "$cpu"
 
+thread_siblings="$(
+    cat \
+        "/sys/devices/system/cpu/cpu${cpu}/topology/thread_siblings_list" \
+        2>/dev/null ||
+    echo unavailable
+)"
+
+printf 'thread siblings:    %s\n' "$thread_siblings"
+
 governor="$(
     cat \
         "/sys/devices/system/cpu/cpu${cpu}/cpufreq/scaling_governor" \
@@ -141,6 +150,13 @@ if [[ "${GEODESIC_BENCH_REQUIRE_CONTROLLED:-0}" == 1 ]]; then
         echo "error: controlled run requires intel_pstate no_turbo=1 (observed '$no_turbo')" >&2
         exit 3
     }
+
+    if [[ "${GEODESIC_BENCH_REQUIRE_ISOLATED_CPU:-0}" == 1 \
+        && "$thread_siblings" != "$cpu" ]]; then
+        echo "error: isolated run requires only logical CPU $cpu in thread_siblings_list" >&2
+        echo "       observed thread siblings=$thread_siblings" >&2
+        exit 3
+    fi
 
     if [[ "${GEODESIC_BENCH_REQUIRE_FIXED_FREQ:-0}" == 1         && "$scaling_min" != "$scaling_max" ]]; then
         echo "error: fixed-frequency run requires scaling_min_freq == scaling_max_freq" >&2
