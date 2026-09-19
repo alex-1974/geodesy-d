@@ -525,7 +525,7 @@ measurement, this establishes the reproducible LDC release performance
 baseline required by Gate TM-F.
 
 
-## Ellipsoidal Geodesic performance baseline
+## Ellipsoidal Geodesic performance
 
 The public ellipsoidal geodesic implementation was benchmarked after completion
 of the direct/inverse numerical and API validation work.
@@ -549,95 +549,38 @@ The external implementations are benchmark references only. They are not
 Reported `ns/op` values are amortized bulk-throughput measurements, not true
 single-operation dependency-chain latency.
 
-### Controlled environment
-
-The controlled reference measurements used:
-
-~~~text
-date:               2026-09-19
-geodesy-d commit:   c26efe6a56e172f962595af1dc08a912ccdf792c
-branch:             perf/geodesic-baseline
-CPU:                Intel Core i7-9750H
-logical CPU:        5
-SMT sibling:        logical CPU 11, offline
-compiler:           LDC 1.41.0
-D frontend:         2.111.0
-LLVM:               19.1.7
-C++ compiler:       GCC 15.2.0
-GeographicLib:      2.7
-PROJ:               9.7.1
-D build:            release, -O3, -mcpu=native
-C++ build:          -O3 -DNDEBUG -march=native -std=c++17
-intel_pstate:       active
-governor:           performance
-minimum frequency:  2.6 GHz
-maximum frequency:  2.6 GHz
-Turbo:              disabled
-samples/corpus:     16384
-timed rounds:       21 per process
-process runs:       5
-~~~
-
-CPU 5 was chosen because its SMT sibling, logical CPU 11, was offline.
-
-The CPU frequency was fixed at 2.6 GHz during controlled measurements and the
-previous governor and frequency limits were restored after each measurement
-session.
-
-Input construction and corpus generation occurred before timed sections.
-
-Within each timed process, implementation order was rotated to reduce systematic
-cache, thermal, and execution-order bias.
-
 ### Corpora
 
-The direct benchmark contains three deterministic corpora:
+The direct benchmark contains:
 
 ~~~text
-ordinary-global:
-    global starting coordinates and azimuths,
-    distances from approximately 1 km through 19001 km
-
-short:
-    global starting coordinates and azimuths,
-    distances from 0.01 m through approximately 10 km
-
-long:
-    global starting coordinates and azimuths,
-    distances from 10000 km through approximately 19500 km
+ordinary-global
+short
+long
 ~~~
 
-The inverse benchmark contains six deterministic corpora:
+The inverse benchmark contains:
 
 ~~~text
-ordinary-global:
-    general global point pairs
-
-short:
-    near-coincident point pairs
-
-meridional:
-    equal-longitude point pairs
-
-equatorial:
-    points on the equator
-
-polar:
-    one endpoint exactly at a pole
-
-near-antipodal:
-    nearly antipodal point pairs
+ordinary-global
+short
+meridional
+equatorial
+polar
+near-antipodal
 ~~~
 
-These corpora intentionally exercise materially different public inverse paths.
-They should not be combined into one aggregate timing.
+These corpora intentionally exercise materially different public paths and are
+reported separately rather than collapsed into one aggregate timing.
 
 ### Numerical preflight
 
-Before timing, every prepared corpus is compared against GeographicLib and
-PROJ.
+Every prepared corpus is checked against GeographicLib and PROJ before timing.
 
-Representative maximum errors from the controlled run were:
+The canonical pre-static and optimized binaries produced identical numerical
+preflight output.
+
+Representative maxima include:
 
 ~~~text
 direct ordinary vs GeographicLib:
@@ -645,72 +588,49 @@ direct ordinary vs GeographicLib:
     longitude:  1.044e-14 rad
     azimuth:    9.548e-15 rad
 
-direct ordinary vs PROJ:
-    latitude:   9.437e-16 rad
-    longitude:  1.021e-14 rad
-    azimuth:    9.548e-15 rad
-
 inverse ordinary vs GeographicLib:
     distance:   7.451e-09 m
     azimuth 1:  8.882e-15 rad
     azimuth 2:  9.326e-15 rad
 
-inverse ordinary vs PROJ:
-    distance:   7.451e-09 m
-    azimuth 1:  1.132e-14 rad
-    azimuth 2:  1.132e-14 rad
-
 inverse near-antipodal vs GeographicLib:
     distance:   7.451e-09 m
     azimuth 1:  8.206e-14 rad
     azimuth 2:  8.260e-14 rad
-
-inverse near-antipodal vs PROJ:
-    distance:   7.451e-09 m
-    azimuth 1:  1.011e-13 rad
-    azimuth 2:  1.008e-13 rad
 ~~~
 
-The short inverse corpus showed the largest angular difference:
+The short inverse corpus has an approximately `9.309e-10 rad` maximum azimuth
+difference in this benchmark.
 
-~~~text
-maximum azimuth difference: approximately 9.309e-10 rad
-~~~
-
-This remained stable across repeated controlled processes and stayed within the
-benchmark preflight envelope.
-
-The preflight is a benchmark sanity check. The normative geodesic correctness
-evidence remains the dedicated numerical validation suite.
+The preflight is a benchmark sanity check. Normative correctness evidence
+remains in the dedicated geodesic validation suite.
 
 ### PROJ 9.7.1 inverse azimuth units
 
 PROJ 9.7.1 requires special handling in the inverse benchmark adapter.
 
-`proj_geod()` accepts angular input coordinates through the PROJ coordinate
-API, but its inverse azimuth outputs are passed through from `geod_inverse()`
-without conversion. In PROJ 9.7.1 those azimuth values are therefore degrees.
+`proj_geod()` inverse azimuth outputs originate from `geod_inverse()` and are
+degrees, while `proj_geod_direct()` converts its angular outputs to radians.
 
-By contrast, `proj_geod_direct()` converts its angular outputs to radians.
+The benchmark therefore converts inverse azimuth outputs only during numerical
+preflight and leaves the native timed PROJ kernel unchanged.
 
-The benchmark adapter therefore:
+The second `geod_inverse()` azimuth is the forward azimuth at the second point,
+matching `geodesy-d` `finalAzimuth` semantics.
 
-- converts `proj_geod()` inverse azimuth outputs from degrees to radians only
-  during numerical preflight;
-- leaves native PROJ outputs unchanged in the timed inverse kernel.
+### Pre-optimization baseline
 
-This preserves correct semantic comparison without adding adapter conversion
-work to the timed PROJ path.
+The original geodesic baseline production source is commit:
 
-The underlying `geod_inverse()` second azimuth is the forward azimuth at the
-second point, matching `geodesy-d` `finalAzimuth` semantics.
+~~~text
+9d86d8d
+~~~
 
-### Controlled process-median baseline
+Commit `8cffde4` added the isolated profiling harness without changing
+production source and was used to rebuild the canonical pre-static comparison
+binary.
 
-Five processes were executed from the same compiled benchmark binary.
-
-For each corpus and implementation, the value below is the median of the five
-per-process medians:
+An earlier five-process baseline recorded the following process-median values:
 
 ~~~text
 corpus                     geodesy-d    GeographicLib 2.7    PROJ 9.7.1
@@ -728,56 +648,239 @@ INVERSE polar                396.533       482.092               468.097
 INVERSE near-antipodal      1294.141      1331.201              1309.589
 ~~~
 
-On this controlled machine and toolchain, `geodesy-d` had the lowest
-process-median timing in every measured corpus.
+That historical run recorded logical CPU 5, `performance` governor, fixed
+2.6 GHz limits and Turbo disabled. Its SMT sibling state was not captured in
+the benchmark log and must therefore not be treated as independently verified.
 
-These results are same-machine performance evidence only. They are not a
-general ranking of the implementations and do not imply broader API or
-numerical-quality superiority.
+The later canonical paired comparison below supersedes that evidence for
+optimization assessment.
 
-### Path-cost observations
+### Profiling
 
-The inverse corpora expose substantially different execution costs.
+An isolated `INVERSE / ordinary-global` profiling mode was added after the
+baseline.
 
-For `geodesy-d`, the controlled process-median baseline is approximately:
+The initial profile identified the dominant costs as:
 
 ~~~text
-equatorial:          161 ns/op
-meridional:          345 ns/op
-polar:               397 ns/op
-short:               941 ns/op
-near-antipodal:     1294 ns/op
-ordinary-global:    1702 ns/op
+geodesicLambda12
+fillCSeriesLike
+atan/atan2
+geodesicLengths
+geodesicCanonicalInverse
 ~~~
 
-The ordinary-global inverse corpus is therefore the most expensive measured
-general inverse path.
+The profile showed that repeated construction/evaluation of fixed-order
+coefficient series was a substantial avoidable cost.
 
-The near-antipodal corpus is materially cheaper than the ordinary-global corpus
-on this implementation. Difficulty of a numerical case must therefore not be
-assumed to imply higher runtime cost without profiling evidence.
+### Accepted optimization — fixed-order C series
 
-These observations identify candidates for later profiling. They do not by
-themselves justify production-code changes.
+Commit:
 
-### Process-level reproducibility
+~~~text
+9d30331
+~~~
 
-The five-process run showed small but visible whole-process system variation.
+specializes the fixed-order geodesic C-series evaluation at compile time while
+preserving the arithmetic ordering of the existing formulas.
 
-The first process was somewhat slower across several implementations. Runs 2
-through 4 were tightly clustered. The fifth process showed renewed system-wide
-disturbance in several fast inverse corpora.
+The change includes compile-time specialization of the integer-polynomial
+evaluation and fixed-order C1/C1p/C2 coefficient filling.
 
-Because the disturbance affected `geodesy-d`, GeographicLib, and PROJ together,
-it is treated as machine/process noise rather than an implementation-specific
-effect.
+DMD and LDC unit tests passed after the change, and benchmark numerical
+preflight remained unchanged.
 
-For baseline reporting, the median of multiple process medians is therefore
-preferred over a single controlled process.
+A controlled isolated ordinary-inverse profile previously showed approximately:
 
-No production optimisation is justified solely by this benchmark baseline.
-Profiling must identify a concrete avoidable cost before arithmetic or control
-flow is changed.
+~~~text
+cycles:       -13.8 %
+instructions: -27.8 %
+branches:     -36.0 %
+~~~
+
+The former `fillCSeriesLike` hotspot disappeared from the optimized profile.
+
+### Canonical paired A/B measurement
+
+The final optimization comparison was run on 2026-09-19.
+
+Production-source relationship:
+
+~~~text
+baseline production:         9d86d8d
+baseline/profile harness:    8cffde4
+
+optimized production:        9d30331
+benchmark instrumentation:   42f7ae0
+~~~
+
+The harness commits do not change the corresponding production source.
+
+Environment:
+
+~~~text
+CPU:                Intel Core i7-9750H
+logical CPU:        5
+thread_siblings:    5
+compiler:           LDC 1.41.0
+D frontend:         2.111.0
+LLVM:               19.1.7
+C++ compiler:       GCC 15.2.0
+GeographicLib:      2.7
+PROJ:               9.7.1
+D build:            release, -O3, -mcpu=native
+C++ build:          -O3 -DNDEBUG -march=native -std=c++17
+governor:           performance
+minimum frequency:  2.6 GHz
+maximum frequency:  2.6 GHz
+Turbo:              disabled
+samples/corpus:     16384
+timed rounds:       21
+paired processes:   5 baseline + 5 optimized
+~~~
+
+The process order alternated baseline/optimized.
+
+Before every process, the measurement verified:
+
+~~~text
+thread_siblings_list == 5
+governor             == performance
+minimum frequency    == 2.6 GHz
+maximum frequency    == 2.6 GHz
+intel no_turbo       == 1
+~~~
+
+Each process additionally had to satisfy predeclared runtime health gates:
+
+~~~text
+task-clock / wall time >= 0.995
+0.995 <= cycles / ref-cycles <= 1.005
+CPU migrations == 0
+core thermal-throttle delta == 0
+package thermal-throttle delta == 0
+~~~
+
+All ten measured processes passed.
+
+Observed `cycles / ref-cycles` was `1.000754` in every measured process.
+
+The numerical preflight was identical between baseline and optimized binaries.
+
+Median-of-five process medians:
+
+~~~text
+corpus                           baseline    optimized      delta
+                                 ns/op       ns/op
+
+DIRECT ordinary-global           608.472      561.945      -7.65 %
+DIRECT short                     566.058      522.546      -7.69 %
+DIRECT long                      612.372      567.560      -7.32 %
+
+INVERSE ordinary-global         1677.600     1449.591     -13.59 %
+INVERSE short                    933.496      810.291     -13.20 %
+INVERSE meridional               342.285      284.711     -16.82 %
+INVERSE equatorial               159.137      157.428      -1.07 %
+INVERSE polar                    392.847      331.702     -15.56 %
+INVERSE near-antipodal          1274.683     1121.863     -11.99 %
+~~~
+
+Paired-median deltas independently gave:
+
+~~~text
+DIRECT ordinary-global           -7.66 %
+DIRECT short                     -7.87 %
+DIRECT long                      -7.96 %
+
+INVERSE ordinary-global        -13.55 %
+INVERSE short                  -13.30 %
+INVERSE meridional             -16.82 %
+INVERSE equatorial              -1.49 %
+INVERSE polar                  -15.58 %
+INVERSE near-antipodal         -12.16 %
+~~~
+
+The external-reference paired medians remained within approximately
+`-0.02 % .. +1.60 %` for GeographicLib and `-0.01 % .. +0.88 %` for PROJ.
+
+The optimization therefore produces a broad and reproducible reduction in
+`geodesy-d` execution time under the controlled same-machine workload. The
+equatorial inverse path shows only a small measured change.
+
+These measurements are evidence for this machine, toolchain, build
+configuration and benchmark corpus. They are not a general performance ranking
+of geodesic implementations.
+
+### Rejected optimization experiments
+
+Two subsequent experiments were not accepted.
+
+#### Additional A1/A2/A3/C3 source specialization
+
+Further compile-time specialization of A1, A2, A3 and C3 source expressions
+passed DMD/LDC tests but produced no performance-relevant LDC machine-code
+change.
+
+The experiment was rejected because it added implementation complexity without
+measurable generated-code benefit.
+
+#### Reduced-latitude normalization without `hypot`
+
+A bounded inverse-dispatch experiment replaced the robust reduced-latitude
+`hypot` normalization with direct `sqrt(x*x + y*y)` evaluation.
+
+LLVM produced materially smaller code and combined the two normalizations into
+packed-double SIMD operations.
+
+An isolated ordinary-inverse measurement showed:
+
+~~~text
+instructions: approximately -0.67 %
+branches:     approximately -0.96 %
+cycles:       no stable improvement
+~~~
+
+The full benchmark matrix additionally showed a reproducible approximately
+5 % regression in the equatorial inverse corpus and a smaller polar regression.
+
+The experiment was therefore rejected despite its simpler generated code.
+
+### Measurement disturbance note
+
+One attempted post-optimization five-process run exhibited a transient
+machine-wide approximately twofold timing slowdown affecting `geodesy-d`,
+GeographicLib and PROJ simultaneously.
+
+The cause was not instrumented during that occurrence, so no thermal,
+frequency or scheduling cause is claimed.
+
+That run is non-canonical and is not included in the reported optimization
+results.
+
+Subsequent instrumented runs verified stable effective cycle rate, essentially
+full task/wall CPU occupancy, zero CPU migrations and no increase in thermal
+throttle counters.
+
+### Current optimization boundary
+
+After the accepted fixed-order series specialization, the remaining dominant
+profile costs are primarily:
+
+~~~text
+geodesicLambda12
+atan/atan2
+geodesicLengths
+geodesicCanonicalInverse
+sin/cos
+normalization / hypot
+~~~
+
+The low-risk structural series opportunity has therefore been addressed.
+
+Further changes in these remaining kernels would alter or closely interact with
+numerically sensitive trigonometric, normalization or solver arithmetic.
+No additional production optimization is justified before a new profile or a
+concrete consumer demonstrates a material need.
 
 ## CI
 
