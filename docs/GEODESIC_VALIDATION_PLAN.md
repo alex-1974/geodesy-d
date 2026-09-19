@@ -555,6 +555,30 @@ Compare:
 GEO-C passes only when every ordinary-profile comparison stays within the
 accepted scalar budget.
 
+### GEO-C acceptance result
+
+GEO-C is **PASS** as of the acceptance run at
+`2026-09-18T23:54:41Z`.
+
+The accepted public-API differential corpus contains, per public scalar,
+`40150` Direct and `40160` Inverse comparisons across ten ellipsoid/scale
+profiles and was passed under both DMD and LDC.
+
+The bulk gate is complemented by a wide-`real` qualification against a
+512-bit MPFR GeographicLib `GeodesicExact` oracle.  That qualification uses
+inputs which are not preserved by a binary64 round trip and also passed under
+both DMD and LDC.
+
+Inverse direction comparison is conditioning-aware: ordinary cases use
+absolute Earth-fixed tangent direction, very short cases use a transverse
+`(s/a) * direction_error` metric, and deliberately near-antipodal cases use an
+antipodal-defect-weighted direction metric.  Distance and endpoint closure
+remain independently validated.
+
+The exact toolchain, validator/oracle hashes, corpus sizes, observed maxima,
+and acceptance-log hash are recorded in
+`research/geodesics/data/GEO_C_PROVENANCE.md`.
+
 ## GEO-D — PROJ interoperability
 
 Purpose:
@@ -870,7 +894,7 @@ Current status:
 ~~~text
 GEO-A  contract and analytical semantics             PASS
 GEO-B  authoritative reference vectors               PASS
-GEO-C  GeographicLib Exact differential validation   PARTIAL
+GEO-C  GeographicLib Exact differential validation   PASS
 GEO-D  PROJ interoperability                         OPEN
 GEO-E  adversarial inverse/convergence                PARTIAL
 GEO-F  API/runtime contract                          PARTIAL
