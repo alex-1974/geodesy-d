@@ -164,6 +164,51 @@ dimensionless fraction. The EPSG-style factory accepts arc-seconds and ppm.
 `pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is exposed in
 v0.1.
 
+## Transverse Mercator — current unreleased accepted surface
+
+The current development line exports the accepted bounded generic Transverse
+Mercator operation:
+
+~~~text
+TransverseMercator<T>
+~~~
+
+Construction uses `tryFromParameters` / `fromParameters`, and prepared
+operations expose checked/throwing `tryForward` / `forward` and
+`tryReverse` / `reverse` pairs.
+
+`TransverseMercator<T>.init` is intentionally invalid.
+
+See ADR-0006 and `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` for the accepted
+domain, numerical, scalar, and platform contract.
+
+## UTM — current unreleased accepted surface
+
+The UTM layer exports:
+
+~~~text
+UtmZone
+UtmHemisphere
+UtmCoordinate<T>
+UtmProjection<T>
+
+tryStandardUtmZone
+tryForwardUtm / forwardUtm
+tryReverseUtm / reverseUtm
+~~~
+
+`UtmZone.init` is intentionally invalid.
+
+`UtmProjection<T>.init` and `UtmCoordinate<T>.init` are structurally invalid
+because they contain an invalid default zone.
+
+`UtmHemisphere.init` is intentionally `UtmHemisphere.north`. The enum's first
+member is therefore part of the public default-state contract and must not be
+reordered casually.
+
+See ADR-0007 and `docs/UTM_VALIDATION_PLAN.md` for the accepted policy,
+parameterization, boundary, and platform contract.
+
 ## Ellipsoidal geodesics — current unreleased surface
 
 The current development line exports the geodesic API through the aggregate:
@@ -268,6 +313,10 @@ The tagged v0.1 contract verifies externally that aggregate
 their hot-path attributes, mutable parameter leakage is rejected,
 package/private helpers remain inaccessible, and Helmert convention selection
 cannot be omitted.
+
+The permanent aggregate contract also compiles a named-argument compatibility
+surface under DMD and LDC. Public parameter names are therefore treated as
+source compatibility for the current stabilized API.
 
 The current geodesic aggregate surface is part of the permanent public API
 contract and is compile-checked under DMD and LDC using only `import geodesy;`.

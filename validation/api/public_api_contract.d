@@ -20,6 +20,7 @@ static assert(is(UtmZone));
 static assert(is(UtmCoordinate!double));
 static assert(is(UtmProjection!double));
 static assert(is(typeof(UtmHemisphere.north) == UtmHemisphere));
+static assert(UtmHemisphere.init == UtmHemisphere.north);
 static assert(is(Geodesic!float));
 static assert(is(Geodesic!double));
 static assert(is(Geodesic!real));
