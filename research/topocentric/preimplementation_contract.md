@@ -286,8 +286,9 @@ operation is complete and only the final public result is narrowed.
 
 ## TOPO-F — public API/runtime contract
 
-TOPO-F remains PENDING until production code exists and the following contract
-compiles under the supported compiler matrix.
+Production topocentric code now exists. TOPO-F remains PENDING until the
+following aggregate public API and runtime contract has been executed under the
+supported compiler matrix.
 
 ### Aggregate public types
 
@@ -528,10 +529,10 @@ Current status:
 ~~~text
 TOPO-A                              PASS
 TOPO-B                              PASS
-TOPO-C                              PENDING
+TOPO-C                              PASS
     PROJ oracle qualification       PASS
-    geodesy-d differential          PENDING
-TOPO-D                              PENDING
+    geodesy-d differential          PASS
+TOPO-D                              PASS
 TOPO-E specification               FROZEN
 TOPO-E execution                   PENDING
 TOPO-F specification               FROZEN
@@ -539,6 +540,9 @@ TOPO-F execution                   PENDING
 TOPO-G                              PENDING
 ~~~
 
-The next step may create production code because the public API, failure
-semantics, adversarial semantics, and compile-time contract are now specified
-in advance.
+Production code has now been implemented after the public API, failure
+semantics, adversarial semantics, and compile-time contract were specified in
+advance.
+
+The remaining work is execution of TOPO-E and TOPO-F against that production
+implementation, followed by TOPO-G compiler/platform coverage.

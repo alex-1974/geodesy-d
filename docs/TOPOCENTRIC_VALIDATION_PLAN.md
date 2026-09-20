@@ -33,8 +33,8 @@ Use the following staged gates:
 ~~~text
 TOPO-A  contract, coordinate model, and canonical semantics             PASS
 TOPO-B  EPSG worked vectors and analytical invariants                   PASS
-TOPO-C  PROJ differential/interoperability validation                   PENDING
-TOPO-D  GeographicLib LocalCartesian differential validation            PENDING
+TOPO-C  PROJ differential/interoperability validation                   PASS
+TOPO-D  GeographicLib LocalCartesian differential validation            PASS
 TOPO-E  adversarial origins, poles, float representation, failure       PENDING
 TOPO-F  public API/runtime contract                                     PENDING
 TOPO-G  compiler/platform/real-width coverage                           PENDING
@@ -646,6 +646,181 @@ The PROJ reference system is qualified and the implemented public
 corpus with both DMD and LDC.
 
 TOPO-C is therefore PASS.
+
+
+## TOPO-D GeographicLib LocalCartesian differential
+
+TOPO-D completed successfully on 2026-09-20.
+
+This gate uses GeographicLib 2.7 `LocalCartesian` as a second external
+implementation reference for the geographic/topocentric path corresponding
+to EPSG 9837.
+
+GeographicLib is validation infrastructure only. The production `geodesy-d`
+library does not link to or require GeographicLib.
+
+Because GeographicLib `LocalCartesian` and `geodesy-d` both ultimately use
+geocentric coordinates plus an orthonormal local rotation, this is strong
+implementation evidence but not mathematically independent evidence.
+Normative EPSG vectors and the independent analytical checks from TOPO-B
+remain separate acceptance layers.
+
+### TOPO-D harness
+
+Committed research programs:
+
+~~~text
+research/topocentric/geographiclib_localcartesian_probe.cpp
+research/topocentric/validate_geodesy_vs_geographiclib.py
+~~~
+
+The C++ probe constructs a GeographicLib `Geocentric` object explicitly for
+each tested ellipsoid and prepares a `LocalCartesian` frame from the supplied
+geodetic origin.
+
+The Python driver compares:
+
+~~~text
+geodesy-d public TopocentricFrame API
+GeographicLib 2.7 LocalCartesian
+independently coded analytical ECEF/ENU reference mathematics
+~~~
+
+### TOPO-D corpus
+
+The deterministic corpus deliberately reuses the TOPO-C ellipsoids, origins,
+case counts, and seeds so that the two external implementation gates are
+directly comparable.
+
+~~~text
+ellipsoids:
+    WGS 84
+    GRS 80
+    Airy 1830
+    sphere, radius 6371000 m
+
+origins:
+    equator / Greenwich
+    Vienna-like mid-latitude
+    Sydney-like southern latitude
+    antimeridian-near origin
+    high northern latitude
+
+forward cases/profile:
+    5000
+
+reverse cases/profile:
+    5000
+
+total forward cases:
+    100000
+
+total independently generated reverse ENU cases:
+    100000
+
+forward seed:
+    0x121814101B191409
+
+reverse seed:
+    0x060A06101B191409
+~~~
+
+The reverse corpus is generated directly in ENU space rather than by feeding
+forward results back into the reverse operation.
+
+### TOPO-D environment
+
+The accepted runs used:
+
+~~~text
+GeographicLib:
+    2.7-1
+
+C++ compiler:
+    g++ 15.2.0
+
+DMD:
+    DMD64 D Compiler v2.111.0
+
+LDC:
+    LDC 1.41.0
+~~~
+
+DMD and LDC produced identical reported maxima and identical worst-case
+witnesses.
+
+### TOPO-D observed maxima
+
+Forward:
+
+~~~text
+geodesy-d vs GeographicLib:
+    7.450580596924e-09 m
+
+geodesy-d vs analytical:
+    5.820766091347e-09 m
+
+GeographicLib vs analytical:
+    5.587935447693e-09 m
+~~~
+
+Independent reverse ENU corpus:
+
+~~~text
+geodesy-d vs GeographicLib latitude:
+    1.506759191140e-14 rad
+
+geodesy-d vs GeographicLib longitude:
+    7.105427357601e-14 rad
+
+geodesy-d vs GeographicLib height:
+    5.456968210638e-09 m
+
+geodesy-d reconstructed-ECEF residual:
+    8.870847523212e-08 m
+
+GeographicLib reconstructed-ECEF residual:
+    4.656612873077e-09 m
+~~~
+
+Unlike the PROJ EPSG 9837 reverse comparison, this GeographicLib comparison
+does not exhibit a millimetre-scale geocentric-to-geodetic reference floor.
+
+### TOPO-D acceptance limits
+
+The committed limits are research/release validation gates, not public
+accuracy guarantees:
+
+~~~text
+forward geodesy-d vs GeographicLib:
+    <= 1e-6 m
+
+forward geodesy-d vs analytical:
+    <= 1e-6 m
+
+forward GeographicLib vs analytical:
+    <= 1e-6 m
+
+reverse geodesy-d vs GeographicLib:
+    latitude  <= 1e-12 rad
+    longitude <= 1e-12 rad
+    height    <= 1e-6 m
+
+reverse reconstructed-ECEF residual:
+    geodesy-d      <= 1e-6 m
+    GeographicLib  <= 1e-6 m
+~~~
+
+All eight criteria pass under both DMD and LDC.
+
+### TOPO-D status
+
+TOPO-D is PASS.
+
+The public geographic/topocentric implementation has therefore been checked
+against both PROJ interoperability behavior and GeographicLib
+`LocalCartesian`, in addition to the normative and analytical evidence from
+TOPO-B.
 
 ## Coordinate value-type gate
 

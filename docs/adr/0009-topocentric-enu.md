@@ -623,11 +623,20 @@ The TOPO-B evidence is recorded in
 `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the independent probes under
 `research/topocentric/`.
 
-The PROJ oracle required for TOPO-C has also been qualified against independent
-research mathematics using PROJ 9.7.1 and a deterministic 17,040-case corpus
-per EPSG method. TOPO-C itself remains pending until the eventual public
-`geodesy-d` topocentric implementation is differentially compared against that
-oracle.
+TOPO-C — PROJ differential/interoperability validation — is complete and
+PASS as of 2026-09-20. The public implementation passed deterministic
+100,000-case forward and reverse corpora per public path under both DMD and
+LDC. The PROJ EPSG 9837 reverse geographic floor was isolated to PROJ's
+`cart -I` stage rather than the topocentric rotation.
+
+TOPO-D — GeographicLib 2.7 `LocalCartesian` differential validation — is also
+complete and PASS as of 2026-09-20. The public geographic/topocentric path
+passed 100,000 forward cases and 100,000 independently generated reverse ENU
+cases under both DMD and LDC.
+
+Detailed environments, seeds, maxima, attribution checks, and acceptance
+limits are recorded in `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the committed
+research harnesses under `research/topocentric/`.
 
 This ADR remains `Proposed` until the remaining topocentric validation gates
 have demonstrated:
