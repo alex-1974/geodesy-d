@@ -31,16 +31,24 @@ evidence.
 Use the following staged gates:
 
 ~~~text
-TOPO-A  contract, coordinate model, and canonical semantics
-TOPO-B  EPSG worked vectors and analytical invariants
-TOPO-C  PROJ differential/interoperability validation
-TOPO-D  GeographicLib LocalCartesian differential validation
-TOPO-E  adversarial origins, poles, float representation, failure behavior
-TOPO-F  public API/runtime contract
-TOPO-G  compiler/platform/real-width coverage
+TOPO-A  contract, coordinate model, and canonical semantics             PASS
+TOPO-B  EPSG worked vectors and analytical invariants                   PENDING
+TOPO-C  PROJ differential/interoperability validation                   PENDING
+TOPO-D  GeographicLib LocalCartesian differential validation            PENDING
+TOPO-E  adversarial origins, poles, float representation, failure       PENDING
+TOPO-F  public API/runtime contract                                     PENDING
+TOPO-G  compiler/platform/real-width coverage                           PENDING
 ~~~
 
-ADR-0009 remains Proposed until all required gates pass.
+TOPO-A was completed on 2026-09-20. Its accepted candidate public surface is
+recorded in:
+
+~~~text
+research/topocentric/api_surface.md
+docs/adr/0009-topocentric-enu.md
+~~~
+
+ADR-0009 remains Proposed until all remaining required gates pass.
 
 ## Reference hierarchy
 

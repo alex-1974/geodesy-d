@@ -270,31 +270,129 @@ working-precision geocentric
 geodetic
 ~~~
 
-## Operational API direction
+## Operational API
 
-The initial API should use explicit domain names rather than a generic
-`forward`/`reverse` overload whose meaning depends on argument type.
+TOPO-A fixes the initial candidate public surface.
 
-The candidate checked operations are conceptually:
+The module is:
 
 ~~~d
-tryGeocentricToTopocentric(...)
-tryTopocentricToGeocentric(...)
-
-tryGeodeticToTopocentric(...)
-tryTopocentricToGeodetic(...)
+geodesy.topocentric
 ~~~
 
-They are operations on a prepared `TopocentricFrame!T`.
+The two public domain types are:
 
-Throwing convenience counterparts may follow the established conversion
-pattern if the API audit confirms that they improve consistency without
-unnecessary surface area.
+~~~d
+TopocentricCoordinate!T
+TopocentricFrame!T
+~~~
 
-Exact signatures and convenience operations remain provisional until the
-validation/API gate is complete.
+### Frame construction
 
-The checked numerical path should preserve, where implementation permits:
+~~~d
+static bool tryFromGeodeticOrigin(
+    const Ellipsoid!T ellipsoid,
+    const GeodeticCoordinate!T origin,
+    out TopocentricFrame result)
+    pure nothrow @safe @nogc;
+
+static TopocentricFrame fromGeodeticOrigin(
+    const Ellipsoid!T ellipsoid,
+    const GeodeticCoordinate!T origin)
+    @safe;
+
+static bool tryFromGeocentricOrigin(
+    const Ellipsoid!T ellipsoid,
+    const GeocentricCoordinate!T origin,
+    out TopocentricFrame result)
+    pure nothrow @safe @nogc;
+
+static TopocentricFrame fromGeocentricOrigin(
+    const Ellipsoid!T ellipsoid,
+    const GeocentricCoordinate!T origin)
+    @safe;
+~~~
+
+Public parameter names are compatibility-sensitive.
+
+The parameter order is deliberately:
+
+~~~text
+ellipsoid
+origin
+result
+~~~
+
+### Frame introspection
+
+The initial surface exposes only:
+
+~~~d
+@property bool isValid() const
+    pure nothrow @safe @nogc;
+
+@property Ellipsoid!T ellipsoid() const
+    pure nothrow @safe @nogc;
+~~~
+
+Public geodetic/geocentric origin properties are deliberately deferred.
+
+They can be added compatibly if a concrete consumer later requires frame-origin
+introspection. Deferring them avoids freezing derived public-float and
+canonicalization semantics unnecessarily before v1.
+
+### Coordinate conversion
+
+The checked operations are:
+
+~~~d
+bool tryGeocentricToTopocentric(
+    const GeocentricCoordinate!T source,
+    out TopocentricCoordinate!T result) const
+    pure nothrow @safe @nogc;
+
+bool tryTopocentricToGeocentric(
+    const TopocentricCoordinate!T source,
+    out GeocentricCoordinate!T result) const
+    pure nothrow @safe @nogc;
+
+bool tryGeodeticToTopocentric(
+    const GeodeticCoordinate!T source,
+    out TopocentricCoordinate!T result) const
+    pure nothrow @safe @nogc;
+
+bool tryTopocentricToGeodetic(
+    const TopocentricCoordinate!T source,
+    out GeodeticCoordinate!T result) const
+    pure nothrow @safe @nogc;
+~~~
+
+The corresponding throwing convenience operations are:
+
+~~~d
+TopocentricCoordinate!T geocentricToTopocentric(
+    const GeocentricCoordinate!T source) const
+    @safe;
+
+GeocentricCoordinate!T topocentricToGeocentric(
+    const TopocentricCoordinate!T source) const
+    @safe;
+
+TopocentricCoordinate!T geodeticToTopocentric(
+    const GeodeticCoordinate!T source) const
+    @safe;
+
+GeodeticCoordinate!T topocentricToGeodetic(
+    const TopocentricCoordinate!T source) const
+    @safe;
+~~~
+
+The explicit source/target names are intentional.
+
+Generic overloaded `forward`, `reverse`, `transform`, or `inverse` operations
+are not part of the initial surface.
+
+The checked numerical path is required to preserve:
 
 ~~~text
 pure
@@ -302,6 +400,25 @@ nothrow
 @safe
 @nogc
 ~~~
+
+unless implementation evidence demonstrates that one of those attributes is
+not valid for a particular operation.
+
+### Internal EPSG 9602 reuse
+
+EPSG 9837 is semantically composed from EPSG 9602 and EPSG 9836, but public
+intermediate coordinate values need not be materialized.
+
+TOPO-A permits a package/private refactor of the existing EPSG 9602 numerical
+kernel so topocentric operations can retain working precision across the
+composition.
+
+This internal refactor must not alter the existing public EPSG 9602 API or its
+validated behavior.
+
+For public `float`, geodetic/topocentric conversion must not narrow an
+intermediate Earth-scale ECEF value to binary32 before local subtraction or
+before reverse EPSG 9602 processing.
 
 ## Scalar and working-precision policy
 
@@ -496,8 +613,11 @@ The initial capability implements the EPSG ellipsoid-normal setting only.
 
 ## Acceptance
 
-This ADR remains `Proposed` until the topocentric validation plan has
-demonstrated:
+TOPO-A — public contract, coordinate model, and canonical semantics — is
+complete and PASS as of 2026-09-20.
+
+This ADR remains `Proposed` until the remaining topocentric validation gates
+have demonstrated:
 
 - EPSG 9836 and 9837 semantic conformance;
 - the published EPSG worked vector in both applicable forms;
