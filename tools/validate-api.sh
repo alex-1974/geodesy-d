@@ -39,6 +39,8 @@ expect_rejected "$repo/validation/api/reject_translation_mutation.d" \
     "GeocentricTranslation mutation"
 expect_rejected "$repo/validation/api/reject_internal_finite_helper.d" \
     "package-internal finite helper"
+expect_rejected "$repo/validation/api/reject_internal_epsg9602_working_helper.d" \
+    "package-internal EPSG 9602 working helper"
 expect_rejected "$repo/validation/api/reject_unchecked_angle_factory.d" \
     "private unchecked Angle factory"
 expect_rejected "$repo/validation/api/reject_internal_angle_helper.d" \

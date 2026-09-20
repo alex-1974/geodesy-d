@@ -33,6 +33,83 @@ if (isGeodesyScalar!T)
 }
 
 
+/*
+ * Package-private raw EPSG 9602 forward kernel.
+ *
+ * The caller selects the arithmetic scalar explicitly.  In particular, the
+ * existing public EPSG 9602 forward API continues to call this kernel with its
+ * public scalar T, while consumers that require a wider intermediate may use
+ * Epsg9602WorkingScalar!T.
+ *
+ * This helper deliberately operates on raw scalar values so an internal
+ * consumer can retain working precision without materializing a public
+ * GeocentricCoordinate!float intermediate.
+ */
+package(geodesy) bool tryEpsg9602ForwardWorking(W)(
+    const W latitude,
+    const W longitude,
+    const W height,
+    const W semiMajorAxis,
+    const W flattening,
+    out W x,
+    out W y,
+    out W z)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!W)
+{
+    const W zero = cast(W) 0;
+    const W one = cast(W) 1;
+    const W two = cast(W) 2;
+
+    if (!isFiniteGeodesyScalar(latitude)
+        || !isFiniteGeodesyScalar(longitude)
+        || !isFiniteGeodesyScalar(height)
+        || !isFiniteGeodesyScalar(semiMajorAxis)
+        || !(semiMajorAxis > zero)
+        || !isFiniteGeodesyScalar(flattening)
+        || flattening < zero
+        || flattening >= one)
+        return false;
+
+    const W sinPhi = sin(latitude);
+    const W cosPhi = cos(latitude);
+    const W sinLambda = sin(longitude);
+    const W cosLambda = cos(longitude);
+
+    const W eccentricitySquared =
+        flattening * (two - flattening);
+
+    const W nu =
+        semiMajorAxis
+        / sqrt(
+            one
+            - eccentricitySquared
+                * sinPhi
+                * sinPhi);
+
+    const W radial = nu + height;
+
+    x =
+        radial
+        * cosPhi
+        * cosLambda;
+
+    y =
+        radial
+        * cosPhi
+        * sinLambda;
+
+    z =
+        ((one - eccentricitySquared) * nu + height)
+        * sinPhi;
+
+    return isFiniteGeodesyScalar(x)
+        && isFiniteGeodesyScalar(y)
+        && isFiniteGeodesyScalar(z);
+}
+
+
+
 /**
  * Convert a geodetic coordinate to geocentric Cartesian coordinates.
  *
@@ -59,25 +136,26 @@ if (isGeodesyScalar!T)
     if (!ellipsoid.isValid)
         return false;
 
-    const T phi = source.latitude.radians;
-    const T lambda = source.longitude.radians;
-    const T h = source.ellipsoidalHeight;
+    T x;
+    T y;
+    T z;
 
-    const T sinPhi = sin(phi);
-    const T cosPhi = cos(phi);
-    const T sinLambda = sin(lambda);
-    const T cosLambda = cos(lambda);
+    if (!tryEpsg9602ForwardWorking!T(
+        source.latitude.radians,
+        source.longitude.radians,
+        source.ellipsoidalHeight,
+        ellipsoid.semiMajorAxis,
+        ellipsoid.flattening,
+        x,
+        y,
+        z))
+        return false;
 
-    const T e2 = ellipsoid.firstEccentricitySquared;
-    const T nu = ellipsoid.semiMajorAxis
-        / sqrt(cast(T) 1 - e2 * sinPhi * sinPhi);
-
-    const T radial = nu + h;
-    const T x = radial * cosPhi * cosLambda;
-    const T y = radial * cosPhi * sinLambda;
-    const T z = ((cast(T) 1 - e2) * nu + h) * sinPhi;
-
-    return GeocentricCoordinate!T.tryFromComponents(x, y, z, result);
+    return GeocentricCoordinate!T.tryFromComponents(
+        x,
+        y,
+        z,
+        result);
 }
 
 
@@ -103,12 +181,20 @@ if (isGeodesyScalar!T)
  * branches at Earth scale. Preserve the public float API while performing
  * the inverse kernel in double precision.
  */
-private template ReverseWorkingScalar(T)
+/*
+ * Working scalar for internal EPSG 9602 composition.
+ *
+ * A public float value remains float at the API boundary, but composed
+ * operations such as geographic -> ECEF -> local Cartesian must not
+ * materialize Earth-scale ECEF coordinates in binary32 before local
+ * subtraction.
+ */
+package(geodesy) template Epsg9602WorkingScalar(T)
 {
     static if (is(T == float))
-        alias ReverseWorkingScalar = double;
+        alias Epsg9602WorkingScalar = double;
     else
-        alias ReverseWorkingScalar = T;
+        alias Epsg9602WorkingScalar = T;
 }
 
 
@@ -759,6 +845,58 @@ if (isGeodesyScalar!T)
 }
 
 
+/*
+ * Package-private raw EPSG 9602 reverse kernel boundary.
+ *
+ * The robust numerical implementation remains tryReverseWorking above.  This
+ * wrapper exposes only scalar working values to other geodesy modules and
+ * keeps ReverseSolution and all algorithm-specific helpers private.
+ */
+package(geodesy) bool tryEpsg9602ReverseWorking(W)(
+    const W x,
+    const W y,
+    const W z,
+    const W semiMajorAxis,
+    const W flattening,
+    out W latitude,
+    out W longitude,
+    out W height)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!W)
+{
+    const W zero = cast(W) 0;
+    const W one = cast(W) 1;
+
+    if (!isFiniteGeodesyScalar(x)
+        || !isFiniteGeodesyScalar(y)
+        || !isFiniteGeodesyScalar(z)
+        || !isFiniteGeodesyScalar(semiMajorAxis)
+        || !(semiMajorAxis > zero)
+        || !isFiniteGeodesyScalar(flattening)
+        || flattening < zero
+        || flattening >= one)
+        return false;
+
+    ReverseSolution!W working;
+
+    if (!tryReverseWorking(
+        x,
+        y,
+        z,
+        semiMajorAxis,
+        flattening,
+        working))
+        return false;
+
+    latitude = working.latitude;
+    longitude = working.longitude;
+    height = working.height;
+
+    return true;
+}
+
+
+
 /**
  * Convert geocentric Cartesian coordinates to a geodetic coordinate.
  *
@@ -842,25 +980,29 @@ if (isGeodesyScalar!T)
     if (!ellipsoid.isValid)
         return false;
 
-    alias W = ReverseWorkingScalar!T;
+    alias W = Epsg9602WorkingScalar!T;
 
-    ReverseSolution!W working;
+    W workingLatitude;
+    W workingLongitude;
+    W workingHeight;
 
-    if (!tryReverseWorking(
+    if (!tryEpsg9602ReverseWorking!W(
         cast(W) source.x,
         cast(W) source.y,
         cast(W) source.z,
         cast(W) ellipsoid.semiMajorAxis,
         cast(W) ellipsoid.flattening,
-        working))
+        workingLatitude,
+        workingLongitude,
+        workingHeight))
         return false;
 
     const T phi =
-        cast(T) working.latitude;
+        cast(T) workingLatitude;
     const T lambda =
-        cast(T) working.longitude;
+        cast(T) workingLongitude;
     const T height =
-        cast(T) working.height;
+        cast(T) workingHeight;
 
     if (!isFiniteGeodesyScalar(phi)
         || !isFiniteGeodesyScalar(lambda)
