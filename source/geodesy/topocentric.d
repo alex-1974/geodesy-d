@@ -364,6 +364,146 @@ public:
 
         return result;
     }
+
+    /**
+     * Convert geocentric Cartesian coordinates to local East/North/Up.
+     *
+     * Implements EPSG coordinate operation method 9836.
+     *
+     * Subtraction from the Earth-scale frame origin is performed in the
+     * frame's prepared working scalar before any narrowing to public scalar T.
+     */
+    bool tryGeocentricToTopocentric(
+        const GeocentricCoordinate!T source,
+        out TopocentricCoordinate!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        const W dx =
+            cast(W) source.x - _originX;
+
+        const W dy =
+            cast(W) source.y - _originY;
+
+        const W dz =
+            cast(W) source.z - _originZ;
+
+        const W east =
+            -dx * _sinLongitude
+            + dy * _cosLongitude;
+
+        const W north =
+            -dx * _sinLatitude * _cosLongitude
+            - dy * _sinLatitude * _sinLongitude
+            + dz * _cosLatitude;
+
+        const W up =
+            dx * _cosLatitude * _cosLongitude
+            + dy * _cosLatitude * _sinLongitude
+            + dz * _sinLatitude;
+
+        return TopocentricCoordinate!T.tryFromComponents(
+            cast(T) east,
+            cast(T) north,
+            cast(T) up,
+            result);
+    }
+
+    /**
+     * Convert geocentric Cartesian coordinates to local East/North/Up.
+     *
+     * Throws `GeodesyValueException` when the frame is invalid or no finite
+     * public result can be represented.
+     */
+    TopocentricCoordinate!T geocentricToTopocentric(
+        const GeocentricCoordinate!T source) const
+        @safe
+    {
+        TopocentricCoordinate!T result;
+
+        if (!tryGeocentricToTopocentric(
+            source,
+            result))
+        {
+            throw new GeodesyValueException(
+                "Geocentric to topocentric conversion requires a valid frame and a finite representable result.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Convert local East/North/Up to geocentric Cartesian coordinates.
+     *
+     * Implements the reverse direction of EPSG method 9836. Because the
+     * forward rotation is orthonormal, the reverse uses its transpose and then
+     * restores the prepared geocentric origin.
+     */
+    bool tryTopocentricToGeocentric(
+        const TopocentricCoordinate!T source,
+        out GeocentricCoordinate!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        const W east =
+            cast(W) source.east;
+
+        const W north =
+            cast(W) source.north;
+
+        const W up =
+            cast(W) source.up;
+
+        const W x =
+            _originX
+            - east * _sinLongitude
+            - north * _sinLatitude * _cosLongitude
+            + up * _cosLatitude * _cosLongitude;
+
+        const W y =
+            _originY
+            + east * _cosLongitude
+            - north * _sinLatitude * _sinLongitude
+            + up * _cosLatitude * _sinLongitude;
+
+        const W z =
+            _originZ
+            + north * _cosLatitude
+            + up * _sinLatitude;
+
+        return GeocentricCoordinate!T.tryFromComponents(
+            cast(T) x,
+            cast(T) y,
+            cast(T) z,
+            result);
+    }
+
+    /**
+     * Convert local East/North/Up to geocentric Cartesian coordinates.
+     *
+     * Throws `GeodesyValueException` when the frame is invalid or no finite
+     * public result can be represented.
+     */
+    GeocentricCoordinate!T topocentricToGeocentric(
+        const TopocentricCoordinate!T source) const
+        @safe
+    {
+        GeocentricCoordinate!T result;
+
+        if (!tryTopocentricToGeocentric(
+            source,
+            result))
+        {
+            throw new GeodesyValueException(
+                "Topocentric to geocentric conversion requires a valid frame and a finite representable result.");
+        }
+
+        return result;
+    }
 }
 
 
@@ -652,4 +792,155 @@ unittest
     assert(floatFrame._originX == cast(double) floatOrigin.x);
     assert(floatFrame._originY == cast(double) floatOrigin.y);
     assert(floatFrame._originZ == cast(double) floatOrigin.z);
+}
+
+
+unittest
+{
+    import std.exception : assertThrown;
+    import std.math : fabs;
+
+    import geodesy.ellipsoid : wgs84;
+
+    bool near(
+        const double actual,
+        const double expected,
+        const double tolerance)
+    {
+        return fabs(actual - expected) <= tolerance;
+    }
+
+    /*
+     * EPSG Guidance Note 7-2 / method 9836 worked WGS 84 example.
+     */
+    const origin =
+        GeocentricCoordinate!double.fromComponents(
+            3_652_755.3058,
+              319_574.6799,
+            5_201_547.3536);
+
+    const frame =
+        TopocentricFrame!double.fromGeocentricOrigin(
+            wgs84!double(),
+            origin);
+
+    const source =
+        GeocentricCoordinate!double.fromComponents(
+            3_771_793.968,
+              140_253.342,
+            5_124_304.349);
+
+    const local =
+        frame.geocentricToTopocentric(
+            source);
+
+    assert(near(
+        local.east,
+        -189_013.869,
+        0.001));
+
+    assert(near(
+        local.north,
+        -128_642.040,
+        0.001));
+
+    assert(near(
+        local.up,
+        -4_220.171,
+        0.001));
+
+    /*
+     * Reverse the published ENU values. Both source and local EPSG values are
+     * rounded, so the comparison remains at the published millimetre scale.
+     */
+    const publishedLocal =
+        TopocentricCoordinate!double.fromComponents(
+            -189_013.869,
+            -128_642.040,
+              -4_220.171);
+
+    const reversed =
+        frame.topocentricToGeocentric(
+            publishedLocal);
+
+    assert(near(
+        reversed.x,
+        3_771_793.968,
+        0.001));
+
+    assert(near(
+        reversed.y,
+        140_253.342,
+        0.001));
+
+    assert(near(
+        reversed.z,
+        5_124_304.349,
+        0.001));
+
+    /*
+     * The frame origin itself maps exactly to local zero because the
+     * represented origin is retained in the prepared working state.
+     */
+    const zero =
+        frame.geocentricToTopocentric(
+            origin);
+
+    assert(zero.east == 0.0);
+    assert(zero.north == 0.0);
+    assert(zero.up == 0.0);
+
+    /*
+     * Invalid prepared state must never silently produce plausible output.
+     */
+    const invalidFrame =
+        TopocentricFrame!double.init;
+
+    TopocentricCoordinate!double invalidLocal;
+
+    assert(
+        !invalidFrame.tryGeocentricToTopocentric(
+            source,
+            invalidLocal));
+
+    GeocentricCoordinate!double invalidGeocentric;
+
+    assert(
+        !invalidFrame.tryTopocentricToGeocentric(
+            publishedLocal,
+            invalidGeocentric));
+
+    assertThrown!GeodesyValueException(
+        invalidFrame.geocentricToTopocentric(
+            source));
+
+    assertThrown!GeodesyValueException(
+        invalidFrame.topocentricToGeocentric(
+            publishedLocal));
+
+    /*
+     * Caller-supplied float ECEF values have already been quantized, but
+     * origin subtraction must still occur after promotion to double.
+     *
+     * Using the exact same represented X/Y/Z value as the frame origin must
+     * therefore map exactly to local zero.
+     */
+    const floatOrigin =
+        GeocentricCoordinate!float.fromComponents(
+            6_378_100.5f,
+            123.25f,
+            -456.75f);
+
+    const floatFrame =
+        TopocentricFrame!float.fromGeocentricOrigin(
+            wgs84!float(),
+            floatOrigin);
+
+    const floatZero =
+        floatFrame.geocentricToTopocentric(
+            floatOrigin);
+
+    assert(floatZero.east == 0.0f);
+    assert(floatZero.north == 0.0f);
+    assert(floatZero.up == 0.0f);
 }

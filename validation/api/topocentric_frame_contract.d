@@ -10,6 +10,7 @@ import geodesy.geocentric :
 import geodesy.geodetic :
     GeodeticCoordinate;
 import geodesy.topocentric :
+    TopocentricCoordinate,
     TopocentricFrame;
 
 
@@ -76,9 +77,26 @@ private void checkedTopocentricFrameContract()
     const frameEllipsoid =
         geodeticFrame.ellipsoid;
 
+    TopocentricCoordinate!double local;
+
+    const geocentricForwardSuccess =
+        geocentricFrame.tryGeocentricToTopocentric(
+            source: geocentricOrigin,
+            result: local);
+
+    GeocentricCoordinate!double geocentricResult;
+
+    const geocentricReverseSuccess =
+        geocentricFrame.tryTopocentricToGeocentric(
+            source: local,
+            result: geocentricResult);
+
     const invalid =
         TopocentricFrame!double.init;
 
+    cast(void) geocentricForwardSuccess;
+    cast(void) geocentricReverseSuccess;
+    cast(void) geocentricResult;
     cast(void) geodeticSuccess;
     cast(void) geocentricSuccess;
     cast(void) valid;
@@ -121,6 +139,16 @@ private void throwingTopocentricFrameContract()
             ellipsoid: ellipsoid,
             origin: geocentricOrigin);
 
+    const local =
+        geocentricFrame.geocentricToTopocentric(
+            source: geocentricOrigin);
+
+    const geocentricAgain =
+        geocentricFrame.topocentricToGeocentric(
+            source: local);
+
+    cast(void) local;
+    cast(void) geocentricAgain;
     cast(void) geodeticFrame;
     cast(void) geocentricFrame;
 }
