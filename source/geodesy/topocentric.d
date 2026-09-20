@@ -3,6 +3,9 @@ module geodesy.topocentric;
 
 import std.math : cos, sin;
 
+import geodesy.angle :
+    Latitude,
+    Longitude;
 import geodesy.conversion :
     Epsg9602WorkingScalar,
     tryEpsg9602ForwardWorking,
@@ -562,6 +565,188 @@ public:
 
         return result;
     }
+
+    /**
+     * Convert a geodetic coordinate directly to local East/North/Up.
+     *
+     * Implements EPSG coordinate operation method 9837 as the composition of
+     * EPSG 9602 forward and EPSG 9836 forward.
+     *
+     * The complete composed calculation remains in the prepared working
+     * scalar. For `float`, the represented public geodetic values are
+     * promoted to `double` before Earth-scale ECEF coordinates are computed.
+     * No `GeocentricCoordinate!float` intermediate is materialized.
+     */
+    bool tryGeodeticToTopocentric(
+        const GeodeticCoordinate!T source,
+        out TopocentricCoordinate!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        W x;
+        W y;
+        W z;
+
+        if (!tryEpsg9602ForwardWorking!W(
+            cast(W) source.latitude.radians,
+            cast(W) source.longitude.radians,
+            cast(W) source.ellipsoidalHeight,
+            cast(W) _ellipsoid.semiMajorAxis,
+            cast(W) _ellipsoid.flattening,
+            x,
+            y,
+            z))
+            return false;
+
+        W east;
+        W north;
+        W up;
+
+        if (!tryWorkingGeocentricToTopocentric(
+            x,
+            y,
+            z,
+            east,
+            north,
+            up))
+            return false;
+
+        return TopocentricCoordinate!T.tryFromComponents(
+            cast(T) east,
+            cast(T) north,
+            cast(T) up,
+            result);
+    }
+
+    /**
+     * Convert a geodetic coordinate directly to local East/North/Up.
+     *
+     * Throws `GeodesyValueException` when the frame is invalid or the
+     * composed EPSG 9837 operation cannot produce a finite representable
+     * public result.
+     */
+    TopocentricCoordinate!T geodeticToTopocentric(
+        const GeodeticCoordinate!T source) const
+        @safe
+    {
+        TopocentricCoordinate!T result;
+
+        if (!tryGeodeticToTopocentric(
+            source,
+            result))
+        {
+            throw new GeodesyValueException(
+                "Geodetic to topocentric conversion requires a valid frame and a finite representable result.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Convert local East/North/Up directly to a geodetic coordinate.
+     *
+     * Implements the reverse direction of EPSG method 9837 as EPSG 9836
+     * reverse followed by EPSG 9602 reverse.
+     *
+     * Working ECEF coordinates remain in the prepared working scalar until
+     * the geodetic inverse is complete. Public scalar T is applied only to
+     * the final latitude, longitude, and height.
+     */
+    bool tryTopocentricToGeodetic(
+        const TopocentricCoordinate!T source,
+        out GeodeticCoordinate!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        W x;
+        W y;
+        W z;
+
+        if (!tryWorkingTopocentricToGeocentric(
+            cast(W) source.east,
+            cast(W) source.north,
+            cast(W) source.up,
+            x,
+            y,
+            z))
+            return false;
+
+        W workingLatitude;
+        W workingLongitude;
+        W workingHeight;
+
+        if (!tryEpsg9602ReverseWorking!W(
+            x,
+            y,
+            z,
+            cast(W) _ellipsoid.semiMajorAxis,
+            cast(W) _ellipsoid.flattening,
+            workingLatitude,
+            workingLongitude,
+            workingHeight))
+            return false;
+
+        const T latitudeValue =
+            cast(T) workingLatitude;
+
+        const T longitudeValue =
+            cast(T) workingLongitude;
+
+        const T heightValue =
+            cast(T) workingHeight;
+
+        if (!isFiniteGeodesyScalar(latitudeValue)
+            || !isFiniteGeodesyScalar(longitudeValue)
+            || !isFiniteGeodesyScalar(heightValue))
+            return false;
+
+        Latitude!T latitude;
+        Longitude!T longitude;
+
+        if (!Latitude!T.tryFromRadians(
+            latitudeValue,
+            latitude))
+            return false;
+
+        if (!Longitude!T.tryFromRadians(
+            longitudeValue,
+            longitude))
+            return false;
+
+        return GeodeticCoordinate!T.tryFromComponents(
+            latitude,
+            longitude,
+            heightValue,
+            result);
+    }
+
+    /**
+     * Convert local East/North/Up directly to a geodetic coordinate.
+     *
+     * Throws `GeodesyValueException` when the frame is invalid or the
+     * composed reverse EPSG 9837 operation cannot produce a defined finite
+     * representable result.
+     */
+    GeodeticCoordinate!T topocentricToGeodetic(
+        const TopocentricCoordinate!T source) const
+        @safe
+    {
+        GeodeticCoordinate!T result;
+
+        if (!tryTopocentricToGeodetic(
+            source,
+            result))
+        {
+            throw new GeodesyValueException(
+                "Topocentric to geodetic conversion requires a valid frame and a defined finite representable result.");
+        }
+
+        return result;
+    }
 }
 
 
@@ -1001,4 +1186,258 @@ unittest
     assert(floatZero.east == 0.0f);
     assert(floatZero.north == 0.0f);
     assert(floatZero.up == 0.0f);
+}
+
+
+unittest
+{
+    import std.exception : assertThrown;
+    import std.math : fabs;
+
+    import geodesy.ellipsoid : wgs84;
+
+    bool near(
+        const double actual,
+        const double expected,
+        const double tolerance)
+    {
+        return fabs(actual - expected) <= tolerance;
+    }
+
+    /*
+     * EPSG Guidance Note 7-2 / method 9837 worked WGS 84 example.
+     *
+     * Origin:
+     *   latitude  55 N
+     *   longitude  5 E
+     *   h          200 m
+     *
+     * Source:
+     *   latitude  53°48'33.82"N
+     *   longitude  2°07'46.38"E
+     *   h           73 m
+     */
+    const origin =
+        GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(55.0),
+            Longitude!double.fromDegrees(5.0),
+            200.0);
+
+    const frame =
+        TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(),
+            origin);
+
+    const source =
+        GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(
+                53.0 + 48.0 / 60.0 + 33.82 / 3600.0),
+            Longitude!double.fromDegrees(
+                2.0 + 7.0 / 60.0 + 46.38 / 3600.0),
+            73.0);
+
+    const local =
+        frame.geodeticToTopocentric(
+            source);
+
+    assert(near(
+        local.east,
+        -189_013.869,
+        0.001));
+
+    assert(near(
+        local.north,
+        -128_642.040,
+        0.001));
+
+    assert(near(
+        local.up,
+        -4_220.171,
+        0.001));
+
+    /*
+     * Reverse the published rounded ENU coordinate.
+     */
+    const publishedLocal =
+        TopocentricCoordinate!double.fromComponents(
+            -189_013.869,
+            -128_642.040,
+              -4_220.171);
+
+    const reversed =
+        frame.topocentricToGeodetic(
+            publishedLocal);
+
+    assert(near(
+        reversed.latitude.degrees,
+        source.latitude.degrees,
+        1e-8));
+
+    assert(near(
+        reversed.longitude.degrees,
+        source.longitude.degrees,
+        1e-8));
+
+    assert(near(
+        reversed.ellipsoidalHeight,
+        73.0,
+        0.001));
+
+    /*
+     * A geodetic frame origin maps exactly to zero because frame preparation
+     * and direct 9837 forward use the same represented geodetic inputs and
+     * working-precision EPSG 9602 kernel.
+     */
+    const zero =
+        frame.geodeticToTopocentric(
+            origin);
+
+    assert(zero.east == 0.0);
+    assert(zero.north == 0.0);
+    assert(zero.up == 0.0);
+
+    /*
+     * Invalid frames reject both direct EPSG 9837 directions.
+     */
+    const invalidFrame =
+        TopocentricFrame!double.init;
+
+    TopocentricCoordinate!double invalidLocal;
+
+    assert(
+        !invalidFrame.tryGeodeticToTopocentric(
+            source,
+            invalidLocal));
+
+    GeodeticCoordinate!double invalidGeodetic;
+
+    assert(
+        !invalidFrame.tryTopocentricToGeodetic(
+            publishedLocal,
+            invalidGeodetic));
+
+    assertThrown!GeodesyValueException(
+        invalidFrame.geodeticToTopocentric(
+            source));
+
+    assertThrown!GeodesyValueException(
+        invalidFrame.topocentricToGeodetic(
+            publishedLocal));
+
+    /*
+     * Float composition regression.
+     *
+     * Public float geodetic values are treated as the represented input
+     * truth, but ECEF must be computed in double. This test constructs the
+     * correct working-precision reference directly and also demonstrates
+     * that an Earth-scale GeocentricCoordinate!float intermediate would
+     * materially change the local result.
+     */
+    const floatEllipsoid =
+        wgs84!float();
+
+    const floatOrigin =
+        GeodeticCoordinate!float.fromComponents(
+            Latitude!float.fromDegrees(48.20849f),
+            Longitude!float.fromDegrees(16.37208f),
+            171.0f);
+
+    const floatSource =
+        GeodeticCoordinate!float.fromComponents(
+            Latitude!float.fromDegrees(48.20850f),
+            Longitude!float.fromDegrees(16.37210f),
+            171.75f);
+
+    const floatFrame =
+        TopocentricFrame!float.fromGeodeticOrigin(
+            floatEllipsoid,
+            floatOrigin);
+
+    const floatLocal =
+        floatFrame.geodeticToTopocentric(
+            floatSource);
+
+    double sourceX;
+    double sourceY;
+    double sourceZ;
+
+    const bool sourceForward =
+        tryEpsg9602ForwardWorking!double(
+            cast(double) floatSource.latitude.radians,
+            cast(double) floatSource.longitude.radians,
+            cast(double) floatSource.ellipsoidalHeight,
+            cast(double) floatEllipsoid.semiMajorAxis,
+            cast(double) floatEllipsoid.flattening,
+            sourceX,
+            sourceY,
+            sourceZ);
+
+    assert(sourceForward);
+
+    double referenceEast;
+    double referenceNorth;
+    double referenceUp;
+
+    const bool referenceRotation =
+        floatFrame.tryWorkingGeocentricToTopocentric(
+            sourceX,
+            sourceY,
+            sourceZ,
+            referenceEast,
+            referenceNorth,
+            referenceUp);
+
+    assert(referenceRotation);
+
+    /*
+     * The public result is exactly the final float narrowing of the
+     * working-precision path.
+     */
+    assert(floatLocal.east == cast(float) referenceEast);
+    assert(floatLocal.north == cast(float) referenceNorth);
+    assert(floatLocal.up == cast(float) referenceUp);
+
+    /*
+     * Deliberately emulate the forbidden implementation:
+     *
+     *     working ECEF -> float ECEF -> local subtraction
+     *
+     * At this Earth-scale location it loses enough information for this
+     * deterministic case to differ by centimetres.
+     */
+    const quantizedEcef =
+        GeocentricCoordinate!float.fromComponents(
+            cast(float) sourceX,
+            cast(float) sourceY,
+            cast(float) sourceZ);
+
+    const quantizedLocal =
+        floatFrame.geocentricToTopocentric(
+            quantizedEcef);
+
+    const double eastDamage =
+        fabs(
+            cast(double) quantizedLocal.east
+            - cast(double) floatLocal.east);
+
+    const double northDamage =
+        fabs(
+            cast(double) quantizedLocal.north
+            - cast(double) floatLocal.north);
+
+    const double upDamage =
+        fabs(
+            cast(double) quantizedLocal.up
+            - cast(double) floatLocal.up);
+
+    const double maximumDamage =
+        eastDamage > northDamage
+        ? (eastDamage > upDamage
+            ? eastDamage
+            : upDamage)
+        : (northDamage > upDamage
+            ? northDamage
+            : upDamage);
+
+    assert(maximumDamage > 0.02);
 }

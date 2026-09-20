@@ -91,12 +91,29 @@ private void checkedTopocentricFrameContract()
             source: local,
             result: geocentricResult);
 
+    TopocentricCoordinate!double geodeticLocal;
+
+    const geodeticForwardSuccess =
+        geodeticFrame.tryGeodeticToTopocentric(
+            source: geodeticOrigin,
+            result: geodeticLocal);
+
+    GeodeticCoordinate!double geodeticResult;
+
+    const geodeticReverseSuccess =
+        geodeticFrame.tryTopocentricToGeodetic(
+            source: geodeticLocal,
+            result: geodeticResult);
+
     const invalid =
         TopocentricFrame!double.init;
 
     cast(void) geocentricForwardSuccess;
     cast(void) geocentricReverseSuccess;
     cast(void) geocentricResult;
+    cast(void) geodeticForwardSuccess;
+    cast(void) geodeticReverseSuccess;
+    cast(void) geodeticResult;
     cast(void) geodeticSuccess;
     cast(void) geocentricSuccess;
     cast(void) valid;
@@ -147,6 +164,16 @@ private void throwingTopocentricFrameContract()
         geocentricFrame.topocentricToGeocentric(
             source: local);
 
+    const geodeticLocal =
+        geodeticFrame.geodeticToTopocentric(
+            source: geodeticOrigin);
+
+    const geodeticAgain =
+        geodeticFrame.topocentricToGeodetic(
+            source: geodeticLocal);
+
+    cast(void) geodeticLocal;
+    cast(void) geodeticAgain;
     cast(void) local;
     cast(void) geocentricAgain;
     cast(void) geodeticFrame;
