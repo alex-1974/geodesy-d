@@ -13,6 +13,14 @@ static assert(is(Longitude!double));
 static assert(is(Ellipsoid!double));
 static assert(is(GeodeticCoordinate!double));
 static assert(is(GeocentricCoordinate!double));
+
+static assert(is(TopocentricCoordinate!float));
+static assert(is(TopocentricCoordinate!double));
+static assert(is(TopocentricCoordinate!real));
+static assert(is(TopocentricFrame!float));
+static assert(is(TopocentricFrame!double));
+static assert(is(TopocentricFrame!real));
+
 static assert(is(GeocentricTranslation!double));
 static assert(is(ProjectedCoordinate!double));
 static assert(is(TransverseMercator!double));
@@ -33,6 +41,166 @@ static assert(is(CoordinateFrameHelmert!double ==
     Helmert7!(double, HelmertConvention.coordinateFrame)));
 static assert(!is(PositionVectorHelmert!double ==
     CoordinateFrameHelmert!double));
+
+private void topocentricCheckedApiContract()
+    pure nothrow @safe @nogc
+{
+    Ellipsoid!double ellipsoid;
+
+    Ellipsoid!double.tryFromInverseFlattening(
+        6_378_137.0,
+        298.257223563,
+        ellipsoid);
+
+    Latitude!double latitude;
+    Longitude!double longitude;
+
+    Latitude!double.tryFromDegrees(
+        48.0,
+        latitude);
+
+    Longitude!double.tryFromDegrees(
+        16.0,
+        longitude);
+
+    GeodeticCoordinate!double geodeticOrigin;
+
+    GeodeticCoordinate!double.tryFromComponents(
+        latitude,
+        longitude,
+        100.0,
+        geodeticOrigin);
+
+    GeocentricCoordinate!double geocentricOrigin;
+
+    tryGeodeticToGeocentric(
+        geodeticOrigin,
+        ellipsoid,
+        geocentricOrigin);
+
+    TopocentricCoordinate!double coordinate;
+
+    TopocentricCoordinate!double.tryFromComponents(
+        1.0,
+        2.0,
+        3.0,
+        coordinate);
+
+    const east = coordinate.east;
+    const north = coordinate.north;
+    const up = coordinate.up;
+
+    TopocentricFrame!double geodeticFrame;
+
+    TopocentricFrame!double.tryFromGeodeticOrigin(
+        ellipsoid,
+        geodeticOrigin,
+        geodeticFrame);
+
+    TopocentricFrame!double geocentricFrame;
+
+    TopocentricFrame!double.tryFromGeocentricOrigin(
+        ellipsoid,
+        geocentricOrigin,
+        geocentricFrame);
+
+    const valid =
+        geodeticFrame.isValid;
+
+    const frameEllipsoid =
+        geodeticFrame.ellipsoid;
+
+    TopocentricCoordinate!double geodeticLocal;
+
+    geodeticFrame.tryGeodeticToTopocentric(
+        geodeticOrigin,
+        geodeticLocal);
+
+    GeodeticCoordinate!double geodeticResult;
+
+    geodeticFrame.tryTopocentricToGeodetic(
+        geodeticLocal,
+        geodeticResult);
+
+    TopocentricCoordinate!double geocentricLocal;
+
+    geocentricFrame.tryGeocentricToTopocentric(
+        geocentricOrigin,
+        geocentricLocal);
+
+    GeocentricCoordinate!double geocentricResult;
+
+    geocentricFrame.tryTopocentricToGeocentric(
+        geocentricLocal,
+        geocentricResult);
+
+    cast(void) east;
+    cast(void) north;
+    cast(void) up;
+    cast(void) valid;
+    cast(void) frameEllipsoid;
+    cast(void) geodeticResult;
+    cast(void) geocentricResult;
+}
+
+
+private void topocentricThrowingApiContract()
+    @safe
+{
+    const ellipsoid =
+        Ellipsoid!double.fromInverseFlattening(
+            6_378_137.0,
+            298.257223563);
+
+    const geodetic =
+        GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0),
+            100.0);
+
+    const geocentric =
+        geodeticToGeocentric(
+            geodetic,
+            ellipsoid);
+
+    const topocentric =
+        TopocentricCoordinate!double.fromComponents(
+            1.0,
+            2.0,
+            3.0);
+
+    const geodeticFrame =
+        TopocentricFrame!double.fromGeodeticOrigin(
+            ellipsoid,
+            geodetic);
+
+    const geocentricFrame =
+        TopocentricFrame!double.fromGeocentricOrigin(
+            ellipsoid,
+            geocentric);
+
+    const a =
+        geodeticFrame.geodeticToTopocentric(
+            geodetic);
+
+    const b =
+        geodeticFrame.topocentricToGeodetic(
+            topocentric);
+
+    const c =
+        geocentricFrame.geocentricToTopocentric(
+            geocentric);
+
+    const d =
+        geocentricFrame.topocentricToGeocentric(
+            topocentric);
+
+    cast(void) a;
+    cast(void) b;
+    cast(void) c;
+    cast(void) d;
+}
+
 
 private void checkedApiContract()
     pure nothrow @safe @nogc

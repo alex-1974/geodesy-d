@@ -8,6 +8,7 @@ public import geodesy.geographic;
 public import geodesy.geodesic;
 public import geodesy.geodetic;
 public import geodesy.geocentric;
+public import geodesy.topocentric;
 public import geodesy.projected;
 public import geodesy.scalar;
 

@@ -1,7 +1,6 @@
 module reject_topocentric_frame_internal_state;
 
-import geodesy.topocentric :
-    TopocentricFrame;
+import geodesy;
 
 void main()
 {

@@ -1,9 +1,6 @@
 module reject_topocentric_frame_mutation;
 
-import geodesy.ellipsoid :
-    Ellipsoid;
-import geodesy.topocentric :
-    TopocentricFrame;
+import geodesy;
 
 void main()
 {

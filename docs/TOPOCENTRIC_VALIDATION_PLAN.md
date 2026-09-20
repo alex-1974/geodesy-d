@@ -36,7 +36,7 @@ TOPO-B  EPSG worked vectors and analytical invariants                   PASS
 TOPO-C  PROJ differential/interoperability validation                   PASS
 TOPO-D  GeographicLib LocalCartesian differential validation            PASS
 TOPO-E  adversarial origins, poles, float representation, failure       PASS
-TOPO-F  public API/runtime contract                                     PENDING
+TOPO-F  public API/runtime contract                                     PASS
 TOPO-G  compiler/platform/real-width coverage                           PENDING
 ~~~
 
@@ -1349,6 +1349,49 @@ helpers from accidental export.
 
 Named public parameters are compatibility-sensitive under the project's
 existing named-argument contract.
+
+### TOPO-F achieved evidence
+
+TOPO-F completed successfully on 2026-09-20.
+
+The aggregate consumer surface now exports `TopocentricCoordinate!T` and
+`TopocentricFrame!T` through:
+
+~~~d
+import geodesy;
+~~~
+
+The permanent positive API contract verifies:
+
+- `TopocentricCoordinate` and `TopocentricFrame` for `float`, `double`, and
+  `real`;
+- checked coordinate construction;
+- both geodetic-origin and geocentric-origin frame construction;
+- frame validity and ellipsoid introspection;
+- all four checked conversion directions inside
+  `pure nothrow @safe @nogc`;
+- all four throwing conversion directions inside `@safe`.
+
+The permanent named-argument contract freezes the accepted topocentric
+parameter names for coordinate construction, both frame constructors, and all
+four checked and throwing conversion methods.
+
+Topocentric rejection contracts are also exercised from the aggregate consumer
+surface and continue to reject:
+
+- direct coordinate-component mutation;
+- the private unchecked coordinate factory;
+- frame ellipsoid mutation;
+- access to internal prepared frame state.
+
+The existing package-boundary contract continues to reject the internal
+EPSG 9602 working-precision helper.
+
+The complete API contract passed under both DMD and LDC. The ordinary library
+test suite also passed under both compilers with 20 modules, and the
+documentation contract generated 22 Ddoc module files successfully.
+
+No production numerical algorithm was changed as part of TOPO-F.
 
 ## Compiler/platform gate
 

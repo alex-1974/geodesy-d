@@ -281,6 +281,57 @@ private void checkedNamedArgumentContract()
         end: geographic,
         result: inverse);
 
+    TopocentricCoordinate!double topocentricCoordinate;
+
+    TopocentricCoordinate!double.tryFromComponents(
+        east: 1.0,
+        north: 2.0,
+        up: 3.0,
+        result: topocentricCoordinate);
+
+    TopocentricFrame!double topocentricGeodeticFrame;
+
+    TopocentricFrame!double.tryFromGeodeticOrigin(
+        ellipsoid: ellipsoid,
+        origin: geodetic,
+        result: topocentricGeodeticFrame);
+
+    TopocentricFrame!double topocentricGeocentricFrame;
+
+    TopocentricFrame!double.tryFromGeocentricOrigin(
+        ellipsoid: ellipsoid,
+        origin: convertedGeocentric,
+        result: topocentricGeocentricFrame);
+
+    TopocentricCoordinate!double localFromGeodetic;
+
+    topocentricGeodeticFrame.tryGeodeticToTopocentric(
+        source: geodetic,
+        result: localFromGeodetic);
+
+    GeodeticCoordinate!double topocentricGeodeticResult;
+
+    topocentricGeodeticFrame.tryTopocentricToGeodetic(
+        source: topocentricCoordinate,
+        result: topocentricGeodeticResult);
+
+    TopocentricCoordinate!double localFromGeocentric;
+
+    topocentricGeocentricFrame.tryGeocentricToTopocentric(
+        source: convertedGeocentric,
+        result: localFromGeocentric);
+
+    GeocentricCoordinate!double topocentricGeocentricResult;
+
+    topocentricGeocentricFrame.tryTopocentricToGeocentric(
+        source: topocentricCoordinate,
+        result: topocentricGeocentricResult);
+
+    cast(void) localFromGeodetic;
+    cast(void) topocentricGeodeticResult;
+    cast(void) localFromGeocentric;
+    cast(void) topocentricGeocentricResult;
+
     cast(void) latitudeRadians;
     cast(void) longitudeRadians;
     cast(void) flatteningEllipsoid;
@@ -504,6 +555,43 @@ private void throwingNamedArgumentContract()
         reverseUtm(
             ellipsoid: ellipsoid,
             source: autoForward);
+
+    const topocentricCoordinate =
+        TopocentricCoordinate!double.fromComponents(
+            east: 1.0,
+            north: 2.0,
+            up: 3.0);
+
+    const topocentricGeodeticFrame =
+        TopocentricFrame!double.fromGeodeticOrigin(
+            ellipsoid: ellipsoid,
+            origin: geodetic);
+
+    const topocentricGeocentricFrame =
+        TopocentricFrame!double.fromGeocentricOrigin(
+            ellipsoid: ellipsoid,
+            origin: convertedGeocentric);
+
+    const localFromGeodetic =
+        topocentricGeodeticFrame.geodeticToTopocentric(
+            source: geodetic);
+
+    const topocentricGeodeticResult =
+        topocentricGeodeticFrame.topocentricToGeodetic(
+            source: topocentricCoordinate);
+
+    const localFromGeocentric =
+        topocentricGeocentricFrame.geocentricToTopocentric(
+            source: convertedGeocentric);
+
+    const topocentricGeocentricResult =
+        topocentricGeocentricFrame.topocentricToGeocentric(
+            source: topocentricCoordinate);
+
+    cast(void) localFromGeodetic;
+    cast(void) topocentricGeodeticResult;
+    cast(void) localFromGeocentric;
+    cast(void) topocentricGeocentricResult;
 
     const geodesic =
         Geodesic!double.fromEllipsoid(

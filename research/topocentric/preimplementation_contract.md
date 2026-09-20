@@ -1,6 +1,6 @@
 # Topocentric pre-implementation contract
 
-Status: specification frozen; execution pending
+Status: specification frozen; TOPO-E and TOPO-F execution complete
 Date: 2026-09-20
 Applies to: TOPO-E and TOPO-F
 Depends on: TOPO-A PASS, TOPO-B PASS, qualified PROJ oracle
@@ -286,9 +286,8 @@ operation is complete and only the final public result is narrowed.
 
 ## TOPO-F — public API/runtime contract
 
-Production topocentric code now exists. TOPO-F remains PENDING until the
-following aggregate public API and runtime contract has been executed under the
-supported compiler matrix.
+TOPO-F execution completed successfully on 2026-09-20. The following
+aggregate public API and runtime contract passed under both DMD and LDC.
 
 ### Aggregate public types
 
@@ -520,6 +519,26 @@ When production code exists, `tools/validate-api.sh` must cover:
 
 TOPO-F cannot pass from module unittests alone.
 
+### TOPO-F execution evidence
+
+TOPO-F was executed against the accepted production implementation on
+2026-09-20.
+
+The aggregate `import geodesy;` contract verifies the accepted topocentric
+types, checked API attributes, both frame-construction paths, all four
+conversion directions, throwing convenience API, and permanent named-argument
+compatibility.
+
+The relevant negative compile contracts were exercised through the aggregate
+consumer surface and continued to reject mutation and implementation-detail
+access. The existing package-boundary contract also continued to reject the
+internal EPSG 9602 working-precision helper.
+
+The API contract passed under both DMD and LDC. The library unittests passed
+under both compilers, and the documentation contract remained green.
+
+No production numerical algorithm changed during TOPO-F.
+
 ## Pre-implementation decision
 
 The contracts above are frozen before production implementation.
@@ -536,7 +555,7 @@ TOPO-D                              PASS
 TOPO-E specification               FROZEN
 TOPO-E execution                   PASS
 TOPO-F specification               FROZEN
-TOPO-F execution                   PENDING
+TOPO-F execution                   PASS
 TOPO-G                              PENDING
 ~~~
 
@@ -544,6 +563,6 @@ Production code has now been implemented after the public API, failure
 semantics, adversarial semantics, and compile-time contract were specified in
 advance.
 
-TOPO-E has now been executed successfully against the production
-implementation. The remaining work is execution of TOPO-F, followed by
-TOPO-G compiler/platform coverage.
+TOPO-E and TOPO-F have now been executed successfully against the
+production implementation. The remaining acceptance work is TOPO-G
+compiler/platform and `real`-width coverage.

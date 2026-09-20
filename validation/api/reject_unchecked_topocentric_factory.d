@@ -1,7 +1,6 @@
 module reject_unchecked_topocentric_factory;
 
-import geodesy.topocentric :
-    TopocentricCoordinate;
+import geodesy;
 
 enum leaked =
     TopocentricCoordinate!double.fromComponentsUnchecked(

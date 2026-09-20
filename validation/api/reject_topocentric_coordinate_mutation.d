@@ -1,7 +1,6 @@
 module reject_topocentric_coordinate_mutation;
 
-import geodesy.topocentric :
-    TopocentricCoordinate;
+import geodesy;
 
 void main()
 {
