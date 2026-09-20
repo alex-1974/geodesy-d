@@ -1,7 +1,16 @@
 /** Local topocentric East/North/Up coordinate types and operations. */
 module geodesy.topocentric;
 
+import std.math : cos, sin;
+
+import geodesy.conversion :
+    Epsg9602WorkingScalar,
+    tryEpsg9602ForwardWorking,
+    tryEpsg9602ReverseWorking;
+import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
+import geodesy.geocentric : GeocentricCoordinate;
+import geodesy.geodetic : GeodeticCoordinate;
 import geodesy.scalar :
     isFiniteGeodesyScalar,
     isGeodesyScalar;
@@ -109,6 +118,255 @@ public:
 }
 
 
+/**
+ * A prepared local East/North/Up frame.
+ *
+ * The frame binds an ellipsoid, a geocentric origin, and the orientation
+ * derived from the origin's geodetic latitude and longitude.
+ *
+ * `.init` is deliberately invalid. A frame must be prepared explicitly from
+ * either a geodetic or geocentric origin before it can be used.
+ *
+ * The prepared numerical state uses `Epsg9602WorkingScalar!T`:
+ *
+ * - `float`  -> `double`
+ * - `double` -> `double`
+ * - `real`   -> `real`
+ *
+ * This prevents composed float operations from materializing Earth-scale
+ * ECEF intermediates in binary32 before local subtraction.
+ */
+struct TopocentricFrame(T)
+if (isGeodesyScalar!T)
+{
+private:
+    alias W = Epsg9602WorkingScalar!T;
+
+    Ellipsoid!T _ellipsoid;
+    bool _valid = false;
+
+    W _originX = 0;
+    W _originY = 0;
+    W _originZ = 0;
+
+    W _sinLatitude = 0;
+    W _cosLatitude = 0;
+    W _sinLongitude = 0;
+    W _cosLongitude = 0;
+
+public:
+    /**
+     * True when this frame has been explicitly prepared from a valid origin.
+     *
+     * In particular, `TopocentricFrame!T.init.isValid` is false.
+     */
+    @property bool isValid() const
+        pure nothrow @safe @nogc
+    {
+        return _valid
+            && _ellipsoid.isValid;
+    }
+
+    /**
+     * Ellipsoid associated with the frame.
+     *
+     * For an invalid `.init` frame this returns `Ellipsoid!T.init`.
+     */
+    @property Ellipsoid!T ellipsoid() const
+        pure nothrow @safe @nogc
+    {
+        return _ellipsoid;
+    }
+
+    /**
+     * Prepare a frame from a geodetic origin without throwing.
+     *
+     * At either geographic pole, the explicitly supplied longitude defines
+     * the East/North orientation and is therefore used directly rather than
+     * being reconstructed from ECEF.
+     */
+    static bool tryFromGeodeticOrigin(
+        const Ellipsoid!T ellipsoid,
+        const GeodeticCoordinate!T origin,
+        out TopocentricFrame result)
+        pure nothrow @safe @nogc
+    {
+        if (!ellipsoid.isValid)
+            return false;
+
+        const W latitude =
+            cast(W) origin.latitude.radians;
+
+        const W longitude =
+            cast(W) origin.longitude.radians;
+
+        W originX;
+        W originY;
+        W originZ;
+
+        if (!tryEpsg9602ForwardWorking!W(
+            latitude,
+            longitude,
+            cast(W) origin.ellipsoidalHeight,
+            cast(W) ellipsoid.semiMajorAxis,
+            cast(W) ellipsoid.flattening,
+            originX,
+            originY,
+            originZ))
+            return false;
+
+        TopocentricFrame candidate;
+
+        candidate._ellipsoid = ellipsoid;
+        candidate._originX = originX;
+        candidate._originY = originY;
+        candidate._originZ = originZ;
+
+        candidate._sinLatitude = sin(latitude);
+        candidate._cosLatitude = cos(latitude);
+        candidate._sinLongitude = sin(longitude);
+        candidate._cosLongitude = cos(longitude);
+
+        if (!isFiniteGeodesyScalar(candidate._sinLatitude)
+            || !isFiniteGeodesyScalar(candidate._cosLatitude)
+            || !isFiniteGeodesyScalar(candidate._sinLongitude)
+            || !isFiniteGeodesyScalar(candidate._cosLongitude))
+            return false;
+
+        candidate._valid = true;
+        result = candidate;
+        return true;
+    }
+
+    /**
+     * Prepare a frame from a geodetic origin.
+     *
+     * Throws `GeodesyValueException` if the ellipsoid is invalid or a finite
+     * prepared frame cannot be produced.
+     */
+    static TopocentricFrame fromGeodeticOrigin(
+        const Ellipsoid!T ellipsoid,
+        const GeodeticCoordinate!T origin)
+        @safe
+    {
+        TopocentricFrame result;
+
+        if (!tryFromGeodeticOrigin(
+            ellipsoid,
+            origin,
+            result))
+        {
+            throw new GeodesyValueException(
+                "Topocentric frame requires a valid ellipsoid and a finite geodetic origin.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Prepare a frame from a geocentric origin without throwing.
+     *
+     * The supplied represented X/Y/Z values are retained as the prepared
+     * frame origin after promotion to the working scalar. They are not
+     * reconstructed from the derived geodetic coordinate.
+     *
+     * Orientation is obtained through the existing canonical reverse EPSG
+     * 9602 semantics. Consequently:
+     *
+     * - the exact geocentre `(0,0,0)` is rejected;
+     * - a non-zero point on the rotation axis is accepted;
+     * - rotation-axis longitude is canonically zero;
+     * - deep-interior origins inherit the existing EPSG 9602 canonical
+     *   nearest-ellipsoid/min-|h| solution.
+     */
+    static bool tryFromGeocentricOrigin(
+        const Ellipsoid!T ellipsoid,
+        const GeocentricCoordinate!T origin,
+        out TopocentricFrame result)
+        pure nothrow @safe @nogc
+    {
+        if (!ellipsoid.isValid)
+            return false;
+
+        const W originX =
+            cast(W) origin.x;
+        const W originY =
+            cast(W) origin.y;
+        const W originZ =
+            cast(W) origin.z;
+
+        W latitude;
+        W longitude;
+        W height;
+
+        if (!tryEpsg9602ReverseWorking!W(
+            originX,
+            originY,
+            originZ,
+            cast(W) ellipsoid.semiMajorAxis,
+            cast(W) ellipsoid.flattening,
+            latitude,
+            longitude,
+            height))
+            return false;
+
+        cast(void) height;
+
+        TopocentricFrame candidate;
+
+        candidate._ellipsoid = ellipsoid;
+
+        /*
+         * Preserve exactly the represented caller-supplied ECEF origin after
+         * promotion. Do not round-trip it through geodetic coordinates.
+         */
+        candidate._originX = originX;
+        candidate._originY = originY;
+        candidate._originZ = originZ;
+
+        candidate._sinLatitude = sin(latitude);
+        candidate._cosLatitude = cos(latitude);
+        candidate._sinLongitude = sin(longitude);
+        candidate._cosLongitude = cos(longitude);
+
+        if (!isFiniteGeodesyScalar(candidate._sinLatitude)
+            || !isFiniteGeodesyScalar(candidate._cosLatitude)
+            || !isFiniteGeodesyScalar(candidate._sinLongitude)
+            || !isFiniteGeodesyScalar(candidate._cosLongitude))
+            return false;
+
+        candidate._valid = true;
+        result = candidate;
+        return true;
+    }
+
+    /**
+     * Prepare a frame from a geocentric origin.
+     *
+     * Throws `GeodesyValueException` if the ellipsoid is invalid, the origin
+     * is the exact geocentre, or a finite prepared frame cannot be produced.
+     */
+    static TopocentricFrame fromGeocentricOrigin(
+        const Ellipsoid!T ellipsoid,
+        const GeocentricCoordinate!T origin)
+        @safe
+    {
+        TopocentricFrame result;
+
+        if (!tryFromGeocentricOrigin(
+            ellipsoid,
+            origin,
+            result))
+        {
+            throw new GeodesyValueException(
+                "Topocentric frame requires a valid ellipsoid and a defined finite geocentric origin.");
+        }
+
+        return result;
+    }
+}
+
+
 unittest
 {
     import std.exception : assertThrown;
@@ -191,4 +449,207 @@ unittest
     assert(realCoordinate.east == 1.0L);
     assert(realCoordinate.north == 2.0L);
     assert(realCoordinate.up == 3.0L);
+}
+
+
+unittest
+{
+    import std.exception : assertThrown;
+    import std.math : fabs, sin;
+
+    import geodesy.angle : Latitude, Longitude;
+    import geodesy.ellipsoid : wgs84;
+
+    static assert(is(TopocentricFrame!float));
+    static assert(is(TopocentricFrame!double));
+    static assert(is(TopocentricFrame!real));
+
+    /*
+     * Prepared working precision is an implementation requirement needed by
+     * composed topocentric float paths.
+     */
+    static assert(
+        is(typeof(TopocentricFrame!float.init._originX) == double));
+    static assert(
+        is(typeof(TopocentricFrame!double.init._originX) == double));
+    static assert(
+        is(typeof(TopocentricFrame!real.init._originX) == real));
+
+    const invalid =
+        TopocentricFrame!double.init;
+
+    assert(!invalid.isValid);
+    assert(!invalid.ellipsoid.isValid);
+
+    const earth =
+        wgs84!double();
+
+    const vienna =
+        GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+
+    const frame =
+        TopocentricFrame!double.fromGeodeticOrigin(
+            earth,
+            vienna);
+
+    assert(frame.isValid);
+    assert(frame.ellipsoid.semiMajorAxis
+        == earth.semiMajorAxis);
+    assert(frame.ellipsoid.flattening
+        == earth.flattening);
+
+    /*
+     * Geodetic pole orientation:
+     * retain the supplied longitude directly rather than deriving an
+     * indeterminate longitude from ECEF.
+     */
+    const northPoleLongitude =
+        Longitude!double.fromDegrees(90.0);
+
+    const northPole =
+        GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(90.0),
+            northPoleLongitude,
+            0.0);
+
+    const poleFrame =
+        TopocentricFrame!double.fromGeodeticOrigin(
+            earth,
+            northPole);
+
+    assert(poleFrame.isValid);
+    assert(fabs(poleFrame._sinLatitude - 1.0) < 1e-15);
+    assert(fabs(poleFrame._cosLatitude) < 1e-15);
+    assert(fabs(poleFrame._sinLongitude - 1.0) < 1e-15);
+    assert(fabs(poleFrame._cosLongitude) < 1e-15);
+
+    /*
+     * +180 degrees is valid in Longitude and is intentionally not passed
+     * through Longitude.normalized during geodetic frame preparation.
+     */
+    const eastAntimeridian =
+        Longitude!double.fromDegrees(180.0);
+
+    const antimeridianPole =
+        GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(90.0),
+            eastAntimeridian,
+            0.0);
+
+    const antimeridianPoleFrame =
+        TopocentricFrame!double.fromGeodeticOrigin(
+            earth,
+            antimeridianPole);
+
+    assert(
+        antimeridianPoleFrame._sinLongitude
+        == sin(eastAntimeridian.radians));
+
+    /*
+     * Geocentric rotation axis inherits the existing EPSG 9602 canonical
+     * longitude == 0 convention.
+     */
+    const northAxis =
+        GeocentricCoordinate!double.fromComponents(
+            0.0,
+            0.0,
+            earth.semiMinorAxis + 100.0);
+
+    const northAxisFrame =
+        TopocentricFrame!double.fromGeocentricOrigin(
+            earth,
+            northAxis);
+
+    assert(northAxisFrame.isValid);
+    assert(northAxisFrame._sinLongitude == 0.0);
+    assert(northAxisFrame._cosLongitude == 1.0);
+    assert(fabs(northAxisFrame._sinLatitude - 1.0) < 1e-15);
+    assert(fabs(northAxisFrame._cosLatitude) < 1e-15);
+
+    const southAxis =
+        GeocentricCoordinate!double.fromComponents(
+            0.0,
+            0.0,
+            -(earth.semiMinorAxis + 100.0));
+
+    const southAxisFrame =
+        TopocentricFrame!double.fromGeocentricOrigin(
+            earth,
+            southAxis);
+
+    assert(southAxisFrame.isValid);
+    assert(southAxisFrame._sinLongitude == 0.0);
+    assert(southAxisFrame._cosLongitude == 1.0);
+    assert(fabs(southAxisFrame._sinLatitude + 1.0) < 1e-15);
+
+    /*
+     * Exact centre is rejected because reverse EPSG 9602 has no unique
+     * latitude/longitude there.
+     */
+    TopocentricFrame!double centreFrame;
+
+    assert(
+        !TopocentricFrame!double.tryFromGeocentricOrigin(
+            earth,
+            GeocentricCoordinate!double.init,
+            centreFrame));
+
+    assertThrown!GeodesyValueException(
+        TopocentricFrame!double.fromGeocentricOrigin(
+            earth,
+            GeocentricCoordinate!double.init));
+
+    /*
+     * Invalid ellipsoid is rejected by both construction paths.
+     */
+    const invalidEllipsoid =
+        Ellipsoid!double.init;
+
+    TopocentricFrame!double invalidFrame;
+
+    assert(
+        !TopocentricFrame!double.tryFromGeodeticOrigin(
+            invalidEllipsoid,
+            vienna,
+            invalidFrame));
+
+    assert(
+        !TopocentricFrame!double.tryFromGeocentricOrigin(
+            invalidEllipsoid,
+            northAxis,
+            invalidFrame));
+
+    assertThrown!GeodesyValueException(
+        TopocentricFrame!double.fromGeodeticOrigin(
+            invalidEllipsoid,
+            vienna));
+
+    assertThrown!GeodesyValueException(
+        TopocentricFrame!double.fromGeocentricOrigin(
+            invalidEllipsoid,
+            northAxis));
+
+    /*
+     * A caller-supplied GeocentricCoordinate<float> has already undergone
+     * binary32 ECEF quantization. The prepared state must preserve those
+     * represented values exactly after promotion to double.
+     */
+    const floatOrigin =
+        GeocentricCoordinate!float.fromComponents(
+            6_378_100.5f,
+            123.25f,
+            -456.75f);
+
+    const floatFrame =
+        TopocentricFrame!float.fromGeocentricOrigin(
+            wgs84!float(),
+            floatOrigin);
+
+    assert(floatFrame.isValid);
+    assert(floatFrame._originX == cast(double) floatOrigin.x);
+    assert(floatFrame._originY == cast(double) floatOrigin.y);
+    assert(floatFrame._originZ == cast(double) floatOrigin.z);
 }

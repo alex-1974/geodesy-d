@@ -27,6 +27,10 @@ echo "Topocentric coordinate module contract ($dc)..."
 compile "$repo/validation/api/topocentric_coordinate_contract.d" \
     "$tmp/topocentric_coordinate_contract.o"
 
+echo "Topocentric frame module contract ($dc)..."
+compile "$repo/validation/api/topocentric_frame_contract.d" \
+    "$tmp/topocentric_frame_contract.o"
+
 expect_rejected() {
     local source="$1"
     local label="$2"
@@ -49,6 +53,10 @@ expect_rejected "$repo/validation/api/reject_topocentric_coordinate_mutation.d" 
     "TopocentricCoordinate component mutation"
 expect_rejected "$repo/validation/api/reject_unchecked_topocentric_factory.d" \
     "private unchecked TopocentricCoordinate factory"
+expect_rejected "$repo/validation/api/reject_topocentric_frame_mutation.d" \
+    "TopocentricFrame ellipsoid mutation"
+expect_rejected "$repo/validation/api/reject_topocentric_frame_internal_state.d" \
+    "TopocentricFrame internal prepared state"
 expect_rejected "$repo/validation/api/reject_unchecked_angle_factory.d" \
     "private unchecked Angle factory"
 expect_rejected "$repo/validation/api/reject_internal_angle_helper.d" \
