@@ -638,6 +638,15 @@ Detailed environments, seeds, maxima, attribution checks, and acceptance
 limits are recorded in `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the committed
 research harnesses under `research/topocentric/`.
 
+
+TOPO-E — adversarial and failure validation — is complete and PASS as of
+2026-09-20. The frozen adversarial contract passed 889 checks under both DMD
+and LDC with identical output. Coverage includes the complete geodetic-origin
+matrix, both pole and rotation-axis cases, the geocentre rejection,
+deep-interior canonical behavior, sphere support, antimeridian behavior,
+finite-arithmetic failure, all supported scalar types, and the forward/reverse
+`float` working-precision contract. No production-code correction was required.
+
 This ADR remains `Proposed` until the remaining topocentric validation gates
 have demonstrated:
 

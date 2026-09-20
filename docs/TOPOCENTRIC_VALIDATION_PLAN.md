@@ -35,7 +35,7 @@ TOPO-A  contract, coordinate model, and canonical semantics             PASS
 TOPO-B  EPSG worked vectors and analytical invariants                   PASS
 TOPO-C  PROJ differential/interoperability validation                   PASS
 TOPO-D  GeographicLib LocalCartesian differential validation            PASS
-TOPO-E  adversarial origins, poles, float representation, failure       PENDING
+TOPO-E  adversarial origins, poles, float representation, failure       PASS
 TOPO-F  public API/runtime contract                                     PENDING
 TOPO-G  compiler/platform/real-width coverage                           PENDING
 ~~~
@@ -821,6 +821,116 @@ The public geographic/topocentric implementation has therefore been checked
 against both PROJ interoperability behavior and GeographicLib
 `LocalCartesian`, in addition to the normative and analytical evidence from
 TOPO-B.
+
+
+## TOPO-E adversarial and failure validation
+
+TOPO-E completed successfully on 2026-09-20.
+
+This gate executes the adversarial and failure semantics frozen before
+implementation in
+`research/topocentric/preimplementation_contract.md`.
+
+The dedicated research probe is:
+
+~~~text
+research/topocentric/topo_e_contract_probe.d
+~~~
+
+The probe intentionally exercises the public `geodesy-d` topocentric API.
+Existing production unittests and negative compile-time API tests provide
+additional evidence where the frozen contract concerns implementation details
+or public immutability.
+
+### TOPO-E compiler runs
+
+The complete probe was built and executed under:
+
+~~~text
+DMD:
+    DMD64 D Compiler v2.111.0
+
+LDC:
+    LDC 1.41.0
+~~~
+
+Both compiler runs completed successfully with identical output.
+
+Each run executed:
+
+~~~text
+889 contract checks
+~~~
+
+### TOPO-E covered behavior
+
+The executed contract includes:
+
+- `TopocentricCoordinate.init` and finite construction for
+  `float`, `double`, and `real`;
+- systematic NaN and positive/negative infinity rejection in East, North,
+  and Up for all three supported scalars;
+- checked and throwing failure behavior;
+- `TopocentricFrame.init` rejection for all supported scalars;
+- all four checked and throwing conversions on invalid frames;
+- invalid ellipsoid rejection through both frame-construction paths;
+- exact geocentre rejection;
+- a complete 9 x 9 geodetic-origin matrix for each supported scalar,
+  covering the frozen latitude and longitude domain;
+- exact north- and south-pole orientation;
+- physical equivalence of `+180` and `-180` meridian orientation, while the
+  existing production unittest separately verifies that supplied polar
+  longitude is not implicitly canonicalized during frame preparation;
+- north and south geocentric rotation-axis origins for all supported scalars,
+  inheriting canonical EPSG 9602 longitude zero;
+- deep-interior geocentric origin behavior inherited from the existing
+  EPSG 9602 canonical inverse;
+- spherical ellipsoid support through geodetic- and geocentric-origin
+  construction, EPSG 9836 forward/reverse, EPSG 9837 forward/reverse, and
+  both poles;
+- antimeridian continuity and equivalent `+180` / `-180` geometry;
+- finite-arithmetic failure handling for `float`, `double`, and `real`;
+- the direct reverse EPSG 9837 `float` path retaining working ECEF precision
+  until the final public narrowing.
+
+### Float representation evidence
+
+Forward `GeodeticCoordinate<float>` composition was already protected by a
+production regression test demonstrating that introducing an Earth-scale
+`GeocentricCoordinate<float>` intermediate materially changes local ENU
+results.
+
+TOPO-E adds the corresponding reverse-path check.
+
+For four deterministic `TopocentricCoordinate<float>` cases, the direct
+reverse EPSG 9837 result is exactly the final `float` narrowing of the same
+calculation performed with represented public inputs in the promoted
+`double` working scalar.
+
+The probe also deliberately materializes the forbidden reverse intermediate:
+
+~~~text
+TopocentricCoordinate<float>
+    -> GeocentricCoordinate<float>
+    -> geodetic
+~~~
+
+Compared with the promoted working-ECEF path, the largest observed binary32
+ECEF component quantization was:
+
+~~~text
+0.233677798 m
+~~~
+
+This diagnostic is not a public accuracy guarantee. It demonstrates why the
+working-precision rule is required and keeps caller-input representation error
+separate from kernel error.
+
+### TOPO-E status
+
+TOPO-E is PASS.
+
+No production-code correction was required by the adversarial gate.
 
 ## Coordinate value-type gate
 

@@ -30,7 +30,7 @@ The implementation must remain consistent with established geodesy-d behavior:
 
 ## TOPO-E — adversarial and failure contract
 
-TOPO-E remains PENDING until these cases are executed against production code.
+TOPO-E execution completed successfully on 2026-09-20 against production code.
 
 ### TopocentricCoordinate
 
@@ -534,7 +534,7 @@ TOPO-C                              PASS
     geodesy-d differential          PASS
 TOPO-D                              PASS
 TOPO-E specification               FROZEN
-TOPO-E execution                   PENDING
+TOPO-E execution                   PASS
 TOPO-F specification               FROZEN
 TOPO-F execution                   PENDING
 TOPO-G                              PENDING
@@ -544,5 +544,6 @@ Production code has now been implemented after the public API, failure
 semantics, adversarial semantics, and compile-time contract were specified in
 advance.
 
-The remaining work is execution of TOPO-E and TOPO-F against that production
-implementation, followed by TOPO-G compiler/platform coverage.
+TOPO-E has now been executed successfully against the production
+implementation. The remaining work is execution of TOPO-F, followed by
+TOPO-G compiler/platform coverage.
