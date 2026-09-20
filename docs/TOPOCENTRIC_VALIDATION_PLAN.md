@@ -32,7 +32,7 @@ Use the following staged gates:
 
 ~~~text
 TOPO-A  contract, coordinate model, and canonical semantics             PASS
-TOPO-B  EPSG worked vectors and analytical invariants                   PENDING
+TOPO-B  EPSG worked vectors and analytical invariants                   PASS
 TOPO-C  PROJ differential/interoperability validation                   PENDING
 TOPO-D  GeographicLib LocalCartesian differential validation            PENDING
 TOPO-E  adversarial origins, poles, float representation, failure       PENDING
@@ -188,6 +188,123 @@ height    = 73 m
 Expected ENU is the same published triplet above.
 
 Validate forward and reverse.
+
+## TOPO-B achieved evidence
+
+TOPO-B completed successfully on 2026-09-20.
+
+Committed research probes:
+
+~~~text
+research/topocentric/epsg_reference_probe.d
+research/topocentric/analytical_rotation_probe.d
+~~~
+
+Both probes are deliberately independent of the production `geodesy-d`
+implementation.
+
+The EPSG reference probe directly evaluates the published WGS 84 EPSG
+9836/9837 worked case using an independent EPSG 9602 forward formula, an
+ordinary-position research-only reverse conversion, and explicit EPSG 9836
+rotation formulas.
+
+The probe passed under both DMD and LDC with identical reported results.
+
+### EPSG 9602 preparation
+
+The independently calculated geocentric coordinates reproduce the published
+rounded values.
+
+Maximum observed absolute differences:
+
+~~~text
+origin ECEF:  0.000011131 m
+source ECEF:  0.000358218 m
+~~~
+
+These are within the millimetre rounding of the published coordinates.
+
+### EPSG 9836
+
+Forward geocentric -> topocentric maximum component difference from the
+published ENU result:
+
+~~~text
+0.000305420 m
+~~~
+
+Reverse topocentric -> geocentric maximum component difference from the
+published rounded source ECEF coordinate:
+
+~~~text
+0.000358404 m
+~~~
+
+The reverse comparison starts from the published ENU values rounded to
+millimetres, so this residual is consistent with source rounding.
+
+### EPSG 9837
+
+Forward geographic -> topocentric maximum component difference from the
+published ENU result:
+
+~~~text
+0.000241598 m
+~~~
+
+Reverse topocentric -> geographic differences from the published source
+coordinate are:
+
+~~~text
+latitude:   3.031137e-11 rad
+longitude:  4.020775e-11 rad
+height:     0.000241983 m
+~~~
+
+These are comfortably inside the tolerances selected from the precision of
+the published source values.
+
+### Analytical rotation invariants
+
+The independent analytical probe tested the EPSG 9836 ENU rotation for the
+Cartesian product:
+
+~~~text
+latitudes:
+    -90, -80, -45, 0, 45, 80, 90 degrees
+
+longitudes:
+    -180, -90, -1, 0, 1, 90, 180 degrees
+~~~
+
+For all 49 orientations it verified:
+
+~~~text
+R * transpose(R) = I
+transpose(R) * R = I
+det(R) = +1
+Euclidean norm preservation
+transpose(R) is the numerical inverse
+~~~
+
+Additional analytical cases verified:
+
+- East/North/Up axis signs at the equator;
+- explicit longitude-dependent East/North orientation at the north pole;
+- unchanged polar Up direction;
+- frame origin mapping exactly to ENU zero.
+
+The analytical probe passed under both DMD and LDC.
+
+### TOPO-B conclusion
+
+TOPO-B is PASS.
+
+The normative worked vectors, forward/reverse signs, handedness, and
+orthonormal rotation semantics are sufficiently established to proceed to
+independent implementation differential validation.
+
+No production implementation is implied by this gate.
 
 ## Coordinate value-type gate
 

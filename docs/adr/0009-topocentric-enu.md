@@ -616,6 +616,13 @@ The initial capability implements the EPSG ellipsoid-normal setting only.
 TOPO-A — public contract, coordinate model, and canonical semantics — is
 complete and PASS as of 2026-09-20.
 
+TOPO-B — published EPSG 9836/9837 vectors and independent analytical rotation
+invariants — is complete and PASS as of 2026-09-20.
+
+The TOPO-B evidence is recorded in
+`docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the independent probes under
+`research/topocentric/`.
+
 This ADR remains `Proposed` until the remaining topocentric validation gates
 have demonstrated:
 
