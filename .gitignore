@@ -20,3 +20,6 @@ __dummy.html
 
 # Local d-geospatial-workspace context
 .workspace/
+
+# Python research/validation cache
+__pycache__/

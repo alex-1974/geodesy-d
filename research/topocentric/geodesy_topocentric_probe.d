@@ -36,11 +36,17 @@ import geodesy.topocentric :
     TopocentricFrame;
 
 
+version (TopocentricRealProbe)
+    alias ProbeScalar = real;
+else
+    alias ProbeScalar = double;
+
+
 private bool parseTriple(
     const string line,
-    out double a,
-    out double b,
-    out double c)
+    out ProbeScalar a,
+    out ProbeScalar b,
+    out ProbeScalar c)
 {
     const fields = line.strip.split;
 
@@ -49,9 +55,9 @@ private bool parseTriple(
 
     try
     {
-        a = fields[0].to!double;
-        b = fields[1].to!double;
-        c = fields[2].to!double;
+        a = fields[0].to!ProbeScalar;
+        b = fields[1].to!ProbeScalar;
+        c = fields[2].to!ProbeScalar;
     }
     catch (Exception)
     {
@@ -74,19 +80,19 @@ int main(string[] args)
 
     const operation = args[1];
 
-    double semiMajorAxis;
-    double flattening;
-    double origin1;
-    double origin2;
-    double origin3;
+    ProbeScalar semiMajorAxis;
+    ProbeScalar flattening;
+    ProbeScalar origin1;
+    ProbeScalar origin2;
+    ProbeScalar origin3;
 
     try
     {
-        semiMajorAxis = args[2].to!double;
-        flattening = args[3].to!double;
-        origin1 = args[4].to!double;
-        origin2 = args[5].to!double;
-        origin3 = args[6].to!double;
+        semiMajorAxis = args[2].to!ProbeScalar;
+        flattening = args[3].to!ProbeScalar;
+        origin1 = args[4].to!ProbeScalar;
+        origin2 = args[5].to!ProbeScalar;
+        origin3 = args[6].to!ProbeScalar;
     }
     catch (Exception)
     {
@@ -95,9 +101,9 @@ int main(string[] args)
         return 2;
     }
 
-    Ellipsoid!double ellipsoid;
+    Ellipsoid!ProbeScalar ellipsoid;
 
-    if (!Ellipsoid!double.tryFromFlattening(
+    if (!Ellipsoid!ProbeScalar.tryFromFlattening(
         semiMajorAxis,
         flattening,
         ellipsoid))
@@ -106,19 +112,19 @@ int main(string[] args)
         return 3;
     }
 
-    TopocentricFrame!double frame;
+    TopocentricFrame!ProbeScalar frame;
 
     if (operation == "9836f"
         || operation == "9836r")
     {
-        GeocentricCoordinate!double origin;
+        GeocentricCoordinate!ProbeScalar origin;
 
-        if (!GeocentricCoordinate!double.tryFromComponents(
+        if (!GeocentricCoordinate!ProbeScalar.tryFromComponents(
                 origin1,
                 origin2,
                 origin3,
                 origin)
-            || !TopocentricFrame!double.tryFromGeocentricOrigin(
+            || !TopocentricFrame!ProbeScalar.tryFromGeocentricOrigin(
                 ellipsoid,
                 origin,
                 frame))
@@ -131,22 +137,22 @@ int main(string[] args)
     else if (operation == "9837f"
         || operation == "9837r")
     {
-        Latitude!double latitude;
-        Longitude!double longitude;
-        GeodeticCoordinate!double origin;
+        Latitude!ProbeScalar latitude;
+        Longitude!ProbeScalar longitude;
+        GeodeticCoordinate!ProbeScalar origin;
 
-        if (!Latitude!double.tryFromDegrees(
+        if (!Latitude!ProbeScalar.tryFromDegrees(
                 origin1,
                 latitude)
-            || !Longitude!double.tryFromDegrees(
+            || !Longitude!ProbeScalar.tryFromDegrees(
                 origin2,
                 longitude)
-            || !GeodeticCoordinate!double.tryFromComponents(
+            || !GeodeticCoordinate!ProbeScalar.tryFromComponents(
                 latitude,
                 longitude,
                 origin3,
                 origin)
-            || !TopocentricFrame!double.tryFromGeodeticOrigin(
+            || !TopocentricFrame!ProbeScalar.tryFromGeodeticOrigin(
                 ellipsoid,
                 origin,
                 frame))
@@ -173,9 +179,9 @@ int main(string[] args)
         if (line.strip.length == 0)
             continue;
 
-        double a;
-        double b;
-        double c;
+        ProbeScalar a;
+        ProbeScalar b;
+        ProbeScalar c;
 
         if (!parseTriple(
             line,
@@ -191,10 +197,10 @@ int main(string[] args)
 
         if (operation == "9836f")
         {
-            GeocentricCoordinate!double source;
-            TopocentricCoordinate!double result;
+            GeocentricCoordinate!ProbeScalar source;
+            TopocentricCoordinate!ProbeScalar result;
 
-            if (!GeocentricCoordinate!double.tryFromComponents(
+            if (!GeocentricCoordinate!ProbeScalar.tryFromComponents(
                     a,
                     b,
                     c,
@@ -210,17 +216,17 @@ int main(string[] args)
             }
 
             writefln(
-                "%.17g %.17g %.17g",
+                "%.36g %.36g %.36g",
                 result.east,
                 result.north,
                 result.up);
         }
         else if (operation == "9836r")
         {
-            TopocentricCoordinate!double source;
-            GeocentricCoordinate!double result;
+            TopocentricCoordinate!ProbeScalar source;
+            GeocentricCoordinate!ProbeScalar result;
 
-            if (!TopocentricCoordinate!double.tryFromComponents(
+            if (!TopocentricCoordinate!ProbeScalar.tryFromComponents(
                     a,
                     b,
                     c,
@@ -236,25 +242,25 @@ int main(string[] args)
             }
 
             writefln(
-                "%.17g %.17g %.17g",
+                "%.36g %.36g %.36g",
                 result.x,
                 result.y,
                 result.z);
         }
         else if (operation == "9837f")
         {
-            Latitude!double latitude;
-            Longitude!double longitude;
-            GeodeticCoordinate!double source;
-            TopocentricCoordinate!double result;
+            Latitude!ProbeScalar latitude;
+            Longitude!ProbeScalar longitude;
+            GeodeticCoordinate!ProbeScalar source;
+            TopocentricCoordinate!ProbeScalar result;
 
-            if (!Latitude!double.tryFromDegrees(
+            if (!Latitude!ProbeScalar.tryFromDegrees(
                     a,
                     latitude)
-                || !Longitude!double.tryFromDegrees(
+                || !Longitude!ProbeScalar.tryFromDegrees(
                     b,
                     longitude)
-                || !GeodeticCoordinate!double.tryFromComponents(
+                || !GeodeticCoordinate!ProbeScalar.tryFromComponents(
                     latitude,
                     longitude,
                     c,
@@ -270,17 +276,17 @@ int main(string[] args)
             }
 
             writefln(
-                "%.17g %.17g %.17g",
+                "%.36g %.36g %.36g",
                 result.east,
                 result.north,
                 result.up);
         }
         else
         {
-            TopocentricCoordinate!double source;
-            GeodeticCoordinate!double result;
+            TopocentricCoordinate!ProbeScalar source;
+            GeodeticCoordinate!ProbeScalar result;
 
-            if (!TopocentricCoordinate!double.tryFromComponents(
+            if (!TopocentricCoordinate!ProbeScalar.tryFromComponents(
                     a,
                     b,
                     c,
@@ -296,7 +302,7 @@ int main(string[] args)
             }
 
             writefln(
-                "%.17g %.17g %.17g",
+                "%.36g %.36g %.36g",
                 result.latitude.degrees,
                 result.longitude.degrees,
                 result.ellipsoidalHeight);

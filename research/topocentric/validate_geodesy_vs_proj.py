@@ -46,6 +46,16 @@ FORWARD_CASES_PER_PROFILE = 5_000
 REVERSE_CASES_PER_PROFILE = 5_000
 LOCAL_FORWARD_CASES = 1_000
 
+PROBE_SCALAR = os.environ.get(
+    "GEODESY_TOPO_SCALAR",
+    "double",
+).strip().lower()
+
+if PROBE_SCALAR not in ("double", "real"):
+    raise RuntimeError(
+        "GEODESY_TOPO_SCALAR must be 'double' or 'real'"
+    )
+
 # TOPO-C validation limits.
 #
 # These are research/release validation gates, not public accuracy promises.
@@ -118,6 +128,20 @@ def compile_probe(
         str(PROBE_SOURCE),
         f"-of={executable}",
     ]
+
+    if PROBE_SCALAR == "real":
+        compiler_name = Path(compiler).name.lower()
+
+        version_flag = (
+            "-d-version=TopocentricRealProbe"
+            if "ldc" in compiler_name
+            else "-version=TopocentricRealProbe"
+        )
+
+        command.insert(
+            3,
+            version_flag,
+        )
 
     proc = subprocess.run(
         command,
@@ -498,6 +522,11 @@ def main() -> None:
     )
 
     print(
+        "probe scalar: "
+        + PROBE_SCALAR
+    )
+
+    print(
         "forward seed: "
         f"0x{FORWARD_SEED:016X}"
     )
@@ -518,7 +547,12 @@ def main() -> None:
     )
 
     print(
-        "mode: TOPO-C PASS/FAIL"
+        "mode: "
+        + (
+            "TOPO-G wide-real differential"
+            if PROBE_SCALAR == "real"
+            else "TOPO-C PASS/FAIL"
+        )
     )
 
     print(
@@ -1145,7 +1179,20 @@ def main() -> None:
         )
 
     print()
-    print("=== TOPO-C ACCEPTANCE ===")
+
+    gate_label = (
+        "TOPO-G wide-real topocentric differential gate"
+        if PROBE_SCALAR == "real"
+        else "TOPO-C geodesy-d topocentric differential gate"
+    )
+
+    acceptance_heading = (
+        "=== TOPO-G REAL ACCEPTANCE ==="
+        if PROBE_SCALAR == "real"
+        else "=== TOPO-C ACCEPTANCE ==="
+    )
+
+    print(acceptance_heading)
 
     checks = [
         (
@@ -1227,14 +1274,12 @@ def main() -> None:
             )
 
         raise SystemExit(
-            "FAIL: TOPO-C geodesy-d "
-            "topocentric differential gate"
+            "FAIL: " + gate_label
         )
 
     print()
     print(
-        "PASS: TOPO-C geodesy-d "
-        "topocentric differential gate"
+        "PASS: " + gate_label
     )
 
     print(

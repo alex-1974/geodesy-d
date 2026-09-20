@@ -1,0 +1,202 @@
+name: Topocentric platform matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - "source/geodesy/**"
+      - "validation/api/**"
+      - "validation/platform_fingerprint.d"
+      - "research/topocentric/**"
+      - "tools/validate-api.sh"
+      - "dub.sdl"
+      - ".github/workflows/topocentric-platform-matrix.yml"
+
+  pull_request:
+    paths:
+      - "source/geodesy/**"
+      - "validation/api/**"
+      - "validation/platform_fingerprint.d"
+      - "research/topocentric/**"
+      - "tools/validate-api.sh"
+      - "dub.sdl"
+      - ".github/workflows/topocentric-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  topocentric-platform:
+    name: ${{ matrix.name }}
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          # Frozen minimum frontend.
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            dc: dmd
+            real_differential: true
+            experimental: false
+
+          # Current compiler coverage.
+          - name: Linux x86_64 / DMD latest
+            os: ubuntu-24.04
+            compiler: dmd-latest
+            dc: dmd
+            real_differential: true
+            experimental: false
+
+          - name: Linux x86_64 / LDC latest
+            os: ubuntu-24.04
+            compiler: ldc-latest
+            dc: ldc2
+            real_differential: true
+            experimental: false
+
+          # Existing accepted platform baseline.
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            dc: ldc2
+            real_differential: true
+            experimental: false
+
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            real_differential: true
+            experimental: false
+
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            dc: ldc2
+            real_differential: false
+            experimental: false
+
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            dc: ldc2
+            real_differential: false
+            experimental: false
+
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            dc: ldc2
+            real_differential: true
+            experimental: false
+
+          # Keep the young Windows/AArch64 path informational.
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            real_differential: false
+            experimental: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+          uname -a || true
+
+          "${{ matrix.dc }}" --version
+          dub --version
+
+      - name: Platform fingerprint
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -run validation/platform_fingerprint.d \
+            | tee topocentric-platform-fingerprint.txt
+
+      - name: Library unit tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          dub test \
+            --compiler="${{ matrix.dc }}" \
+            --force
+
+      - name: Public API contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          DC="${{ matrix.dc }}" \
+            bash tools/validate-api.sh
+
+      - name: TOPO-E adversarial/failure contract
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          "${{ matrix.dc }}" \
+            -i \
+            -Isource \
+            -run research/topocentric/topo_e_contract_probe.d
+
+      - name: Install PROJ on Linux
+        if: matrix.real_differential && runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y proj-bin
+          cct --version
+
+      - name: Install PROJ on macOS
+        if: matrix.real_differential && runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          if ! command -v cct >/dev/null 2>&1; then
+            brew install proj
+          fi
+
+          cct --version
+
+      - name: TOPO-G wide-real PROJ differential
+        if: matrix.real_differential
+        shell: bash
+        env:
+          DC: ${{ matrix.dc }}
+          GEODESY_TOPO_SCALAR: real
+        run: |
+          set -euxo pipefail
+
+          python3 \
+            research/topocentric/validate_geodesy_vs_proj.py
