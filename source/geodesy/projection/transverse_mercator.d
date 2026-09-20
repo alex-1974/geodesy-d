@@ -1399,6 +1399,243 @@ public:
     }
 
 
+    version (ProjectionFactorResearch)
+    {
+        /*
+         * Research-only factor probe.
+         *
+         * This member is absent from normal builds and is package-protected
+         * even when ProjectionFactorResearch is enabled. It exists only to
+         * qualify the numerical factor kernel before any public API is
+         * selected.
+         *
+         * Geographic poles are deliberately excluded from this prototype.
+         * Their convergence convention is a separate PF-A semantic question.
+         */
+        package bool researchTryForwardFactors(
+            const GeographicCoordinate!T source,
+            out T convergenceRadians,
+            out T pointScale) const
+            pure nothrow @safe @nogc
+        {
+            convergenceRadians = T.nan;
+            pointScale = T.nan;
+
+            /*
+             * First require the accepted public forward operation to accept
+             * exactly this represented source. The research path must not
+             * silently broaden the existing TM domain.
+             */
+            ProjectedCoordinate!T projected;
+            if (!tryForward(source, projected))
+                return false;
+
+            const W latitude =
+                workingLatitudeRadians(source.latitude);
+
+            const W poleTolerance =
+                cast(W) 8 * W.epsilon
+                    * (halfPi!W > cast(W) 1
+                        ? halfPi!W
+                        : cast(W) 1);
+
+            if (fabs(fabs(latitude) - halfPi!W) <= poleTolerance)
+                return false;
+
+            W deltaLongitude = longitudeDifference(
+                cast(W) source.longitude.radians,
+                cast(W) _longitudeOfNaturalOrigin.radians);
+
+            const W maxDelta = maxLongitudeDifference!W;
+            const W domainSlack = longitudeDomainSlack();
+
+            if (fabs(deltaLongitude) > maxDelta + domainSlack)
+                return false;
+
+            if (fabs(deltaLongitude) > maxDelta)
+                deltaLongitude =
+                    deltaLongitude < cast(W) 0
+                        ? -maxDelta
+                        : maxDelta;
+
+            const W sinPhi = sin(latitude);
+            const W cosPhi = cos(latitude);
+            const W sinLambda = sin(deltaLongitude);
+            const W cosLambda = cos(deltaLongitude);
+
+            if (!isFiniteScalar(sinPhi)
+                || !isFiniteScalar(cosPhi)
+                || !isFiniteScalar(sinLambda)
+                || !isFiniteScalar(cosLambda)
+                || cosPhi == cast(W) 0)
+                return false;
+
+            const W tau = sinPhi / cosPhi;
+            const W tauPrime =
+                conformalTau(tau, _eccentricity);
+
+            const W denominator =
+                hypot2(tauPrime, cosLambda);
+
+            if (!(denominator > cast(W) 0)
+                || !isFiniteScalar(denominator))
+                return false;
+
+            const W xiPrime =
+                atan2(tauPrime, cosLambda);
+
+            const W etaPrime =
+                asinh(sinLambda / denominator);
+
+            if (!isFiniteScalar(xiPrime)
+                || !isFiniteScalar(etaPrime))
+                return false;
+
+            /*
+             * Gauss-Schreiber convergence and scale before the
+             * conformal-to-rectifying Krueger series.
+             */
+            W gamma =
+                atan2(
+                    sinLambda * tauPrime,
+                    cosLambda
+                        * hypot2(cast(W) 1, tauPrime));
+
+            const W e2 =
+                _eccentricity * _eccentricity;
+            const W e2m =
+                cast(W) 1 - e2;
+
+            W scale =
+                sqrt(
+                    e2m
+                    + e2 * cosPhi * cosPhi)
+                * hypot2(cast(W) 1, tau)
+                / denominator;
+
+            if (!isFiniteScalar(gamma)
+                || !isFiniteScalar(scale)
+                || !(scale > cast(W) 0))
+                return false;
+
+            /*
+             * Evaluate
+             *
+             *   d zeta / d zeta'
+             *     = 1
+             *       + sum(2 k alpha[k] cos(2 k zeta'))
+             *
+             * with the same complex Clenshaw recurrence family used by
+             * applyForwardSeries().
+             */
+            const W c0 =
+                cos(cast(W) 2 * xiPrime);
+            const W ch0 =
+                cosh(cast(W) 2 * etaPrime);
+            const W s0 =
+                sin(cast(W) 2 * xiPrime);
+            const W sh0 =
+                sinh(cast(W) 2 * etaPrime);
+
+            if (!isFiniteScalar(c0)
+                || !isFiniteScalar(ch0)
+                || !isFiniteScalar(s0)
+                || !isFiniteScalar(sh0))
+                return false;
+
+            const ComplexPair!W recurrence =
+                ComplexPair!W(
+                    cast(W) 2 * c0 * ch0,
+                    -cast(W) 2 * s0 * sh0);
+
+            ComplexPair!W derivativeB1;
+            ComplexPair!W derivativeB2;
+
+            for (int k = seriesOrder; k >= 1; --k)
+            {
+                ComplexPair!W next =
+                    pairSub(
+                        pairMul(
+                            recurrence,
+                            derivativeB1),
+                        derivativeB2);
+
+                next = pairWithRealAdded(
+                    next,
+                    cast(W) (2 * k) * _alpha[k]);
+
+                derivativeB2 = derivativeB1;
+                derivativeB1 = next;
+            }
+
+            const ComplexPair!W cos2ZetaPrime =
+                ComplexPair!W(
+                    recurrence.re / cast(W) 2,
+                    recurrence.im / cast(W) 2);
+
+            ComplexPair!W derivative =
+                pairSub(
+                    pairWithRealAdded(
+                        pairMul(
+                            cos2ZetaPrime,
+                            derivativeB1),
+                        cast(W) 1),
+                    derivativeB2);
+
+            if (!isFiniteScalar(derivative.re)
+                || !isFiniteScalar(derivative.im))
+                return false;
+
+            const W derivativeMagnitude =
+                hypot2(
+                    derivative.re,
+                    derivative.im);
+
+            if (!(derivativeMagnitude > cast(W) 0)
+                || !isFiniteScalar(derivativeMagnitude))
+                return false;
+
+            /*
+             * The complex derivative contributes its argument to grid
+             * rotation and its magnitude to local point scale.
+             */
+            gamma -=
+                atan2(
+                    derivative.im,
+                    derivative.re);
+
+            gamma = normalizeRadians(gamma);
+
+            const W semiMajorAxis =
+                cast(W) _ellipsoid.semiMajorAxis;
+
+            if (!(semiMajorAxis > cast(W) 0)
+                || !isFiniteScalar(semiMajorAxis))
+                return false;
+
+            const W b1 =
+                _a1 / semiMajorAxis;
+
+            scale *=
+                b1
+                * derivativeMagnitude
+                * cast(W) _scaleFactorAtNaturalOrigin;
+
+            if (!isFiniteScalar(gamma)
+                || !isFiniteScalar(scale)
+                || !(scale > cast(W) 0))
+                return false;
+
+            convergenceRadians = cast(T) gamma;
+            pointScale = cast(T) scale;
+
+            return isFiniteScalar(convergenceRadians)
+                && isFiniteScalar(pointScale)
+                && pointScale > cast(T) 0;
+        }
+    }
+
+
     /**
      * Project a geographic coordinate.
      *

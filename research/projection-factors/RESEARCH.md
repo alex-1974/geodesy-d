@@ -479,6 +479,131 @@ produces finite convergence and point scale.
 These results characterize the oracle and sign convention. They do not yet
 define the final `geodesy-d` numerical acceptance tolerances.
 
+### Spherical-oracle exception
+
+GeographicLib 2.7 `TransverseMercatorExact` requires strictly positive
+flattening and therefore does not support the exact spherical limit `f = 0`.
+
+The projection-factor differential prototype consequently uses two independent
+reference paths:
+
+~~~text
+f > 0    GeographicLib TransverseMercatorExact
+f = 0    closed-form spherical Transverse Mercator factors
+~~~
+
+For the sphere, with geographic latitude `phi`, longitude difference `lambda`
+from the central meridian, and central scale `k0`, the research oracle uses:
+
+~~~text
+gamma = atan2(sin(lambda) * sin(phi), cos(lambda))
+
+k = k0 / sqrt(
+        1 - (cos(phi) * sin(lambda))^2
+    )
+~~~
+
+False easting, false northing, and the latitude-of-natural-origin northing
+translation do not alter these local differential factors.
+
+The GeographicLib series implementation remains useful as a separate
+same-family interoperability reference for the sphere, but it is not used as
+the independent spherical oracle for this prototype.
+
+### Forward derivative prototype — reproduced results
+
+The private D forward-factor prototype was reproduced on 2026-09-20 with:
+
+~~~text
+GeographicLib TransverseMercatorProj 2.7
+DMD 2.111.0
+LDC 1.41.0, DMD frontend 2.111.0
+~~~
+
+The DMD and LDC probes were built from the same source state with
+`ProjectionFactorResearch` enabled.
+
+The deterministic differential corpus contains:
+
+~~~text
+6 projection profiles
+81 structured points/profile
+2000 seeded random points/profile
+2081 cases/profile
+12486 total cases
+~~~
+
+Profiles cover:
+
+~~~text
+WGS84, UTM-like k0 = 0.9996
+WGS84, k0 = 0.9
+WGS84, k0 = 1.1
+Airy 1830
+sphere
+synthetic flattening f = 0.01
+~~~
+
+For positive flattening, GeographicLib Exact remains the independent oracle.
+For the sphere, the closed-form spherical Transverse Mercator factor formulas
+described above are used.
+
+After correcting the research harness to compute wrapped angular differences
+with `math.remainder(actual - reference, 360.0)` rather than first adding
+180 degrees, the reproduced oracle maxima are:
+
+| profile | max `|delta gamma|` | max relative `|delta k|` |
+|---|---:|---:|
+| WGS84, `k0 = 0.9996` | `1.8891554987021664e-12 deg` | `5.6064455490428346e-14` |
+| WGS84, `k0 = 0.9` | `1.8891554987021664e-12 deg` | `5.6042029708232178e-14` |
+| WGS84, `k0 = 1.1` | `1.8891554987021664e-12 deg` | `5.5942133042085597e-14` |
+| Airy 1830 | `2.4993340730361524e-12 deg` | `5.3208196020296701e-14` |
+| sphere | `2.1316282072803006e-14 deg` | approximately `6.4e-16` to `6.8e-16` |
+| synthetic `f = 0.01` | `3.9324120626460513e-08 deg` | `1.161586612780204e-09` |
+
+The global oracle worst cases remain the synthetic `f = 0.01` profile:
+
+~~~text
+max |delta gamma| = 3.9324120626460513e-08 deg
+max |delta k|     = 2.3990778252880318e-09
+max relative
+    |delta k|     = 1.161586612780204e-09
+~~~
+
+The ordinary Earth ellipsoids remain several orders of magnitude closer to the
+Exact oracle. The synthetic high-flattening case therefore remains an explicit
+characterization point and must not be hidden by selecting tolerances only from
+WGS84 behavior.
+
+A direct point-for-point DMD/LDC comparison over the same 12486 cases found:
+
+~~~text
+gamma bit differences = 1749 / 12486
+scale bit differences = 4274 / 12486
+
+max |DMD - LDC gamma| = 2.1316282072803006e-14 deg
+max gamma ULP distance = 5
+
+max |DMD - LDC k| = 1.3322676295501878e-15
+max relative |DMD - LDC k| = 8.7071374358997978e-16
+max scale ULP distance = 6
+~~~
+
+The bitwise differences are small and consistent with ordinary
+compiler/backend or math-library rounding variation. They provide no evidence
+of a compiler-dependent factor algorithm.
+
+The angle-error helper itself required a research-harness precision correction.
+The previous form added 180 degrees before subtraction from 180 degrees and
+could therefore lose differences around `1e-14` degrees through floating-point
+rounding. The corrected form wraps the small difference directly with
+`math.remainder`.
+
+These measurements establish the numerical viability and compiler stability of
+the private forward derivative prototype. They are characterization evidence,
+not final public projection-factor acceptance tolerances and not a public API
+decision.
+
 ### Existing Exact-corpus opportunity
 
 The existing
