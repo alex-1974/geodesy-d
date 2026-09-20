@@ -154,6 +154,93 @@ private:
     W _sinLongitude = 0;
     W _cosLongitude = 0;
 
+    /*
+     * Working-precision forward EPSG 9836 rotation.
+     *
+     * Inputs and outputs remain in W.  In particular, a composed float path
+     * may reach this helper with double-precision ECEF values without first
+     * materializing GeocentricCoordinate!float.
+     */
+    bool tryWorkingGeocentricToTopocentric(
+        const W x,
+        const W y,
+        const W z,
+        out W east,
+        out W north,
+        out W up) const
+        pure nothrow @safe @nogc
+    {
+        if (!_valid || !_ellipsoid.isValid)
+            return false;
+
+        const W dx =
+            x - _originX;
+
+        const W dy =
+            y - _originY;
+
+        const W dz =
+            z - _originZ;
+
+        east =
+            -dx * _sinLongitude
+            + dy * _cosLongitude;
+
+        north =
+            -dx * _sinLatitude * _cosLongitude
+            - dy * _sinLatitude * _sinLongitude
+            + dz * _cosLatitude;
+
+        up =
+            dx * _cosLatitude * _cosLongitude
+            + dy * _cosLatitude * _sinLongitude
+            + dz * _sinLatitude;
+
+        return isFiniteGeodesyScalar(east)
+            && isFiniteGeodesyScalar(north)
+            && isFiniteGeodesyScalar(up);
+    }
+
+    /*
+     * Working-precision reverse EPSG 9836 rotation.
+     *
+     * The transpose of the orthonormal forward rotation is applied before
+     * restoring the prepared working-precision ECEF origin.
+     */
+    bool tryWorkingTopocentricToGeocentric(
+        const W east,
+        const W north,
+        const W up,
+        out W x,
+        out W y,
+        out W z) const
+        pure nothrow @safe @nogc
+    {
+        if (!_valid || !_ellipsoid.isValid)
+            return false;
+
+        x =
+            _originX
+            - east * _sinLongitude
+            - north * _sinLatitude * _cosLongitude
+            + up * _cosLatitude * _cosLongitude;
+
+        y =
+            _originY
+            + east * _cosLongitude
+            - north * _sinLatitude * _sinLongitude
+            + up * _cosLatitude * _sinLongitude;
+
+        z =
+            _originZ
+            + north * _cosLatitude
+            + up * _sinLatitude;
+
+        return isFiniteGeodesyScalar(x)
+            && isFiniteGeodesyScalar(y)
+            && isFiniteGeodesyScalar(z);
+    }
+
 public:
     /**
      * True when this frame has been explicitly prepared from a valid origin.
@@ -378,31 +465,18 @@ public:
         out TopocentricCoordinate!T result) const
         pure nothrow @safe @nogc
     {
-        if (!isValid)
+        W east;
+        W north;
+        W up;
+
+        if (!tryWorkingGeocentricToTopocentric(
+            cast(W) source.x,
+            cast(W) source.y,
+            cast(W) source.z,
+            east,
+            north,
+            up))
             return false;
-
-        const W dx =
-            cast(W) source.x - _originX;
-
-        const W dy =
-            cast(W) source.y - _originY;
-
-        const W dz =
-            cast(W) source.z - _originZ;
-
-        const W east =
-            -dx * _sinLongitude
-            + dy * _cosLongitude;
-
-        const W north =
-            -dx * _sinLatitude * _cosLongitude
-            - dy * _sinLatitude * _sinLongitude
-            + dz * _cosLatitude;
-
-        const W up =
-            dx * _cosLatitude * _cosLongitude
-            + dy * _cosLatitude * _sinLongitude
-            + dz * _sinLatitude;
 
         return TopocentricCoordinate!T.tryFromComponents(
             cast(T) east,
@@ -446,34 +520,18 @@ public:
         out GeocentricCoordinate!T result) const
         pure nothrow @safe @nogc
     {
-        if (!isValid)
+        W x;
+        W y;
+        W z;
+
+        if (!tryWorkingTopocentricToGeocentric(
+            cast(W) source.east,
+            cast(W) source.north,
+            cast(W) source.up,
+            x,
+            y,
+            z))
             return false;
-
-        const W east =
-            cast(W) source.east;
-
-        const W north =
-            cast(W) source.north;
-
-        const W up =
-            cast(W) source.up;
-
-        const W x =
-            _originX
-            - east * _sinLongitude
-            - north * _sinLatitude * _cosLongitude
-            + up * _cosLatitude * _cosLongitude;
-
-        const W y =
-            _originY
-            + east * _cosLongitude
-            - north * _sinLatitude * _sinLongitude
-            + up * _cosLatitude * _sinLongitude;
-
-        const W z =
-            _originZ
-            + north * _cosLatitude
-            + up * _sinLatitude;
 
         return GeocentricCoordinate!T.tryFromComponents(
             cast(T) x,
