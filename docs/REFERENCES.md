@@ -50,6 +50,108 @@ IOGP's current publication library continues to list Report 373-07-2 as the form
 
 See `docs/operations/geographic-geocentric.md` for the operation-level contract and test vector.
 
+## Proposed operation: EPSG 9836 / 9837 topocentric conversions
+
+The pre-v1 roadmap admits a bounded topocentric East/North/Up capability.
+
+Normative semantics are taken from:
+
+~~~text
+IOGP Report 373-07-02
+EPSG Guidance Note 7-2
+December 2024
+
+EPSG method 9836 — Geocentric/topocentric conversions
+EPSG method 9837 — Geographic/topocentric conversions
+EPSG method 9602 — Geographic/geocentric conversions
+~~~
+
+EPSG 9836 defines a right-handed local Cartesian frame:
+
+~~~text
+U = East
+V = North
+W = Up
+~~~
+
+where `Up` is normal to the ellipsoid at the topocentric origin.
+
+EPSG 9837 is treated as the semantic composition:
+
+~~~text
+geographic/geodetic
+    ↕ EPSG 9602
+geocentric
+    ↕ EPSG 9836
+topocentric
+~~~
+
+The mandatory acceptance vector is the published WGS 84 worked example with:
+
+~~~text
+origin:
+    latitude  = 55 deg N
+    longitude = 5 deg E
+    height    = 200 m
+
+source:
+    latitude  = 53 deg 48 min 33.820 sec N
+    longitude =  2 deg 07 min 46.380 sec E
+    height    = 73 m
+
+expected topocentric:
+    East  = -189013.869 m
+    North = -128642.040 m
+    Up    =   -4220.171 m
+~~~
+
+The equivalent EPSG 9836 geocentric-origin example uses:
+
+~~~text
+X0 = 3652755.3058 m
+Y0 =  319574.6799 m
+Z0 = 5201547.3536 m
+~~~
+
+with source:
+
+~~~text
+X = 3771793.968 m
+Y =  140253.342 m
+Z = 5124304.349 m
+~~~
+
+and the same expected East/North/Up result.
+
+Independent implementation references for the research and validation program
+are:
+
+~~~text
+GeographicLib 2.7
+    LocalCartesian
+    Geocentric
+
+PROJ
+    topocentric
+    cart + topocentric pipeline
+~~~
+
+The exact PROJ version used for differential validation must be recorded by the
+validation harness rather than assumed by this document.
+
+PROJ and GeographicLib are validation/research references only and are not
+runtime dependencies.
+
+See:
+
+~~~text
+docs/adr/0009-topocentric-enu.md
+docs/TOPOCENTRIC_VALIDATION_PLAN.md
+~~~
+
+ADR-0009 remains Proposed until the complete TOPO-A through TOPO-G acceptance
+program has passed.
+
 ## Historical `coordinate` repository
 
 The repository `alex-1974/coordinate` is a historical pure-D prototype and may be inspected for:

@@ -1,0 +1,651 @@
+# Topocentric ENU validation plan
+
+- Status: Draft acceptance specification
+- Date: 2026-09-20
+- Applies to: ADR-0009
+- Intended methods: EPSG 9836 and EPSG 9837
+
+## Purpose
+
+This document defines the evidence required before the topocentric ENU
+capability may be accepted into the public `geodesy-d` surface.
+
+It is written before production implementation so that implementation choices
+cannot redefine the success criteria.
+
+The validation program must establish separately:
+
+1. EPSG 9836 geocentric/topocentric semantics;
+2. EPSG 9837 geographic/topocentric semantics;
+3. forward and reverse numerical accuracy;
+4. deterministic origin, pole, and failure semantics;
+5. scalar-specific representation behavior;
+6. public API/runtime attributes;
+7. compiler and platform behavior.
+
+Self-roundtrip checks are useful regressions but are not independent accuracy
+evidence.
+
+## Acceptance gates
+
+Use the following staged gates:
+
+~~~text
+TOPO-A  contract, coordinate model, and canonical semantics
+TOPO-B  EPSG worked vectors and analytical invariants
+TOPO-C  PROJ differential/interoperability validation
+TOPO-D  GeographicLib LocalCartesian differential validation
+TOPO-E  adversarial origins, poles, float representation, failure behavior
+TOPO-F  public API/runtime contract
+TOPO-G  compiler/platform/real-width coverage
+~~~
+
+ADR-0009 remains Proposed until all required gates pass.
+
+## Reference hierarchy
+
+### A. Normative semantics
+
+Use:
+
+~~~text
+IOGP Report 373-07-02
+EPSG Guidance Note 7-2
+December 2024
+
+EPSG 9602
+EPSG 9836
+EPSG 9837
+~~~
+
+This reference is normative for:
+
+- East/North/Up orientation;
+- right-handed axis convention;
+- ellipsoid-normal Up;
+- origin interpretation;
+- forward/reverse operation semantics;
+- published worked examples.
+
+### B. Analytical reference
+
+EPSG 9836 is a translation followed by an orthonormal rotation.
+
+Use independently coded analytical checks for:
+
+- frame origin;
+- equatorial frames;
+- axis-aligned origins;
+- cardinal displacements;
+- matrix orthonormality;
+- determinant `+1`;
+- inverse equal to transpose;
+- preservation of Euclidean norm by the rotation.
+
+These checks must not call the production rotation helper.
+
+### C. PROJ interoperability reference
+
+Use a current stable PROJ release and record its exact version.
+
+Validate:
+
+~~~text
++proj=topocentric
+~~~
+
+against EPSG 9836 and:
+
+~~~text
++proj=pipeline
++step +proj=cart
++step +proj=topocentric
+~~~
+
+against EPSG 9837.
+
+PROJ is an interoperability oracle, not a runtime dependency.
+
+### D. GeographicLib reference
+
+Use GeographicLib 2.7 `LocalCartesian` for an independent
+geodetic/topocentric implementation comparison.
+
+Record the exact library version and build configuration.
+
+Because GeographicLib and the intended implementation both ultimately use
+geocentric coordinates and an orthonormal local rotation, agreement is strong
+implementation evidence but does not replace EPSG normative vectors and
+analytical invariants.
+
+## Mandatory EPSG worked example
+
+Use the current Guidance Note 7-2 WGS 84 example.
+
+### EPSG 9836 origin
+
+~~~text
+X0 = 3652755.3058 m
+Y0 =  319574.6799 m
+Z0 = 5201547.3536 m
+
+a   = 6378137.0 m
+1/f = 298.257223563
+~~~
+
+Derived origin orientation:
+
+~~~text
+phi0    = 0.9599310885 rad
+lambda0 = 0.0872664625 rad
+~~~
+
+Source:
+
+~~~text
+X = 3771793.968 m
+Y =  140253.342 m
+Z = 5124304.349 m
+~~~
+
+Expected:
+
+~~~text
+East  / U = -189013.869 m
+North / V = -128642.040 m
+Up    / W =   -4220.171 m
+~~~
+
+Validate both forward and reverse, using tolerances consistent with the
+rounding of the published values.
+
+### EPSG 9837 origin and source
+
+Origin:
+
+~~~text
+latitude  = 55 degrees north
+longitude = 5 degrees east
+height    = 200 m
+~~~
+
+Source:
+
+~~~text
+latitude  = 53 deg 48 min 33.82 sec north
+longitude =  2 deg 07 min 46.38 sec east
+height    = 73 m
+~~~
+
+Expected ENU is the same published triplet above.
+
+Validate forward and reverse.
+
+## Coordinate value-type gate
+
+For `TopocentricCoordinate!T`, verify for:
+
+~~~text
+float
+double
+real
+~~~
+
+that:
+
+- finite East/North/Up values are accepted;
+- NaN and infinities are rejected;
+- `.init` is `(0,0,0)`;
+- the type carries no CRS/frame/datum/unit metadata;
+- read-only component access matches the established coordinate-type pattern.
+
+## Frame-construction gate
+
+### Geodetic origins
+
+At minimum use:
+
+~~~text
+latitude:
+    -90
+    -89.999999
+    -80
+    -45
+     0
+    +45
+    +80
+    +89.999999
+    +90 deg
+
+longitude:
+    -180
+    -179.999999
+    -90
+    -1
+     0
+    +1
+    +90
+    +179.999999
+    +180 deg
+~~~
+
+Test representative combinations rather than only one meridian.
+
+At exact poles, repeat the same physical origin using multiple explicit
+longitudes and prove:
+
+- Up is unchanged;
+- East/North rotate according to the supplied longitude;
+- reverse operations preserve the frame's chosen orientation.
+
+### Geocentric origins
+
+Include:
+
+- ordinary WGS 84 surface-near origins;
+- equatorial axis-aligned origins;
+- north and south rotation-axis origins;
+- origins generated from multiple terrestrial ellipsoids;
+- exact `(0,0,0)` rejection.
+
+A non-zero rotation-axis origin must inherit the existing EPSG 9602
+longitude-zero convention.
+
+## Ellipsoid matrix
+
+At minimum validate:
+
+~~~text
+WGS 84
+GRS 80
+Airy 1830
+Bessel 1841
+Clarke 1866
+International 1924
+Earth-sized sphere
+synthetic valid oblate ellipsoid
+~~~
+
+The topocentric operation must not introduce an arbitrary `f <= 0.01`
+restriction unless validation discovers a concrete numerical reason.
+
+Record the actual supported `Ellipsoid!T` domain at acceptance.
+
+## Height and distance profiles
+
+### Ordinary terrestrial profile
+
+Initially validate origins and geodetic source points over at least:
+
+~~~text
+origin ellipsoidal height:
+    -20 km through +100 km
+
+source ellipsoidal height:
+    -20 km through +100 km
+~~~
+
+This is an accuracy-validation profile, not automatically a construction
+restriction.
+
+### Local displacement profile
+
+Exercise local ENU magnitudes spanning:
+
+~~~text
+millimetres
+centimetres
+metres
+tens/hundreds of metres
+kilometres
+hundreds of kilometres
+~~~
+
+Include displacements dominated individually by East, North, and Up as well as
+mixed directions.
+
+### Wider robustness profile
+
+Add finite high-altitude and long-baseline cases to distinguish the validated
+ordinary accuracy envelope from broader arithmetic robustness.
+
+No stronger physical-use interpretation should be inferred from those stress
+cases.
+
+## Analytical invariants
+
+For the prepared rotation matrix `R` verify independently:
+
+~~~text
+R * transpose(R) = I
+transpose(R) * R = I
+det(R) = +1
+~~~
+
+within scalar-appropriate numerical tolerances.
+
+For arbitrary finite displacement vector `d`:
+
+~~~text
+norm(R * d) == norm(d)
+~~~
+
+within expected floating-point error.
+
+For source equal to origin:
+
+~~~text
+East  = 0
+North = 0
+Up    = 0
+~~~
+
+subject only to the eventual documented signed-zero convention.
+
+Reverse of an independently generated ENU displacement must equal application
+of the transposed reference matrix plus origin.
+
+## Cardinal-direction cases
+
+Construct analytical cases at the equator and selected mid-latitudes where
+ECEF displacement directions can be chosen to represent pure:
+
+~~~text
+East
+North
+Up
+~~~
+
+Verify sign and handedness explicitly.
+
+These tests guard against common:
+
+- axis swaps;
+- ENU/NEU confusion;
+- transpose errors;
+- sign errors.
+
+## Antimeridian and longitude representation
+
+Use geodetic origins around:
+
+~~~text
+-180 deg
++180 deg
+-179.999999 deg
++179.999999 deg
+~~~
+
+and nearby source points represented on both sides of the longitude boundary.
+
+Equivalent longitude representations must yield equivalent physical frame
+orientation and coordinate results.
+
+## Pole semantics
+
+### Geodetic-origin pole
+
+For both poles, prepare frames using multiple longitudes.
+
+Verify that explicit longitude determines rotation of the East/North axes.
+
+### Geocentric-origin pole
+
+Construct the same physical axis origin only from `(X0,Y0,Z0)`.
+
+Verify that frame orientation follows the existing EPSG 9602 canonical
+longitude-zero convention.
+
+Do not silently equate these two construction semantics: a geodetic polar
+origin carries an explicit orientation parameter that pure axis ECEF
+coordinates do not contain.
+
+## Float representation gate
+
+This is a mandatory acceptance gate.
+
+Near Earth radius, binary32 ECEF coordinate spacing is of decimetre/metre
+scale, while topocentric applications commonly require much smaller local
+differences.
+
+Validate separately:
+
+### A. Geodetic float path
+
+~~~text
+GeodeticCoordinate<float>
+    ->
+TopocentricCoordinate<float>
+~~~
+
+The kernel must use promoted working precision without materializing an
+intermediate public `GeocentricCoordinate<float>`.
+
+Compare against a double/high-precision reference evaluated from the same
+represented public float input values.
+
+Measure final ENU error after only the public output rounding.
+
+### B. Geocentric float path
+
+~~~text
+GeocentricCoordinate<float>
+    ->
+TopocentricCoordinate<float>
+~~~
+
+Quantize source and origin to actual public binary32 ECEF values before
+reference comparison.
+
+Report separately:
+
+- error relative to the represented float ECEF inputs;
+- loss relative to the unquantized physical source coordinates.
+
+The latter is an input-representation limitation, not kernel error.
+
+### C. Reverse paths
+
+Perform the corresponding distinction for:
+
+~~~text
+Topocentric<float> -> Geocentric<float>
+Topocentric<float> -> Geodetic<float>
+~~~
+
+The geodetic reverse path must not unnecessarily narrow an internal
+working-precision ECEF result before EPSG 9602 reverse conversion.
+
+Do not select the public float accuracy envelope until these measurements are
+complete.
+
+## Scalar policy gate
+
+Required public instantiations:
+
+~~~text
+float
+double
+real
+~~~
+
+Validate that implementation working precision is:
+
+~~~text
+float  -> double
+double -> double
+real   -> real
+~~~
+
+unless later evidence justifies a documented change.
+
+For `real`, record:
+
+~~~text
+real.sizeof
+real.mant_dig
+real.epsilon
+compiler
+target architecture
+~~~
+
+Wider `real` must not be silently narrowed to double in the production kernel.
+
+## Deterministic differential corpus
+
+Use a committed deterministic generator.
+
+The corpus must vary:
+
+- ellipsoid;
+- origin latitude;
+- origin longitude;
+- origin height;
+- local source displacement;
+- source height;
+- antimeridian representation;
+- pole proximity.
+
+Include both:
+
+~~~text
+geodetic <-> topocentric
+geocentric <-> topocentric
+~~~
+
+paths.
+
+Initial target for `double`:
+
+~~~text
+>= 100000 forward cases per public path
+>= 100000 reverse cases per public path
+~~~
+
+The exact corpus size may be revised based on measured execution cost, but
+boundary/adversarial cases remain mandatory regardless of random corpus size.
+
+Use a fixed documented PRNG and seed.
+
+## Independent reverse corpus
+
+Do not generate the entire reverse test set by calling the production forward
+operation.
+
+Obtain reverse inputs from:
+
+- EPSG worked values;
+- independently evaluated analytical rotations;
+- PROJ;
+- GeographicLib where applicable;
+- directly generated ENU displacement vectors.
+
+This prevents a self-consistent forward/reverse defect from passing unnoticed.
+
+## Self-roundtrip regression
+
+Maintain:
+
+~~~text
+geodetic
+    -> geodesy-d topocentric
+    -> geodesy-d geodetic
+
+geocentric
+    -> geodesy-d topocentric
+    -> geodesy-d geocentric
+~~~
+
+but report these separately from independent accuracy evidence.
+
+## Failure and overflow probes
+
+Test:
+
+- invalid `TopocentricFrame.init`;
+- invalid `Ellipsoid.init`;
+- exact geocentric origin `(0,0,0)`;
+- largest practical finite coordinate magnitudes;
+- arithmetic overflow where representable inputs produce non-finite derived
+  values;
+- invalid/non-finite `TopocentricCoordinate` construction.
+
+Checked APIs must return `false` rather than assert or throw.
+
+Throwing convenience APIs, if accepted, must throw `GeodesyValueException`.
+
+## API/runtime contract
+
+Compile the public surface only through:
+
+~~~d
+import geodesy;
+~~~
+
+Verify the accepted public API under DMD and LDC.
+
+Required checked hot-path attributes, where accepted by implementation:
+
+~~~text
+pure
+nothrow
+@safe
+@nogc
+~~~
+
+Negative compile tests should protect any package/private working-precision
+helpers from accidental export.
+
+Named public parameters are compatibility-sensitive under the project's
+existing named-argument contract.
+
+## Compiler/platform gate
+
+At minimum:
+
+- minimum supported D frontend 2.111.0;
+- current DMD;
+- current LDC.
+
+Hosted platform validation must cover Linux, Windows, and macOS where the
+project's existing numerical matrix supports them.
+
+`real` width and precision must be recorded per platform.
+
+If platform `real` is wider than double, the differential corpus must exercise
+that wider arithmetic rather than silently validating only double behavior.
+
+## Performance policy
+
+No performance optimization is required before correctness acceptance.
+
+After TOPO-A through the numerical/API gates pass, establish a reproducible
+baseline only if a concrete consumer or profile shows the operation to be
+performance relevant.
+
+The prepared frame should naturally avoid recomputing invariant origin
+trigonometry per point, but no further low-level optimization is accepted from
+assumption alone.
+
+## Acceptance decision
+
+The capability is release-ready only when:
+
+~~~text
+TOPO-A PASS
+AND TOPO-B PASS
+AND TOPO-C PASS
+AND TOPO-D PASS
+AND TOPO-E PASS
+AND TOPO-F PASS
+AND TOPO-G PASS
+~~~
+
+At that point:
+
+1. record achieved accuracy envelopes rather than planned ones;
+2. update ADR-0009 from Proposed to Accepted;
+3. update `docs/API.md`, `docs/REFERENCES.md`, and release-facing documentation;
+4. add the new documents to the documentation contract;
+5. only then treat the public topocentric surface as part of the pre-v1
+   compatibility baseline.
