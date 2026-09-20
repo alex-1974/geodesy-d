@@ -23,6 +23,10 @@ compile "$repo/validation/api/public_api_contract.d" "$tmp/public_api_contract.o
 echo "Named-argument source compatibility ($dc)..."
 compile "$repo/validation/api/named_arguments_contract.d" "$tmp/named_arguments_contract.o"
 
+echo "Topocentric coordinate module contract ($dc)..."
+compile "$repo/validation/api/topocentric_coordinate_contract.d" \
+    "$tmp/topocentric_coordinate_contract.o"
+
 expect_rejected() {
     local source="$1"
     local label="$2"
@@ -41,6 +45,10 @@ expect_rejected "$repo/validation/api/reject_internal_finite_helper.d" \
     "package-internal finite helper"
 expect_rejected "$repo/validation/api/reject_internal_epsg9602_working_helper.d" \
     "package-internal EPSG 9602 working helper"
+expect_rejected "$repo/validation/api/reject_topocentric_coordinate_mutation.d" \
+    "TopocentricCoordinate component mutation"
+expect_rejected "$repo/validation/api/reject_unchecked_topocentric_factory.d" \
+    "private unchecked TopocentricCoordinate factory"
 expect_rejected "$repo/validation/api/reject_unchecked_angle_factory.d" \
     "private unchecked Angle factory"
 expect_rejected "$repo/validation/api/reject_internal_angle_helper.d" \
