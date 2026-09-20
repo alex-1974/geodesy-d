@@ -306,20 +306,19 @@ independent implementation differential validation.
 
 No production implementation is implied by this gate.
 
-## TOPO-C PROJ oracle qualification
+## TOPO-C PROJ interoperability differential
 
-TOPO-C itself remains pending until the implemented public `geodesy-d`
-topocentric API has been differentially validated against PROJ.
-
-The external PROJ oracle required for that future differential gate has,
-however, been independently qualified.
+The external PROJ oracle was independently qualified before production
+topocentric implementation. The implemented public `geodesy-d` topocentric
+API has now also been differentially validated against that oracle and against
+independently coded analytical ECEF/ENU mathematics.
 
 Status:
 
 ~~~text
 PROJ oracle qualification     PASS
-geodesy-d differential        PENDING
-TOPO-C overall                PENDING
+geodesy-d differential        PASS
+TOPO-C overall                PASS
 ~~~
 
 ### Oracle environment
@@ -491,13 +490,162 @@ The distinction between absolute oracle accuracy and paired pipeline delta is
 deliberate. A looser geographic reverse bound must not conceal a defect in the
 topocentric operation itself.
 
+### Production differential corpus
+
+The production differential harness is:
+
+~~~text
+research/topocentric/geodesy_topocentric_probe.d
+research/topocentric/validate_geodesy_vs_proj.py
+~~~
+
+The D probe imports only public `geodesy` modules and exercises the public
+`TopocentricFrame` API. The Python driver compares its results with PROJ and
+with independently coded analytical reference mathematics.
+
+The deterministic corpus uses the same four ellipsoids and five representative
+origins as the qualified oracle. It executes:
+
+~~~text
+EPSG 9836 forward:   100000 cases
+EPSG 9836 reverse:   100000 cases
+EPSG 9837 forward:   100000 cases
+EPSG 9837 reverse:   100000 cases
+~~~
+
+The reverse corpus is generated independently in ENU space rather than by
+feeding forward results back into the inverse. Structured and random reverse
+vectors range from millimetres through hundreds of kilometres, including
+500 km components.
+
+Recorded environment for the acceptance run:
+
+~~~text
+PROJ:
+    cct 9.7.1
+
+DMD:
+    DMD64 D Compiler v2.111.0
+
+LDC:
+    LDC 1.41.0
+
+forward seed:
+    0x121814101B191409
+
+reverse seed:
+    0x060A06101B191409
+~~~
+
+DMD and LDC produced identical reported maxima and worst-case witnesses.
+
+Observed maxima were:
+
+~~~text
+EPSG 9836 forward
+    geodesy-d vs PROJ:
+        6.519258022308e-09 m
+    geodesy-d vs analytical:
+        6.519258022308e-09 m
+
+EPSG 9836 reverse
+    geodesy-d vs PROJ:
+        1.862645149231e-09 m
+    geodesy-d vs analytical:
+        1.862645149231e-09 m
+
+EPSG 9837 forward
+    geodesy-d vs PROJ:
+        8.371898729820e-09 m
+    geodesy-d vs analytical:
+        5.820766091347e-09 m
+
+EPSG 9837 reverse
+    geodesy-d reconstructed-ECEF residual:
+        8.870847523212e-08 m
+~~~
+
+The direct reverse-geographic comparison against PROJ reached:
+
+~~~text
+latitude:
+    4.390929427613e-10 rad
+
+longitude:
+    1.776356839400e-15 rad
+
+height:
+    2.884217072278e-03 m
+~~~
+
+These values are not used as `geodesy-d` acceptance limits because the same
+corpus demonstrated that they are dominated by PROJ's geocentric-to-geodetic
+inverse.
+
+For the exact same reverse target ECEF coordinates:
+
+~~~text
+PROJ complete EPSG 9837 inverse ECEF residual:
+    3.868382424116e-03 m
+
+isolated PROJ cart-inverse ECEF residual:
+    3.868382424116e-03 m
+~~~
+
+The paired complete-pipeline versus isolated-cart differences were only:
+
+~~~text
+latitude:
+    4.960524086057e-16 rad
+
+longitude:
+    1.776356839400e-15 rad
+
+height:
+    4.656612873077e-09 m
+~~~
+
+This pointwise attribution establishes that the millimetre-scale direct
+geographic difference is due to PROJ's `cart -I` stage, not to its
+topocentric rotation.
+
+The committed TOPO-C acceptance limits are validation gates rather than public
+accuracy guarantees:
+
+~~~text
+EPSG 9836 forward:
+    geodesy-d vs PROJ        <= 1e-6 m
+    geodesy-d vs analytical  <= 1e-6 m
+
+EPSG 9836 reverse:
+    geodesy-d vs PROJ        <= 1e-6 m
+    geodesy-d vs analytical  <= 1e-6 m
+
+EPSG 9837 forward:
+    geodesy-d vs PROJ        <= 1e-6 m
+    geodesy-d vs analytical  <= 1e-6 m
+
+EPSG 9837 reverse:
+    geodesy-d reconstructed-ECEF residual
+        <= 1e-6 m
+
+PROJ pipeline attribution:
+    latitude   <= 1e-13 rad
+    longitude  <= 1e-12 rad
+    height     <= 1e-6 m
+~~~
+
+Direct EPSG 9837 reverse `geodesy-d` versus PROJ latitude/longitude/height
+differences remain reported diagnostics but are deliberately not acceptance
+criteria.
+
 ### TOPO-C status
 
-The PROJ reference system is sufficiently qualified for later differential
-testing.
+The PROJ reference system is qualified and the implemented public
+`TopocentricFrame` API has passed the deterministic production differential
+corpus with both DMD and LDC.
 
-TOPO-C remains PENDING because no production `TopocentricFrame` implementation
-exists yet to compare against this oracle.
+TOPO-C is therefore PASS.
 
 ## Coordinate value-type gate
 
