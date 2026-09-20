@@ -306,6 +306,199 @@ independent implementation differential validation.
 
 No production implementation is implied by this gate.
 
+## TOPO-C PROJ oracle qualification
+
+TOPO-C itself remains pending until the implemented public `geodesy-d`
+topocentric API has been differentially validated against PROJ.
+
+The external PROJ oracle required for that future differential gate has,
+however, been independently qualified.
+
+Status:
+
+~~~text
+PROJ oracle qualification     PASS
+geodesy-d differential        PENDING
+TOPO-C overall                PENDING
+~~~
+
+### Oracle environment
+
+The qualified local reference executable is:
+
+~~~text
+cct: Rel. 9.7.1, December 1st, 2025
+~~~
+
+The committed qualification harness is:
+
+~~~text
+research/topocentric/validate_proj_oracle.py
+~~~
+
+Deterministic PRNG seed:
+
+~~~text
+0x544F504F5F50524F
+~~~
+
+The exact PROJ version is recorded as evidence for this validation run.
+A later release-validation run may use another explicitly recorded PROJ
+version, but must not silently substitute an unknown oracle version.
+
+### Qualification corpus
+
+The corpus covers:
+
+~~~text
+ellipsoids:
+    WGS 84
+    GRS 80
+    Airy 1830
+    sphere, radius 6371000 m
+
+origins:
+    equator / Greenwich
+    Vienna-like mid-latitude
+    Sydney-like southern latitude
+    antimeridian-near origin
+    high northern latitude
+~~~
+
+Source points combine:
+
+- a structured latitude/longitude/height matrix;
+- a deterministic global random corpus;
+- deterministic local points around each origin.
+
+Total evaluated cases:
+
+~~~text
+EPSG 9836: 17040
+EPSG 9837: 17040
+~~~
+
+Each method is exercised in both forward and reverse directions.
+
+Exact poles and deliberately pathological/deep-interior cases remain assigned
+to TOPO-E rather than being conflated with this interoperability gate.
+
+### Independent reference comparison
+
+The harness compares PROJ EPSG 9836/9837 behavior against independently coded
+geodetic/ECEF and ENU research mathematics.
+
+Observed global maxima:
+
+~~~text
+EPSG 9836 forward:
+    3.725290298462e-09 m
+
+EPSG 9836 reverse:
+    6.519258022308e-09 m
+
+EPSG 9837 forward:
+    5.580659490079e-09 m
+~~~
+
+These values show nanometre-scale agreement between PROJ's topocentric
+operation and the independent reference over the qualification corpus.
+
+### Reverse EPSG 9837 oracle floor
+
+The geographic reverse path additionally includes PROJ's ECEF-to-geodetic
+`cart -I` operation.
+
+Observed EPSG 9837 reverse maxima were:
+
+~~~text
+latitude:
+    1.337481306703e-11 rad
+
+longitude:
+    5.062616992291e-14 rad
+
+height:
+    9.956931171473e-05 m
+~~~
+
+The isolated PROJ `cart -I` baseline over the same source ECEF coordinates was:
+
+~~~text
+latitude:
+    1.337444102772e-11 rad
+
+longitude:
+    4.440892098501e-16 rad
+
+height:
+    9.956744906958e-05 m
+~~~
+
+The approximately 0.1 mm reverse-geographic floor is therefore attributable
+to the PROJ geocentric-to-geodetic inverse rather than to the topocentric
+rotation itself.
+
+### Paired pipeline-delta test
+
+Aggregate maxima are not sufficient to prove that the topocentric stage adds
+negligible error because unrelated cases may produce those maxima.
+
+The final qualification therefore compares, for every individual case, the
+complete inverse EPSG 9837 result with the isolated `cart -I` result for the
+same exact ECEF source coordinate.
+
+Maximum paired differences were:
+
+~~~text
+latitude:
+    7.440786129085e-16 rad
+
+longitude:
+    5.062616992291e-14 rad
+
+height:
+    6.519258022308e-09 m
+~~~
+
+This establishes that the topocentric portion contributes only
+floating-point-scale additional error relative to the underlying PROJ
+geographic inverse.
+
+### Qualification thresholds
+
+The committed oracle-qualification limits are intentionally not public
+`geodesy-d` accuracy contracts.
+
+They are:
+
+~~~text
+topocentric-only linear comparison:
+    <= 1e-6 m
+
+reverse EPSG 9837 absolute sanity ceilings:
+    latitude  <= 2e-11 rad
+    longitude <= 1e-12 rad
+    height    <= 2e-4 m
+
+paired EPSG 9837 versus isolated cart-inverse delta:
+    latitude  <= 1e-13 rad
+    longitude <= 1e-12 rad
+    height    <= 1e-6 m
+~~~
+
+The distinction between absolute oracle accuracy and paired pipeline delta is
+deliberate. A looser geographic reverse bound must not conceal a defect in the
+topocentric operation itself.
+
+### TOPO-C status
+
+The PROJ reference system is sufficiently qualified for later differential
+testing.
+
+TOPO-C remains PENDING because no production `TopocentricFrame` implementation
+exists yet to compare against this oracle.
+
 ## Coordinate value-type gate
 
 For `TopocentricCoordinate!T`, verify for:

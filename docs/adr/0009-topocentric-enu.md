@@ -623,6 +623,12 @@ The TOPO-B evidence is recorded in
 `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the independent probes under
 `research/topocentric/`.
 
+The PROJ oracle required for TOPO-C has also been qualified against independent
+research mathematics using PROJ 9.7.1 and a deterministic 17,040-case corpus
+per EPSG method. TOPO-C itself remains pending until the eventual public
+`geodesy-d` topocentric implementation is differentially compared against that
+oracle.
+
 This ADR remains `Proposed` until the remaining topocentric validation gates
 have demonstrated:
 
