@@ -50,7 +50,7 @@ IOGP's current publication library continues to list Report 373-07-2 as the form
 
 See `docs/operations/geographic-geocentric.md` for the operation-level contract and test vector.
 
-## Proposed operation: EPSG 9836 / 9837 topocentric conversions
+## Implemented operation: EPSG 9836 / 9837 topocentric conversions
 
 The pre-v1 roadmap admits a bounded topocentric East/North/Up capability.
 
@@ -149,8 +149,10 @@ docs/adr/0009-topocentric-enu.md
 docs/TOPOCENTRIC_VALIDATION_PLAN.md
 ~~~
 
-ADR-0009 remains Proposed until the complete TOPO-A through TOPO-G acceptance
-program has passed.
+ADR-0009 is Accepted. The complete TOPO-A through TOPO-G acceptance program
+passed on 2026-09-20, including EPSG worked vectors, PROJ and GeographicLib
+differential validation, adversarial/failure semantics, aggregate API
+validation, and hosted compiler/platform/`real`-width coverage.
 
 ## Historical `coordinate` repository
 

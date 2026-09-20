@@ -6,6 +6,29 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ## [Unreleased]
 
+### Added
+
+- Public `TopocentricCoordinate!T` and prepared `TopocentricFrame!T` for
+  `float`, `double`, and platform `real`.
+- EPSG 9836 geocentric/topocentric East-North-Up conversion in both directions.
+- EPSG 9837 geodetic/topocentric conversion in both directions using shared
+  working-precision EPSG 9602/9836 kernels.
+- Geodetic-origin and geocentric-origin frame construction with explicit pole,
+  rotation-axis, geocentre, and canonical interior semantics.
+- ADR-0009 and the topocentric validation program.
+
+### Validation
+
+- Completed TOPO-A through TOPO-G.
+- Reproduced the published EPSG/IOGP 9836/9837 worked vectors.
+- Completed deterministic 100,000-case-per-public-path differential validation
+  against PROJ and independent GeographicLib `LocalCartesian` validation.
+- Completed adversarial/failure, public API/runtime, DMD/LDC, hosted
+  Linux/Windows/macOS, and platform-`real` validation.
+- Exercised the complete PROJ differential corpus with `real` on every hosted
+  target where `real` is wider than `double`, including Linux AArch64 with a
+  113-bit mantissa.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added

@@ -1,6 +1,6 @@
 # Topocentric ENU validation plan
 
-- Status: Draft acceptance specification
+- Status: Accepted validation record
 - Date: 2026-09-20
 - Applies to: ADR-0009
 - Intended methods: EPSG 9836 and EPSG 9837
@@ -37,7 +37,7 @@ TOPO-C  PROJ differential/interoperability validation                   PASS
 TOPO-D  GeographicLib LocalCartesian differential validation            PASS
 TOPO-E  adversarial origins, poles, float representation, failure       PASS
 TOPO-F  public API/runtime contract                                     PASS
-TOPO-G  compiler/platform/real-width coverage                           PENDING
+TOPO-G  compiler/platform/real-width coverage                           PASS
 ~~~
 
 TOPO-A was completed on 2026-09-20. Its accepted candidate public surface is
@@ -48,7 +48,7 @@ research/topocentric/api_surface.md
 docs/adr/0009-topocentric-enu.md
 ~~~
 
-ADR-0009 remains Proposed until all remaining required gates pass.
+ADR-0009 is Accepted after completion of TOPO-A through TOPO-G.
 
 ## Reference hierarchy
 
@@ -1409,6 +1409,93 @@ project's existing numerical matrix supports them.
 If platform `real` is wider than double, the differential corpus must exercise
 that wider arithmetic rather than silently validating only double behavior.
 
+### TOPO-G achieved evidence
+
+TOPO-G completed successfully on 2026-09-20.
+
+The hosted Topocentric platform matrix passed on commit
+`e21f6e5f349942bb9466d97cc3972f7819b6b587`.
+
+Required compiler coverage:
+
+~~~text
+minimum frontend:
+    DMD 2.111.0                       PASS
+
+current compilers:
+    DMD 2.113.0                       PASS
+    LDC 1.43.0 / DMD frontend 2.113.0 PASS
+~~~
+
+Platform and `real` fingerprints:
+
+~~~text
+Linux x86_64 / DMD 2.111.0
+    real.sizeof   = 16
+    real.mant_dig = 64
+
+Linux x86_64 / DMD 2.113.0
+    real.sizeof   = 16
+    real.mant_dig = 64
+
+Linux x86_64 / LDC 1.41.0
+    real.sizeof   = 16
+    real.mant_dig = 64
+
+Linux x86_64 / LDC 1.43.0
+    real.sizeof   = 16
+    real.mant_dig = 64
+
+Linux AArch64 / LDC 1.41.0
+    real.sizeof   = 16
+    real.mant_dig = 113
+
+macOS x86_64 / LDC 1.41.0
+    real.sizeof   = 16
+    real.mant_dig = 64
+
+macOS AArch64 / LDC 1.41.0
+    real.sizeof   = 8
+    real.mant_dig = 53
+
+Windows x86_64 / LDC 1.41.0
+    real.sizeof   = 8
+    real.mant_dig = 53
+~~~
+
+Every non-experimental required matrix job passed the library unittests,
+aggregate public API contract, and TOPO-E adversarial/failure contract.
+
+The deterministic TOPO-C PROJ differential corpus was made scalar-selectable
+without changing its default `double` behavior.
+
+On every matrix target where `real.mant_dig > double.mant_dig`, the same
+differential corpus was executed with:
+
+~~~text
+TopocentricCoordinate!real
+TopocentricFrame!real
+~~~
+
+The wide-`real` run completed:
+
+~~~text
+EPSG 9836 forward: 100000 cases
+EPSG 9836 reverse: 100000 cases
+EPSG 9837 forward: 100000 cases
+EPSG 9837 reverse: 100000 cases
+~~~
+
+per tested compiler/target and passed the existing accepted TOPO-C numerical
+limits.
+
+The experimental Windows AArch64 runner also completed successfully. Its LDC
+1.41.0 installation reported an x86_64 Windows default compiler target, so it
+remains informational rather than evidence for a native Windows/AArch64
+compiler target.
+
+No production topocentric numerical algorithm changed during TOPO-G.
+
 ## Performance policy
 
 No performance optimization is required before correctness acceptance.
@@ -1435,11 +1522,13 @@ AND TOPO-F PASS
 AND TOPO-G PASS
 ~~~
 
-At that point:
+The acceptance closeout is now complete:
 
-1. record achieved accuracy envelopes rather than planned ones;
-2. update ADR-0009 from Proposed to Accepted;
-3. update `docs/API.md`, `docs/REFERENCES.md`, and release-facing documentation;
-4. add the new documents to the documentation contract;
-5. only then treat the public topocentric surface as part of the pre-v1
+1. achieved accuracy envelopes are recorded from executed validation;
+2. ADR-0009 is Accepted;
+3. `docs/API.md`, `docs/REFERENCES.md`, and release-facing documentation are
+   updated;
+4. the topocentric ADR and validation plan are covered by the documentation
+   contract;
+5. the accepted public topocentric surface is part of the current pre-v1
    compatibility baseline.

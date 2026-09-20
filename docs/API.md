@@ -33,6 +33,8 @@ Longitude<T>
 Ellipsoid<T>
 GeodeticCoordinate<T>
 GeocentricCoordinate<T>
+TopocentricCoordinate<T>
+TopocentricFrame<T>
 GeocentricTranslation<T>
 Helmert7<T, convention>
 PositionVectorHelmert<T>
@@ -131,6 +133,70 @@ claimed.
 See ADR-0005 and `docs/operations/geographic-geocentric.md` for algorithmic and
 validation details.
 
+
+## EPSG 9836 / 9837 topocentric ENU — current unreleased accepted surface
+
+The current development line exports:
+
+~~~text
+TopocentricCoordinate<T>
+TopocentricFrame<T>
+~~~
+
+for `T = float | double | real`.
+
+`TopocentricCoordinate<T>` stores read-only:
+
+~~~text
+east
+north
+up
+~~~
+
+and `.init` is the valid local zero coordinate.
+
+`TopocentricFrame<T>.init` is intentionally invalid. A frame is prepared from
+either a geodetic or geocentric origin:
+
+~~~text
+tryFromGeodeticOrigin / fromGeodeticOrigin
+tryFromGeocentricOrigin / fromGeocentricOrigin
+~~~
+
+The explicit conversion surface is:
+
+~~~text
+tryGeocentricToTopocentric / geocentricToTopocentric
+tryTopocentricToGeocentric / topocentricToGeocentric
+
+tryGeodeticToTopocentric / geodeticToTopocentric
+tryTopocentricToGeodetic / topocentricToGeodetic
+~~~
+
+Generic `forward`, `reverse`, `transform`, and `inverse` names are deliberately
+not part of the topocentric public surface.
+
+Checked operations are `pure nothrow @safe @nogc`; throwing convenience
+operations are `@safe` and report invalid caller input through
+`GeodesyValueException`.
+
+Working precision is:
+
+~~~text
+float  -> double
+double -> double
+real   -> real
+~~~
+
+The geographic/topocentric `float` path retains promoted ECEF working
+precision across the internal EPSG 9602/9836 composition rather than
+materializing an Earth-scale public `GeocentricCoordinate<float>` intermediate.
+
+Pole orientation, geocentric rotation-axis behavior, geocentre rejection,
+deep-interior canonical semantics, and scalar/platform behavior are fixed by
+ADR-0009 and the accepted validation program.
+
+See ADR-0009 and `docs/TOPOCENTRIC_VALIDATION_PLAN.md`.
 
 ## EPSG 1031
 
@@ -323,5 +389,11 @@ contract and is compile-checked under DMD and LDC using only `import geodesy;`.
 GEO-F additionally validates the checked geodesic API/runtime contract, and the
 hosted GEO-G matrix repeats the public API contract across the accepted
 platform/compiler matrix.
+
+The accepted topocentric aggregate surface is likewise part of the permanent
+public API contract. TOPO-F validates its aggregate API and runtime attributes;
+TOPO-G repeats the contract across the accepted compiler/platform matrix and
+executes the differential corpus with platform `real` wherever it is wider than
+`double`.
 
 Normal CI runs the aggregate contract for DMD and LDC.

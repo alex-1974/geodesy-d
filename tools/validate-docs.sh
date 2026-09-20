@@ -16,10 +16,12 @@ required=(
   docs/REFERENCES.md
   docs/VALIDATION.md
   docs/V0_1_READINESS.md
+  docs/TOPOCENTRIC_VALIDATION_PLAN.md
   docs/adr/0001-scope-and-boundaries.md
   docs/adr/0002-core-type-and-unit-model.md
   docs/adr/0003-helmert-rotation-conventions.md
   docs/adr/0004-invalid-ellipsoid-default-state.md
+  docs/adr/0009-topocentric-enu.md
   docs/operations/geographic-geocentric.md
   docs/operations/geocentric-translation.md
   docs/operations/helmert-7p.md
@@ -56,6 +58,7 @@ fi
 # Canonical public API document must mention every aggregate-import family.
 for symbol in \
   Angle Latitude Longitude Ellipsoid GeodeticCoordinate GeocentricCoordinate \
+  TopocentricCoordinate TopocentricFrame \
   GeocentricTranslation HelmertConvention Helmert7 PositionVectorHelmert \
   CoordinateFrameHelmert tryGeodeticToGeocentric geocentricToGeodetic \
   tryApplyGeocentricTranslation tryApplyPositionVectorHelmert \

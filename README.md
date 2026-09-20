@@ -27,7 +27,10 @@ The `v0.2.0` release line provides:
 - tagged `UtmCoordinate!T`;
 - automatic standard-zone UTM forward projection;
 - explicit-zone and tagged reverse UTM operations;
-- prepared direct/inverse ellipsoidal `Geodesic!T` solver.
+- prepared direct/inverse ellipsoidal `Geodesic!T` solver;
+- EPSG 9836 geocentric/topocentric East-North-Up conversion;
+- EPSG 9837 geodetic/topocentric East-North-Up conversion through prepared
+  `TopocentricFrame!T`.
 
 The public numerical operations are independently validated against appropriate
 authoritative references and mature external implementations including
@@ -144,6 +147,7 @@ not silently create a plausible but physically meaningless Earth model.
 ~~~text
 GeodeticCoordinate!T
 GeocentricCoordinate!T
+TopocentricCoordinate!T
 ~~~
 
 A geodetic coordinate contains:
@@ -183,6 +187,35 @@ operation cannot produce a valid result.
 
 The geocentre `(0, 0, 0)` is representable as a geocentric coordinate but has
 no unique inverse geodetic coordinate.
+
+## Topocentric East/North/Up coordinates
+
+The accepted topocentric API provides:
+
+~~~text
+TopocentricCoordinate!T
+TopocentricFrame!T
+~~~
+
+A prepared frame may use either a geodetic or geocentric origin and implements
+EPSG 9836 and EPSG 9837 in both directions.
+
+The local axes are:
+
+~~~text
+East
+North
+Up
+~~~
+
+where `Up` is the ellipsoid-normal direction at the origin.
+
+The operation supports `float`, `double`, and platform `real`. Public `float`
+uses promoted working precision internally where Earth-scale ECEF
+intermediates would otherwise destroy local information.
+
+The full TOPO-A through TOPO-G validation program is recorded in
+`docs/TOPOCENTRIC_VALIDATION_PLAN.md`.
 
 ## Geocentric translation
 

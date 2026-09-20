@@ -70,11 +70,16 @@ The current development line additionally contains:
 bounded generic Transverse Mercator
 UTM policy/projection layer
 direct and inverse ellipsoidal geodesics
+EPSG 9836/9837 topocentric East/North/Up conversions
 ```
 
 The geodesic slice is publicly exported, implementation-complete, and
 accepted under ADR-0008. GEO-A through GEO-G are complete in
 `docs/GEODESIC_VALIDATION_PLAN.md`.
+
+The topocentric slice is publicly exported and accepted under ADR-0009.
+TOPO-A through TOPO-G are complete in
+`docs/TOPOCENTRIC_VALIDATION_PLAN.md`.
 
 ## Current and planned layering
 
@@ -89,6 +94,7 @@ source/geodesy/
 ├── ellipsoid.d
 ├── geodetic.d
 ├── geocentric.d
+├── topocentric.d                  # EPSG 9836 / 9837
 ├── conversion.d
 ├── transform/
 │   ├── geocentric_translation.d # EPSG 1031
@@ -172,9 +178,11 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/adr/0006-transverse-mercator.md` — bounded Transverse Mercator.
 - `docs/adr/0007-utm-policy.md` — UTM policy.
 - `docs/adr/0008-ellipsoidal-geodesics.md` — direct/inverse geodesic contract.
+- `docs/adr/0009-topocentric-enu.md` — EPSG 9836/9837 topocentric ENU contract.
 - `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` — Transverse Mercator validation.
 - `docs/UTM_VALIDATION_PLAN.md` — UTM validation.
 - `docs/GEODESIC_VALIDATION_PLAN.md` — geodesic acceptance program and evidence.
+- `docs/TOPOCENTRIC_VALIDATION_PLAN.md` — topocentric acceptance program and evidence.
 - `docs/operations/geographic-geocentric.md` — EPSG 9602.
 - `docs/operations/geocentric-translation.md` — EPSG 1031.
 - `docs/operations/helmert-7p.md` — EPSG 1032/1033.

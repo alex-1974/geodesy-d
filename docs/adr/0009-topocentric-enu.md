@@ -1,6 +1,6 @@
 # ADR-0009: Topocentric East/North/Up coordinates
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-20
 - Applies to: EPSG 9836 and EPSG 9837 topocentric coordinate conversions
 - Depends on: ADR-0001, ADR-0002, ADR-0005
@@ -638,7 +638,6 @@ Detailed environments, seeds, maxima, attribution checks, and acceptance
 limits are recorded in `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the committed
 research harnesses under `research/topocentric/`.
 
-
 TOPO-E — adversarial and failure validation — is complete and PASS as of
 2026-09-20. The frozen adversarial contract passed 889 checks under both DMD
 and LDC with identical output. Coverage includes the complete geodetic-origin
@@ -647,16 +646,17 @@ deep-interior canonical behavior, sphere support, antimeridian behavior,
 finite-arithmetic failure, all supported scalar types, and the forward/reverse
 `float` working-precision contract. No production-code correction was required.
 
-This ADR remains `Proposed` until the remaining topocentric validation gates
-have demonstrated:
+TOPO-F — aggregate public API/runtime validation — is complete and PASS as of
+2026-09-20. The accepted surface is exported through `import geodesy;`, its
+checked operations retain `pure nothrow @safe @nogc`, named public parameters
+are contract-tested, and implementation details remain inaccessible.
 
-- EPSG 9836 and 9837 semantic conformance;
-- the published EPSG worked vector in both applicable forms;
-- independent differential agreement with external implementations;
-- explicit pole and geocentre behavior;
-- accepted float/double/real accuracy contracts;
-- compiler/platform compatibility required by the project;
-- public API and runtime attribute contracts.
+TOPO-G — compiler/platform/`real`-width validation — is complete and PASS as of
+2026-09-20. The hosted matrix covers the minimum frontend, current DMD and LDC,
+Linux, Windows, and macOS. Platforms with `real` wider than `double` execute
+the complete deterministic topocentric PROJ differential corpus using the
+public `real` API.
 
-Only then may the ADR be promoted to `Accepted` and the topocentric public
-surface be treated as release-ready.
+TOPO-A through TOPO-G are therefore complete. ADR-0009 is Accepted and the
+bounded EPSG 9836/9837 topocentric public surface is release-ready for the
+current pre-v1 development line.

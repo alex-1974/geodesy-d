@@ -1,6 +1,6 @@
 # Topocentric pre-implementation contract
 
-Status: specification frozen; TOPO-E and TOPO-F execution complete
+Status: specification frozen; TOPO-E through TOPO-G acceptance complete
 Date: 2026-09-20
 Applies to: TOPO-E and TOPO-F
 Depends on: TOPO-A PASS, TOPO-B PASS, qualified PROJ oracle
@@ -556,13 +556,13 @@ TOPO-E specification               FROZEN
 TOPO-E execution                   PASS
 TOPO-F specification               FROZEN
 TOPO-F execution                   PASS
-TOPO-G                              PENDING
+TOPO-G                              PASS
 ~~~
 
 Production code has now been implemented after the public API, failure
 semantics, adversarial semantics, and compile-time contract were specified in
 advance.
 
-TOPO-E and TOPO-F have now been executed successfully against the
-production implementation. The remaining acceptance work is TOPO-G
-compiler/platform and `real`-width coverage.
+TOPO-E and TOPO-F have been executed successfully against the production
+implementation. TOPO-G compiler/platform and `real`-width validation has also
+passed. The complete TOPO-A through TOPO-G acceptance program is now complete.
