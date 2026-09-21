@@ -23,6 +23,11 @@ static assert(is(TopocentricFrame!real));
 
 static assert(is(GeocentricTranslation!double));
 static assert(is(ProjectedCoordinate!double));
+
+static assert(is(ConformalProjectionFactors!float));
+static assert(is(ConformalProjectionFactors!double));
+static assert(is(ConformalProjectionFactors!real));
+
 static assert(is(TransverseMercator!double));
 static assert(is(UtmZone));
 static assert(is(UtmCoordinate!double));
@@ -363,6 +368,18 @@ private void projectionApiContract()
         0.0,
         projectedCoordinate);
 
+    ConformalProjectionFactors!double factors;
+
+    static assert(
+        is(typeof(factors.meridianConvergence) == Angle!double));
+    static assert(
+        is(typeof(factors.pointScale) == double));
+
+    const factorConvergence =
+        factors.meridianConvergence;
+    const factorScale =
+        factors.pointScale;
+
     TransverseMercator!double tm;
     TransverseMercator!double.tryFromParameters(
         ellipsoid,
@@ -376,8 +393,18 @@ private void projectionApiContract()
     ProjectedCoordinate!double tmProjected;
     tm.tryForward(source, tmProjected);
 
+    ConformalProjectionFactors!double tmForwardFactors;
+    tm.tryForwardFactors(
+        source,
+        tmForwardFactors);
+
     GeographicCoordinate!double tmReversed;
     tm.tryReverse(tmProjected, tmReversed);
+
+    ConformalProjectionFactors!double tmReverseFactors;
+    tm.tryReverseFactors(
+        tmProjected,
+        tmReverseFactors);
 
     UtmZone zone;
     UtmZone.tryFromNumber(33, zone);
@@ -400,8 +427,18 @@ private void projectionApiContract()
     ProjectedCoordinate!double utmProjected;
     utm.tryForward(source, utmProjected);
 
+    ConformalProjectionFactors!double utmForwardFactors;
+    utm.tryForwardFactors(
+        source,
+        utmForwardFactors);
+
     GeographicCoordinate!double utmReversed;
     utm.tryReverse(utmProjected, utmReversed);
+
+    ConformalProjectionFactors!double utmReverseFactors;
+    utm.tryReverseFactors(
+        utmProjected,
+        utmReverseFactors);
 
     UtmZone selectedZone;
     UtmHemisphere selectedHemisphere;
@@ -423,9 +460,13 @@ private void projectionApiContract()
         automaticReversed);
 
     cast(void) projectedCoordinate;
+    cast(void) factorConvergence;
+    cast(void) factorScale;
     cast(void) tmReversed;
     cast(void) tagged;
+    cast(void) utmForwardFactors;
     cast(void) utmReversed;
+    cast(void) utmReverseFactors;
     cast(void) selectedZone;
     cast(void) selectedHemisphere;
     cast(void) automaticReversed;

@@ -61,6 +61,13 @@ expect_rejected "$repo/validation/api/reject_unchecked_angle_factory.d" \
     "private unchecked Angle factory"
 expect_rejected "$repo/validation/api/reject_internal_angle_helper.d" \
     "package-internal Angle helper"
+expect_rejected "$repo/validation/api/reject_conformal_projection_factors_factory.d" \
+    "package-internal ConformalProjectionFactors factory"
+
+expect_rejected "$repo/validation/api/reject_tm_research_forward_factors.d" \
+    "research-only TM forward factors"
+expect_rejected "$repo/validation/api/reject_tm_research_reverse_factors.d" \
+    "research-only TM reverse factors"
 expect_rejected "$repo/validation/api/reject_implicit_helmert_convention.d" \
     "Helmert7 without explicit convention"
 

@@ -40,6 +40,19 @@ The accepted scope is the validated first direct/inverse public slice. Deferred
 geodesic capabilities remain future work and require their own consumer or
 research justification.
 
+The first post-v0.2 P0 capability is also complete:
+
+```text
+topocentric ENU    ACCEPTED
+ADR-0009           Accepted
+TOPO-A .. TOPO-G   PASS
+```
+
+The bounded EPSG 9836/9837 topocentric surface is now integrated into `main`.
+
+The next admitted P0 research slice is Transverse Mercator / UTM projection
+factors, followed by Pseudo-Mercator.
+
 ## Geodesic acceptance state
 
 The authoritative status is maintained in
@@ -70,11 +83,19 @@ ellipsoidal geodesic slice.
 Work toward `v1.0.0` follows the workspace rule of depth before breadth and
 research before new abstractions.
 
+Current P0 state:
+
+```text
+topocentric ENU                         ACCEPTED
+Transverse Mercator / UTM factors      NEXT
+Pseudo-Mercator                         PENDING
+```
+
 Continue in this order:
 
-1. research and qualify the three admitted P0 v1.0 capability slices defined
-   below;
-2. for each P0 slice, define the mathematical method, public semantics,
+1. research and qualify the remaining admitted P0 v1.0 capability slices
+   defined below;
+2. for each remaining P0 slice, define the mathematical method, public semantics,
    supported domain, scalar policy, failure semantics, independent validation,
    and API shape before implementation is accepted;
 3. evaluate the two P1 geodesic extensions only against concrete consumer
@@ -99,9 +120,13 @@ projection, and geodesic building blocks expected by real consumers.
 The following three capability slices are admitted P0 work before the v1 API
 freeze.
 
-### P0 — topocentric ENU
+### P0 — topocentric ENU — accepted
 
-Add a prepared local topocentric East/North/Up frame with forward and reverse
+This capability was accepted on 2026-09-20 under ADR-0009 after completion of
+TOPO-A through TOPO-G and is integrated into `main`.
+
+The accepted implementation provides a prepared local topocentric
+East/North/Up frame with forward and reverse
 conversion between Earth-fixed/geodetic coordinates and local ENU
 coordinates.
 
@@ -114,24 +139,34 @@ The intended ownership boundary is:
 - `geodesy-d` must not acquire a dependency on `geo-d` merely to represent or
   transform ENU coordinates.
 
-Research must establish the relevant EPSG semantics, origin and orientation
-conventions, singular cases, scalar policy, and independent validation before
-the API is fixed.
+The accepted contract fixes the relevant EPSG semantics, origin and
+orientation conventions, singular cases, scalar policy, and independent
+validation evidence. See ADR-0009 and
+`docs/TOPOCENTRIC_VALIDATION_PLAN.md`.
 
-### P0 — Transverse Mercator / UTM projection factors
+### P0 — Transverse Mercator / UTM projection factors — accepted 2026-09-21
 
-Extend the accepted Transverse Mercator and UTM surfaces with the projection
-information required for practical use, at minimum:
+This capability is accepted under ADR-0011.
 
-- meridian convergence;
-- point scale.
+The implemented additive API provides:
 
-This is an extension of existing projection mathematics, not a general CRS
-factor or CRS-discovery facility.
+- `ConformalProjectionFactors!T`;
+- meridian convergence as `Angle!T`;
+- dimensionless isotropic point scale;
+- checked and throwing forward-factor operations on `TransverseMercator!T`;
+- checked and throwing reverse-factor operations on `TransverseMercator!T`;
+- the same four operations on prepared `UtmProjection!T` objects by exact
+  delegation to their underlying bounded Transverse Mercator operation.
 
-The existing forward/reverse API must not be broken merely to add factors.
-Research must determine whether factors belong in an additional result type,
-dedicated operation, or another additive API.
+The existing coordinate forward/reverse API remains unchanged.
+
+Reverse factors use the same post-policy represented geographic point as public
+reverse projection, including representation-aware +/-60-degree boundary
+handling and the canonical pole convention defined by ADR-0011.
+
+Automatic UTM zone-selection helpers do not gain separate factor operations.
+Broader non-conformal projection differentials and CRS-level factor discovery
+remain outside this accepted slice.
 
 ### P0 — Pseudo-Mercator
 
@@ -339,7 +374,7 @@ Broad `@fastmath` is not a library policy.
 
 The planned path to `v1.0.0` is deliberately bounded:
 
-1. qualify and accept the three P0 capability slices;
+1. qualify and accept the remaining P0 capability slices;
 2. admit P1 capability only when concrete consumer evidence justifies it;
 3. reconcile release-facing documentation and permanent API contracts;
 4. perform an explicit v1 public-API freeze and readiness audit;

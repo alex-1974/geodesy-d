@@ -14,6 +14,7 @@ import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.projected : ProjectedCoordinate;
+import geodesy.projection.factors : ConformalProjectionFactors;
 import geodesy.projection.transverse_mercator : TransverseMercator;
 import geodesy.scalar : isGeodesyScalar;
 
@@ -656,6 +657,45 @@ public:
     }
 
     /**
+     * Compute conformal projection factors for a geographic coordinate in this
+     * explicit UTM zone.
+     *
+     * Factor mathematics and the bounded longitude domain are delegated to the
+     * prepared Transverse Mercator projection. The automatic UTM latitude band
+     * is not imposed.
+     */
+    bool tryForwardFactors(
+        const GeographicCoordinate!T source,
+        out ConformalProjectionFactors!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        return _transverseMercator.tryForwardFactors(
+            source,
+            result);
+    }
+
+    /** Throwing convenience wrapper for `tryForwardFactors`. */
+    ConformalProjectionFactors!T forwardFactors(
+        const GeographicCoordinate!T source) const
+        @safe
+    {
+        ConformalProjectionFactors!T result;
+
+        if (!tryForwardFactors(source, result))
+        {
+            throw new GeodesyValueException(
+                "UTM forward factor evaluation failed because the prepared "
+                ~ "projection is invalid or the source lies outside the "
+                ~ "bounded Transverse Mercator domain.");
+        }
+
+        return result;
+    }
+
+    /**
      * Reverse a coordinate in this explicit UTM zone.
      *
      * The standard automatic UTM latitude band is not imposed here. The
@@ -688,6 +728,45 @@ public:
                 "UTM reverse projection failed because the prepared "
                 ~ "projection is invalid or the coordinate lies outside "
                 ~ "the bounded Transverse Mercator domain.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Compute conformal projection factors for a represented coordinate in
+     * this explicit UTM zone.
+     *
+     * Reverse acceptance, representation-aware boundary handling, pole
+     * convention, and factor mathematics are delegated to the prepared
+     * Transverse Mercator projection.
+     */
+    bool tryReverseFactors(
+        const ProjectedCoordinate!T source,
+        out ConformalProjectionFactors!T result) const
+        pure nothrow @safe @nogc
+    {
+        if (!isValid)
+            return false;
+
+        return _transverseMercator.tryReverseFactors(
+            source,
+            result);
+    }
+
+    /** Throwing convenience wrapper for `tryReverseFactors`. */
+    ConformalProjectionFactors!T reverseFactors(
+        const ProjectedCoordinate!T source) const
+        @safe
+    {
+        ConformalProjectionFactors!T result;
+
+        if (!tryReverseFactors(source, result))
+        {
+            throw new GeodesyValueException(
+                "UTM reverse factor evaluation failed because the prepared "
+                ~ "projection is invalid or the coordinate lies outside the "
+                ~ "bounded Transverse Mercator domain.");
         }
 
         return result;
@@ -955,6 +1034,122 @@ unittest
     assert(southOrigin.northing == 10_000_000.0);
 
     /*
+     * UTM factor evaluation is a policy wrapper around the exactly equivalent
+     * prepared Transverse Mercator operation. No separate UTM factor
+     * mathematics is permitted.
+     */
+    const equivalentNorthTm =
+        TransverseMercator!double.fromParameters(
+            ellipsoid,
+            north.latitudeOfNaturalOrigin,
+            north.longitudeOfNaturalOrigin,
+            north.scaleFactorAtNaturalOrigin,
+            north.falseEasting,
+            north.falseNorthing);
+
+    ConformalProjectionFactors!double northForwardFactorsChecked;
+    assert(north.tryForwardFactors(
+        origin,
+        northForwardFactorsChecked));
+
+    const northForwardFactors =
+        north.forwardFactors(origin);
+
+    const tmForwardFactors =
+        equivalentNorthTm.forwardFactors(origin);
+
+    assert(
+        northForwardFactorsChecked.meridianConvergence.radians
+            == tmForwardFactors.meridianConvergence.radians);
+    assert(
+        northForwardFactorsChecked.pointScale
+            == tmForwardFactors.pointScale);
+    assert(
+        northForwardFactors.meridianConvergence.radians
+            == tmForwardFactors.meridianConvergence.radians);
+    assert(
+        northForwardFactors.pointScale
+            == tmForwardFactors.pointScale);
+
+    ConformalProjectionFactors!double northReverseFactorsChecked;
+    assert(north.tryReverseFactors(
+        northOrigin,
+        northReverseFactorsChecked));
+
+    const northReverseFactors =
+        north.reverseFactors(northOrigin);
+
+    const tmReverseFactors =
+        equivalentNorthTm.reverseFactors(northOrigin);
+
+    assert(
+        northReverseFactorsChecked.meridianConvergence.radians
+            == tmReverseFactors.meridianConvergence.radians);
+    assert(
+        northReverseFactorsChecked.pointScale
+            == tmReverseFactors.pointScale);
+    assert(
+        northReverseFactors.meridianConvergence.radians
+            == tmReverseFactors.meridianConvergence.radians);
+    assert(
+        northReverseFactors.pointScale
+            == tmReverseFactors.pointScale);
+
+    /*
+     * The same delegation identity must hold at binary32 precision.
+     */
+    const ellipsoidFloat = wgs84!float();
+
+    const northFloat =
+        UtmProjection!float.fromZone(
+            ellipsoidFloat,
+            zone33,
+            UtmHemisphere.north);
+
+    const sourceFloat =
+        GeographicCoordinate!float.fromComponents(
+            Latitude!float.fromDegrees(48.0f),
+            Longitude!float.fromDegrees(16.0f));
+
+    const projectedFloat =
+        northFloat.forward(sourceFloat);
+
+    const equivalentFloatTm =
+        TransverseMercator!float.fromParameters(
+            ellipsoidFloat,
+            northFloat.latitudeOfNaturalOrigin,
+            northFloat.longitudeOfNaturalOrigin,
+            northFloat.scaleFactorAtNaturalOrigin,
+            northFloat.falseEasting,
+            northFloat.falseNorthing);
+
+    const utmForwardFactorsFloat =
+        northFloat.forwardFactors(sourceFloat);
+
+    const tmForwardFactorsFloat =
+        equivalentFloatTm.forwardFactors(sourceFloat);
+
+    assert(
+        utmForwardFactorsFloat.meridianConvergence.radians
+            == tmForwardFactorsFloat.meridianConvergence.radians);
+    assert(
+        utmForwardFactorsFloat.pointScale
+            == tmForwardFactorsFloat.pointScale);
+
+    const utmReverseFactorsFloat =
+        northFloat.reverseFactors(projectedFloat);
+
+    const tmReverseFactorsFloat =
+        equivalentFloatTm.reverseFactors(projectedFloat);
+
+    assert(
+        utmReverseFactorsFloat.meridianConvergence.radians
+            == tmReverseFactorsFloat.meridianConvergence.radians);
+    assert(
+        utmReverseFactorsFloat.pointScale
+            == tmReverseFactorsFloat.pointScale);
+
+    /*
      * The standard automatic UTM band ends at 84 degrees, but an explicitly
      * prepared zone remains the corresponding fixed Transverse Mercator
      * projection.
@@ -979,6 +1174,22 @@ unittest
         - explicit84.longitude.radians) < 1e-12);
 
     UtmProjection!double invalid;
+
+    ConformalProjectionFactors!double invalidForwardFactors;
+    assert(!invalid.tryForwardFactors(
+        origin,
+        invalidForwardFactors));
+
+    ConformalProjectionFactors!double invalidReverseFactors;
+    assert(!invalid.tryReverseFactors(
+        northOrigin,
+        invalidReverseFactors));
+
+    assertThrown!GeodesyValueException(
+        invalid.forwardFactors(origin));
+
+    assertThrown!GeodesyValueException(
+        invalid.reverseFactors(northOrigin));
 
     assert(!UtmProjection!double.tryFromZone(
         Ellipsoid!double.sphere(6_378_137.0),
