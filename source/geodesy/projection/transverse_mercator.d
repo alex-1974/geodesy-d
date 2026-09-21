@@ -1402,36 +1402,21 @@ public:
     version (ProjectionFactorResearch)
     {
         /*
-         * Research-only factor probe.
+         * Research-only common factor kernel.
          *
-         * This member is absent from normal builds and is package-protected
-         * even when ProjectionFactorResearch is enabled. It exists only to
-         * qualify the numerical factor kernel before any public API is
-         * selected.
-         *
-         * Geographic poles are deliberately excluded from this prototype.
-         * Their convergence convention is a separate PF-A semantic question.
+         * The inputs are the post-policy geographic working coordinates of
+         * the represented point. No public-scalar narrowing is performed
+         * here.
          */
-        package bool researchTryForwardFactors(
-            const GeographicCoordinate!T source,
-            out T convergenceRadians,
-            out T pointScale) const
+        private bool researchTryFactorsAtWorkingPoint(
+            const W latitude,
+            const W deltaLongitude,
+            out W convergenceRadians,
+            out W pointScale) const
             pure nothrow @safe @nogc
         {
-            convergenceRadians = T.nan;
-            pointScale = T.nan;
-
-            /*
-             * First require the accepted public forward operation to accept
-             * exactly this represented source. The research path must not
-             * silently broaden the existing TM domain.
-             */
-            ProjectedCoordinate!T projected;
-            if (!tryForward(source, projected))
-                return false;
-
-            const W latitude =
-                workingLatitudeRadians(source.latitude);
+            convergenceRadians = W.nan;
+            pointScale = W.nan;
 
             const W poleTolerance =
                 cast(W) 8 * W.epsilon
@@ -1441,22 +1426,6 @@ public:
 
             if (fabs(fabs(latitude) - halfPi!W) <= poleTolerance)
                 return false;
-
-            W deltaLongitude = longitudeDifference(
-                cast(W) source.longitude.radians,
-                cast(W) _longitudeOfNaturalOrigin.radians);
-
-            const W maxDelta = maxLongitudeDifference!W;
-            const W domainSlack = longitudeDomainSlack();
-
-            if (fabs(deltaLongitude) > maxDelta + domainSlack)
-                return false;
-
-            if (fabs(deltaLongitude) > maxDelta)
-                deltaLongitude =
-                    deltaLongitude < cast(W) 0
-                        ? -maxDelta
-                        : maxDelta;
 
             const W sinPhi = sin(latitude);
             const W cosPhi = cos(latitude);
@@ -1509,9 +1478,9 @@ public:
             W scale =
                 sqrt(
                     e2m
-                    + e2 * cosPhi * cosPhi)
-                * hypot2(cast(W) 1, tau)
-                / denominator;
+                        + e2 * cosPhi * cosPhi)
+                    * hypot2(cast(W) 1, tau)
+                    / denominator;
 
             if (!isFiniteScalar(gamma)
                 || !isFiniteScalar(scale)
@@ -1573,7 +1542,7 @@ public:
                     recurrence.re / cast(W) 2,
                     recurrence.im / cast(W) 2);
 
-            ComplexPair!W derivative =
+            const ComplexPair!W derivative =
                 pairSub(
                     pairWithRealAdded(
                         pairMul(
@@ -1595,10 +1564,6 @@ public:
                 || !isFiniteScalar(derivativeMagnitude))
                 return false;
 
-            /*
-             * The complex derivative contributes its argument to grid
-             * rotation and its magnitude to local point scale.
-             */
             gamma -=
                 atan2(
                     derivative.im,
@@ -1618,12 +1583,203 @@ public:
 
             scale *=
                 b1
-                * derivativeMagnitude
-                * cast(W) _scaleFactorAtNaturalOrigin;
+                    * derivativeMagnitude
+                    * cast(W) _scaleFactorAtNaturalOrigin;
 
             if (!isFiniteScalar(gamma)
                 || !isFiniteScalar(scale)
                 || !(scale > cast(W) 0))
+                return false;
+
+            convergenceRadians = gamma;
+            pointScale = scale;
+            return true;
+        }
+
+
+        /*
+         * Research-only forward factor probe.
+         *
+         * This member is absent from normal builds and is package-protected
+         * even when ProjectionFactorResearch is enabled.
+         */
+        package bool researchTryForwardFactors(
+            const GeographicCoordinate!T source,
+            out T convergenceRadians,
+            out T pointScale) const
+            pure nothrow @safe @nogc
+        {
+            convergenceRadians = T.nan;
+            pointScale = T.nan;
+
+            /*
+             * Preserve the accepted public forward domain exactly.
+             */
+            ProjectedCoordinate!T projected;
+            if (!tryForward(source, projected))
+                return false;
+
+            const W latitude =
+                workingLatitudeRadians(source.latitude);
+
+            W deltaLongitude =
+                longitudeDifference(
+                    cast(W) source.longitude.radians,
+                    cast(W) _longitudeOfNaturalOrigin.radians);
+
+            const W maxDelta =
+                maxLongitudeDifference!W;
+            const W domainSlack =
+                longitudeDomainSlack();
+
+            if (fabs(deltaLongitude) > maxDelta + domainSlack)
+                return false;
+
+            if (fabs(deltaLongitude) > maxDelta)
+            {
+                deltaLongitude =
+                    deltaLongitude < cast(W) 0
+                        ? -maxDelta
+                        : maxDelta;
+            }
+
+            W gamma;
+            W scale;
+
+            if (!researchTryFactorsAtWorkingPoint(
+                    latitude,
+                    deltaLongitude,
+                    gamma,
+                    scale))
+                return false;
+
+            convergenceRadians = cast(T) gamma;
+            pointScale = cast(T) scale;
+
+            return isFiniteScalar(convergenceRadians)
+                && isFiniteScalar(pointScale)
+                && pointScale > cast(T) 0;
+        }
+
+
+        /*
+         * Research-only reverse factor probe for candidate path B.
+         *
+         * Factor evaluation occurs at the post-policy working-precision
+         * geographic point corresponding to the represented projected input.
+         * Geographic poles remain excluded pending the PF-A convention
+         * decision.
+         */
+        package bool researchTryReverseFactors(
+            const ProjectedCoordinate!T source,
+            out T convergenceRadians,
+            out T pointScale) const
+            pure nothrow @safe @nogc
+        {
+            convergenceRadians = T.nan;
+            pointScale = T.nan;
+
+            /*
+             * Let the accepted public reverse operation remain the authority
+             * for validity, represented-pole handling and sheet acceptance.
+             */
+            GeographicCoordinate!T accepted;
+            if (!tryReverse(source, accepted))
+                return false;
+
+            const W naturalScale =
+                _a1 * cast(W) _scaleFactorAtNaturalOrigin;
+
+            if (!(naturalScale > cast(W) 0)
+                || !isFiniteScalar(naturalScale))
+                return false;
+
+            W eta =
+                (cast(W) source.easting
+                    - cast(W) _falseEasting)
+                    / naturalScale;
+
+            W xi =
+                (cast(W) source.northing
+                    - cast(W) _falseNorthing)
+                    / naturalScale
+                    + _originXi;
+
+            if (!isFiniteScalar(xi)
+                || !isFiniteScalar(eta))
+                return false;
+
+            const int poleSign =
+                representedPoleSign(
+                    source,
+                    naturalScale);
+
+            if (poleSign != 0)
+            {
+                xi =
+                    poleSign < 0
+                        ? -halfPi!W
+                        : halfPi!W;
+                eta = cast(W) 0;
+            }
+
+            W latitude;
+            W deltaLongitude;
+
+            if (!reverseKernel(
+                    xi,
+                    eta,
+                    latitude,
+                    deltaLongitude))
+                return false;
+
+            /*
+             * Reproduce the post-kernel policy of tryReverse(). The acceptance
+             * decision itself has already been made by tryReverse() above.
+             */
+            const W poleTolerance =
+                cast(W) 64 * W.epsilon
+                    * (halfPi!W > cast(W) 1
+                        ? halfPi!W
+                        : cast(W) 1);
+
+            const bool isPole =
+                fabs(fabs(latitude) - halfPi!W)
+                    <= poleTolerance;
+
+            if (isPole)
+            {
+                /*
+                 * Convergence at the geographic poles remains a separate
+                 * semantic decision, matching the forward research probe.
+                 */
+                return false;
+            }
+
+            const W maxDelta =
+                maxLongitudeDifference!W;
+
+            if (fabs(deltaLongitude) > maxDelta)
+            {
+                /*
+                 * Public tryReverse() has already established that this
+                 * represented excursion is acceptable; its returned point is
+                 * the corresponding exact sheet boundary.
+                 */
+                deltaLongitude =
+                    deltaLongitude < cast(W) 0
+                        ? -maxDelta
+                        : maxDelta;
+            }
+
+            W gamma;
+            W scale;
+
+            if (!researchTryFactorsAtWorkingPoint(
+                    latitude,
+                    deltaLongitude,
+                    gamma,
+                    scale))
                 return false;
 
             convergenceRadians = cast(T) gamma;

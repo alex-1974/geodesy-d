@@ -629,34 +629,180 @@ The existing UTM oracle has a similar opportunity:
 `UTMUPS::Forward` already computes `gamma` and `scale`, although the current
 text protocol emits only zone, hemisphere, easting, and northing.
 
-## Private implementation-prototype gate
+## Forward implementation-prototype gate — PASS
 
-The next step is a non-public D prototype of the projection-factor
-calculation.
+The private forward D prototype has passed its differential and compiler
+characterization gate.
 
-The prototype should:
+Established by the prototype:
 
-1. preserve the existing coordinate computation unchanged;
-2. evaluate the derivative of the same alpha-series Clenshaw recurrence used
-   by the forward TM kernel;
-3. derive convergence and point scale from the Gauss-Schreiber quantities plus
-   that derivative;
-4. compare the resulting factors against the GeographicLib exact oracle;
-5. avoid freezing public result types or method names.
+1. the existing forward coordinate computation remains unchanged;
+2. convergence and point scale can be derived from the same alpha-series
+   Clenshaw family used by the accepted forward TM kernel;
+3. the derivative prototype agrees closely with GeographicLib Exact for
+   ordinary Earth ellipsoids;
+4. the spherical case agrees with an independent closed-form oracle near
+   floating-point precision;
+5. the synthetic `f = 0.01` case remains an explicit high-flattening
+   characterization point;
+6. DMD and LDC differ only by a few ULP over the deterministic 12486-case
+   corpus;
+7. the research implementation remains version-gated and package-internal.
 
-Only after this differential prototype has passed should PF-A select the
-public API shape.
+This gate establishes numerical viability. It does not select a public result
+type, public method name, or final acceptance tolerance.
 
-## Initial research conclusion
+## Reverse-factor research gate
 
-Projection factors are a natural additive extension of the existing accepted
-Transverse Mercator kernel.
+The next research question is how factors should be obtained for a represented
+projected input passed to the reverse TM operation.
 
-Current evidence favors computing them in the same forward/reverse numerical
-pass via the derivative of the existing Krueger series.
+Three candidate paths must be distinguished:
 
-The public API is not yet frozen.
+~~~text
+A. represented projected input
+   -> public reverse result
+   -> factor evaluation at the narrowed public geographic value
 
-The next research step is to prototype the derivative computation privately and
-compare it against GeographicLib and PROJ before selecting the final result
-types.
+B. represented projected input
+   -> reverse kernel
+   -> existing pole and sheet-boundary policy
+   -> post-policy working-precision latitude and longitude difference
+   -> the same factor kernel used by forward
+
+C. represented projected input
+   -> direct differentiation/inversion of the reverse beta-series
+~~~
+
+The first hypothesis to test is B.
+
+It preserves the existing represented-input reverse semantics while avoiding
+an unnecessary public-scalar geographic narrowing before factor evaluation.
+It would also permit forward and reverse to share one factor kernel rather
+than duplicate the factor mathematics.
+
+Path C is not justified merely for mathematical symmetry. It should be
+investigated only if measurement shows that factors evaluated at the internal
+working-precision inverse point fail the required reverse accuracy or
+semantics.
+
+The reverse prototype must therefore determine:
+
+1. the exact working state available after `reverseKernel`;
+2. whether existing boundary and represented-value handling changes that
+   working point before public return;
+3. the error of path B against an independent oracle for the same represented
+   projected input;
+4. the additional error introduced by path A, especially for `float`;
+5. whether any observed error requires path C.
+
+## Reverse candidate B — double characterization PASS
+
+Candidate B was evaluated with the same deterministic six-profile corpus used
+for the forward prototype:
+
+~~~text
+2081 cases/profile
+12486 total cases
+DMD 2.111.0
+LDC 1.41.0
+~~~
+
+For each geographic corpus point, geodesy-d first produced the represented
+`ProjectedCoordinate!double`. That exact represented E/N pair was then:
+
+1. reversed by the research candidate B path;
+2. evaluated with the shared post-policy working-point factor kernel;
+3. independently reversed by GeographicLib Exact for comparison.
+
+For positive flattening the reverse oracle uses `TransverseMercatorProj -r`.
+The projection's latitude-of-natural-origin northing offset is restored before
+calling the GeographicLib reverse operation. The spherical profile continues
+to use the independent closed-form spherical oracle.
+
+Representative DMD maxima for candidate B are:
+
+| profile | max `|delta gamma|` | max relative `|delta k|` |
+|---|---:|---:|
+| WGS84, `k0 = 0.9996` | `1.886713008047991e-12 deg` | `5.6284316100194865e-14` |
+| WGS84, `k0 = 0.9` | `1.8978152382942426e-12 deg` | `5.6286221558812851e-14` |
+| WGS84, `k0 = 1.1` | `1.8967050152696174e-12 deg` | `5.5742339709792568e-14` |
+| Airy 1830 | `2.4780177909633494e-12 deg` | `5.3867801756085609e-14` |
+| sphere | `5.6843418860808015e-14 deg` | `6.0578418947633963e-16` |
+| synthetic `f = 0.01` | `3.9257173511941801e-08 deg` | `1.1596813266592617e-09` |
+
+The global worst case therefore remains the deliberate synthetic
+high-flattening profile, at essentially the same magnitude already observed in
+the forward characterization.
+
+Candidate A was also measured:
+
+~~~text
+represented E/N
+-> public reverse GeographicCoordinate<double>
+-> forward factor evaluation
+~~~
+
+For `double`, A and B are numerically almost indistinguishable over this
+corpus. The DMD global A/B maxima are:
+
+~~~text
+max |delta gamma|       = 2.1316282072803006e-14 deg
+max relative |delta k|  = 4.7243152193565324e-16
+~~~
+
+The corresponding LDC maxima remain of the same scale:
+
+~~~text
+max |delta gamma|       = 2.1316282072803006e-14 deg
+max relative |delta k|  = 5.0522804713848751e-16
+~~~
+
+The public reverse geographic position also remains extremely close to the
+independent reverse oracle for the ordinary ellipsoid profiles. The synthetic
+`f = 0.01` case shows the expected larger, but still small, reverse-position
+difference.
+
+This double-precision evidence supports candidate B and provides no numerical
+reason to implement candidate C, the separate differentiation/inversion of the
+reverse beta-series.
+
+### Remaining reverse questions
+
+The current corpus starts from geographic points projected by geodesy-d and
+then evaluates the exact same represented projected coordinates independently.
+It therefore validates reverse factors at represented round-trip points, but
+does not yet exhaust all possible externally supplied represented projected
+inputs.
+
+The next reverse characterization must cover:
+
+1. `float`, where public geographic narrowing may be materially
+   larger;
+2. A versus B for the same represented float E/N input;
+3. independently represented projected inputs rather than only geodesy-d
+   forward products;
+4. explicit represented +/-60-degree boundary cases;
+5. rejected just-outside-domain cases;
+6. poles once PF-A selects the convergence convention.
+
+Only if these measurements expose a deficiency in the shared working-point
+factor kernel should candidate C be reopened.
+
+## Current research conclusion
+
+Projection factors remain a natural additive extension of the accepted
+Transverse Mercator implementation.
+
+Forward numerical viability is established, and reverse candidate B has now
+passed its initial double-precision characterization.
+
+The evidence currently supports one shared working-precision factor kernel fed
+by the post-policy working coordinates of either the forward or reverse path.
+A separate reverse beta-series factor implementation is not justified by the
+double-precision measurements.
+
+Float represented-value behavior, independent projected inputs, sheet
+boundaries, and pole semantics remain open research questions.
+
+The public API remains unfrozen.
