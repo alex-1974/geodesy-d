@@ -806,3 +806,202 @@ Float represented-value behavior, independent projected inputs, sheet
 boundaries, and pole semantics remain open research questions.
 
 The public API remains unfrozen.
+
+## Reverse candidate B — float characterization PASS
+
+Candidate B was next evaluated through the genuine public
+`TransverseMercator!float` surface.
+
+The FLOAT-R1 experiment deliberately models the represented binary32 system
+rather than comparing against the original double-valued profile constants.
+
+For every profile:
+
+1. projection parameters are narrowed to `float`;
+2. latitude and longitude inputs pass through the real
+   `Latitude!float.fromDegrees` / `Longitude!float.fromDegrees` path;
+3. geodesy-d produces the represented `ProjectedCoordinate!float`;
+4. that exact represented E/N pair is used by both reverse candidates;
+5. the independent oracle uses the represented float projection parameters and
+   the represented E/N pair;
+6. candidate B evaluates factors at the post-policy working-precision reverse
+   point;
+7. candidate A evaluates factors after narrowing the reverse position to
+   `GeographicCoordinate!float`.
+
+The deterministic corpus remains:
+
+~~~text
+2081 cases/profile
+6 profiles
+12486 total cases
+~~~
+
+DMD 2.111.0 and LDC 1.41.0 produced identical complete validator output.
+
+### Candidate B versus the independent oracle
+
+Global FLOAT-R1 maxima were:
+
+~~~text
+max |delta gamma|
+    2.388751035198311e-05 deg
+
+max |delta k|
+    2.0282011137240374e-07
+
+max relative |delta k|
+    9.8258573025431495e-08
+~~~
+
+The loose research sanity bounds therefore pass.
+
+The largest gamma error occurred in the Airy 1830 profile.  The largest scale
+error occurred in the deliberate synthetic `f = 0.01` profile.
+
+These values characterize the represented public `float` model and are not
+production acceptance tolerances.
+
+### Candidate A versus candidate B
+
+The public reverse narrowing is measurably non-neutral for `float`.
+
+Across all 12486 cases:
+
+~~~text
+gamma bitwise different:
+    4173 cases
+
+scale bitwise different:
+    524 cases
+
+max A/B |delta gamma|
+    6.8301891715805141e-06 deg
+
+max A/B |delta k|
+    2.384185791015625e-07
+
+max A/B relative |delta k|
+    1.1927566986856239e-07
+~~~
+
+The maximum binary32 ULP distance was:
+
+~~~text
+gamma:
+    387 ULP
+
+scale:
+    2 ULP
+~~~
+
+The large gamma ULP count occurs for convergence close to zero, where binary32
+spacing is correspondingly very small; the absolute angular difference remains
+small.
+
+### Oracle preference
+
+The independent oracle comparison shows a systematic advantage for candidate B.
+
+For convergence:
+
+~~~text
+B closer to oracle: 4159
+A closer to oracle:   14
+tie:                 8313
+~~~
+
+Among cases where A and B differ, B is closer to the oracle in approximately
+99.66% of cases.
+
+For point scale:
+
+~~~text
+B closer to oracle:  520
+A closer to oracle:    4
+tie:                11962
+~~~
+
+Among cases where A and B differ, B is closer to the oracle in approximately
+99.24% of cases.
+
+Mean errors over the complete corpus were:
+
+~~~text
+mean |delta gamma|
+
+    B: 4.2662668891565316e-07 deg
+    A: 6.4476014594061845e-07 deg
+
+mean relative |delta k|
+
+    B: 2.4983441758280161e-08
+    A: 2.5632246653491226e-08
+~~~
+
+Candidate B therefore reduces the mean convergence error by approximately 34%
+over this corpus.
+
+The mean scale improvement is smaller, but the global worst relative scale
+error improves from:
+
+~~~text
+A: 1.6953891307299494e-07
+B: 9.8258573025431495e-08
+~~~
+
+which is approximately a 42% reduction.
+
+### FLOAT-R1 conclusion
+
+FLOAT-R1 confirms the architectural hypothesis behind candidate B.
+
+For `double`, candidate A and B were effectively indistinguishable over the
+initial corpus.
+
+For `float`, however, routing reverse factor evaluation through the narrowed
+public `GeographicCoordinate!float` loses information often enough to affect
+the returned factor values.
+
+The post-policy working-precision path:
+
+~~~text
+represented projected input
+-> reverse working point
+-> public reverse policy
+-> shared factor kernel
+-> public scalar result
+~~~
+
+is therefore numerically preferable to:
+
+~~~text
+represented projected input
+-> public GeographicCoordinate<float>
+-> factor evaluation
+~~~
+
+Candidate B is now the preferred reverse-factor architecture.
+
+The evidence still provides no reason to implement candidate C, the separate
+differentiation/inversion of the reverse beta-series.
+
+### Remaining reverse-factor research
+
+FLOAT-R1 still begins with geographic points projected by geodesy-d itself.
+
+The next research gate must therefore use independently supplied represented
+projected inputs.
+
+That gate should cover:
+
+1. externally/independently generated `ProjectedCoordinate<float>` values;
+2. values not selected through geodesy-d forward round trips;
+3. represented +/-60-degree sheet-boundary cases;
+4. just-inside boundary values;
+5. representational excursions accepted by existing reverse policy;
+6. just-outside values that must be rejected;
+7. pole semantics only after PF-A selects a convergence convention.
+
+Until that gate is complete, FLOAT-R1 establishes the preferred reverse
+architecture but not exhaustive reverse-domain coverage.
