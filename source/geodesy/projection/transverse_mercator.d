@@ -1622,6 +1622,37 @@ public:
             const W latitude =
                 workingLatitudeRadians(source.latitude);
 
+            /*
+             * Canonical pole-factor convention (PF-A).
+             *
+             * Longitude is geometrically degenerate at a geographic pole and
+             * public tryForward() already treats pole E/N as independent of
+             * source longitude.  Factors therefore describe that same
+             * canonical projected pole:
+             *
+             *   convergence = 0
+             *   point scale = k0
+             *
+             * Do this before longitude-domain classification so arbitrary
+             * stored pole longitudes remain valid exactly as in tryForward().
+             */
+            const W poleTolerance =
+                cast(W) 64 * W.epsilon
+                    * (halfPi!W > cast(W) 1
+                        ? halfPi!W
+                        : cast(W) 1);
+
+            const bool isPole =
+                fabs(fabs(latitude) - halfPi!W)
+                    <= poleTolerance;
+
+            if (isPole)
+            {
+                convergenceRadians = cast(T) 0;
+                pointScale = _scaleFactorAtNaturalOrigin;
+                return true;
+            }
+
             W deltaLongitude =
                 longitudeDifference(
                     cast(W) source.longitude.radians,
@@ -1667,8 +1698,9 @@ public:
          *
          * Factor evaluation occurs at the post-policy working-precision
          * geographic point corresponding to the represented projected input.
-         * Geographic poles remain excluded pending the PF-A convention
-         * decision.
+         *
+         * Geographic poles use the canonical PF-A convention:
+         * convergence = 0 and point scale = k0.
          */
         package bool researchTryReverseFactors(
             const ProjectedCoordinate!T source,
@@ -1750,10 +1782,15 @@ public:
             if (isPole)
             {
                 /*
-                 * Convergence at the geographic poles remains a separate
-                 * semantic decision, matching the forward research probe.
+                 * Canonical pole-factor convention (PF-A).
+                 *
+                 * tryReverse() canonicalizes the represented pole longitude
+                 * to the central meridian.  Return factors for that same
+                 * canonical projected point.
                  */
-                return false;
+                convergenceRadians = cast(T) 0;
+                pointScale = _scaleFactorAtNaturalOrigin;
+                return true;
             }
 
             const W maxDelta =

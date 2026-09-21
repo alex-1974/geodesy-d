@@ -1417,3 +1417,239 @@ There remains no evidence requiring candidate C.
 The remaining distinct semantic question is convergence at the geographic
 poles. Longitude is degenerate there, so that question requires an explicit
 API convention rather than another numerical boundary experiment.
+
+## PF-A — canonical geographic-pole factor convention PASS
+
+Projection-factor research had deliberately left the exact geographic poles
+undefined while forward factors, reverse architecture, float representation,
+and reverse sheet-boundary semantics were validated.
+
+PF-A resolves that remaining semantic question.
+
+### Why the pole requires a convention
+
+At a geographic pole, longitude is degenerate. There is no unique geographic
+meridian direction associated with the point itself.
+
+Consequently meridian convergence at the exact pole does not have a unique
+longitude-independent geometric value.
+
+Approaching the pole along different longitudes gives different limiting
+convergence values even though all those geographic coordinates represent the
+same pole and project to the same Transverse Mercator E/N point.
+
+Point scale does not have this ambiguity.
+
+### GeographicLib 2.7 reference behaviour
+
+The locally installed GeographicLib 2.7 implementation was checked directly
+with `TransverseMercatorProj`.
+
+For a central meridian of 15 degrees and `k0 = 0.9996`, exact-pole forward
+results were:
+
+~~~text
+north pole:
+    lon -45 -> gamma -60 deg
+    lon  15 -> gamma   0 deg
+    lon  45 -> gamma +30 deg
+    lon  75 -> gamma +60 deg
+
+south pole:
+    lon -45 -> gamma +60 deg
+    lon  15 -> gamma  -0 deg
+    lon  45 -> gamma -30 deg
+    lon  75 -> gamma -60 deg
+
+all exact-pole forward cases:
+    identical pole E/N for a given hemisphere
+    k = 0.9996
+~~~
+
+Near-pole results at +/-89.999999 degrees approach these longitude-dependent
+values.
+
+Reverse of the represented exact pole instead returned:
+
+~~~text
+longitude = central meridian
+gamma     = 0
+k         = k0
+~~~
+
+Thus GeographicLib itself demonstrates that exact-pole convergence requires a
+convention: its forward interface retains a longitude-dependent limiting
+direction, while reverse canonicalizes the same represented projected pole to
+the central meridian.
+
+### geodesy-d convention
+
+`geodesy-d` adopts a direction-independent canonical projected-pole
+convention:
+
+~~~text
+at either geographic pole:
+
+    meridian convergence gamma = 0
+    point scale k              = k0
+~~~
+
+The source longitude is ignored.
+
+This does not claim that true north has a unique geometric tangent direction
+at the pole. `gamma = 0` is an explicit canonical API value associated with
+the central-meridian representation of the projected pole.
+
+The convention follows the semantics already established by the public
+projection operations:
+
+- forward pole E/N is independent of source longitude;
+- reverse of the represented pole canonicalizes longitude to the central
+  meridian;
+- the same represented projected point should therefore have the same factor
+  values independent of whether it was reached through forward or reverse.
+
+This gives the invariant:
+
+~~~text
+forwardFactors(any longitude at a geographic pole)
+    ==
+reverseFactors(the represented projected pole)
+
+gamma = 0
+k     = k0
+~~~
+
+### PF-A implementation experiment
+
+The research-only forward factor path now detects a public geographic pole
+before longitude-domain classification.
+
+This ordering is essential: public `tryForward()` accepts a geographic pole
+independent of its stored longitude, including longitudes that would lie
+outside the ordinary +/-60 degree non-polar sheet.
+
+The research forward factor path therefore returns immediately:
+
+~~~text
+gamma = 0
+k     = k0
+~~~
+
+The research reverse factor path continues to use public `tryReverse()` as its
+acceptance authority. After represented-pole canonicalization it applies the
+same PF-A values.
+
+### Deterministic PF-A probe
+
+`tm_pole_factor_probe.d` validates:
+
+~~~text
+ellipsoids:
+    sphere
+    WGS84
+
+public scalars:
+    float
+    double
+
+poles:
+    -90 degrees
+    +90 degrees
+
+source longitudes:
+    -180
+    -120
+    -45
+    +15
+    +45
+    +75
+    +120
+    +180 degrees
+~~~
+
+The longitude set deliberately includes values well outside the normal
+non-polar +/-60 degree Transverse Mercator sheet.
+
+For every profile and longitude the probe requires:
+
+1. public forward projection succeeds;
+2. research forward factors succeed;
+3. represented E/N is independent of source longitude at a given pole;
+4. forward gamma is exactly zero;
+5. forward point scale is exactly k0;
+6. public reverse succeeds;
+7. research reverse factors succeed;
+8. reverse gamma is exactly zero;
+9. reverse point scale is exactly k0;
+10. reverse longitude equals the represented central meridian;
+11. reverse latitude remains the exact public pole;
+12. forward and reverse factors are identical.
+
+Results:
+
+~~~text
+sphere / float:
+    PASS
+
+sphere / double:
+    PASS
+
+WGS84 / float:
+    PASS
+
+WGS84 / double:
+    PASS
+
+PF-A OVERALL RESULT:
+    PASS
+~~~
+
+DMD 2.111.0 and LDC 1.41.0 produced identical complete output.
+
+### PF-A conclusion
+
+The exact geographic poles are now semantically covered by the projection
+factor research.
+
+The selected convention is:
+
+~~~text
+gamma = 0
+k     = k0
+~~~
+
+for either pole, independent of source longitude.
+
+This convention is intentionally canonical rather than a longitude-dependent
+approach-direction limit.
+
+It preserves the existing longitude-degenerate public pole semantics and makes
+forward and reverse factors properties of the same represented projected pole.
+
+With PF-A, the investigated Transverse Mercator factor domains are now:
+
+~~~text
+forward numerical factors:
+    PASS
+
+reverse candidate architecture:
+    candidate B preferred
+
+float reverse representation:
+    PASS
+
+independently generated float projected inputs:
+    PASS
+
+represented +/-60 degree sheet boundary:
+    PASS
+
+exact geographic poles:
+    PASS
+~~~
+
+There remains no numerical or semantic evidence requiring reverse candidate C.
+
+The research is therefore sufficiently mature to move from factor-algorithm
+selection to design of the public projection-factor API.
