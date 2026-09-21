@@ -50,8 +50,8 @@ TOPO-A .. TOPO-G   PASS
 
 The bounded EPSG 9836/9837 topocentric surface is now integrated into `main`.
 
-The next admitted P0 research slice is Transverse Mercator / UTM projection
-factors, followed by Pseudo-Mercator.
+Transverse Mercator / UTM projection factors are accepted under ADR-0011.
+The next admitted P0 research slice is Pseudo-Mercator.
 
 ## Geodesic acceptance state
 
@@ -87,8 +87,8 @@ Current P0 state:
 
 ```text
 topocentric ENU                         ACCEPTED
-Transverse Mercator / UTM factors      NEXT
-Pseudo-Mercator                         PENDING
+Transverse Mercator / UTM factors      ACCEPTED
+Pseudo-Mercator                         NEXT
 ```
 
 Continue in this order:
