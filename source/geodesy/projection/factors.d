@@ -10,8 +10,9 @@ import geodesy.scalar : isGeodesyScalar;
 /**
  * Meridian convergence and isotropic point scale of a conformal projection.
  *
- * `meridianConvergence` is the signed angle between grid north and true
- * north according to the convention of the projection operation.
+ * `meridianConvergence` is the bearing of grid north measured clockwise
+ * from true north. Positive values therefore denote a clockwise rotation
+ * from true north to grid north.
  *
  * `pointScale` is dimensionless and strictly positive for a successfully
  * computed result.

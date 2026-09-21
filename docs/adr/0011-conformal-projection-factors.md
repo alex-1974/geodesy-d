@@ -75,6 +75,19 @@ geodesic azimuths and Helmert rotations use `Angle!T`.
 For ordinary non-polar Transverse Mercator points, the stored value is the
 normalized meridian convergence produced by the validated numerical kernel.
 
+Its sign convention is part of the public API:
+
+~~~text
+meridianConvergence =
+    bearing of grid north measured clockwise from true north
+
+positive = clockwise rotation from true north to grid north
+negative = counter-clockwise rotation from true north to grid north
+~~~
+
+This is also the convention used by the GeographicLib reference oracle against
+which the Transverse Mercator factor implementation was validated.
+
 ### Point scale
 
 `pointScale` is a dimensionless `T`.

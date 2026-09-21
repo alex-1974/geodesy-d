@@ -10,11 +10,12 @@ import std.math :
 
 import std.typecons : tuple;
 
-import geodesy.angle : Latitude, Longitude;
+import geodesy.angle : Angle, Latitude, Longitude;
 import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.projected : ProjectedCoordinate;
+import geodesy.projection.factors : ConformalProjectionFactors;
 import geodesy.scalar : isGeodesyScalar;
 
 
@@ -1399,434 +1400,590 @@ public:
     }
 
 
-    version (ProjectionFactorResearch)
+    /*
+     * Research-only common factor kernel.
+     *
+     * The inputs are the post-policy geographic working coordinates of
+     * the represented point. No public-scalar narrowing is performed
+     * here.
+     */
+    private bool tryFactorsAtWorkingPoint(
+        const W latitude,
+        const W deltaLongitude,
+        out W convergenceRadians,
+        out W pointScale) const
+        pure nothrow @safe @nogc
     {
+        convergenceRadians = W.nan;
+        pointScale = W.nan;
+
+        const W poleTolerance =
+            cast(W) 8 * W.epsilon
+                * (halfPi!W > cast(W) 1
+                    ? halfPi!W
+                    : cast(W) 1);
+
+        if (fabs(fabs(latitude) - halfPi!W) <= poleTolerance)
+            return false;
+
+        const W sinPhi = sin(latitude);
+        const W cosPhi = cos(latitude);
+        const W sinLambda = sin(deltaLongitude);
+        const W cosLambda = cos(deltaLongitude);
+
+        if (!isFiniteScalar(sinPhi)
+            || !isFiniteScalar(cosPhi)
+            || !isFiniteScalar(sinLambda)
+            || !isFiniteScalar(cosLambda)
+            || cosPhi == cast(W) 0)
+            return false;
+
+        const W tau = sinPhi / cosPhi;
+        const W tauPrime =
+            conformalTau(tau, _eccentricity);
+
+        const W denominator =
+            hypot2(tauPrime, cosLambda);
+
+        if (!(denominator > cast(W) 0)
+            || !isFiniteScalar(denominator))
+            return false;
+
+        const W xiPrime =
+            atan2(tauPrime, cosLambda);
+
+        const W etaPrime =
+            asinh(sinLambda / denominator);
+
+        if (!isFiniteScalar(xiPrime)
+            || !isFiniteScalar(etaPrime))
+            return false;
+
         /*
-         * Research-only common factor kernel.
-         *
-         * The inputs are the post-policy geographic working coordinates of
-         * the represented point. No public-scalar narrowing is performed
-         * here.
+         * Gauss-Schreiber convergence and scale before the
+         * conformal-to-rectifying Krueger series.
          */
-        private bool researchTryFactorsAtWorkingPoint(
-            const W latitude,
-            const W deltaLongitude,
-            out W convergenceRadians,
-            out W pointScale) const
-            pure nothrow @safe @nogc
+        W gamma =
+            atan2(
+                sinLambda * tauPrime,
+                cosLambda
+                    * hypot2(cast(W) 1, tauPrime));
+
+        const W e2 =
+            _eccentricity * _eccentricity;
+        const W e2m =
+            cast(W) 1 - e2;
+
+        W scale =
+            sqrt(
+                e2m
+                    + e2 * cosPhi * cosPhi)
+                * hypot2(cast(W) 1, tau)
+                / denominator;
+
+        if (!isFiniteScalar(gamma)
+            || !isFiniteScalar(scale)
+            || !(scale > cast(W) 0))
+            return false;
+
+        /*
+         * Evaluate
+         *
+         *   d zeta / d zeta'
+         *     = 1
+         *       + sum(2 k alpha[k] cos(2 k zeta'))
+         *
+         * with the same complex Clenshaw recurrence family used by
+         * applyForwardSeries().
+         */
+        const W c0 =
+            cos(cast(W) 2 * xiPrime);
+        const W ch0 =
+            cosh(cast(W) 2 * etaPrime);
+        const W s0 =
+            sin(cast(W) 2 * xiPrime);
+        const W sh0 =
+            sinh(cast(W) 2 * etaPrime);
+
+        if (!isFiniteScalar(c0)
+            || !isFiniteScalar(ch0)
+            || !isFiniteScalar(s0)
+            || !isFiniteScalar(sh0))
+            return false;
+
+        const ComplexPair!W recurrence =
+            ComplexPair!W(
+                cast(W) 2 * c0 * ch0,
+                -cast(W) 2 * s0 * sh0);
+
+        ComplexPair!W derivativeB1;
+        ComplexPair!W derivativeB2;
+
+        for (int k = seriesOrder; k >= 1; --k)
         {
-            convergenceRadians = W.nan;
-            pointScale = W.nan;
-
-            const W poleTolerance =
-                cast(W) 8 * W.epsilon
-                    * (halfPi!W > cast(W) 1
-                        ? halfPi!W
-                        : cast(W) 1);
-
-            if (fabs(fabs(latitude) - halfPi!W) <= poleTolerance)
-                return false;
-
-            const W sinPhi = sin(latitude);
-            const W cosPhi = cos(latitude);
-            const W sinLambda = sin(deltaLongitude);
-            const W cosLambda = cos(deltaLongitude);
-
-            if (!isFiniteScalar(sinPhi)
-                || !isFiniteScalar(cosPhi)
-                || !isFiniteScalar(sinLambda)
-                || !isFiniteScalar(cosLambda)
-                || cosPhi == cast(W) 0)
-                return false;
-
-            const W tau = sinPhi / cosPhi;
-            const W tauPrime =
-                conformalTau(tau, _eccentricity);
-
-            const W denominator =
-                hypot2(tauPrime, cosLambda);
-
-            if (!(denominator > cast(W) 0)
-                || !isFiniteScalar(denominator))
-                return false;
-
-            const W xiPrime =
-                atan2(tauPrime, cosLambda);
-
-            const W etaPrime =
-                asinh(sinLambda / denominator);
-
-            if (!isFiniteScalar(xiPrime)
-                || !isFiniteScalar(etaPrime))
-                return false;
-
-            /*
-             * Gauss-Schreiber convergence and scale before the
-             * conformal-to-rectifying Krueger series.
-             */
-            W gamma =
-                atan2(
-                    sinLambda * tauPrime,
-                    cosLambda
-                        * hypot2(cast(W) 1, tauPrime));
-
-            const W e2 =
-                _eccentricity * _eccentricity;
-            const W e2m =
-                cast(W) 1 - e2;
-
-            W scale =
-                sqrt(
-                    e2m
-                        + e2 * cosPhi * cosPhi)
-                    * hypot2(cast(W) 1, tau)
-                    / denominator;
-
-            if (!isFiniteScalar(gamma)
-                || !isFiniteScalar(scale)
-                || !(scale > cast(W) 0))
-                return false;
-
-            /*
-             * Evaluate
-             *
-             *   d zeta / d zeta'
-             *     = 1
-             *       + sum(2 k alpha[k] cos(2 k zeta'))
-             *
-             * with the same complex Clenshaw recurrence family used by
-             * applyForwardSeries().
-             */
-            const W c0 =
-                cos(cast(W) 2 * xiPrime);
-            const W ch0 =
-                cosh(cast(W) 2 * etaPrime);
-            const W s0 =
-                sin(cast(W) 2 * xiPrime);
-            const W sh0 =
-                sinh(cast(W) 2 * etaPrime);
-
-            if (!isFiniteScalar(c0)
-                || !isFiniteScalar(ch0)
-                || !isFiniteScalar(s0)
-                || !isFiniteScalar(sh0))
-                return false;
-
-            const ComplexPair!W recurrence =
-                ComplexPair!W(
-                    cast(W) 2 * c0 * ch0,
-                    -cast(W) 2 * s0 * sh0);
-
-            ComplexPair!W derivativeB1;
-            ComplexPair!W derivativeB2;
-
-            for (int k = seriesOrder; k >= 1; --k)
-            {
-                ComplexPair!W next =
-                    pairSub(
-                        pairMul(
-                            recurrence,
-                            derivativeB1),
-                        derivativeB2);
-
-                next = pairWithRealAdded(
-                    next,
-                    cast(W) (2 * k) * _alpha[k]);
-
-                derivativeB2 = derivativeB1;
-                derivativeB1 = next;
-            }
-
-            const ComplexPair!W cos2ZetaPrime =
-                ComplexPair!W(
-                    recurrence.re / cast(W) 2,
-                    recurrence.im / cast(W) 2);
-
-            const ComplexPair!W derivative =
+            ComplexPair!W next =
                 pairSub(
-                    pairWithRealAdded(
-                        pairMul(
-                            cos2ZetaPrime,
-                            derivativeB1),
-                        cast(W) 1),
+                    pairMul(
+                        recurrence,
+                        derivativeB1),
                     derivativeB2);
 
-            if (!isFiniteScalar(derivative.re)
-                || !isFiniteScalar(derivative.im))
+            next = pairWithRealAdded(
+                next,
+                cast(W) (2 * k) * _alpha[k]);
+
+            derivativeB2 = derivativeB1;
+            derivativeB1 = next;
+        }
+
+        const ComplexPair!W cos2ZetaPrime =
+            ComplexPair!W(
+                recurrence.re / cast(W) 2,
+                recurrence.im / cast(W) 2);
+
+        const ComplexPair!W derivative =
+            pairSub(
+                pairWithRealAdded(
+                    pairMul(
+                        cos2ZetaPrime,
+                        derivativeB1),
+                    cast(W) 1),
+                derivativeB2);
+
+        if (!isFiniteScalar(derivative.re)
+            || !isFiniteScalar(derivative.im))
+            return false;
+
+        const W derivativeMagnitude =
+            hypot2(
+                derivative.re,
+                derivative.im);
+
+        if (!(derivativeMagnitude > cast(W) 0)
+            || !isFiniteScalar(derivativeMagnitude))
+            return false;
+
+        gamma -=
+            atan2(
+                derivative.im,
+                derivative.re);
+
+        gamma = normalizeRadians(gamma);
+
+        const W semiMajorAxis =
+            cast(W) _ellipsoid.semiMajorAxis;
+
+        if (!(semiMajorAxis > cast(W) 0)
+            || !isFiniteScalar(semiMajorAxis))
+            return false;
+
+        const W b1 =
+            _a1 / semiMajorAxis;
+
+        scale *=
+            b1
+                * derivativeMagnitude
+                * cast(W) _scaleFactorAtNaturalOrigin;
+
+        if (!isFiniteScalar(gamma)
+            || !isFiniteScalar(scale)
+            || !(scale > cast(W) 0))
+            return false;
+
+        convergenceRadians = gamma;
+        pointScale = scale;
+        return true;
+    }
+
+
+    /*
+     * Research-only forward factor probe.
+     *
+     * This member is absent from normal builds and is package-protected
+     * even when ProjectionFactorResearch is enabled.
+     */
+    private bool tryForwardFactorScalars(
+        const GeographicCoordinate!T source,
+        out T convergenceRadians,
+        out T pointScale) const
+        pure nothrow @safe @nogc
+    {
+        convergenceRadians = T.nan;
+        pointScale = T.nan;
+
+        /*
+         * Preserve the accepted public forward domain exactly.
+         */
+        ProjectedCoordinate!T projected;
+        if (!tryForward(source, projected))
+            return false;
+
+        const W latitude =
+            workingLatitudeRadians(source.latitude);
+
+        /*
+         * Canonical pole-factor convention (PF-A).
+         *
+         * Longitude is geometrically degenerate at a geographic pole and
+         * public tryForward() already treats pole E/N as independent of
+         * source longitude.  Factors therefore describe that same
+         * canonical projected pole:
+         *
+         *   convergence = 0
+         *   point scale = k0
+         *
+         * Do this before longitude-domain classification so arbitrary
+         * stored pole longitudes remain valid exactly as in tryForward().
+         */
+        const W poleTolerance =
+            cast(W) 64 * W.epsilon
+                * (halfPi!W > cast(W) 1
+                    ? halfPi!W
+                    : cast(W) 1);
+
+        const bool isPole =
+            fabs(fabs(latitude) - halfPi!W)
+                <= poleTolerance;
+
+        if (isPole)
+        {
+            convergenceRadians = cast(T) 0;
+            pointScale = _scaleFactorAtNaturalOrigin;
+            return true;
+        }
+
+        W deltaLongitude =
+            longitudeDifference(
+                cast(W) source.longitude.radians,
+                cast(W) _longitudeOfNaturalOrigin.radians);
+
+        const W maxDelta =
+            maxLongitudeDifference!W;
+        const W domainSlack =
+            longitudeDomainSlack();
+
+        if (fabs(deltaLongitude) > maxDelta + domainSlack)
+            return false;
+
+        if (fabs(deltaLongitude) > maxDelta)
+        {
+            deltaLongitude =
+                deltaLongitude < cast(W) 0
+                    ? -maxDelta
+                    : maxDelta;
+        }
+
+        W gamma;
+        W scale;
+
+        if (!tryFactorsAtWorkingPoint(
+                latitude,
+                deltaLongitude,
+                gamma,
+                scale))
+            return false;
+
+        convergenceRadians = cast(T) gamma;
+        pointScale = cast(T) scale;
+
+        return isFiniteScalar(convergenceRadians)
+            && isFiniteScalar(pointScale)
+            && pointScale > cast(T) 0;
+    }
+
+
+    /*
+     * Research-only reverse factor probe for candidate path B.
+     *
+     * Factor evaluation occurs at the post-policy working-precision
+     * geographic point corresponding to the represented projected input.
+     *
+     * Geographic poles use the canonical PF-A convention:
+     * convergence = 0 and point scale = k0.
+     */
+    private bool tryReverseFactorScalars(
+        const ProjectedCoordinate!T source,
+        out T convergenceRadians,
+        out T pointScale) const
+        pure nothrow @safe @nogc
+    {
+        convergenceRadians = T.nan;
+        pointScale = T.nan;
+
+        /*
+         * Let the accepted public reverse operation remain the authority
+         * for validity, represented-pole handling and sheet acceptance.
+         */
+        GeographicCoordinate!T accepted;
+        if (!tryReverse(source, accepted))
+            return false;
+
+        const W naturalScale =
+            _a1 * cast(W) _scaleFactorAtNaturalOrigin;
+
+        if (!(naturalScale > cast(W) 0)
+            || !isFiniteScalar(naturalScale))
+            return false;
+
+        W eta =
+            (cast(W) source.easting
+                - cast(W) _falseEasting)
+                / naturalScale;
+
+        W xi =
+            (cast(W) source.northing
+                - cast(W) _falseNorthing)
+                / naturalScale
+                + _originXi;
+
+        if (!isFiniteScalar(xi)
+            || !isFiniteScalar(eta))
+            return false;
+
+        const int poleSign =
+            representedPoleSign(
+                source,
+                naturalScale);
+
+        if (poleSign != 0)
+        {
+            xi =
+                poleSign < 0
+                    ? -halfPi!W
+                    : halfPi!W;
+            eta = cast(W) 0;
+        }
+
+        W latitude;
+        W deltaLongitude;
+
+        if (!reverseKernel(
+                xi,
+                eta,
+                latitude,
+                deltaLongitude))
+            return false;
+
+        /*
+         * Reproduce the post-kernel policy of tryReverse(). The acceptance
+         * decision itself has already been made by tryReverse() above.
+         */
+        const W poleTolerance =
+            cast(W) 64 * W.epsilon
+                * (halfPi!W > cast(W) 1
+                    ? halfPi!W
+                    : cast(W) 1);
+
+        const bool isPole =
+            fabs(fabs(latitude) - halfPi!W)
+                <= poleTolerance;
+
+        if (isPole)
+        {
+            /*
+             * Canonical pole-factor convention (PF-A).
+             *
+             * tryReverse() canonicalizes the represented pole longitude
+             * to the central meridian.  Return factors for that same
+             * canonical projected point.
+             */
+            convergenceRadians = cast(T) 0;
+            pointScale = _scaleFactorAtNaturalOrigin;
+            return true;
+        }
+
+        const W maxDelta =
+            maxLongitudeDifference!W;
+
+        if (fabs(deltaLongitude) > maxDelta)
+        {
+            /*
+             * Public tryReverse() has already established that this
+             * represented excursion is acceptable; its returned point is
+             * the corresponding exact sheet boundary.
+             */
+            deltaLongitude =
+                deltaLongitude < cast(W) 0
+                    ? -maxDelta
+                    : maxDelta;
+        }
+
+        W gamma;
+        W scale;
+
+        if (!tryFactorsAtWorkingPoint(
+                latitude,
+                deltaLongitude,
+                gamma,
+                scale))
+            return false;
+
+        convergenceRadians = cast(T) gamma;
+        pointScale = cast(T) scale;
+
+        return isFiniteScalar(convergenceRadians)
+            && isFiniteScalar(pointScale)
+            && pointScale > cast(T) 0;
+    }
+
+
+    public:
+
+        /**
+         * Compute conformal factors at a geographic source coordinate.
+         *
+         * The accepted domain is identical to `tryForward`. Meridian
+         * convergence is returned as a strongly typed angle and point scale
+         * is dimensionless.
+         */
+        bool tryForwardFactors(
+            const GeographicCoordinate!T source,
+            out ConformalProjectionFactors!T result) const
+            pure nothrow @safe @nogc
+        {
+            result = ConformalProjectionFactors!T.init;
+
+            T convergenceRadians;
+            T pointScale;
+
+            if (!tryForwardFactorScalars(
+                    source,
+                    convergenceRadians,
+                    pointScale))
                 return false;
 
-            const W derivativeMagnitude =
-                hypot2(
-                    derivative.re,
-                    derivative.im);
+            Angle!T convergence;
 
-            if (!(derivativeMagnitude > cast(W) 0)
-                || !isFiniteScalar(derivativeMagnitude))
+            if (!Angle!T.tryFromRadians(
+                    convergenceRadians,
+                    convergence))
                 return false;
 
-            gamma -=
-                atan2(
-                    derivative.im,
-                    derivative.re);
+            result =
+                ConformalProjectionFactors!T.fromComponents(
+                    convergence,
+                    pointScale);
 
-            gamma = normalizeRadians(gamma);
-
-            const W semiMajorAxis =
-                cast(W) _ellipsoid.semiMajorAxis;
-
-            if (!(semiMajorAxis > cast(W) 0)
-                || !isFiniteScalar(semiMajorAxis))
-                return false;
-
-            const W b1 =
-                _a1 / semiMajorAxis;
-
-            scale *=
-                b1
-                    * derivativeMagnitude
-                    * cast(W) _scaleFactorAtNaturalOrigin;
-
-            if (!isFiniteScalar(gamma)
-                || !isFiniteScalar(scale)
-                || !(scale > cast(W) 0))
-                return false;
-
-            convergenceRadians = gamma;
-            pointScale = scale;
             return true;
         }
 
 
-        /*
-         * Research-only forward factor probe.
-         *
-         * This member is absent from normal builds and is package-protected
-         * even when ProjectionFactorResearch is enabled.
+        /**
+         * Compute conformal factors at a geographic source coordinate or
+         * throw on projection/domain failure.
          */
-        package bool researchTryForwardFactors(
-            const GeographicCoordinate!T source,
-            out T convergenceRadians,
-            out T pointScale) const
-            pure nothrow @safe @nogc
+        ConformalProjectionFactors!T forwardFactors(
+            const GeographicCoordinate!T source) const
+            @safe
         {
-            convergenceRadians = T.nan;
-            pointScale = T.nan;
+            ConformalProjectionFactors!T result;
 
-            /*
-             * Preserve the accepted public forward domain exactly.
-             */
-            ProjectedCoordinate!T projected;
-            if (!tryForward(source, projected))
-                return false;
-
-            const W latitude =
-                workingLatitudeRadians(source.latitude);
-
-            /*
-             * Canonical pole-factor convention (PF-A).
-             *
-             * Longitude is geometrically degenerate at a geographic pole and
-             * public tryForward() already treats pole E/N as independent of
-             * source longitude.  Factors therefore describe that same
-             * canonical projected pole:
-             *
-             *   convergence = 0
-             *   point scale = k0
-             *
-             * Do this before longitude-domain classification so arbitrary
-             * stored pole longitudes remain valid exactly as in tryForward().
-             */
-            const W poleTolerance =
-                cast(W) 64 * W.epsilon
-                    * (halfPi!W > cast(W) 1
-                        ? halfPi!W
-                        : cast(W) 1);
-
-            const bool isPole =
-                fabs(fabs(latitude) - halfPi!W)
-                    <= poleTolerance;
-
-            if (isPole)
+            if (!tryForwardFactors(source, result))
             {
-                convergenceRadians = cast(T) 0;
-                pointScale = _scaleFactorAtNaturalOrigin;
-                return true;
+                throw new GeodesyValueException(
+                    "Transverse Mercator forward factor evaluation failed "
+                    ~ "or the point lies outside the supported +/-60 degree "
+                    ~ "longitude domain.");
             }
 
-            W deltaLongitude =
-                longitudeDifference(
-                    cast(W) source.longitude.radians,
-                    cast(W) _longitudeOfNaturalOrigin.radians);
-
-            const W maxDelta =
-                maxLongitudeDifference!W;
-            const W domainSlack =
-                longitudeDomainSlack();
-
-            if (fabs(deltaLongitude) > maxDelta + domainSlack)
-                return false;
-
-            if (fabs(deltaLongitude) > maxDelta)
-            {
-                deltaLongitude =
-                    deltaLongitude < cast(W) 0
-                        ? -maxDelta
-                        : maxDelta;
-            }
-
-            W gamma;
-            W scale;
-
-            if (!researchTryFactorsAtWorkingPoint(
-                    latitude,
-                    deltaLongitude,
-                    gamma,
-                    scale))
-                return false;
-
-            convergenceRadians = cast(T) gamma;
-            pointScale = cast(T) scale;
-
-            return isFiniteScalar(convergenceRadians)
-                && isFiniteScalar(pointScale)
-                && pointScale > cast(T) 0;
+            return result;
         }
 
 
-        /*
-         * Research-only reverse factor probe for candidate path B.
+        /**
+         * Compute conformal factors for a represented projected coordinate.
          *
-         * Factor evaluation occurs at the post-policy working-precision
-         * geographic point corresponding to the represented projected input.
-         *
-         * Geographic poles use the canonical PF-A convention:
-         * convergence = 0 and point scale = k0.
+         * The accepted represented-coordinate domain is identical to
+         * `tryReverse`, including pole canonicalization and representation-
+         * aware sheet-boundary handling.
          */
-        package bool researchTryReverseFactors(
+        bool tryReverseFactors(
             const ProjectedCoordinate!T source,
-            out T convergenceRadians,
-            out T pointScale) const
+            out ConformalProjectionFactors!T result) const
             pure nothrow @safe @nogc
         {
-            convergenceRadians = T.nan;
-            pointScale = T.nan;
+            result = ConformalProjectionFactors!T.init;
 
-            /*
-             * Let the accepted public reverse operation remain the authority
-             * for validity, represented-pole handling and sheet acceptance.
-             */
-            GeographicCoordinate!T accepted;
-            if (!tryReverse(source, accepted))
-                return false;
+            T convergenceRadians;
+            T pointScale;
 
-            const W naturalScale =
-                _a1 * cast(W) _scaleFactorAtNaturalOrigin;
-
-            if (!(naturalScale > cast(W) 0)
-                || !isFiniteScalar(naturalScale))
-                return false;
-
-            W eta =
-                (cast(W) source.easting
-                    - cast(W) _falseEasting)
-                    / naturalScale;
-
-            W xi =
-                (cast(W) source.northing
-                    - cast(W) _falseNorthing)
-                    / naturalScale
-                    + _originXi;
-
-            if (!isFiniteScalar(xi)
-                || !isFiniteScalar(eta))
-                return false;
-
-            const int poleSign =
-                representedPoleSign(
+            if (!tryReverseFactorScalars(
                     source,
-                    naturalScale);
-
-            if (poleSign != 0)
-            {
-                xi =
-                    poleSign < 0
-                        ? -halfPi!W
-                        : halfPi!W;
-                eta = cast(W) 0;
-            }
-
-            W latitude;
-            W deltaLongitude;
-
-            if (!reverseKernel(
-                    xi,
-                    eta,
-                    latitude,
-                    deltaLongitude))
+                    convergenceRadians,
+                    pointScale))
                 return false;
 
-            /*
-             * Reproduce the post-kernel policy of tryReverse(). The acceptance
-             * decision itself has already been made by tryReverse() above.
-             */
-            const W poleTolerance =
-                cast(W) 64 * W.epsilon
-                    * (halfPi!W > cast(W) 1
-                        ? halfPi!W
-                        : cast(W) 1);
+            Angle!T convergence;
 
-            const bool isPole =
-                fabs(fabs(latitude) - halfPi!W)
-                    <= poleTolerance;
-
-            if (isPole)
-            {
-                /*
-                 * Canonical pole-factor convention (PF-A).
-                 *
-                 * tryReverse() canonicalizes the represented pole longitude
-                 * to the central meridian.  Return factors for that same
-                 * canonical projected point.
-                 */
-                convergenceRadians = cast(T) 0;
-                pointScale = _scaleFactorAtNaturalOrigin;
-                return true;
-            }
-
-            const W maxDelta =
-                maxLongitudeDifference!W;
-
-            if (fabs(deltaLongitude) > maxDelta)
-            {
-                /*
-                 * Public tryReverse() has already established that this
-                 * represented excursion is acceptable; its returned point is
-                 * the corresponding exact sheet boundary.
-                 */
-                deltaLongitude =
-                    deltaLongitude < cast(W) 0
-                        ? -maxDelta
-                        : maxDelta;
-            }
-
-            W gamma;
-            W scale;
-
-            if (!researchTryFactorsAtWorkingPoint(
-                    latitude,
-                    deltaLongitude,
-                    gamma,
-                    scale))
+            if (!Angle!T.tryFromRadians(
+                    convergenceRadians,
+                    convergence))
                 return false;
 
-            convergenceRadians = cast(T) gamma;
-            pointScale = cast(T) scale;
+            result =
+                ConformalProjectionFactors!T.fromComponents(
+                    convergence,
+                    pointScale);
 
-            return isFiniteScalar(convergenceRadians)
-                && isFiniteScalar(pointScale)
-                && pointScale > cast(T) 0;
+            return true;
         }
-    }
+
+
+        /**
+         * Compute conformal factors for a represented projected coordinate or
+         * throw on projection/domain failure.
+         */
+        ConformalProjectionFactors!T reverseFactors(
+            const ProjectedCoordinate!T source) const
+            @safe
+        {
+            ConformalProjectionFactors!T result;
+
+            if (!tryReverseFactors(source, result))
+            {
+                throw new GeodesyValueException(
+                    "Transverse Mercator reverse factor evaluation failed "
+                    ~ "because the coordinate lies outside the supported "
+                    ~ "sheet/domain.");
+            }
+
+            return result;
+        }
+
+
+        version (ProjectionFactorResearch)
+        {
+            /*
+             * Compatibility entry points for the validated research corpus.
+             *
+             * These deliberately delegate to the production scalar paths so
+             * research and public factor evaluation cannot diverge.
+             */
+            package bool researchTryForwardFactors(
+                const GeographicCoordinate!T source,
+                out T convergenceRadians,
+                out T pointScale) const
+                pure nothrow @safe @nogc
+            {
+                return tryForwardFactorScalars(
+                    source,
+                    convergenceRadians,
+                    pointScale);
+            }
+
+
+            package bool researchTryReverseFactors(
+                const ProjectedCoordinate!T source,
+                out T convergenceRadians,
+                out T pointScale) const
+                pure nothrow @safe @nogc
+            {
+                return tryReverseFactorScalars(
+                    source,
+                    convergenceRadians,
+                    pointScale);
+            }
+        }
 
 
     /**
@@ -2059,6 +2216,46 @@ unittest
     assert(fabs(roundTrip.latitude.degrees) < 1e-12);
     assert(fabs(roundTrip.longitude.degrees - 15.0) < 1e-12);
 
+    ConformalProjectionFactors!double originForwardFactors;
+    assert(utmLike.tryForwardFactors(
+        naturalOrigin,
+        originForwardFactors));
+
+    assert(originForwardFactors.meridianConvergence.radians == 0.0);
+    assert(fabs(
+        originForwardFactors.pointScale
+            - utmLike.scaleFactorAtNaturalOrigin) < 1e-14);
+
+    const originForwardFactorsThrowing =
+        utmLike.forwardFactors(naturalOrigin);
+
+    assert(
+        originForwardFactorsThrowing.meridianConvergence.radians
+            == originForwardFactors.meridianConvergence.radians);
+    assert(
+        originForwardFactorsThrowing.pointScale
+            == originForwardFactors.pointScale);
+
+    ConformalProjectionFactors!double originReverseFactors;
+    assert(utmLike.tryReverseFactors(
+        projectedOrigin,
+        originReverseFactors));
+
+    assert(originReverseFactors.meridianConvergence.radians == 0.0);
+    assert(fabs(
+        originReverseFactors.pointScale
+            - utmLike.scaleFactorAtNaturalOrigin) < 1e-14);
+
+    const originReverseFactorsThrowing =
+        utmLike.reverseFactors(projectedOrigin);
+
+    assert(
+        originReverseFactorsThrowing.meridianConvergence.radians
+            == originReverseFactors.meridianConvergence.radians);
+    assert(
+        originReverseFactorsThrowing.pointScale
+            == originReverseFactors.pointScale);
+
     /*
      * EPSG 9807 worked example:
      * Airy 1830, British National Grid parameters.
@@ -2092,6 +2289,20 @@ unittest
     assert(fabs(epsgReverse.latitude.degrees - 50.5) < 1e-10);
     assert(fabs(epsgReverse.longitude.degrees - 0.5) < 1e-10);
 
+    const epsgForwardFactors =
+        britishGrid.forwardFactors(epsgSource);
+
+    const epsgReverseFactors =
+        britishGrid.reverseFactors(epsgProjected);
+
+    assert(fabs(
+        epsgForwardFactors.meridianConvergence.radians
+            - epsgReverseFactors.meridianConvergence.radians) < 1e-12);
+
+    assert(fabs(
+        epsgForwardFactors.pointScale
+            - epsgReverseFactors.pointScale) < 1e-14);
+
     // Longitude domain boundary.
     ProjectedCoordinate!double projected;
     const onBoundary = GeographicCoordinate!double.fromComponents(
@@ -2099,10 +2310,27 @@ unittest
         Longitude!double.fromDegrees(75.0)); // lon0 15 + 60
     assert(utmLike.tryForward(onBoundary, projected));
 
+    ConformalProjectionFactors!double boundaryForwardFactors;
+    assert(utmLike.tryForwardFactors(
+        onBoundary,
+        boundaryForwardFactors));
+    assert(boundaryForwardFactors.pointScale > 0.0);
+
     const outsideBoundary = GeographicCoordinate!double.fromComponents(
         Latitude!double.fromDegrees(10.0),
         Longitude!double.fromDegrees(75.000001));
     assert(!utmLike.tryForward(outsideBoundary, projected));
+
+    ConformalProjectionFactors!double rejectedForwardFactors;
+    assert(!utmLike.tryForwardFactors(
+        outsideBoundary,
+        rejectedForwardFactors));
+
+    assert(rejectedForwardFactors.meridianConvergence.radians == 0.0);
+    assert(rejectedForwardFactors.pointScale == 0.0);
+
+    assertThrown!GeodesyValueException(
+        utmLike.forwardFactors(outsideBoundary));
 
     // Antimeridian normalization: -179.75 is +0.5 deg from +179.75.
     const antiMeridian = TransverseMercator!double.fromParameters(
@@ -2133,6 +2361,24 @@ unittest
 
     assert(reversedPole.latitude.degrees == 90.0);
     assert(fabs(reversedPole.longitude.degrees - 15.0) < 1e-12);
+
+    const poleForwardFactors =
+        utmLike.forwardFactors(northPole);
+
+    const poleReverseFactors =
+        utmLike.reverseFactors(projectedPole);
+
+    assert(poleForwardFactors.meridianConvergence.radians == 0.0);
+    assert(poleReverseFactors.meridianConvergence.radians == 0.0);
+    assert(
+        poleForwardFactors.pointScale
+            == utmLike.scaleFactorAtNaturalOrigin);
+    assert(
+        poleReverseFactors.pointScale
+            == utmLike.scaleFactorAtNaturalOrigin);
+    assert(
+        poleForwardFactors.pointScale
+            == poleReverseFactors.pointScale);
 
     /*
      * Independent PROJ smoke vectors.
@@ -2242,6 +2488,12 @@ unittest
 
     assert(fabs(boundaryRecovered.latitude.degrees + 45.0) < 1e-9);
     assert(fabs(boundaryRecovered.longitude.degrees + 45.0) < 1e-9);
+
+    ConformalProjectionFactors!double boundaryReverseFactors;
+    assert(boundaryProjection.tryReverseFactors(
+        boundaryProjected,
+        boundaryReverseFactors));
+    assert(boundaryReverseFactors.pointScale > 0.0);
 
     /*
      * Float reverse boundary regression.
@@ -2458,6 +2710,18 @@ unittest
     assert(!floatOutsideBoundaryProjection.tryReverse(
         floatOutsideBoundaryProjected,
         floatOutsideBoundaryRecovered));
+
+    ConformalProjectionFactors!float rejectedReverseFactors;
+    assert(!floatOutsideBoundaryProjection.tryReverseFactors(
+        floatOutsideBoundaryProjected,
+        rejectedReverseFactors));
+
+    assert(rejectedReverseFactors.meridianConvergence.radians == 0.0f);
+    assert(rejectedReverseFactors.pointScale == 0.0f);
+
+    assertThrown!GeodesyValueException(
+        floatOutsideBoundaryProjection.reverseFactors(
+            floatOutsideBoundaryProjected));
 
     // Projection-specific flattening bound.
     const tooFlat = Ellipsoid!double.fromFlattening(6_378_137.0, 0.02);

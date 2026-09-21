@@ -393,8 +393,18 @@ private void projectionApiContract()
     ProjectedCoordinate!double tmProjected;
     tm.tryForward(source, tmProjected);
 
+    ConformalProjectionFactors!double tmForwardFactors;
+    tm.tryForwardFactors(
+        source,
+        tmForwardFactors);
+
     GeographicCoordinate!double tmReversed;
     tm.tryReverse(tmProjected, tmReversed);
+
+    ConformalProjectionFactors!double tmReverseFactors;
+    tm.tryReverseFactors(
+        tmProjected,
+        tmReverseFactors);
 
     UtmZone zone;
     UtmZone.tryFromNumber(33, zone);
