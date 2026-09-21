@@ -144,20 +144,29 @@ orientation conventions, singular cases, scalar policy, and independent
 validation evidence. See ADR-0009 and
 `docs/TOPOCENTRIC_VALIDATION_PLAN.md`.
 
-### P0 — Transverse Mercator / UTM projection factors
+### P0 — Transverse Mercator / UTM projection factors — accepted 2026-09-21
 
-Extend the accepted Transverse Mercator and UTM surfaces with the projection
-information required for practical use, at minimum:
+This capability is accepted under ADR-0011.
 
-- meridian convergence;
-- point scale.
+The implemented additive API provides:
 
-This is an extension of existing projection mathematics, not a general CRS
-factor or CRS-discovery facility.
+- `ConformalProjectionFactors!T`;
+- meridian convergence as `Angle!T`;
+- dimensionless isotropic point scale;
+- checked and throwing forward-factor operations on `TransverseMercator!T`;
+- checked and throwing reverse-factor operations on `TransverseMercator!T`;
+- the same four operations on prepared `UtmProjection!T` objects by exact
+  delegation to their underlying bounded Transverse Mercator operation.
 
-The existing forward/reverse API must not be broken merely to add factors.
-Research must determine whether factors belong in an additional result type,
-dedicated operation, or another additive API.
+The existing coordinate forward/reverse API remains unchanged.
+
+Reverse factors use the same post-policy represented geographic point as public
+reverse projection, including representation-aware +/-60-degree boundary
+handling and the canonical pole convention defined by ADR-0011.
+
+Automatic UTM zone-selection helpers do not gain separate factor operations.
+Broader non-conformal projection differentials and CRS-level factor discovery
+remain outside this accepted slice.
 
 ### P0 — Pseudo-Mercator
 

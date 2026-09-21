@@ -16,6 +16,12 @@ The project follows Semantic Versioning from the first tagged public release.
 - Geodetic-origin and geocentric-origin frame construction with explicit pole,
   rotation-axis, geocentre, and canonical interior semantics.
 - ADR-0009 and the topocentric validation program.
+- Public `ConformalProjectionFactors!T` result type with strong
+  `Angle!T` meridian convergence and dimensionless point scale.
+- Checked and throwing conformal-factor operations on prepared
+  `TransverseMercator!T` and `UtmProjection!T` projections.
+- ADR-0011 defining conformal projection-factor semantics, reverse
+  representation policy, pole convention, and UTM delegation.
 
 ### Validation
 
@@ -28,6 +34,14 @@ The project follows Semantic Versioning from the first tagged public release.
 - Exercised the complete PROJ differential corpus with `real` on every hosted
   target where `real` is wider than `double`, including Linux AArch64 with a
   113-bit mantissa.
+- Validated Transverse Mercator meridian convergence and point scale against
+  GeographicLib and the independent analytic spherical model under DMD and LDC.
+- Validated reverse factors at the accepted post-policy working point for
+  `double` and `float`, including independently generated binary32 projected
+  inputs and representation-aware +/-60-degree boundary behavior.
+- Confirmed exact UTM-to-Transverse-Mercator factor delegation for prepared
+  projections and compile-time exclusion of `ProjectionFactorResearch` entry
+  points from normal public builds.
 
 ## [0.2.0] - 2026-09-19
 

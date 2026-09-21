@@ -1078,6 +1078,90 @@ Windows AArch64 remains an informational/non-blocking CI entry for now because
 the LDC Windows-on-ARM64 path is comparatively young. Its successful result is
 recorded as additional evidence but is not required for the acceptance decision.
 
+## Projection-factor acceptance evidence
+
+The additive conformal projection-factor API accepted under ADR-0011 was
+validated independently of the projected-position acceptance program.
+
+Forward factor validation exercised six deterministic projection profiles with
+2,081 cases each, for 12,486 total cases under both DMD and LDC. GeographicLib
+was used as the ellipsoidal reference and the spherical profile used the
+independent analytic spherical Transverse Mercator result.
+
+For the wide synthetic `f = 0.01` stress profile, the observed forward maxima
+were approximately:
+
+~~~text
+|delta meridian convergence|   3.9324121e-08 degrees
+|delta point scale|            2.3990778e-09
+relative delta point scale     1.1615866e-09
+~~~
+
+The ordinary terrestrial ellipsoid profiles remained near floating-point
+rounding scale.
+
+Reverse factor research compared two architectures:
+
+~~~text
+A = public reverse -> forward factor evaluation
+B = accepted post-policy reverse working point -> factor evaluation
+~~~
+
+Candidate B was accepted. The binary64 corpus contained 12,486 cases and
+reproduced the forward-reference accuracy.
+
+Two independent binary32 studies then confirmed the architecture:
+
+~~~text
+FLOAT-R1:
+    cases                         12486
+    gamma B/A/tie                 4159 / 14 / 8313
+    scale B/A/tie                  520 / 4 / 11962
+
+FLOAT-R2:
+    independently generated E/N
+    cases                         12378
+    gamma B/A/tie                 5072 / 7 / 7299
+    scale B/A/tie                  747 / 0 / 11631
+~~~
+
+FLOAT-R3 exercised 546 representation-boundary cases. Public reverse and
+reverse-factor acceptance matched exactly:
+
+~~~text
+reverse accepted/rejected       244 / 302
+factors accepted/rejected       244 / 302
+acceptance parity failures      0
+accepted raw excursions         66
+clamped-longitude failures      0
+~~~
+
+For all clamp-sensitive spherical cases, factor evaluation at the post-policy
+clamped boundary point was closer than evaluation at the raw reverse point; the
+maximum observed difference from the analytic clamped factor result was zero in
+the probe's public binary32 representation.
+
+The exact geographic poles use the ADR-0011 API convention:
+
+~~~text
+meridianConvergence = 0
+pointScale          = k0
+~~~
+
+independent of source longitude.
+
+Production acceptance additionally requires and currently passes:
+
+- DMD and LDC unit tests;
+- DMD and LDC release builds;
+- public and named-argument API compile contracts;
+- the deterministic Transverse Mercator reverse-boundary property gate;
+- normal-build rejection of `ProjectionFactorResearch` entry points;
+- research-build availability of those gated entry points.
+
+The research bounds above are characterization guards, not public accuracy
+guarantees.
+
 ## Current structured-reference evidence
 
 The large GeographicLib 2.7 `TransverseMercatorExact` corpora are now complete

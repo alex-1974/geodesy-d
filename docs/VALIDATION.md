@@ -29,6 +29,50 @@ dub build --compiler=ldc2 --build=release
 
 These tests require only D/Phobos.
 
+## Conformal projection-factor validation
+
+The accepted Transverse Mercator projection-factor surface is validated
+separately from projected-position accuracy.
+
+The factor program covers:
+
+- forward meridian convergence and point scale against GeographicLib;
+- an independent analytic spherical reference;
+- reverse evaluation at the accepted post-policy working-precision geographic
+  point;
+- `double` reverse comparison;
+- binary32 reverse behavior for both geodesy-d-generated projected coordinates
+  and independently generated projected coordinates;
+- representation-aware +/-60-degree reverse-boundary acceptance and clamping;
+- the canonical exact-pole factor convention;
+- DMD/LDC agreement;
+- public API and named-argument compile contracts;
+- normal-build rejection of research-only factor entry points;
+- exact prepared-UTM delegation to the accepted Transverse Mercator factor
+  implementation.
+
+The dedicated research material is retained under:
+
+~~~text
+research/projection-factors/
+~~~
+
+ADR-0011 records the accepted public semantics. The research tolerances are
+characterization guards and are not public API accuracy promises.
+
+The ordinary Transverse Mercator reverse-domain property gate remains:
+
+~~~bash
+tools/validate-tm-boundary-property.sh
+~~~
+
+and the public compile contract remains:
+
+~~~bash
+tools/validate-api.sh
+DC=ldc2 tools/validate-api.sh
+~~~
+
 ## Optional PROJ differential gate
 
 When PROJ command-line tools are installed:

@@ -11,7 +11,7 @@ a CRS database or a replacement for the complete PROJ ecosystem.
 
 ## Status
 
-The `v0.2.0` release line provides:
+The current development line provides:
 
 - strong `Angle`, `Latitude`, and `Longitude` value types;
 - reference ellipsoids;
@@ -22,6 +22,8 @@ The `v0.2.0` release line provides:
 - EPSG 1033 Position Vector 7-parameter Helmert transformations;
 - EPSG 1032 Coordinate Frame 7-parameter Helmert transformations;
 - bounded generic `TransverseMercator!T`;
+- conformal projection factors providing meridian convergence and isotropic
+  point scale for prepared Transverse Mercator and UTM projections;
 - Universal Transverse Mercator zone and hemisphere policy;
 - prepared `UtmProjection!T`;
 - tagged `UtmCoordinate!T`;
@@ -323,7 +325,7 @@ dependency.
 
 ## Validation
 
-The v0.2.0 release is validated with:
+The current development line is validated with:
 
 - DMD and LDC;
 - the public API compile contract;
@@ -331,7 +333,10 @@ The v0.2.0 release is validated with:
 - GeographicLib 2.7 reference and differential validation;
 - PROJ 9.7.1 differential validation;
 - multi-platform validation matrices for Transverse Mercator, UTM, and
-  ellipsoidal geodesics.
+  ellipsoidal geodesics;
+- independent Transverse Mercator projection-factor validation against
+  GeographicLib and the analytic spherical model, including reverse
+  representation-boundary tests.
 
 The original v0.1 extended fixed-seed differential suite passed:
 

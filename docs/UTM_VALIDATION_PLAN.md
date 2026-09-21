@@ -760,6 +760,10 @@ Measured coverage includes:
 - projected natural-origin invariants for all zones and hemispheres;
 - exact forward delegation equivalence with `TransverseMercator!T`;
 - exact reverse delegation equivalence with `TransverseMercator!T`;
+- exact prepared forward-factor delegation equivalence with
+  `TransverseMercator!T`;
+- exact prepared reverse-factor delegation equivalence with
+  `TransverseMercator!T`;
 - explicit neighboring-zone operation;
 - rejection of invalid zones and hemisphere values;
 - rejection of spherical ellipsoids;
@@ -1100,7 +1104,9 @@ and exercise:
 - `UtmProjection.tryFromZone`;
 - projection properties;
 - `UtmProjection.tryForward`;
+- `UtmProjection.tryForwardFactors`;
 - `UtmProjection.tryReverse`;
+- `UtmProjection.tryReverseFactors`;
 - automatic `tryForwardUtm`;
 - tagged `tryReverseUtm`.
 
@@ -1537,6 +1543,34 @@ The following intentional differences were confirmed and retained:
    Earth-size ranges. geodesy-d deliberately applies an Earth-size safety
    policy because its current coordinate types do not encode linear-unit
    metadata while UTM false offsets are defined in metres.
+
+### UTM-AF — prepared projection-factor delegation
+
+`UtmProjection!T` exposes the same four conformal factor operations as its
+prepared bounded Transverse Mercator implementation:
+
+~~~text
+tryForwardFactors / forwardFactors
+tryReverseFactors / reverseFactors
+~~~
+
+No UTM-specific factor mathematics is permitted.
+
+The unit-test gate prepares an equivalent `TransverseMercator!T` from the
+represented UTM parameters and requires exact equality of meridian convergence
+and point scale for both forward and reverse factor evaluation.
+
+This exact delegation identity is exercised for public `double` and binary32
+`float`. Invalid prepared UTM projections reject the checked factor operations,
+and the throwing wrappers raise `GeodesyValueException`.
+
+The public API and named-argument compile contracts cover the new methods under
+both DMD and LDC.
+
+Automatic `tryForwardUtm` / `forwardUtm` and tagged reverse convenience
+operations deliberately do not gain separate factor-returning variants in this
+accepted slice. ADR-0011 keeps factor evaluation on the explicitly prepared
+`UtmProjection!T` surface.
 
 ### UTM-C2 — numerical reference
 

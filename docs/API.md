@@ -230,6 +230,35 @@ dimensionless fraction. The EPSG-style factory accepts arc-seconds and ppm.
 `pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is exposed in
 v0.1.
 
+## Conformal projection factors — current unreleased accepted surface
+
+The aggregate public API exports:
+
+~~~text
+ConformalProjectionFactors<T>
+~~~
+
+A successfully computed value exposes:
+
+~~~text
+meridianConvergence : Angle<T>
+pointScale          : T
+~~~
+
+`meridianConvergence` is the bearing of grid north measured clockwise from true
+north. Positive values therefore represent a clockwise rotation from true north
+to grid north.
+
+`pointScale` is the dimensionless isotropic local scale of the conformal
+projection and is strictly positive for a successfully computed result.
+
+`ConformalProjectionFactors<T>.init` has `pointScale == 0` and is intentionally
+not a successfully computed result. Arbitrary public construction is not
+provided.
+
+See ADR-0011 for reverse representation policy, the exact-pole convention, and
+the rationale for using a conformal-specific result type.
+
 ## Transverse Mercator — current unreleased accepted surface
 
 The current development line exports the accepted bounded generic Transverse
@@ -242,6 +271,16 @@ TransverseMercator<T>
 Construction uses `tryFromParameters` / `fromParameters`, and prepared
 operations expose checked/throwing `tryForward` / `forward` and
 `tryReverse` / `reverse` pairs.
+
+Prepared projections additionally expose:
+
+~~~text
+tryForwardFactors / forwardFactors
+tryReverseFactors / reverseFactors
+~~~
+
+The factor operations use the same bounded domain and representation-aware
+reverse policy as the corresponding coordinate operations.
 
 `TransverseMercator<T>.init` is intentionally invalid.
 
@@ -272,7 +311,18 @@ because they contain an invalid default zone.
 member is therefore part of the public default-state contract and must not be
 reordered casually.
 
-See ADR-0007 and `docs/UTM_VALIDATION_PLAN.md` for the accepted policy,
+Prepared `UtmProjection<T>` values additionally expose:
+
+~~~text
+tryForwardFactors / forwardFactors
+tryReverseFactors / reverseFactors
+~~~
+
+These operations delegate factor mathematics and reverse boundary/pole semantics
+to the prepared underlying `TransverseMercator<T>`. No separate UTM factor
+formula is defined.
+
+See ADR-0007, ADR-0011, and `docs/UTM_VALIDATION_PLAN.md` for the accepted policy,
 parameterization, boundary, and platform contract.
 
 ## Ellipsoidal geodesics — current unreleased surface
