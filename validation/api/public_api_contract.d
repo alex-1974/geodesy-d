@@ -427,8 +427,18 @@ private void projectionApiContract()
     ProjectedCoordinate!double utmProjected;
     utm.tryForward(source, utmProjected);
 
+    ConformalProjectionFactors!double utmForwardFactors;
+    utm.tryForwardFactors(
+        source,
+        utmForwardFactors);
+
     GeographicCoordinate!double utmReversed;
     utm.tryReverse(utmProjected, utmReversed);
+
+    ConformalProjectionFactors!double utmReverseFactors;
+    utm.tryReverseFactors(
+        utmProjected,
+        utmReverseFactors);
 
     UtmZone selectedZone;
     UtmHemisphere selectedHemisphere;
@@ -454,7 +464,9 @@ private void projectionApiContract()
     cast(void) factorScale;
     cast(void) tmReversed;
     cast(void) tagged;
+    cast(void) utmForwardFactors;
     cast(void) utmReversed;
+    cast(void) utmReverseFactors;
     cast(void) selectedZone;
     cast(void) selectedHemisphere;
     cast(void) automaticReversed;

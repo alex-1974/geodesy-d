@@ -249,10 +249,20 @@ private void checkedNamedArgumentContract()
         source: projectionSource,
         result: utmProjected);
 
+    ConformalProjectionFactors!double utmForwardFactors;
+    utm.tryForwardFactors(
+        source: projectionSource,
+        result: utmForwardFactors);
+
     GeographicCoordinate!double utmReversed;
     utm.tryReverse(
         source: utmProjected,
         result: utmReversed);
+
+    ConformalProjectionFactors!double utmReverseFactors;
+    utm.tryReverseFactors(
+        source: utmProjected,
+        result: utmReverseFactors);
 
     UtmZone selectedZone;
     UtmHemisphere selectedHemisphere;
@@ -358,7 +368,9 @@ private void checkedNamedArgumentContract()
     cast(void) tmReversed;
     cast(void) tmReverseFactors;
     cast(void) tagged;
+    cast(void) utmForwardFactors;
     cast(void) utmReversed;
+    cast(void) utmReverseFactors;
     cast(void) selectedZone;
     cast(void) selectedHemisphere;
     cast(void) automaticReversed;
@@ -559,6 +571,14 @@ private void throwingNamedArgumentContract()
         utm.reverse(
             source: utmForward);
 
+    const utmForwardFactors =
+        utm.forwardFactors(
+            source: source);
+
+    const utmReverseFactors =
+        utm.reverseFactors(
+            source: utmForward);
+
     const tagged =
         UtmCoordinate!double.fromComponents(
             zone: zone,
@@ -634,6 +654,8 @@ private void throwingNamedArgumentContract()
     cast(void) tmForwardFactors;
     cast(void) tmReverseFactors;
     cast(void) utmReverse;
+    cast(void) utmForwardFactors;
+    cast(void) utmReverseFactors;
     cast(void) tagged;
     cast(void) autoReverse;
     cast(void) geodesic;
