@@ -23,6 +23,11 @@ static assert(is(TopocentricFrame!real));
 
 static assert(is(GeocentricTranslation!double));
 static assert(is(ProjectedCoordinate!double));
+
+static assert(is(ConformalProjectionFactors!float));
+static assert(is(ConformalProjectionFactors!double));
+static assert(is(ConformalProjectionFactors!real));
+
 static assert(is(TransverseMercator!double));
 static assert(is(UtmZone));
 static assert(is(UtmCoordinate!double));
@@ -363,6 +368,18 @@ private void projectionApiContract()
         0.0,
         projectedCoordinate);
 
+    ConformalProjectionFactors!double factors;
+
+    static assert(
+        is(typeof(factors.meridianConvergence) == Angle!double));
+    static assert(
+        is(typeof(factors.pointScale) == double));
+
+    const factorConvergence =
+        factors.meridianConvergence;
+    const factorScale =
+        factors.pointScale;
+
     TransverseMercator!double tm;
     TransverseMercator!double.tryFromParameters(
         ellipsoid,
@@ -423,6 +440,8 @@ private void projectionApiContract()
         automaticReversed);
 
     cast(void) projectedCoordinate;
+    cast(void) factorConvergence;
+    cast(void) factorScale;
     cast(void) tmReversed;
     cast(void) tagged;
     cast(void) utmReversed;
