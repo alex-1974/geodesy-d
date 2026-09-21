@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-A — semantics and research contract
+Status: PM-B complete — PM-C next
 
 ## Goal
 
@@ -171,9 +171,10 @@ PM-A — semantic contract and ownership boundary
     Freeze the method identity, non-goals, reference sources, and unresolved
     questions. No production API.
 
-PM-B — numerical forward study
-    Compare analytically equivalent forward formulations across scalar types,
-    ordinary and adversarial latitudes, and independent reference values.
+PM-B — numerical forward study — PASS
+    `asinh(tan(phi))` accepted as the portable forward numerical candidate
+    after DMD/LDC, high-precision oracle, alternative-form and backend
+    characterization. See `PM_B_FORWARD_RESULTS.md`.
 
 PM-C — numerical reverse and round-trip study
     Compare inverse formulations, extreme finite projected inputs,
