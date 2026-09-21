@@ -1179,3 +1179,241 @@ FLOAT-R3
 ~~~
 
 Pole convergence remains separate and depends on the PF-A convention decision.
+
+## Reverse candidate B — float sheet-boundary semantics PASS
+
+FLOAT-R3 isolates the represented reverse-domain boundary semantics for
+`TransverseMercator!float`.
+
+Unlike FLOAT-R1 and FLOAT-R2, this gate is primarily semantic rather than a
+large numerical-accuracy corpus.
+
+The probe uses an independent exact analytic spherical Transverse Mercator
+forward/reverse and factor oracle. Public projected coordinates are binary32,
+so the experiment observes the same represented E/N values seen by the
+production API while avoiding ellipsoidal-series error in the oracle.
+
+The public `tryReverse()` operation remains the sole authority for domain
+acceptance. Candidate B must make exactly the same acceptance decision and,
+for an accepted represented excursion beyond the nominal sheet, evaluate its
+factors at the same exact +/-60-degree post-policy boundary.
+
+The deterministic corpus contains:
+
+~~~text
+scalar:
+    float
+
+sphere:
+    R = 6371000 m
+
+scale factors:
+    0.9f
+    1.0f
+    1.1f
+
+non-polar nominal latitudes:
+    13
+
+sheet sides:
+    -60 degrees
+    +60 degrees
+
+boundary/outside magnitudes:
+    60
+    60.000001
+    60.001
+    60.01
+    60.1
+    61
+    65 degrees
+
+total:
+    546 represented ProjectedCoordinate<float> cases
+~~~
+
+### Acceptance parity
+
+Results:
+
+~~~text
+tryReverse():
+    accepted: 244
+    rejected: 302
+
+candidate B reverse factors:
+    accepted: 244
+    rejected: 302
+
+acceptance parity failures:
+    0
+~~~
+
+Candidate B therefore inherits the public reverse-domain acceptance decision
+exactly over this boundary corpus.
+
+### Represented boundary excursions
+
+The independent spherical inverse showed:
+
+~~~text
+accepted cases whose raw represented inverse lies beyond +/-60 degrees:
+    66
+
+rejected raw boundary excursions:
+    302
+~~~
+
+The test therefore materially exercises both sides of the representation-aware
+boundary policy rather than merely testing values whose represented inverse
+happens to remain inside the nominal sheet.
+
+For every accepted raw excursion, the public reverse result matched the exact
+expected sheet-boundary longitude:
+
+~~~text
+clamped public longitude failures:
+    0
+~~~
+
+### Factor clamp semantics
+
+Some accepted represented excursions give different binary32 factor results
+depending on whether factors are evaluated at the raw reconstructed longitude
+or at the public post-policy +/-60-degree boundary.
+
+These cases directly distinguish the two possible semantics.
+
+Results:
+
+~~~text
+gamma clamp-sensitive cases:
+    48
+
+candidate B closer to clamped boundary oracle:
+    48
+
+candidate B closer to raw outside oracle:
+    0
+
+ties:
+    0
+
+
+scale clamp-sensitive cases:
+    6
+
+candidate B closer to clamped boundary oracle:
+    6
+
+candidate B closer to raw outside oracle:
+    0
+
+ties:
+    0
+~~~
+
+Candidate B therefore evaluates factors at the public post-policy boundary,
+not at the raw reconstructed longitude outside the supported sheet.
+
+### Analytic spherical factor agreement
+
+For every accepted represented input, after independently applying the same
+sheet-boundary clamp in the analytic spherical oracle:
+
+~~~text
+max |gamma_B - analytic clamped gamma|:
+    0 at binary32 precision
+
+max relative |k_B - analytic clamped k|:
+    0 at binary32 precision
+~~~
+
+The first recorded zero-error case was:
+
+~~~text
+k0 = 0.899999976
+latitude = -89.9999000 degrees
+delta longitude = -60 degrees
+~~~
+
+The zero maxima are therefore genuine binary32 equality, not an uninitialized
+measurement artifact.
+
+DMD 2.111.0 and LDC 1.41.0 produced identical complete probe output.
+
+### Existing reverse-domain property gate
+
+The existing production-oriented Transverse Mercator boundary/property
+validator was rerun after FLOAT-R3.
+
+It remained PASS for both scalar types.
+
+For `double`:
+
+~~~text
+boundary rejected:
+    0 / 120
+
+boundary residual beyond 0.001 m budget:
+    0
+
+outside accepted beyond budget:
+    0
+
+worst accepted outside residual:
+    0.000213479484405 m
+~~~
+
+For `float`:
+
+~~~text
+boundary rejected:
+    0 / 108
+
+boundary residual beyond 2 m budget:
+    0
+
+outside accepted beyond budget:
+    0
+
+worst accepted outside residual:
+    1.39297150223 m
+~~~
+
+Overall existing boundary-property result:
+
+~~~text
+PASS
+~~~
+
+FLOAT-R3 therefore introduces no evidence of a conflict with the established
+public Transverse Mercator reverse-domain policy.
+
+### FLOAT-R3 conclusion
+
+FLOAT-R3 establishes that candidate B is semantically consistent with the
+existing public reverse-domain behavior:
+
+1. `tryReverse()` remains the authoritative acceptance gate;
+2. factor acceptance has exact parity with public reverse acceptance;
+3. represented excursions that are accepted by the public accuracy policy are
+   evaluated at the exact +/-60-degree sheet boundary;
+4. represented outside points rejected by reverse are also rejected by the
+   factor path;
+5. when raw and clamped factor values are distinguishable at binary32
+   precision, candidate B always follows the clamped public semantics;
+6. the resulting spherical factor values exactly match the independently
+   clamped analytic binary32 oracle;
+7. the existing reverse-domain property validation remains PASS;
+8. DMD and LDC behave identically.
+
+Together, FLOAT-R1, FLOAT-R2, and FLOAT-R3 provide numerical, independence,
+representation, and boundary-policy evidence for candidate B as the preferred
+reverse-factor architecture.
+
+There remains no evidence requiring candidate C.
+
+The remaining distinct semantic question is convergence at the geographic
+poles. Longitude is degenerate there, so that question requires an explicit
+API convention rather than another numerical boundary experiment.
