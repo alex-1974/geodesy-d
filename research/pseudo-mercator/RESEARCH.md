@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-B complete — PM-C next
+Status: PM-C complete — PM-D next
 
 ## Goal
 
@@ -176,9 +176,10 @@ PM-B — numerical forward study — PASS
     after DMD/LDC, high-precision oracle, alternative-form and backend
     characterization. See `PM_B_FORWARD_RESULTS.md`.
 
-PM-C — numerical reverse and round-trip study
-    Compare inverse formulations, extreme finite projected inputs,
-    representability limits, and forward/reverse round trips.
+PM-C — numerical reverse and round-trip study — PASS
+    `atan(sinh(q))` accepted as the portable reverse numerical candidate.
+    Forward/reverse round trips and scalar representability limits are
+    characterized in `PM_C_REVERSE_ROUNDTRIP_RESULTS.md`.
 
 PM-D — domain and longitude-policy gate
     Resolve supported latitude domain, pole handling, projected-coordinate
