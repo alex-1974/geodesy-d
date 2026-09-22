@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-D complete — PM-E next
+Status: PM-E0 complete — PM-E1 next
 
 ## Goal
 
@@ -207,9 +207,15 @@ PM-D — domain and longitude-policy gate — PASS
     against represented forward boundaries, and easting uses working-precision
     principal-sheet classification. See `PM_D_DOMAIN_POLICY.md`.
 
-PM-E — independent differential validation
-    Validate the selected research kernel against PROJ and an independent
-    high-precision analytic oracle over deterministic corpora.
+PM-E — independent differential validation — ACTIVE
+    PM-E0 PASS: local PROJ `webmerc` is qualified as a numerical differential
+    reference over the shared supported domain. Exact +pi endpoint policy is
+    intentionally treated separately from numerical agreement.
+    See `PM_E0_PROJ_QUALIFICATION.md`.
+
+    PM-E1 NEXT: validate the complete selected D research kernel and PM-D
+    domain classifier for float, double, and real against the high-precision
+    oracle and compatible PROJ cases.
 
 PM-F — public API gate
     Only after PM-A through PM-E, resolve the public type name,
