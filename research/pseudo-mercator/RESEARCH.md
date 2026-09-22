@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-C complete — PM-D next
+Status: PM-D complete — PM-E next
 
 ## Goal
 
@@ -62,36 +62,56 @@ cutoff is not automatically the domain of the geodesy-d projection kernel.
 No XYZ/TMS tile addressing, zoom level, pixel size, tile extent, tile URL, or
 raster concern belongs in this research slice.
 
-## Open domain question
+## PM-D domain decision
 
-The production domain is deliberately not fixed in PM-A.
+PM-D adopts the represented closed forward latitude domain:
 
-Research must distinguish at least:
+    -88 degrees <= phi <= +88 degrees
 
-- the mathematical open-pole domain |phi| < pi/2;
-- the IOGP guidance that the stated formula should not be used poleward of
-  approximately 88 degrees;
-- the EPSG:3857 area of use of approximately +/-85.06 degrees;
-- the WebMercatorQuad square cutoff of approximately
-  +/-85.0511287798 degrees;
-- scalar-dependent limits where a finite projected coordinate can no longer be
-  reversed to a non-pole Latitude!T representation.
+The geographic poles are outside the supported method domain.
 
-The tile cutoff must not be adopted merely because EPSG:3857 is the dominant
-consumer.
+The normalized northing boundary is derived from the represented public
++/-88-degree forward points. Reverse must classify projected northing against
+those represented forward boundaries before inverse-latitude rounding can hide
+an out-of-domain input.
 
-## Longitude policy question
+The approximately +/-85.06-degree EPSG:3857 area of use and the approximately
++/-85.0511287798-degree WebMercatorQuad cutoff remain CRS/consumer policy and
+are not geodesy-d kernel limits.
 
-EPSG Guidance Note 7-2 assumes longitude wrap-around into the conventional
-range around the longitude of natural origin.
+See `PM_D_DOMAIN_POLICY.md`.
 
-Research must define exact behaviour for:
 
-- +/-180 degrees;
-- a central meridian different from zero;
-- an area crossing the antimeridian;
-- exact +/-pi longitude difference;
-- forward/reverse canonicalization parity.
+## PM-D longitude policy decision
+
+Pseudo-Mercator uses the existing geodesy-d principal longitude convention:
+
+    -pi <= deltaLambda < +pi
+
+An exact represented +pi tie canonicalizes to -pi.
+
+The mathematical principal easting sheet is therefore:
+
+    FE - a*pi <= E < FE + a*pi
+
+The open east boundary must not be pre-rounded to public scalar T and used as a
+raw comparison limit. PM-D demonstrated a `float`/WGS84 representation
+collision where a legal east-side point and the excluded mathematical +pi
+boundary round to the same public easting.
+
+Reverse therefore classifies the longitude difference reconstructed from the
+represented easting in working precision.
+
+If a legal point and an excluded mathematical boundary are indistinguishable
+after public scalar rounding, the legal represented value remains accepted.
+
+Reverse longitude output is canonicalized to `[-pi,+pi)`.
+
+Bit-identical recovery of every independently rounded public longitude is not a
+PM-D requirement; numerical round-trip accuracy is validated by PM-E.
+
+See `PM_D_DOMAIN_POLICY.md`.
+
 
 ## Numerical candidates
 
@@ -181,9 +201,11 @@ PM-C — numerical reverse and round-trip study — PASS
     Forward/reverse round trips and scalar representability limits are
     characterized in `PM_C_REVERSE_ROUNDTRIP_RESULTS.md`.
 
-PM-D — domain and longitude-policy gate
-    Resolve supported latitude domain, pole handling, projected-coordinate
-    acceptance, longitude wrap-around, and exact boundary semantics.
+PM-D — domain and longitude-policy gate — PASS
+    +/-88 degrees accepted as the represented closed latitude boundary.
+    Principal longitude difference is [-pi,+pi), projected northing is checked
+    against represented forward boundaries, and easting uses working-precision
+    principal-sheet classification. See `PM_D_DOMAIN_POLICY.md`.
 
 PM-E — independent differential validation
     Validate the selected research kernel against PROJ and an independent
