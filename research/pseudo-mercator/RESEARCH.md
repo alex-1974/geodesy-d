@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-E1A complete — PM-E1B next
+Status: PM-E1B complete — PM-E1C next
 
 ## Goal
 
@@ -218,8 +218,14 @@ PM-E — independent differential validation — ACTIVE
     legal-east endpoint anchors handle the remaining rounding collisions
     without general domain slack. See `PM_E1A_EASTING_DOMAIN_RESULTS.md`.
 
-    PM-E1B NEXT: assemble the complete D research kernel with the accepted
-    PM-B/PM-C formulas and PM-D/PM-E1A domain classifiers.
+    PM-E1B PASS: the complete D research kernel composes the accepted
+    PM-B/PM-C formulas with the PM-D/PM-E1A domain classifiers. The
+    deterministic 18-profile / 144-round-trip corpus has zero failures and
+    byte-identical DMD/LDC output. See `PM_E1B_KERNEL_RESULTS.md`.
+
+    PM-E1C NEXT: independently validate the complete research kernel against
+    the high-precision analytical oracle and the PM-E0-qualified PROJ
+    `webmerc` reference, with explicit representation-aware error accounting.
 
 PM-F — public API gate
     Only after PM-A through PM-E, resolve the public type name,

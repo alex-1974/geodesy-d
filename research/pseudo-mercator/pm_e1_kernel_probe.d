@@ -1,0 +1,1629 @@
+/**
+ * PM-E1B — complete research Pseudo-Mercator kernel.
+ *
+ * Research-only.
+ *
+ * Composes the already accepted pieces:
+ *
+ *   PM-B   q   = asinh(tan(phi))
+ *   PM-C   phi = atan(sinh(q))
+ *   PM-D   latitude/domain and [-pi,+pi) longitude policy
+ *   PM-E1A represented easting endpoint policy
+ *
+ * This file is not production API.
+ */
+module pm_e1_kernel_probe;
+
+import geodesy.angle :
+    Latitude,
+    Longitude;
+
+import geodesy.geographic :
+    GeographicCoordinate;
+
+import geodesy.projected :
+    ProjectedCoordinate;
+
+import geodesy.scalar :
+    isGeodesyScalar;
+
+import std.math :
+    PI,
+    asinh,
+    atan,
+    fabs,
+    isFinite,
+    nextDown,
+    nextUp,
+    sinh,
+    tan;
+
+import std.stdio :
+    writefln,
+    writeln;
+
+
+private template WorkingScalar(T)
+if (isGeodesyScalar!T)
+{
+    static if (is(T == float))
+        alias WorkingScalar = double;
+    else
+        alias WorkingScalar = T;
+}
+
+
+private T pi(T)()
+{
+    return cast(T) PI;
+}
+
+
+private void twoSum(T)(
+    const T a,
+    const T b,
+    out T sum,
+    out T residual)
+{
+    sum = a + b;
+
+    const T z =
+        sum - a;
+
+    residual =
+        (a - (sum - z))
+        + (b - z);
+}
+
+
+private T canonicalPublicRadians(T)(
+    const T radians)
+{
+    const T p =
+        pi!T;
+
+    const T twoP =
+        cast(T) 2 * p;
+
+    T result =
+        radians;
+
+    if (result >= p)
+        result -= twoP;
+    else if (result < -p)
+        result += twoP;
+
+    if (result >= p)
+        result -= twoP;
+    else if (result < -p)
+        result += twoP;
+
+    return result == cast(T) 0
+        ? cast(T) 0
+        : result;
+}
+
+
+private WorkingScalar!T workingCanonicalLongitude(T)(
+    const T radians)
+{
+    alias W = WorkingScalar!T;
+
+    const T canonical =
+        canonicalPublicRadians(
+            radians);
+
+    const T publicPi =
+        pi!T;
+
+    /*
+     * Preserve exact public cardinal semantics while widening.
+     */
+    if (canonical == cast(T) 0)
+        return cast(W) 0;
+
+    if (canonical == -publicPi)
+        return -pi!W;
+
+    const T halfPublicPi =
+        publicPi / cast(T) 2;
+
+    if (canonical == halfPublicPi)
+        return pi!W / cast(W) 2;
+
+    if (canonical == -halfPublicPi)
+        return -pi!W / cast(W) 2;
+
+    return cast(W) canonical;
+}
+
+
+private WorkingScalar!T normalizeWorking(T)(
+    WorkingScalar!T radians)
+{
+    alias W = WorkingScalar!T;
+
+    const W p =
+        pi!W;
+
+    const W twoP =
+        cast(W) 2 * p;
+
+    if (radians >= p)
+        radians -= twoP;
+    else if (radians < -p)
+        radians += twoP;
+
+    if (radians >= p)
+        radians -= twoP;
+    else if (radians < -p)
+        radians += twoP;
+
+    return radians == cast(W) 0
+        ? cast(W) 0
+        : radians;
+}
+
+
+private WorkingScalar!T longitudeDifference(T)(
+    const T longitude,
+    const T longitude0)
+{
+    alias W = WorkingScalar!T;
+
+    const W source =
+        workingCanonicalLongitude!T(
+            longitude);
+
+    const W origin =
+        workingCanonicalLongitude!T(
+            longitude0);
+
+    W sum;
+    W residual;
+
+    twoSum(
+        source,
+        -origin,
+        sum,
+        residual);
+
+    const W p =
+        pi!W;
+
+    const W twoP =
+        cast(W) 2 * p;
+
+    /*
+     * Residual-aware exact +/-pi tie.
+     *
+     * +pi canonicalizes to -pi.
+     */
+    if (sum > p
+        || (sum == p
+            && residual >= cast(W) 0))
+    {
+        sum -= twoP;
+    }
+    else if (sum < -p
+        || (sum == -p
+            && residual < cast(W) 0))
+    {
+        sum += twoP;
+    }
+
+    return normalizeWorking!T(
+        sum + residual);
+}
+
+
+private WorkingScalar!T addLongitude(T)(
+    const T longitude0,
+    const WorkingScalar!T delta)
+{
+    alias W = WorkingScalar!T;
+
+    const W origin =
+        workingCanonicalLongitude!T(
+            longitude0);
+
+    W sum;
+    W residual;
+
+    twoSum(
+        origin,
+        delta,
+        sum,
+        residual);
+
+    return normalizeWorking!T(
+        sum + residual);
+}
+
+
+private bool validPublicLongitude(T)(
+    const T radians)
+{
+    return isFinite(
+            radians)
+        && radians >= -pi!T
+        && radians <= pi!T;
+}
+
+
+/*
+ * Research-only characterization helper inherited from PM-E1A.
+ *
+ * This must not be mistaken for a production preparation algorithm.
+ */
+private bool findRepresentedEastMaximum(T)(
+    const T longitude0,
+    const T semiMajorAxis,
+    const T falseEasting,
+    out T representedEasting,
+    out WorkingScalar!T legalDelta,
+    out T legalLongitude)
+{
+    alias W = WorkingScalar!T;
+
+    enum size_t searchRadius =
+        4096;
+
+    const W p =
+        pi!W;
+
+    const W origin =
+        workingCanonicalLongitude!T(
+            longitude0);
+
+    const W twoP =
+        cast(W) 2 * p;
+
+    W opposite =
+        origin + p;
+
+    if (opposite >= p)
+        opposite -= twoP;
+    else if (opposite < -p)
+        opposite += twoP;
+
+    T centre =
+        cast(T) opposite;
+
+    const T publicPi =
+        pi!T;
+
+    if (!validPublicLongitude(
+            centre))
+    {
+        centre =
+            centre > cast(T) 0
+                ? publicPi
+                : -publicPi;
+    }
+
+    bool found = false;
+
+    representedEasting =
+        T.nan;
+
+    legalDelta =
+        -W.infinity;
+
+    legalLongitude =
+        T.nan;
+
+    size_t bestDistance =
+        size_t.max;
+
+
+    void consider(
+        const T candidate,
+        const size_t distance)
+    {
+        if (!validPublicLongitude(
+                candidate))
+            return;
+
+        const W delta =
+            longitudeDifference!T(
+                candidate,
+                longitude0);
+
+        if (!(delta >= cast(W) 0)
+            || !(delta < p))
+            return;
+
+        if (!found
+            || delta > legalDelta)
+        {
+            const W easting =
+                cast(W) falseEasting
+                + cast(W) semiMajorAxis
+                    * delta;
+
+            const T publicEasting =
+                cast(T) easting;
+
+            if (!isFinite(
+                    publicEasting))
+                return;
+
+            found = true;
+
+            legalDelta =
+                delta;
+
+            legalLongitude =
+                candidate;
+
+            representedEasting =
+                publicEasting;
+
+            bestDistance =
+                distance;
+        }
+    }
+
+
+    void scan(
+        const T scanCentre)
+    {
+        consider(
+            scanCentre,
+            0);
+
+        T lower =
+            scanCentre;
+
+        T upper =
+            scanCentre;
+
+        foreach (distance;
+            1 .. searchRadius + 1)
+        {
+            lower =
+                nextDown(lower);
+
+            upper =
+                nextUp(upper);
+
+            consider(
+                lower,
+                distance);
+
+            consider(
+                upper,
+                distance);
+        }
+    }
+
+
+    scan(
+        centre);
+
+    if (centre == -publicPi)
+        scan(publicPi);
+    else if (centre == publicPi)
+        scan(-publicPi);
+
+    return found
+        && bestDistance < searchRadius;
+}
+
+
+private struct ResearchPseudoMercator(T)
+if (isGeodesyScalar!T)
+{
+    alias W =
+        WorkingScalar!T;
+
+private:
+
+    bool _valid;
+
+    T _semiMajorAxis;
+    Longitude!T _longitudeOfNaturalOrigin;
+    T _falseEasting;
+    T _falseNorthing;
+
+    W _a;
+    W _falseEastingWorking;
+    W _falseNorthingWorking;
+
+    Latitude!T _southLatitude;
+    Latitude!T _northLatitude;
+
+    T _southNorthingBoundary;
+    T _northNorthingBoundary;
+
+    T _westEastingBoundary;
+
+    T _eastLegalMaximum;
+    W _eastLegalDelta;
+    T _eastLegalLongitude;
+
+public:
+
+    static bool tryPrepare(
+        const T semiMajorAxis,
+        const Longitude!T longitudeOfNaturalOrigin,
+        const T falseEasting,
+        const T falseNorthing,
+        out ResearchPseudoMercator result)
+    {
+        result =
+            ResearchPseudoMercator.init;
+
+        if (!isFinite(
+                semiMajorAxis)
+            || !(semiMajorAxis > cast(T) 0)
+            || !isFinite(
+                falseEasting)
+            || !isFinite(
+                falseNorthing))
+        {
+            return false;
+        }
+
+        Latitude!T northLatitude;
+        Latitude!T southLatitude;
+
+        if (!Latitude!T.tryFromDegrees(
+                cast(T) 88,
+                northLatitude)
+            || !Latitude!T.tryFromDegrees(
+                cast(T) -88,
+                southLatitude))
+        {
+            return false;
+        }
+
+        result._semiMajorAxis =
+            semiMajorAxis;
+
+        result._longitudeOfNaturalOrigin =
+            longitudeOfNaturalOrigin;
+
+        result._falseEasting =
+            falseEasting;
+
+        result._falseNorthing =
+            falseNorthing;
+
+        result._a =
+            cast(W) semiMajorAxis;
+
+        result._falseEastingWorking =
+            cast(W) falseEasting;
+
+        result._falseNorthingWorking =
+            cast(W) falseNorthing;
+
+        result._northLatitude =
+            northLatitude;
+
+        result._southLatitude =
+            southLatitude;
+
+        const W northPhi =
+            cast(W)
+                northLatitude.radians;
+
+        const W southPhi =
+            cast(W)
+                southLatitude.radians;
+
+        const W northQ =
+            asinh(
+                tan(
+                    northPhi));
+
+        const W southQ =
+            asinh(
+                tan(
+                    southPhi));
+
+        const T northBoundary =
+            cast(T) (
+                result._falseNorthingWorking
+                + result._a * northQ);
+
+        const T southBoundary =
+            cast(T) (
+                result._falseNorthingWorking
+                + result._a * southQ);
+
+        if (!isFinite(
+                northBoundary)
+            || !isFinite(
+                southBoundary)
+            || !(southBoundary
+                < northBoundary))
+        {
+            return false;
+        }
+
+        result._northNorthingBoundary =
+            northBoundary;
+
+        result._southNorthingBoundary =
+            southBoundary;
+
+        result._westEastingBoundary =
+            cast(T) (
+                result._falseEastingWorking
+                - result._a * pi!W);
+
+        if (!isFinite(
+                result._westEastingBoundary))
+        {
+            return false;
+        }
+
+        if (!findRepresentedEastMaximum!T(
+                longitudeOfNaturalOrigin.radians,
+                semiMajorAxis,
+                falseEasting,
+                result._eastLegalMaximum,
+                result._eastLegalDelta,
+                result._eastLegalLongitude))
+        {
+            return false;
+        }
+
+        result._valid =
+            true;
+
+        return true;
+    }
+
+
+    @property bool isValid() const
+    {
+        return _valid;
+    }
+
+
+    @property T southNorthingBoundary() const
+    {
+        return _southNorthingBoundary;
+    }
+
+
+    @property T northNorthingBoundary() const
+    {
+        return _northNorthingBoundary;
+    }
+
+
+    @property T westEastingBoundary() const
+    {
+        return _westEastingBoundary;
+    }
+
+
+    @property T eastLegalMaximum() const
+    {
+        return _eastLegalMaximum;
+    }
+
+
+    @property W eastLegalDelta() const
+    {
+        return _eastLegalDelta;
+    }
+
+
+    bool tryForward(
+        const GeographicCoordinate!T source,
+        out ProjectedCoordinate!T result) const
+    {
+        result =
+            ProjectedCoordinate!T.init;
+
+        if (!_valid)
+            return false;
+
+        const T latitudePublic =
+            source.latitude.radians;
+
+        if (latitudePublic
+                < _southLatitude.radians
+            || latitudePublic
+                > _northLatitude.radians)
+        {
+            return false;
+        }
+
+        const W phi =
+            cast(W)
+                latitudePublic;
+
+        const W deltaLongitude =
+            longitudeDifference!T(
+                source.longitude.radians,
+                _longitudeOfNaturalOrigin.radians);
+
+        const W q =
+            asinh(
+                tan(
+                    phi));
+
+        const W easting =
+            _falseEastingWorking
+            + _a * deltaLongitude;
+
+        const W northing =
+            _falseNorthingWorking
+            + _a * q;
+
+        if (!isFinite(
+                easting)
+            || !isFinite(
+                northing))
+        {
+            return false;
+        }
+
+        return ProjectedCoordinate!T
+            .tryFromComponents(
+                cast(T) easting,
+                cast(T) northing,
+                result);
+    }
+
+
+    bool tryReverse(
+        const ProjectedCoordinate!T source,
+        out GeographicCoordinate!T result) const
+    {
+        result =
+            GeographicCoordinate!T.init;
+
+        if (!_valid)
+            return false;
+
+        /*
+         * PM-D northing classification occurs before R2.
+         */
+        if (source.northing
+                < _southNorthingBoundary
+            || source.northing
+                > _northNorthingBoundary)
+        {
+            return false;
+        }
+
+        W deltaLongitude =
+            (
+                cast(W) source.easting
+                - _falseEastingWorking
+            ) / _a;
+
+        if (!isFinite(
+                deltaLongitude))
+        {
+            return false;
+        }
+
+        const W p =
+            pi!W;
+
+        /*
+         * PM-E1A easting classifier.
+         */
+        if (deltaLongitude >= -p
+            && deltaLongitude < p)
+        {
+            // Ordinary represented point.
+        }
+        else if (source.easting
+            == _westEastingBoundary)
+        {
+            deltaLongitude =
+                -p;
+        }
+        else if (source.easting
+            == _eastLegalMaximum)
+        {
+            deltaLongitude =
+                _eastLegalDelta;
+        }
+        else
+        {
+            return false;
+        }
+
+        Latitude!T latitude;
+
+        if (source.northing
+            == _northNorthingBoundary)
+        {
+            latitude =
+                _northLatitude;
+        }
+        else if (source.northing
+            == _southNorthingBoundary)
+        {
+            latitude =
+                _southLatitude;
+        }
+        else
+        {
+            const W q =
+                (
+                    cast(W) source.northing
+                    - _falseNorthingWorking
+                ) / _a;
+
+            if (!isFinite(
+                    q))
+            {
+                return false;
+            }
+
+            const W phi =
+                atan(
+                    sinh(
+                        q));
+
+            if (!isFinite(
+                    phi)
+                || !Latitude!T.tryFromRadians(
+                    cast(T) phi,
+                    latitude))
+            {
+                return false;
+            }
+        }
+
+        const W longitudeWorking =
+            addLongitude!T(
+                _longitudeOfNaturalOrigin.radians,
+                deltaLongitude);
+
+        if (!isFinite(
+                longitudeWorking))
+        {
+            return false;
+        }
+
+        const T longitudePublic =
+            canonicalPublicRadians!T(
+                cast(T)
+                    longitudeWorking);
+
+        Longitude!T longitude;
+
+        if (!Longitude!T.tryFromRadians(
+                longitudePublic,
+                longitude))
+        {
+            return false;
+        }
+
+        /*
+         * Enforce the unique public reverse representation.
+         */
+        longitude =
+            longitude.normalized;
+
+        result =
+            GeographicCoordinate!T
+                .fromComponents(
+                    latitude,
+                    longitude);
+
+        return true;
+    }
+}
+
+
+private bool makeGeographic(T)(
+    const real latitudeDegrees,
+    const real longitudeDegrees,
+    out GeographicCoordinate!T result)
+{
+    Latitude!T latitude;
+    Longitude!T longitude;
+
+    if (!Latitude!T.tryFromDegrees(
+            cast(T) latitudeDegrees,
+            latitude)
+        || !Longitude!T.tryFromDegrees(
+            cast(T) longitudeDegrees,
+            longitude))
+    {
+        result =
+            GeographicCoordinate!T.init;
+
+        return false;
+    }
+
+    result =
+        GeographicCoordinate!T
+            .fromComponents(
+                latitude,
+                longitude);
+
+    return true;
+}
+
+
+private WorkingScalar!T angularError(T)(
+    const T actual,
+    const T expected)
+{
+    alias W =
+        WorkingScalar!T;
+
+    W difference =
+        cast(W) actual
+        - cast(W) expected;
+
+    const W p =
+        pi!W;
+
+    const W twoP =
+        cast(W) 2 * p;
+
+    if (difference >= p)
+        difference -= twoP;
+    else if (difference < -p)
+        difference += twoP;
+
+    return fabs(
+        difference);
+}
+
+
+private void check(
+    const bool condition,
+    const string scalarName,
+    const string profileName,
+    const string label,
+    ref size_t failures)
+{
+    if (condition)
+        return;
+
+    ++failures;
+
+    writefln(
+        "FAIL\t%s\t%s\t%s",
+        scalarName,
+        profileName,
+        label);
+}
+
+
+private void probeProfile(T)(
+    const string scalarName,
+    const string profileName,
+    const real longitude0Degrees,
+    const T semiMajorAxis,
+    const T falseEasting,
+    const T falseNorthing,
+    ref size_t failures)
+{
+    alias W =
+        WorkingScalar!T;
+
+    Longitude!T longitude0;
+
+    const bool originOk =
+        Longitude!T.tryFromDegrees(
+            cast(T) longitude0Degrees,
+            longitude0);
+
+    check(
+        originOk,
+        scalarName,
+        profileName,
+        "construct_origin",
+        failures);
+
+    if (!originOk)
+        return;
+
+    ResearchPseudoMercator!T projection;
+
+    const bool prepared =
+        ResearchPseudoMercator!T
+            .tryPrepare(
+                semiMajorAxis,
+                longitude0,
+                falseEasting,
+                falseNorthing,
+                projection);
+
+    check(
+        prepared,
+        scalarName,
+        profileName,
+        "prepare",
+        failures);
+
+    if (!prepared)
+        return;
+
+    /*
+     * Exact forward latitude boundaries.
+     */
+    GeographicCoordinate!T northSource;
+    GeographicCoordinate!T southSource;
+
+    Latitude!T northLatitude;
+    Latitude!T southLatitude;
+
+    const bool northLatOk =
+        Latitude!T.tryFromDegrees(
+            cast(T) 88,
+            northLatitude);
+
+    const bool southLatOk =
+        Latitude!T.tryFromDegrees(
+            cast(T) -88,
+            southLatitude);
+
+    check(
+        northLatOk && southLatOk,
+        scalarName,
+        profileName,
+        "construct_latitude_boundaries",
+        failures);
+
+    if (!(northLatOk && southLatOk))
+        return;
+
+    northSource =
+        GeographicCoordinate!T
+            .fromComponents(
+                northLatitude,
+                longitude0);
+
+    southSource =
+        GeographicCoordinate!T
+            .fromComponents(
+                southLatitude,
+                longitude0);
+
+    ProjectedCoordinate!T northProjected;
+    ProjectedCoordinate!T southProjected;
+
+    check(
+        projection.tryForward(
+            northSource,
+            northProjected),
+        scalarName,
+        profileName,
+        "forward_north_88",
+        failures);
+
+    check(
+        projection.tryForward(
+            southSource,
+            southProjected),
+        scalarName,
+        profileName,
+        "forward_south_88",
+        failures);
+
+    if (projection.tryForward(
+            northSource,
+            northProjected))
+    {
+        check(
+            northProjected.northing
+                == projection
+                    .northNorthingBoundary,
+            scalarName,
+            profileName,
+            "north_boundary_anchor",
+            failures);
+    }
+
+    if (projection.tryForward(
+            southSource,
+            southProjected))
+    {
+        check(
+            southProjected.northing
+                == projection
+                    .southNorthingBoundary,
+            scalarName,
+            profileName,
+            "south_boundary_anchor",
+            failures);
+    }
+
+    /*
+     * First represented public latitude outside +/-88 must reject.
+     */
+    Latitude!T outsideNorthLatitude;
+    Latitude!T outsideSouthLatitude;
+
+    const bool outsideNorthConstructed =
+        Latitude!T.tryFromRadians(
+            nextUp(
+                northLatitude.radians),
+            outsideNorthLatitude);
+
+    const bool outsideSouthConstructed =
+        Latitude!T.tryFromRadians(
+            nextDown(
+                southLatitude.radians),
+            outsideSouthLatitude);
+
+    check(
+        outsideNorthConstructed,
+        scalarName,
+        profileName,
+        "construct_latitude_north_outside",
+        failures);
+
+    check(
+        outsideSouthConstructed,
+        scalarName,
+        profileName,
+        "construct_latitude_south_outside",
+        failures);
+
+    if (outsideNorthConstructed)
+    {
+        const outsideNorth =
+            GeographicCoordinate!T
+                .fromComponents(
+                    outsideNorthLatitude,
+                    longitude0);
+
+        ProjectedCoordinate!T ignored;
+
+        check(
+            !projection.tryForward(
+                outsideNorth,
+                ignored),
+            scalarName,
+            profileName,
+            "reject_latitude_north_outside",
+            failures);
+    }
+
+    if (outsideSouthConstructed)
+    {
+        const outsideSouth =
+            GeographicCoordinate!T
+                .fromComponents(
+                    outsideSouthLatitude,
+                    longitude0);
+
+        ProjectedCoordinate!T ignored;
+
+        check(
+            !projection.tryForward(
+                outsideSouth,
+                ignored),
+            scalarName,
+            profileName,
+            "reject_latitude_south_outside",
+            failures);
+    }
+
+    /*
+     * Reverse northing represented boundaries and nextOutside.
+     */
+    const T centreEasting =
+        falseEasting;
+
+    ProjectedCoordinate!T projected;
+
+    GeographicCoordinate!T geographic;
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            centreEasting,
+            projection.northNorthingBoundary,
+            projected))
+    {
+        check(
+            projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reverse_north_boundary",
+            failures);
+
+        if (projection.tryReverse(
+                projected,
+                geographic))
+        {
+            check(
+                geographic.latitude.radians
+                    == northLatitude.radians,
+                scalarName,
+                profileName,
+                "reverse_north_boundary_exact",
+                failures);
+        }
+    }
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            centreEasting,
+            projection.southNorthingBoundary,
+            projected))
+    {
+        check(
+            projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reverse_south_boundary",
+            failures);
+
+        if (projection.tryReverse(
+                projected,
+                geographic))
+        {
+            check(
+                geographic.latitude.radians
+                    == southLatitude.radians,
+                scalarName,
+                profileName,
+                "reverse_south_boundary_exact",
+                failures);
+        }
+    }
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            centreEasting,
+            nextUp(
+                projection
+                    .northNorthingBoundary),
+            projected))
+    {
+        check(
+            !projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reject_northing_next_outside",
+            failures);
+    }
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            centreEasting,
+            nextDown(
+                projection
+                    .southNorthingBoundary),
+            projected))
+    {
+        check(
+            !projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reject_south_northing_next_outside",
+            failures);
+    }
+
+    /*
+     * Reverse easting boundaries and nextOutside.
+     */
+    const T centreNorthing =
+        falseNorthing;
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            projection.westEastingBoundary,
+            centreNorthing,
+            projected))
+    {
+        check(
+            projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reverse_west_easting_boundary",
+            failures);
+
+        if (projection.tryReverse(
+                projected,
+                geographic))
+        {
+            check(
+                geographic.longitude.radians
+                    < pi!T,
+                scalarName,
+                profileName,
+                "west_reverse_canonical_longitude",
+                failures);
+        }
+    }
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            nextDown(
+                projection
+                    .westEastingBoundary),
+            centreNorthing,
+            projected))
+    {
+        check(
+            !projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reject_west_easting_next_outside",
+            failures);
+    }
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            projection.eastLegalMaximum,
+            centreNorthing,
+            projected))
+    {
+        check(
+            projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reverse_east_legal_maximum",
+            failures);
+
+        if (projection.tryReverse(
+                projected,
+                geographic))
+        {
+            check(
+                geographic.longitude.radians
+                    < pi!T,
+                scalarName,
+                profileName,
+                "east_reverse_canonical_longitude",
+                failures);
+        }
+    }
+
+    if (ProjectedCoordinate!T.tryFromComponents(
+            nextUp(
+                projection
+                    .eastLegalMaximum),
+            centreNorthing,
+            projected))
+    {
+        check(
+            !projection.tryReverse(
+                projected,
+                geographic),
+            scalarName,
+            profileName,
+            "reject_east_easting_next_outside",
+            failures);
+    }
+
+    /*
+     * Exact +pi tie control at zero central meridian.
+     */
+    if (longitude0Degrees == 0.0L)
+    {
+        GeographicCoordinate!T east180;
+        GeographicCoordinate!T west180;
+
+        const bool eastOk =
+            makeGeographic!T(
+                0.0L,
+                180.0L,
+                east180);
+
+        const bool westOk =
+            makeGeographic!T(
+                0.0L,
+                -180.0L,
+                west180);
+
+        check(
+            eastOk && westOk,
+            scalarName,
+            profileName,
+            "construct_antimeridian_tie",
+            failures);
+
+        if (eastOk && westOk)
+        {
+            ProjectedCoordinate!T eastProjected;
+            ProjectedCoordinate!T westProjected;
+
+            const bool eastForward =
+                projection.tryForward(
+                    east180,
+                    eastProjected);
+
+            const bool westForward =
+                projection.tryForward(
+                    west180,
+                    westProjected);
+
+            check(
+                eastForward && westForward,
+                scalarName,
+                profileName,
+                "forward_antimeridian_tie",
+                failures);
+
+            if (eastForward && westForward)
+            {
+                check(
+                    eastProjected.easting
+                        == westProjected.easting
+                    && eastProjected.northing
+                        == westProjected.northing,
+                    scalarName,
+                    profileName,
+                    "plus_pi_tie_matches_minus_pi",
+                    failures);
+
+                check(
+                    eastProjected.easting
+                        == projection
+                            .westEastingBoundary,
+                    scalarName,
+                    profileName,
+                    "plus_pi_tie_uses_west_sheet_edge",
+                    failures);
+            }
+        }
+    }
+
+    /*
+     * Representative complete forward/reverse corpus.
+     *
+     * Numerical accuracy is characterized more strictly in PM-E1C.
+     * E1B requires accepted finite round trips and records their maxima.
+     */
+    const real[8] latitudeDegrees =
+    [
+        0.0L,
+        45.0L,
+        -45.0L,
+        80.0L,
+        85.0511287798066L,
+        88.0L,
+        -88.0L,
+        12.345L
+    ];
+
+    const real[8] longitudeDegrees =
+    [
+        0.0L,
+        12.5L,
+        -37.0L,
+        179.75L,
+        -179.75L,
+        170.0L,
+        -170.0L,
+        90.0L
+    ];
+
+    W maxLatitudeError =
+        cast(W) 0;
+
+    W maxLongitudeError =
+        cast(W) 0;
+
+    size_t roundTrips;
+
+    foreach (i; 0 .. latitudeDegrees.length)
+    {
+        GeographicCoordinate!T source;
+
+        const bool sourceOk =
+            makeGeographic!T(
+                latitudeDegrees[i],
+                longitudeDegrees[i],
+                source);
+
+        check(
+            sourceOk,
+            scalarName,
+            profileName,
+            "construct_roundtrip_source",
+            failures);
+
+        if (!sourceOk)
+            continue;
+
+        ProjectedCoordinate!T forward;
+
+        const bool forwardOk =
+            projection.tryForward(
+                source,
+                forward);
+
+        check(
+            forwardOk,
+            scalarName,
+            profileName,
+            "roundtrip_forward",
+            failures);
+
+        if (!forwardOk)
+            continue;
+
+        GeographicCoordinate!T reverse;
+
+        const bool reverseOk =
+            projection.tryReverse(
+                forward,
+                reverse);
+
+        check(
+            reverseOk,
+            scalarName,
+            profileName,
+            "roundtrip_reverse",
+            failures);
+
+        if (!reverseOk)
+            continue;
+
+        ++roundTrips;
+
+        const W latitudeError =
+            fabs(
+                cast(W)
+                    reverse.latitude.radians
+                - cast(W)
+                    source.latitude.radians);
+
+        const W longitudeError =
+            angularError!T(
+                reverse.longitude.radians,
+                source.longitude
+                    .normalized.radians);
+
+        if (latitudeError
+            > maxLatitudeError)
+        {
+            maxLatitudeError =
+                latitudeError;
+        }
+
+        if (longitudeError
+            > maxLongitudeError)
+        {
+            maxLongitudeError =
+                longitudeError;
+        }
+
+        check(
+            isFinite(
+                latitudeError)
+            && isFinite(
+                longitudeError),
+            scalarName,
+            profileName,
+            "roundtrip_finite_error",
+            failures);
+
+        check(
+            reverse.longitude.radians
+                < pi!T,
+            scalarName,
+            profileName,
+            "roundtrip_canonical_longitude",
+            failures);
+    }
+
+    writefln(
+        "SUMMARY\t%s\t%s\t"
+        ~ "roundtrips=%u\t"
+        ~ "max_lat_rad=%.40g\t"
+        ~ "max_lon_rad=%.40g\t"
+        ~ "southN=%.40g\t"
+        ~ "northN=%.40g\t"
+        ~ "westE=%.40g\t"
+        ~ "eastE=%.40g",
+        scalarName,
+        profileName,
+        roundTrips,
+        maxLatitudeError,
+        maxLongitudeError,
+        projection.southNorthingBoundary,
+        projection.northNorthingBoundary,
+        projection.westEastingBoundary,
+        projection.eastLegalMaximum);
+}
+
+
+private void probeScalar(T)(
+    const string scalarName,
+    ref size_t failures)
+{
+    probeProfile!T(
+        scalarName,
+        "unit_lon0_0",
+        0.0L,
+        cast(T) 1,
+        cast(T) 0,
+        cast(T) 0,
+        failures);
+
+    probeProfile!T(
+        scalarName,
+        "wgs84_lon0_0",
+        0.0L,
+        cast(T) 6_378_137,
+        cast(T) 0,
+        cast(T) 0,
+        failures);
+
+    probeProfile!T(
+        scalarName,
+        "wgs84_offset_lon0_170",
+        170.0L,
+        cast(T) 6_378_137,
+        cast(T) 500_000,
+        cast(T) -2_000_000,
+        failures);
+
+    probeProfile!T(
+        scalarName,
+        "wgs84_offset_lon0_minus170",
+        -170.0L,
+        cast(T) 6_378_137,
+        cast(T) -250_000,
+        cast(T) 1_250_000,
+        failures);
+
+    probeProfile!T(
+        scalarName,
+        "wgs84_offset_lon0_179_75",
+        179.75L,
+        cast(T) 6_378_137,
+        cast(T) 500_000,
+        cast(T) -2_000_000,
+        failures);
+
+    probeProfile!T(
+        scalarName,
+        "wgs84_offset_lon0_minus179_75",
+        -179.75L,
+        cast(T) 6_378_137,
+        cast(T) -250_000,
+        cast(T) 1_250_000,
+        failures);
+}
+
+
+void main()
+{
+    writeln(
+        "# PM-E1B complete research kernel probe");
+
+    size_t failures;
+
+    probeScalar!float(
+        "float",
+        failures);
+
+    probeScalar!double(
+        "double",
+        failures);
+
+    probeScalar!real(
+        "real",
+        failures);
+
+    writefln(
+        "RESULT\tfailures=%u",
+        failures);
+
+    if (failures != 0)
+        throw new Exception(
+            "PM-E1B research kernel probe failed.");
+}
