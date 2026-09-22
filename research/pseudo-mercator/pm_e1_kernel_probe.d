@@ -173,9 +173,178 @@ private WorkingScalar!T normalizeWorking(T)(
 }
 
 
-private WorkingScalar!T longitudeDifference(T)(
+private void twoPiSplit(T)(
+    out WorkingScalar!T high,
+    out WorkingScalar!T low)
+{
+    alias W = WorkingScalar!T;
+
+    static if (is(W == double))
+    {
+        /*
+         * Use real as the preparation precision for the double split.
+         *
+         * high + low approximates mathematical 2*pi much more closely
+         * than high alone.
+         */
+        const real twoPiPrepared =
+            cast(real) 2 * PI;
+
+        high =
+            cast(W) twoPiPrepared;
+
+        low =
+            cast(W) (
+                twoPiPrepared
+                - cast(real) high);
+    }
+    else static if (is(W == real))
+    {
+        /*
+         * 64-bit-significand x87-real split of mathematical 2*pi.
+         *
+         * high is nearest representable real.
+         * low carries the residual that cannot be represented in high.
+         *
+         * Research-only constants for PM-E1C1.
+         */
+        high =
+            cast(W)
+                6.2831853071795864770256179188123724088654853403568267822265625L;
+
+        low =
+            cast(W)
+                -1.0033115225336664047114654160661514027667331538436718742758200274393034931576586e-19L;
+    }
+    else
+    {
+        static assert(
+            false,
+            "Unexpected WorkingScalar");
+    }
+}
+
+
+private void normalizeExpansion(T)(
+    const WorkingScalar!T highInput,
+    const WorkingScalar!T lowInput,
+    out WorkingScalar!T high,
+    out WorkingScalar!T low)
+{
+    twoSum(
+        highInput,
+        lowInput,
+        high,
+        low);
+}
+
+
+private void addSplitPeriodParts(T)(
+    const WorkingScalar!T sum,
+    const WorkingScalar!T residual,
+    const int periodSign,
+    out WorkingScalar!T high,
+    out WorkingScalar!T low)
+{
+    alias W = WorkingScalar!T;
+
+    W periodHigh;
+    W periodLow;
+
+    twoPiSplit!T(
+        periodHigh,
+        periodLow);
+
+    const W signedHigh =
+        periodSign > 0
+            ? periodHigh
+            : -periodHigh;
+
+    const W signedLow =
+        periodSign > 0
+            ? periodLow
+            : -periodLow;
+
+    /*
+     * Form an expansion for:
+     *
+     *     sum + residual
+     *         + signedHigh + signedLow
+     *
+     * without immediately collapsing it back to one W.
+     */
+    W major;
+    W majorResidual;
+
+    twoSum(
+        sum,
+        signedHigh,
+        major,
+        majorResidual);
+
+    W minor;
+    W minorResidual;
+
+    twoSum(
+        residual,
+        signedLow,
+        minor,
+        minorResidual);
+
+    W combined;
+    W combinedResidual;
+
+    twoSum(
+        major,
+        minor,
+        combined,
+        combinedResidual);
+
+    W tailA;
+    W tailB;
+
+    twoSum(
+        majorResidual,
+        combinedResidual,
+        tailA,
+        tailB);
+
+    W tailC;
+    W tailD;
+
+    twoSum(
+        tailA,
+        minorResidual,
+        tailC,
+        tailD);
+
+    W firstHigh;
+    W firstLow;
+
+    twoSum(
+        combined,
+        tailC,
+        firstHigh,
+        firstLow);
+
+    const W finalLow =
+        firstLow
+        + tailB
+        + tailD;
+
+    normalizeExpansion!T(
+        firstHigh,
+        finalLow,
+        high,
+        low);
+}
+
+
+private void longitudeDifferenceParts(T)(
     const T longitude,
-    const T longitude0)
+    const T longitude0,
+    out WorkingScalar!T high,
+    out WorkingScalar!T low)
 {
     alias W = WorkingScalar!T;
 
@@ -199,29 +368,334 @@ private WorkingScalar!T longitudeDifference(T)(
     const W p =
         pi!W;
 
-    const W twoP =
-        cast(W) 2 * p;
-
     /*
-     * Residual-aware exact +/-pi tie.
+     * PM-D tie classification remains unchanged.
      *
-     * +pi canonicalizes to -pi.
+     * Only the representation of the resulting principal delta changes:
+     * it remains a two-term expansion for the forward linear operation.
      */
     if (sum > p
         || (sum == p
             && residual >= cast(W) 0))
     {
-        sum -= twoP;
+        addSplitPeriodParts!T(
+            sum,
+            residual,
+            -1,
+            high,
+            low);
+
+        return;
     }
-    else if (sum < -p
+
+    if (sum < -p
         || (sum == -p
             && residual < cast(W) 0))
     {
-        sum += twoP;
+        addSplitPeriodParts!T(
+            sum,
+            residual,
+            +1,
+            high,
+            low);
+
+        return;
     }
 
-    return normalizeWorking!T(
-        sum + residual);
+    /*
+     * The subtraction itself is already an error-free twoSum expansion.
+     * Keep it instead of collapsing sum + residual.
+     */
+    normalizeExpansion!T(
+        sum,
+        residual,
+        high,
+        low);
+}
+
+
+private WorkingScalar!T longitudeDifference(T)(
+    const T longitude,
+    const T longitude0)
+{
+    alias W = WorkingScalar!T;
+
+    W high;
+    W low;
+
+    longitudeDifferenceParts!T(
+        longitude,
+        longitude0,
+        high,
+        low);
+
+    /*
+     * Existing consumers that require one W retain their old-shaped
+     * interface. Forward easting uses the expansion directly below.
+     */
+    return high + low;
+}
+
+
+private void splitProductOperand(T)(
+    const WorkingScalar!T value,
+    out WorkingScalar!T high,
+    out WorkingScalar!T low)
+{
+    alias W = WorkingScalar!T;
+
+    W splitter;
+
+    static if (is(W == double))
+    {
+        /*
+         * p = 53 significant bits.
+         *
+         * splitter = 2^ceil(p/2) + 1
+         *          = 2^27 + 1
+         */
+        splitter =
+            cast(W) 134217729.0;
+    }
+    else static if (is(W == real))
+    {
+        /*
+         * x86 extended real has p = 64 significant bits.
+         *
+         * splitter = 2^32 + 1
+         */
+        splitter =
+            cast(W) 4294967297.0L;
+    }
+    else
+    {
+        static assert(
+            false,
+            "Unexpected WorkingScalar");
+    }
+
+    const W scaled =
+        splitter * value;
+
+    high =
+        scaled
+        - (scaled - value);
+
+    low =
+        value - high;
+}
+
+
+private void twoProduct(T)(
+    const WorkingScalar!T a,
+    const WorkingScalar!T b,
+    out WorkingScalar!T product,
+    out WorkingScalar!T residual)
+{
+    alias W = WorkingScalar!T;
+
+    /*
+     * Dekker/Veltkamp error-free product.
+     *
+     * Research preconditions for this experiment:
+     *
+     * - finite operands;
+     * - no product overflow;
+     * - no underflow-sensitive case in the PM-E1C1 corpus;
+     * - default round-to-nearest arithmetic.
+     *
+     * No FMA is used.
+     */
+    product =
+        a * b;
+
+    W aHigh;
+    W aLow;
+
+    W bHigh;
+    W bLow;
+
+    splitProductOperand!T(
+        a,
+        aHigh,
+        aLow);
+
+    splitProductOperand!T(
+        b,
+        bHigh,
+        bLow);
+
+    residual =
+        (
+            (
+                aHigh * bHigh
+                - product
+            )
+            + aHigh * bLow
+            + aLow * bHigh
+        )
+        + aLow * bLow;
+}
+
+
+private WorkingScalar!T affineProductSum(T)(
+    const WorkingScalar!T scale,
+    const WorkingScalar!T value,
+    const WorkingScalar!T offset)
+{
+    alias W = WorkingScalar!T;
+
+    /*
+     * Error-free product plus compensated addition.
+     *
+     * Research-only PM-E1C1 experiment for:
+     *
+     *     offset + scale * value
+     *
+     * Uses the already validated non-FMA twoProduct path.
+     */
+    W product;
+    W productResidual;
+
+    twoProduct!T(
+        scale,
+        value,
+        product,
+        productResidual);
+
+    W sum;
+    W sumResidual;
+
+    twoSum(
+        offset,
+        product,
+        sum,
+        sumResidual);
+
+    W tail;
+    W tailResidual;
+
+    twoSum(
+        sumResidual,
+        productResidual,
+        tail,
+        tailResidual);
+
+    W result;
+    W resultResidual;
+
+    twoSum(
+        sum,
+        tail,
+        result,
+        resultResidual);
+
+    return result
+        + (
+            resultResidual
+            + tailResidual
+        );
+}
+
+
+private WorkingScalar!T eastingFromLongitudeDifference(T)(
+    const WorkingScalar!T semiMajorAxis,
+    const WorkingScalar!T falseEasting,
+    const WorkingScalar!T deltaHigh,
+    const WorkingScalar!T deltaLow)
+{
+    alias W = WorkingScalar!T;
+
+    /*
+     * Keep both product rounding residuals.
+     *
+     * Exact target:
+     *
+     *   FE + a * (deltaHigh + deltaLow)
+     */
+    W mainProduct;
+    W mainProductResidual;
+
+    twoProduct!T(
+        semiMajorAxis,
+        deltaHigh,
+        mainProduct,
+        mainProductResidual);
+
+    W lowProduct;
+    W lowProductResidual;
+
+    twoProduct!T(
+        semiMajorAxis,
+        deltaLow,
+        lowProduct,
+        lowProductResidual);
+
+    /*
+     * First combine the dominant terms exactly with twoSum.
+     */
+    W mainSum;
+    W mainSumResidual;
+
+    twoSum(
+        falseEasting,
+        mainProduct,
+        mainSum,
+        mainSumResidual);
+
+    /*
+     * Collect all terms below the dominant mainSum.
+     */
+    W tail0;
+    W tail0Residual;
+
+    twoSum(
+        mainProductResidual,
+        lowProduct,
+        tail0,
+        tail0Residual);
+
+    W tail1;
+    W tail1Residual;
+
+    twoSum(
+        tail0,
+        lowProductResidual,
+        tail1,
+        tail1Residual);
+
+    W tail2;
+    W tail2Residual;
+
+    twoSum(
+        mainSumResidual,
+        tail1,
+        tail2,
+        tail2Residual);
+
+    /*
+     * Fold the compact residual expansion back only at the final WorkingScalar
+     * result boundary.
+     */
+    const W remaining =
+        tail0Residual
+        + tail1Residual
+        + tail2Residual;
+
+    W result;
+    W resultResidual;
+
+    twoSum(
+        mainSum,
+        tail2,
+        result,
+        resultResidual);
+
+    return result
+        + (
+            resultResidual
+            + remaining
+        );
 }
 
 
@@ -333,10 +807,18 @@ private bool findRepresentedEastMaximum(T)(
                 candidate))
             return;
 
+        W deltaHigh;
+        W deltaLow;
+
+        longitudeDifferenceParts!T(
+            candidate,
+            longitude0,
+            deltaHigh,
+            deltaLow);
+
         const W delta =
-            longitudeDifference!T(
-                candidate,
-                longitude0);
+            deltaHigh
+            + deltaLow;
 
         if (!(delta >= cast(W) 0)
             || !(delta < p))
@@ -346,9 +828,11 @@ private bool findRepresentedEastMaximum(T)(
             || delta > legalDelta)
         {
             const W easting =
-                cast(W) falseEasting
-                + cast(W) semiMajorAxis
-                    * delta;
+                eastingFromLongitudeDifference!T(
+                    cast(W) semiMajorAxis,
+                    cast(W) falseEasting,
+                    deltaHigh,
+                    deltaLow);
 
             const T publicEasting =
                 cast(T) easting;
@@ -514,33 +998,89 @@ public:
         result._southLatitude =
             southLatitude;
 
-        const W northPhi =
-            cast(W)
-                northLatitude.radians;
+        T northBoundary;
+        T southBoundary;
 
-        const W southPhi =
-            cast(W)
-                southLatitude.radians;
+        static if (is(T == double))
+        {
+            /*
+             * PM-E1C1:
+             *
+             * Boundary anchors must be produced by the same numerical
+             * forward path as ordinary represented double latitudes.
+             *
+             * Do not first round q to double and widen afterwards.
+             */
+            const real northPhiExtended =
+                cast(real)
+                    northLatitude.radians;
 
-        const W northQ =
-            asinh(
-                tan(
-                    northPhi));
+            const real southPhiExtended =
+                cast(real)
+                    southLatitude.radians;
 
-        const W southQ =
-            asinh(
-                tan(
-                    southPhi));
+            const real northQExtended =
+                asinh(
+                    tan(
+                        northPhiExtended));
 
-        const T northBoundary =
-            cast(T) (
-                result._falseNorthingWorking
-                + result._a * northQ);
+            const real southQExtended =
+                asinh(
+                    tan(
+                        southPhiExtended));
 
-        const T southBoundary =
-            cast(T) (
-                result._falseNorthingWorking
-                + result._a * southQ);
+            northBoundary =
+                cast(T)
+                    affineProductSum!real(
+                        cast(real)
+                            result._a,
+                        northQExtended,
+                        cast(real)
+                            result._falseNorthingWorking);
+
+            southBoundary =
+                cast(T)
+                    affineProductSum!real(
+                        cast(real)
+                            result._a,
+                        southQExtended,
+                        cast(real)
+                            result._falseNorthingWorking);
+        }
+        else
+        {
+            const W northPhi =
+                cast(W)
+                    northLatitude.radians;
+
+            const W southPhi =
+                cast(W)
+                    southLatitude.radians;
+
+            const W northQ =
+                asinh(
+                    tan(
+                        northPhi));
+
+            const W southQ =
+                asinh(
+                    tan(
+                        southPhi));
+
+            northBoundary =
+                cast(T)
+                    affineProductSum!T(
+                        result._a,
+                        northQ,
+                        result._falseNorthingWorking);
+
+            southBoundary =
+                cast(T)
+                    affineProductSum!T(
+                        result._a,
+                        southQ,
+                        result._falseNorthingWorking);
+        }
 
         if (!isFinite(
                 northBoundary)
@@ -648,10 +1188,18 @@ public:
             cast(W)
                 latitudePublic;
 
+        W deltaLongitudeHigh;
+        W deltaLongitudeLow;
+
+        longitudeDifferenceParts!T(
+            source.longitude.radians,
+            _longitudeOfNaturalOrigin.radians,
+            deltaLongitudeHigh,
+            deltaLongitudeLow);
+
         const W deltaLongitude =
-            longitudeDifference!T(
-                source.longitude.radians,
-                _longitudeOfNaturalOrigin.radians);
+            deltaLongitudeHigh
+            + deltaLongitudeLow;
 
         const W q =
             asinh(
@@ -659,12 +1207,47 @@ public:
                     phi));
 
         const W easting =
-            _falseEastingWorking
-            + _a * deltaLongitude;
+            eastingFromLongitudeDifference!T(
+                _a,
+                _falseEastingWorking,
+                deltaLongitudeHigh,
+                deltaLongitudeLow);
 
-        const W northing =
-            _falseNorthingWorking
-            + _a * q;
+        W northing;
+
+        static if (is(T == double))
+        {
+            /*
+             * PM-E1C1 research experiment:
+             *
+             * Preserve more than binary64 precision across the complete
+             * q -> affine-Northing chain.
+             *
+             * The public latitude remains exactly the represented double
+             * input.  Only the internal evaluation is widened to real.
+             */
+            const real qExtended =
+                asinh(
+                    tan(
+                        cast(real)
+                            source.latitude.radians));
+
+            northing =
+                cast(W)
+                    affineProductSum!real(
+                        cast(real) _a,
+                        qExtended,
+                        cast(real)
+                            _falseNorthingWorking);
+        }
+        else
+        {
+            northing =
+                affineProductSum!T(
+                    _a,
+                    q,
+                    _falseNorthingWorking);
+        }
 
         if (!isFinite(
                 easting)

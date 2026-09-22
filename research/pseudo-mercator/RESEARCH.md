@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-E1C0 complete — PM-E1C1 next
+Status: PM-E1C1A forward differential complete — PM-E1C1B reverse differential next
 
 ## Goal
 
@@ -229,9 +229,25 @@ PM-E — independent differential validation — ACTIVE
     byte-identical and preserves the +pi -> -pi principal-sheet tie.
     See `PM_E1C0_DIFFERENTIAL_DRIVER.md`.
 
-    PM-E1C1 NEXT: run representation-aware differential validation against
-    the high-precision analytical oracle and, for compatible double cases,
-    the PM-E0-qualified PROJ `webmerc` implementation.
+    PM-E1C1A PASS: representation-aware forward differential validation is
+    complete against an independent high-precision analytical oracle, with
+    the PM-E0-qualified PROJ `webmerc` implementation retained as a secondary
+    reference for compatible double cases. The 264-case corpus is byte-
+    identical across DMD/LDC. Easting is correctly rounded for all tested
+    float/double/real cases; Northing is correctly rounded for all float and
+    double cases and 86/88 real cases, with exactly two remaining 1-ULP real
+    Northing cases. The selected research path retains the high/low longitude
+    difference through split-period reduction and `twoProduct`, uses
+    compensated affine arithmetic, evaluates the complete double Northing
+    chain internally in `real`, and prepares double Northing boundaries through
+    the same widened path. See `PM_E1C1_FORWARD_RESULTS.md`.
+
+    PM-E1C1B NEXT: run representation-aware reverse differential validation
+    against the independent analytical inverse and, where policy-compatible,
+    the PM-E0-qualified PROJ `webmerc` implementation. Preserve PM-D
+    pre-inverse Northing/easting classification, represented endpoint policy,
+    canonical half-open longitude output, and explicit distinction between
+    numerical error and intentional principal-sheet policy differences.
 
 PM-F — public API gate
     Only after PM-A through PM-E, resolve the public type name,
