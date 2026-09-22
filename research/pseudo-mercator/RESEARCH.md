@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-E0 complete — PM-E1 next
+Status: PM-E1A complete — PM-E1B next
 
 ## Goal
 
@@ -213,9 +213,13 @@ PM-E — independent differential validation — ACTIVE
     intentionally treated separately from numerical agreement.
     See `PM_E0_PROJ_QUALIFICATION.md`.
 
-    PM-E1 NEXT: validate the complete selected D research kernel and PM-D
-    domain classifier for float, double, and real against the high-precision
-    oracle and compatible PROJ cases.
+    PM-E1A PASS: represented easting-domain behaviour is characterized.
+    Working-precision classification is primary; exact represented west and
+    legal-east endpoint anchors handle the remaining rounding collisions
+    without general domain slack. See `PM_E1A_EASTING_DOMAIN_RESULTS.md`.
+
+    PM-E1B NEXT: assemble the complete D research kernel with the accepted
+    PM-B/PM-C formulas and PM-D/PM-E1A domain classifiers.
 
 PM-F — public API gate
     Only after PM-A through PM-E, resolve the public type name,
