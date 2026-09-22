@@ -38,9 +38,17 @@ import std.math :
     sinh,
     tan;
 
+import std.conv :
+    to;
+
 import std.stdio :
+    readln,
     writefln,
     writeln;
+
+import std.string :
+    split,
+    strip;
 
 
 private template WorkingScalar(T)
@@ -1600,30 +1608,450 @@ private void probeScalar(T)(
 }
 
 
-void main()
+version (PseudoMercatorDifferential)
 {
-    writeln(
-        "# PM-E1B complete research kernel probe");
+    /*
+     * PM-E1C machine-readable driver.
+     *
+     * Input records are whitespace-separated.
+     *
+     * B:
+     *   B id scalar a lon0_deg FE FN
+     *
+     * F:
+     *   F id scalar a lon0_deg FE FN lat_deg lon_deg
+     *
+     * R:
+     *   R id scalar a lon0_deg FE FN easting northing
+     *
+     * scalar is one of:
+     *
+     *   float
+     *   double
+     *   real
+     *
+     * Every OK record echoes the represented public scalar inputs that
+     * actually entered the D kernel.  PM-E1C can therefore separate:
+     *
+     * - decimal-input representation error;
+     * - projection arithmetic error;
+     * - projected-coordinate representation error.
+     */
+    private bool prepareDifferential(T)(
+        const string[] fields,
+        out ResearchPseudoMercator!T projection,
+        out T semiMajorAxis,
+        out Longitude!T longitude0,
+        out T falseEasting,
+        out T falseNorthing)
+    {
+        semiMajorAxis =
+            fields[3].to!T;
 
-    size_t failures;
+        falseEasting =
+            fields[5].to!T;
 
-    probeScalar!float(
-        "float",
-        failures);
+        falseNorthing =
+            fields[6].to!T;
 
-    probeScalar!double(
-        "double",
-        failures);
+        if (!Longitude!T.tryFromDegrees(
+                fields[4].to!T,
+                longitude0))
+        {
+            return false;
+        }
 
-    probeScalar!real(
-        "real",
-        failures);
+        return ResearchPseudoMercator!T
+            .tryPrepare(
+                semiMajorAxis,
+                longitude0,
+                falseEasting,
+                falseNorthing,
+                projection);
+    }
 
-    writefln(
-        "RESULT\tfailures=%u",
-        failures);
 
-    if (failures != 0)
-        throw new Exception(
-            "PM-E1B research kernel probe failed.");
+    private void differentialBoundary(T)(
+        const string[] fields,
+        const string scalarName)
+    {
+        if (fields.length != 7)
+        {
+            writefln(
+                "ERROR\t%s\tB\t%s\tfields=%u",
+                fields.length >= 2 ? fields[1] : "?",
+                scalarName,
+                fields.length);
+
+            return;
+        }
+
+        ResearchPseudoMercator!T projection;
+        T semiMajorAxis;
+        Longitude!T longitude0;
+        T falseEasting;
+        T falseNorthing;
+
+        if (!prepareDifferential!T(
+                fields,
+                projection,
+                semiMajorAxis,
+                longitude0,
+                falseEasting,
+                falseNorthing))
+        {
+            writefln(
+                "REJECT\t%s\tB\t%s\tprepare",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        writefln(
+            "BOK\t%s\t%s\t"
+            ~ "a=%.40g\t"
+            ~ "lon0_rad=%.40g\t"
+            ~ "fe=%.40g\t"
+            ~ "fn=%.40g\t"
+            ~ "southN=%.40g\t"
+            ~ "northN=%.40g\t"
+            ~ "westE=%.40g\t"
+            ~ "eastE=%.40g\t"
+            ~ "eastDelta=%.40g",
+            fields[1],
+            scalarName,
+            semiMajorAxis,
+            longitude0.radians,
+            falseEasting,
+            falseNorthing,
+            projection.southNorthingBoundary,
+            projection.northNorthingBoundary,
+            projection.westEastingBoundary,
+            projection.eastLegalMaximum,
+            projection.eastLegalDelta);
+    }
+
+
+    private void differentialForward(T)(
+        const string[] fields,
+        const string scalarName)
+    {
+        if (fields.length != 9)
+        {
+            writefln(
+                "ERROR\t%s\tF\t%s\tfields=%u",
+                fields.length >= 2 ? fields[1] : "?",
+                scalarName,
+                fields.length);
+
+            return;
+        }
+
+        ResearchPseudoMercator!T projection;
+        T semiMajorAxis;
+        Longitude!T longitude0;
+        T falseEasting;
+        T falseNorthing;
+
+        if (!prepareDifferential!T(
+                fields,
+                projection,
+                semiMajorAxis,
+                longitude0,
+                falseEasting,
+                falseNorthing))
+        {
+            writefln(
+                "REJECT\t%s\tF\t%s\tprepare",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        Latitude!T latitude;
+        Longitude!T longitude;
+
+        if (!Latitude!T.tryFromDegrees(
+                fields[7].to!T,
+                latitude)
+            || !Longitude!T.tryFromDegrees(
+                fields[8].to!T,
+                longitude))
+        {
+            writefln(
+                "REJECT\t%s\tF\t%s\tinput",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        const source =
+            GeographicCoordinate!T
+                .fromComponents(
+                    latitude,
+                    longitude);
+
+        ProjectedCoordinate!T projected;
+
+        if (!projection.tryForward(
+                source,
+                projected))
+        {
+            writefln(
+                "REJECT\t%s\tF\t%s\tdomain",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        writefln(
+            "FOK\t%s\t%s\t"
+            ~ "a=%.40g\t"
+            ~ "lon0_rad=%.40g\t"
+            ~ "fe=%.40g\t"
+            ~ "fn=%.40g\t"
+            ~ "lat_rad=%.40g\t"
+            ~ "lon_rad=%.40g\t"
+            ~ "e=%.40g\t"
+            ~ "n=%.40g",
+            fields[1],
+            scalarName,
+            semiMajorAxis,
+            longitude0.radians,
+            falseEasting,
+            falseNorthing,
+            latitude.radians,
+            longitude.radians,
+            projected.easting,
+            projected.northing);
+    }
+
+
+    private void differentialReverse(T)(
+        const string[] fields,
+        const string scalarName)
+    {
+        if (fields.length != 9)
+        {
+            writefln(
+                "ERROR\t%s\tR\t%s\tfields=%u",
+                fields.length >= 2 ? fields[1] : "?",
+                scalarName,
+                fields.length);
+
+            return;
+        }
+
+        ResearchPseudoMercator!T projection;
+        T semiMajorAxis;
+        Longitude!T longitude0;
+        T falseEasting;
+        T falseNorthing;
+
+        if (!prepareDifferential!T(
+                fields,
+                projection,
+                semiMajorAxis,
+                longitude0,
+                falseEasting,
+                falseNorthing))
+        {
+            writefln(
+                "REJECT\t%s\tR\t%s\tprepare",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        const T easting =
+            fields[7].to!T;
+
+        const T northing =
+            fields[8].to!T;
+
+        ProjectedCoordinate!T source;
+
+        if (!ProjectedCoordinate!T
+                .tryFromComponents(
+                    easting,
+                    northing,
+                    source))
+        {
+            writefln(
+                "REJECT\t%s\tR\t%s\tinput",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        GeographicCoordinate!T geographic;
+
+        if (!projection.tryReverse(
+                source,
+                geographic))
+        {
+            writefln(
+                "REJECT\t%s\tR\t%s\tdomain",
+                fields[1],
+                scalarName);
+
+            return;
+        }
+
+        writefln(
+            "ROK\t%s\t%s\t"
+            ~ "a=%.40g\t"
+            ~ "lon0_rad=%.40g\t"
+            ~ "fe=%.40g\t"
+            ~ "fn=%.40g\t"
+            ~ "e=%.40g\t"
+            ~ "n=%.40g\t"
+            ~ "lat_rad=%.40g\t"
+            ~ "lon_rad=%.40g",
+            fields[1],
+            scalarName,
+            semiMajorAxis,
+            longitude0.radians,
+            falseEasting,
+            falseNorthing,
+            easting,
+            northing,
+            geographic.latitude.radians,
+            geographic.longitude.radians);
+    }
+
+
+    private void dispatchDifferential(T)(
+        const string[] fields,
+        const string scalarName)
+    {
+        if (fields[0] == "B")
+        {
+            differentialBoundary!T(
+                fields,
+                scalarName);
+
+            return;
+        }
+
+        if (fields[0] == "F")
+        {
+            differentialForward!T(
+                fields,
+                scalarName);
+
+            return;
+        }
+
+        if (fields[0] == "R")
+        {
+            differentialReverse!T(
+                fields,
+                scalarName);
+
+            return;
+        }
+
+        writefln(
+            "ERROR\t%s\t%s\t%s\tunknown-command",
+            fields.length >= 2 ? fields[1] : "?",
+            fields[0],
+            scalarName);
+    }
+
+
+    void main()
+    {
+        string line;
+
+        while ((line = readln()) !is null)
+        {
+            const stripped =
+                line.strip;
+
+            if (stripped.length == 0
+                || stripped[0] == '#')
+            {
+                continue;
+            }
+
+            const fields =
+                stripped.split;
+
+            if (fields.length < 3)
+            {
+                writefln(
+                    "ERROR\t?\t?\t?\tfields=%u",
+                    fields.length);
+
+                continue;
+            }
+
+            const scalarName =
+                fields[2];
+
+            if (scalarName == "float")
+            {
+                dispatchDifferential!float(
+                    fields,
+                    scalarName);
+            }
+            else if (scalarName == "double")
+            {
+                dispatchDifferential!double(
+                    fields,
+                    scalarName);
+            }
+            else if (scalarName == "real")
+            {
+                dispatchDifferential!real(
+                    fields,
+                    scalarName);
+            }
+            else
+            {
+                writefln(
+                    "ERROR\t%s\t%s\t%s\tunknown-scalar",
+                    fields[1],
+                    fields[0],
+                    scalarName);
+            }
+        }
+    }
+}
+else
+{
+    void main()
+    {
+        writeln(
+            "# PM-E1B complete research kernel probe");
+
+        size_t failures;
+
+        probeScalar!float(
+            "float",
+            failures);
+
+        probeScalar!double(
+            "double",
+            failures);
+
+        probeScalar!real(
+            "real",
+            failures);
+
+        writefln(
+            "RESULT\tfailures=%u",
+            failures);
+
+        if (failures != 0)
+            throw new Exception(
+                "PM-E1B research kernel probe failed.");
+    }
 }

@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-E1B complete — PM-E1C next
+Status: PM-E1C0 complete — PM-E1C1 next
 
 ## Goal
 
@@ -223,9 +223,15 @@ PM-E — independent differential validation — ACTIVE
     deterministic 18-profile / 144-round-trip corpus has zero failures and
     byte-identical DMD/LDC output. See `PM_E1B_KERNEL_RESULTS.md`.
 
-    PM-E1C NEXT: independently validate the complete research kernel against
-    the high-precision analytical oracle and the PM-E0-qualified PROJ
-    `webmerc` reference, with explicit representation-aware error accounting.
+    PM-E1C0 PASS: the accepted PM-E1B kernel now has a versioned
+    machine-readable differential driver. Normal E1B behaviour remains
+    byte-identical across DMD/LDC; the driver smoke corpus is also
+    byte-identical and preserves the +pi -> -pi principal-sheet tie.
+    See `PM_E1C0_DIFFERENTIAL_DRIVER.md`.
+
+    PM-E1C1 NEXT: run representation-aware differential validation against
+    the high-precision analytical oracle and, for compatible double cases,
+    the PM-E0-qualified PROJ `webmerc` implementation.
 
 PM-F — public API gate
     Only after PM-A through PM-E, resolve the public type name,
