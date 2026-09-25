@@ -320,6 +320,123 @@ UFCS-capable except the one-shot UTM family, whose ellipsoid-first ordering is
 carried forward as a concrete pre-v1 API correction candidate.
 
 
+### B6-B9 — transformation, projection, result, and type vocabulary
+
+Status: **reviewed**
+
+#### B6 transformation direction and convention naming
+
+The static-transform vocabulary is coherent:
+
+~~~text
+GeocentricTranslation
+    inverse
+    tryApplyGeocentricTranslation / applyGeocentricTranslation
+
+HelmertConvention
+    positionVector
+    coordinateFrame
+
+PositionVectorHelmert<T>
+CoordinateFrameHelmert<T>
+
+toCoordinateFrame
+toPositionVector
+
+tryApplyPositionVectorHelmert / applyPositionVectorHelmert
+tryApplyCoordinateFrameHelmert / applyCoordinateFrameHelmert
+~~~
+
+`inverse` denotes inversion of a translation value, while
+`toCoordinateFrame/toPositionVector` convert between two Helmert convention
+representations. These are distinct operations, so the different verbs are
+intentional rather than inconsistent. The convention names are explicit and
+avoid an ambiguous generic `Helmert` application function.
+
+Classification: **consistent**.
+
+#### B7 projection parameter vocabulary
+
+Where semantically present, Transverse Mercator and UTM expose the same
+parameter names:
+
+~~~text
+latitudeOfNaturalOrigin
+longitudeOfNaturalOrigin
+scaleFactorAtNaturalOrigin
+falseEasting
+falseNorthing
+~~~
+
+Pseudo-Mercator exposes:
+
+~~~text
+longitudeOfNaturalOrigin
+falseEasting
+falseNorthing
+~~~
+
+The missing latitude/scale properties on Pseudo-Mercator reflect its accepted
+bounded parameter model rather than abbreviated naming. The existing names
+use explicit geodetic/projection terminology and are preferable to shorter
+but ambiguous forms such as `origin`, `scale`, `x0`, or `y0`.
+
+Classification: **consistent with intentional capability specialization**.
+
+#### B8 result and accessor vocabulary
+
+Projection-factor results expose:
+
+~~~text
+meridianConvergence
+pointScale
+~~~
+
+Geodesic results expose:
+
+~~~text
+GeodesicDirectResult:
+    position
+    finalAzimuth
+
+GeodesicInverseResult:
+    distance
+    initialAzimuth
+    finalAzimuth
+~~~
+
+The direct result's `position` and inverse result's `distance` describe
+their respective primary outputs without leaking algorithm terminology.
+`initialAzimuth/finalAzimuth` are directionally explicit. The shared
+`finalAzimuth` spelling carries the same documented endpoint-forward-azimuth
+semantics in both result types.
+
+Classification: **consistent**.
+
+#### B9 type, enum, and alias naming
+
+Public type names consistently identify the represented domain object:
+coordinate values use the `Coordinate` suffix, prepared computational
+objects use domain names such as `TransverseMercator`, `PseudoMercator`,
+`UtmProjection`, `TopocentricFrame`, and `Geodesic`, and result values
+use the `Result` suffix where they package multiple operation outputs.
+
+`Helmert7<T, convention>` names the seven-parameter representation, while
+`PositionVectorHelmert<T>` and `CoordinateFrameHelmert<T>` provide
+semantically named public aliases. `HelmertConvention.positionVector` and
+`.coordinateFrame` match those aliases.
+
+`UtmHemisphere.north/south` and `UtmZone` use domain vocabulary without
+encoding representation details.
+
+Classification: **consistent**.
+
+**B6-B9 conclusion:** no additional rename candidate is identified. The only
+current V1-B production-API correction candidate remains the one-shot UTM
+argument order from B5.
+
+
+
 
 
 ## V1-A inventory basis
