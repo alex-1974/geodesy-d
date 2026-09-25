@@ -22,6 +22,7 @@ The current development line provides:
 - EPSG 1033 Position Vector 7-parameter Helmert transformations;
 - EPSG 1032 Coordinate Frame 7-parameter Helmert transformations;
 - bounded generic `TransverseMercator!T`;
+- bounded EPSG method 1024 `PseudoMercator!T`;
 - conformal projection factors providing meridian convergence and isotropic
   point scale for prepared Transverse Mercator and UTM projections;
 - Universal Transverse Mercator zone and hemisphere policy;
