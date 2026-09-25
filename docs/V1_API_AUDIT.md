@@ -245,6 +245,82 @@ and prepared-operation vocabularies are internally coherent, with differences
 corresponding to distinct domain semantics.
 
 
+### B5 — argument order and UFCS
+
+Status: **reviewed — one candidate inconsistency**
+
+For public free functions, argument order is source API in D for two reasons:
+ordinary calls expose the order directly, and the first argument determines
+the natural UFCS receiver. V1 therefore uses the following review rule:
+
+> Where semantics permit, the first parameter of an operation-like free
+> function should be the primary value being operated on, so that UFCS reads
+> as a natural pipeline.
+
+The existing conversion and transformation families follow that rule:
+
+~~~d
+source.geodeticToGeocentric(ellipsoid);
+source.geocentricToGeodetic(ellipsoid);
+
+source.applyGeocentricTranslation(translation);
+source.applyPositionVectorHelmert(transform);
+source.applyCoordinateFrameHelmert(transform);
+
+transform.toCoordinateFrame();
+transform.toPositionVector();
+
+source.tryStandardUtmZone(zone, hemisphere);
+~~~
+
+Their ordinary-call forms therefore consistently place `source` first and
+the context/operation value second.
+
+The one-shot UTM family is the exception:
+
+~~~d
+forwardUtm(ellipsoid, source);
+reverseUtm(ellipsoid, source);
+
+// Current UFCS meaning:
+ellipsoid.forwardUtm(source);
+ellipsoid.reverseUtm(source);
+~~~
+
+This makes the reference ellipsoid, rather than the coordinate being
+converted, the UFCS receiver. It also differs from the public geodetic /
+geocentric conversion functions, which already use
+`(source, ellipsoid)`.
+
+**Classification:** `tryForwardUtm/forwardUtm` and
+`tryReverseUtm/reverseUtm` are a **candidate API inconsistency**. The
+source-first forms
+
+~~~d
+forwardUtm(source, ellipsoid);
+reverseUtm(source, ellipsoid);
+
+source.forwardUtm(ellipsoid);
+source.reverseUtm(ellipsoid);
+~~~
+
+would align ordinary calls and UFCS with the rest of the free conversion /
+transformation surface.
+
+No production signature is changed at this audit step. Because parameter
+order is source compatibility and named-argument API, any correction must be
+made before V1-J and validated by the external consumer. V1-G must explicitly
+account for the compatibility impact.
+
+The checked variants must preserve the same receiver/order convention as
+their throwing peers, with the `out result` parameter last.
+
+**B5 conclusion:** all reviewed public free operation families are naturally
+UFCS-capable except the one-shot UTM family, whose ellipsoid-first ordering is
+carried forward as a concrete pre-v1 API correction candidate.
+
+
+
 
 ## V1-A inventory basis
 
