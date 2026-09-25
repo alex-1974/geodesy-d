@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-E independent differential validation complete — PM-F public API gate next
+Status: PM-F public API accepted — PM-G production/platform acceptance next
 
 ## Goal
 
@@ -247,14 +247,26 @@ PM-E — independent differential validation — PASS
     optimized quotient-residual / `sech(q)` correction.
     See `PM_E1C1_REVERSE_RESULTS.md`.
 
-    PM-E is complete. PM-F public API design is next.
+    PM-E is complete. PM-F public API is accepted; PM-G is next.
 
-PM-F — public API gate
-    Only after PM-A through PM-E, resolve the public type name,
-    parameterization, checked/throwing operations, default-state semantics,
-    and documentation contract.
+PM-F — public API gate — PASS
+    The accepted surface is documented in `PM_F_PUBLIC_API.md`.
 
-PM-G — production/platform acceptance
+    `PseudoMercator!T` is a prepared value type with checked/throwing
+    preparation, intentionally invalid `.init`, read-only defining
+    properties, `tryForward` / `forward`, and `tryReverse` / `reverse`.
+
+    The public parameter set is `Ellipsoid!T`, longitude of natural origin,
+    false easting, and false northing.
+
+    No latitude-of-natural-origin parameter, scale-factor parameter,
+    projection-factor API, one-shot free projection helpers, WebMercator
+    alias, CRS object, or tile policy is admitted.
+
+    Receiver semantics and future free-function parameter ordering follow the
+    workspace UFCS policy without duplicating member/free API.
+
+PM-G — production/platform acceptance — ACTIVE
     Implement only the accepted PM-F surface, then validate API isolation,
     DMD/LDC, release builds, supported platforms, and regression boundaries.
 

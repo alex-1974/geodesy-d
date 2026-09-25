@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACTIVE — PM-F NEXT
+Pseudo-Mercator                         ACTIVE — PM-G NEXT
 ```
 
 Continue in this order:
@@ -198,9 +198,13 @@ scalar-specific numerical paths, independent forward/reverse differential
 evidence, controlled compiler behaviour, and the current research performance
 boundary are qualified.
 
-PM-F is now the active gate. No production type or public operation is accepted
-until the API surface, preparation model, checked/throwing operations,
-default-state semantics, and documentation contract are resolved.
+PM-F is complete. The accepted public surface is recorded in
+`research/pseudo-mercator/PM_F_PUBLIC_API.md`.
+
+PM-G is now the active gate. Production work must implement exactly the
+accepted surface, then validate aggregate API exposure, checked/throwing
+semantics, DMD/LDC builds, supported platforms, and regression boundaries
+before Pseudo-Mercator is marked accepted.
 
 ### P1 — consumer-confirmed geodesic extensions
 
