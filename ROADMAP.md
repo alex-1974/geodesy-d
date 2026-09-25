@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACTIVE — PM-G2 API/RUNTIME
+Pseudo-Mercator                         ACTIVE — PM-G3 EQUIVALENCE
 ```
 
 Continue in this order:
@@ -214,12 +214,15 @@ PM-G1 production module extraction is complete. The production module
 qualified PM-E/PM-G0 semantics. Baseline module and full-repository tests pass
 under DMD 2.111.0 and LDC 1.41.0.
 
-PM-G2 public API / aggregate / runtime contract validation is active.
+PM-G2 public API / aggregate / runtime contract validation is complete.
+Root aggregate exposure, positive and negative API contracts, named-argument
+source compatibility, checked-operation attributes, runtime boundary/failure
+semantics, and full repository tests pass under DMD 2.111.0 and LDC 1.41.0.
 
-Subsequent PM-G gates validate production-to-research equivalence,
-production-to-research equivalence, the full controlled DMD/LDC matrix, and
-platform / release / regression boundaries before Pseudo-Mercator is marked
-accepted.
+PM-G3 production-to-research equivalence is active.
+
+Subsequent PM-G gates validate the full controlled DMD/LDC matrix and platform /
+release / regression boundaries before Pseudo-Mercator is marked accepted.
 
 ### P1 — consumer-confirmed geodesic extensions
 

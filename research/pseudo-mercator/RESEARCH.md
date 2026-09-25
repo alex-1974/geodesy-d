@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-G1 production module extraction PASS — PM-G2 public API / aggregate / runtime contracts ACTIVE
+Status: PM-G2 public API / aggregate / runtime contracts PASS — PM-G3 research-kernel equivalence ACTIVE
 
 ## Goal
 
@@ -248,8 +248,9 @@ PM-E — independent differential validation — PASS
     See `PM_E1C1_REVERSE_RESULTS.md`.
 
     PM-E is complete. PM-F public API is accepted. PM-G0 production endpoint
-    qualification and PM-G1 production module extraction are complete; PM-G2
-    public API / aggregate / runtime contracts are active.
+    qualification, PM-G1 production module extraction, and PM-G2 public API /
+    aggregate / runtime contracts are complete; PM-G3 research-kernel
+    equivalence is active.
 
 PM-F — public API gate — PASS
     The accepted surface is documented in `PM_F_PUBLIC_API.md`.
@@ -291,11 +292,19 @@ PM-G — production/platform acceptance — ACTIVE
 
         See `PM_G1_PRODUCTION_EXTRACTION.md`.
 
-    PM-G2 — public API / aggregate / runtime contracts — ACTIVE
-        Validate API shape, root exposure, checked/throwing behaviour,
-        default-state semantics, attributes, and boundary contracts.
+    PM-G2 — public API / aggregate / runtime contracts — PASS
+        Root aggregate exposure, positive public API and named-argument
+        contracts, checked-operation attributes, runtime failure/boundary
+        semantics, and rejected WebMercator/factor surfaces are validated
+        under DMD 2.111.0 and LDC 1.41.0.
 
-    PM-G3 — research-kernel equivalence — PENDING
+        The dedicated PM-G2 runtime validator passes for float/double/real
+        under both compilers. Full repository `dub test` also remains green
+        under both compilers.
+
+        See `PM_G2_API_RUNTIME_RESULTS.md`.
+
+    PM-G3 — research-kernel equivalence — ACTIVE
         Demonstrate production behaviour against the qualified research
         differential and endpoint gates.
 
