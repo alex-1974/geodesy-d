@@ -165,6 +165,87 @@ this gate. The two missing throwing counterparts are carried forward to V1-D
 as explicit semantic decisions.
 
 
+### B3/B4 — coordinate vocabulary and prepared-operation families
+
+Status: **reviewed**
+
+The coordinate/property vocabulary is semantically regular and intentionally
+uses the terminology of each coordinate system rather than generic positional
+names:
+
+~~~text
+GeographicCoordinate   latitude / longitude
+GeodeticCoordinate     latitude / longitude / ellipsoidalHeight
+GeocentricCoordinate   x / y / z
+ProjectedCoordinate    easting / northing
+TopocentricCoordinate  east / north / up
+UtmCoordinate          zone / hemisphere / projected / easting / northing
+~~~
+
+Classification:
+
+- `ellipsoidalHeight` is preferred over a generic `height`: the qualifier
+  distinguishes the value from orthometric or other height systems.
+- `easting/northing` versus `east/north/up` is **intentional semantic
+  specialization**. The former are projected-coordinate ordinates; the latter
+  are local ENU components.
+- `UtmCoordinate.projected` plus convenience `easting/northing` accessors
+  is consistent with UTM carrying both projection ordinates and the zone /
+  hemisphere metadata required for unambiguous reverse projection.
+- `Angle.radians/degrees`, `Latitude.radians/degrees/asAngle`, and
+  `Longitude.radians/degrees/asAngle/normalized` form a coherent angular
+  vocabulary. `normalized` is longitude-specific because canonical
+  longitude wrapping is a domain operation, not a generic angle operation.
+
+Prepared operation families are also regular:
+
+~~~text
+TransverseMercator:
+    tryForward / forward
+    tryReverse / reverse
+    tryForwardFactors / forwardFactors
+    tryReverseFactors / reverseFactors
+
+PseudoMercator:
+    tryForward / forward
+    tryReverse / reverse
+
+UtmProjection:
+    tryForward / forward
+    tryReverse / reverse
+    tryForwardFactors / forwardFactors
+    tryReverseFactors / reverseFactors
+
+TopocentricFrame:
+    tryGeocentricToTopocentric / geocentricToTopocentric
+    tryTopocentricToGeocentric / topocentricToGeocentric
+    tryGeodeticToTopocentric / geodeticToTopocentric
+    tryTopocentricToGeodetic / topocentricToGeodetic
+
+Geodesic:
+    tryDirect
+    tryInverse
+~~~
+
+The longer Topocentric method names are **intentional semantic
+specialization**: unlike a projection object's unambiguous forward/reverse
+direction, a `TopocentricFrame` supports two source coordinate families, so
+the source and destination names prevent ambiguity.
+
+Pseudo-Mercator intentionally has no factor methods in the accepted bounded
+v1 capability; this is a feature-scope difference rather than an API-family
+naming defect.
+
+Geodesic's `direct` / `inverse` terminology is the standard distinction
+between the two geodesic problems and should not be renamed to
+`forward/reverse`. The absence of throwing peers remains deferred to V1-D.
+
+**B3/B4 conclusion:** no naming correction is indicated. The public coordinate
+and prepared-operation vocabularies are internally coherent, with differences
+corresponding to distinct domain semantics.
+
+
+
 ## V1-A inventory basis
 
 The inventory is derived from the production modules publicly re-exported by
