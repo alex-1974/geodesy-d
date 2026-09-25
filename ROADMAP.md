@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACTIVE — PM-G4 COMPILER MATRIX
+Pseudo-Mercator                         ACTIVE — PM-G5 RELEASE ACCEPTANCE
 ```
 
 Continue in this order:
@@ -224,10 +224,13 @@ LDC 1.41.0 the production differential driver reproduces the qualified
 PM-E1C1 forward and reverse corpus/results, including the already-characterized
 real-scalar rounding cases and PM-G0 endpoint policy.
 
-PM-G4 controlled compiler matrix validation is active.
+PM-G4 controlled compiler matrix validation is complete. Public API contracts,
+PM-G2 API/runtime contracts, PM-G3 production/research equivalence, and the full
+repository test suite pass across DMD 2.111.0/2.112.1/2.113.0 and
+LDC 1.41.0/1.42.0/1.43.0, with zero failed checks.
 
-The final PM-G5 gate validates platform / release / regression boundaries before
-Pseudo-Mercator is marked accepted.
+PM-G5 is now active. This final gate validates platform / release / regression
+boundaries before Pseudo-Mercator is marked accepted.
 
 ### P1 — consumer-confirmed geodesic extensions
 
