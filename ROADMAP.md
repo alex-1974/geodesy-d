@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACTIVE — PM-G1 PRODUCTION
+Pseudo-Mercator                         ACTIVE — PM-G2 API/RUNTIME
 ```
 
 Continue in this order:
@@ -209,10 +209,14 @@ with the prepared legal public east longitude retained as the authoritative
 exact reverse identity. The durable gate passes 8682 origins and 51975 endpoint
 round-trip checks with zero failures across the controlled six-compiler matrix.
 
-PM-G1 production module extraction is active. It must implement exactly the
-accepted PM-F surface and qualified PM-E/PM-G0 semantics.
+PM-G1 production module extraction is complete. The production module
+`geodesy.projection.pseudo_mercator` implements the accepted PM-F surface and
+qualified PM-E/PM-G0 semantics. Baseline module and full-repository tests pass
+under DMD 2.111.0 and LDC 1.41.0.
 
-Subsequent PM-G gates validate public API / aggregate / runtime contracts,
+PM-G2 public API / aggregate / runtime contract validation is active.
+
+Subsequent PM-G gates validate production-to-research equivalence,
 production-to-research equivalence, the full controlled DMD/LDC matrix, and
 platform / release / regression boundaries before Pseudo-Mercator is marked
 accepted.

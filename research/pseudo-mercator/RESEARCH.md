@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-G0 production endpoint qualification PASS — PM-G1 production module extraction ACTIVE
+Status: PM-G1 production module extraction PASS — PM-G2 public API / aggregate / runtime contracts ACTIVE
 
 ## Goal
 
@@ -247,9 +247,9 @@ PM-E — independent differential validation — PASS
     optimized quotient-residual / `sech(q)` correction.
     See `PM_E1C1_REVERSE_RESULTS.md`.
 
-    PM-E is complete. PM-F public API is accepted. PM-G0 production
-    endpoint qualification is complete; PM-G1 production module extraction is
-    active.
+    PM-E is complete. PM-F public API is accepted. PM-G0 production endpoint
+    qualification and PM-G1 production module extraction are complete; PM-G2
+    public API / aggregate / runtime contracts are active.
 
 PM-F — public API gate — PASS
     The accepted surface is documented in `PM_F_PUBLIC_API.md`.
@@ -280,11 +280,18 @@ PM-G — production/platform acceptance — ACTIVE
         DMD 2.111/2.112.1/2.113 and LDC 1.41/1.42/1.43 matrix. All six outputs
         are byte-identical.
 
-    PM-G1 — production module extraction — ACTIVE
-        Implement only the accepted PM-F surface and qualified PM-E/PM-G0
-        semantics in `geodesy.projection.pseudo_mercator`.
+    PM-G1 — production module extraction — PASS
+        `source/geodesy/projection/pseudo_mercator.d` implements only the
+        accepted PM-F surface and qualified PM-E/PM-G0 numerical/domain
+        semantics.
 
-    PM-G2 — public API / aggregate / runtime contracts — PENDING
+        Baseline validation on commit 76fbc3a passes module unittests under
+        DMD 2.111.0 and LDC 1.41.0 (6 modules each), and full repository
+        `dub test` under both compilers (22 modules each).
+
+        See `PM_G1_PRODUCTION_EXTRACTION.md`.
+
+    PM-G2 — public API / aggregate / runtime contracts — ACTIVE
         Validate API shape, root exposure, checked/throwing behaviour,
         default-state semantics, attributes, and boundary contracts.
 
