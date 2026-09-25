@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-G3 research-kernel equivalence PASS — PM-G4 controlled compiler matrix ACTIVE
+Status: PM-G4 controlled compiler matrix PASS — PM-G5 platform / release / regression acceptance ACTIVE
 
 ## Goal
 
@@ -250,7 +250,7 @@ PM-E — independent differential validation — PASS
     PM-E is complete. PM-F public API is accepted. PM-G0 production endpoint
     qualification, PM-G1 production module extraction, PM-G2 public API /
     aggregate / runtime contracts, and PM-G3 research-kernel equivalence are
-    complete; PM-G4 controlled compiler matrix validation is active.
+    complete; PM-G4 controlled compiler matrix validation is complete and PM-G5 platform / release / regression acceptance is active.
 
 PM-F — public API gate — PASS
     The accepted surface is documented in `PM_F_PUBLIC_API.md`.
@@ -320,13 +320,19 @@ PM-G — production/platform acceptance — ACTIVE
 
         See `PM_G3_EQUIVALENCE_RESULTS.md`.
 
-    PM-G4 — controlled compiler matrix — ACTIVE
-        Run the production implementation over the full supported DMD/LDC
-        matrix. PM-G0's matrix qualifies the endpoint algorithm only.
+    PM-G4 — controlled compiler matrix — PASS
+        The production implementation passes public API contracts, PM-G2
+        API/runtime contracts, PM-G3 production/research equivalence, and the
+        full repository test suite across DMD 2.111.0/2.112.1/2.113.0 and
+        LDC 1.41.0/1.42.0/1.43.0. The matrix completed with six controlled
+        compilers and zero failed checks.
 
-    PM-G5 — platform / release / regression acceptance — PENDING
-        Complete supported-platform, release-build, and repository regression
-        validation before Pseudo-Mercator is marked accepted.
+        See `PM_G4_COMPILER_MATRIX_RESULTS.md`.
+
+    PM-G5 — platform / release / regression acceptance — ACTIVE
+        Complete supported-platform, release-build, packaging/documentation,
+        and repository regression validation before Pseudo-Mercator is marked
+        accepted.
 
 ## Explicit non-goals for this slice
 
