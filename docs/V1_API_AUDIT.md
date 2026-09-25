@@ -1,6 +1,6 @@
 # v1 public API audit
 
-Status: **V1-A active — inventory only**
+Status: **V1-A source inventory complete — external aggregate compile check pending**
 
 The v1 feature freeze is active. This audit determines the concrete public API
 that may later be accepted and frozen for v1.0.
@@ -204,23 +204,48 @@ thirdFlattening
 
 ### Coordinate values
 
-The coordinate types expose their accepted construction/property families,
-including strong geographic components and finite linear components. Exact
-signatures and default-state semantics remain subjects of V1-B through V1-E.
-
 ~~~text
-GeographicCoordinate
-GeodeticCoordinate
-GeocentricCoordinate
-ProjectedCoordinate
-TopocentricCoordinate
-UtmCoordinate
+GeographicCoordinate:
+    fromComponents
+    latitude
+    longitude
+
+GeodeticCoordinate:
+    tryFromComponents / fromComponents
+    latitude
+    longitude
+    ellipsoidalHeight
+
+GeocentricCoordinate:
+    tryFromComponents / fromComponents
+    x / y / z
+
+ProjectedCoordinate:
+    tryFromComponents / fromComponents
+    easting / northing
+
+TopocentricCoordinate:
+    tryFromComponents / fromComponents
+    east / north / up
+
+UtmCoordinate:
+    isValid
+    tryFromComponents / fromComponents
+    zone
+    hemisphere
+    projected
+    easting
+    northing
 ~~~
+
+Exact signatures and default-state semantics remain subjects of V1-B through
+V1-E.
 
 ### Topocentric frame
 
 ~~~text
 isValid
+ellipsoid
 tryFromGeodeticOrigin / fromGeodeticOrigin
 tryFromGeocentricOrigin / fromGeocentricOrigin
 tryGeocentricToTopocentric / geocentricToTopocentric
@@ -257,8 +282,15 @@ tryReverse / reverse
 ### UTM
 
 ~~~text
+UtmHemisphere:
+    north
+    south
+
 UtmZone:
-    checked / throwing construction and zone value access
+    isValid
+    tryFromNumber / fromNumber
+    number
+    centralMeridianDegrees
 
 UtmProjection:
     isValid
@@ -275,16 +307,22 @@ UtmProjection:
 ~~~text
 Geodesic:
     isValid
+    isSphere
     tryFromEllipsoid / fromEllipsoid
     ellipsoid
     tryDirect
     tryInverse
 
 GeodesicDirectResult:
-    result construction/accessors for position and final azimuth
+    fromComponents
+    position
+    finalAzimuth
 
 GeodesicInverseResult:
-    result construction/accessors for distance, initial azimuth, final azimuth
+    fromComponents
+    distance
+    initialAzimuth
+    finalAzimuth
 ~~~
 
 ### Static transformations
@@ -303,6 +341,24 @@ Helmert7:
     scaleDifference
     scaleFactor
 ~~~
+
+## V1-A access-control findings
+
+The source inspection also distinguishes implementation declarations that may
+look public in a textual scan but are not aggregate API:
+
+- `angleFromRadiansUnchecked` is `package(geodesy)`;
+- raw EPSG 9602 working kernels and `Epsg9602WorkingScalar` are
+  `package(geodesy)`;
+- projection working-scalar templates, numerical helpers, trace structures,
+  series constants, and reference-case structures are private or occur inside
+  private sections;
+- unchecked coordinate factories occur in private sections where present.
+
+These declarations are excluded from the candidate v1 surface.
+
+No separate public declaration was accepted merely because it appeared in a
+production source file; module/section access control remains authoritative.
 
 ## Immediate V1-A documentation discrepancy
 
