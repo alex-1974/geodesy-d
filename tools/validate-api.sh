@@ -68,6 +68,10 @@ expect_rejected "$repo/validation/api/reject_tm_research_forward_factors.d" \
     "research-only TM forward factors"
 expect_rejected "$repo/validation/api/reject_tm_research_reverse_factors.d" \
     "research-only TM reverse factors"
+expect_rejected "$repo/validation/api/reject_pseudo_mercator_webmercator_alias.d" \
+    "Pseudo-Mercator WebMercator alias"
+expect_rejected "$repo/validation/api/reject_pseudo_mercator_conformal_factors.d" \
+    "Pseudo-Mercator conformal factor surface"
 expect_rejected "$repo/validation/api/reject_implicit_helmert_convention.d" \
     "Helmert7 without explicit convention"
 

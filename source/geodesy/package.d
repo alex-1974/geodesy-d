@@ -14,6 +14,7 @@ public import geodesy.scalar;
 
 public import geodesy.conversion;
 public import geodesy.projection.factors;
+public import geodesy.projection.pseudo_mercator;
 public import geodesy.projection.transverse_mercator;
 public import geodesy.projection.utm;
 

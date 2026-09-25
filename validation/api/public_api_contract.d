@@ -28,6 +28,10 @@ static assert(is(ConformalProjectionFactors!float));
 static assert(is(ConformalProjectionFactors!double));
 static assert(is(ConformalProjectionFactors!real));
 
+static assert(is(PseudoMercator!float));
+static assert(is(PseudoMercator!double));
+static assert(is(PseudoMercator!real));
+
 static assert(is(TransverseMercator!double));
 static assert(is(UtmZone));
 static assert(is(UtmCoordinate!double));
@@ -380,6 +384,39 @@ private void projectionApiContract()
     const factorScale =
         factors.pointScale;
 
+    PseudoMercator!double pseudoMercator;
+    PseudoMercator!double.tryFromParameters(
+        ellipsoid,
+        longitude15,
+        500_000.0,
+        1_000_000.0,
+        pseudoMercator);
+
+    const pseudoMercatorValid =
+        pseudoMercator.isValid;
+
+    const pseudoMercatorEllipsoid =
+        pseudoMercator.ellipsoid;
+
+    const pseudoMercatorLongitude0 =
+        pseudoMercator.longitudeOfNaturalOrigin;
+
+    const pseudoMercatorFalseEasting =
+        pseudoMercator.falseEasting;
+
+    const pseudoMercatorFalseNorthing =
+        pseudoMercator.falseNorthing;
+
+    ProjectedCoordinate!double pseudoMercatorProjected;
+    pseudoMercator.tryForward(
+        source,
+        pseudoMercatorProjected);
+
+    GeographicCoordinate!double pseudoMercatorReversed;
+    pseudoMercator.tryReverse(
+        pseudoMercatorProjected,
+        pseudoMercatorReversed);
+
     TransverseMercator!double tm;
     TransverseMercator!double.tryFromParameters(
         ellipsoid,
@@ -460,6 +497,12 @@ private void projectionApiContract()
         automaticReversed);
 
     cast(void) projectedCoordinate;
+    cast(void) pseudoMercatorValid;
+    cast(void) pseudoMercatorEllipsoid;
+    cast(void) pseudoMercatorLongitude0;
+    cast(void) pseudoMercatorFalseEasting;
+    cast(void) pseudoMercatorFalseNorthing;
+    cast(void) pseudoMercatorReversed;
     cast(void) factorConvergence;
     cast(void) factorScale;
     cast(void) tmReversed;
@@ -492,9 +535,28 @@ private void throwingApiContract()
     auto pvTarget = applyPositionVectorHelmert(geocentric, pv);
     auto cf = toCoordinateFrame(pv);
     auto cfTarget = applyCoordinateFrameHelmert(geocentric, cf);
+    auto pseudoMercator =
+        PseudoMercator!double.fromParameters(
+            ellipsoid,
+            longitude,
+            500_000.0,
+            1_000_000.0);
+
+    auto pseudoProjected =
+        pseudoMercator.forward(
+            GeographicCoordinate!double.fromComponents(
+                latitude,
+                longitude));
+
+    auto pseudoReversed =
+        pseudoMercator.reverse(
+            pseudoProjected);
+
     auto geodesic = Geodesic!double.fromEllipsoid(ellipsoid);
     GeodesyValueException exception = new GeodesyValueException("contract");
     cast(void) angle; cast(void) geodeticAgain; cast(void) shifted;
-    cast(void) pvTarget; cast(void) cfTarget; cast(void) geodesic;
+    cast(void) pvTarget; cast(void) cfTarget;
+    cast(void) pseudoReversed;
+    cast(void) geodesic;
     cast(void) exception;
 }

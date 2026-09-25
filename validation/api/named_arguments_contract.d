@@ -189,6 +189,24 @@ private void checkedNamedArgumentContract()
         degrees: 15.0,
         result: longitude15);
 
+    PseudoMercator!double pseudoMercator;
+    PseudoMercator!double.tryFromParameters(
+        ellipsoid: ellipsoid,
+        longitudeOfNaturalOrigin: longitude15,
+        falseEasting: 500_000.0,
+        falseNorthing: 1_000_000.0,
+        result: pseudoMercator);
+
+    ProjectedCoordinate!double pseudoMercatorProjected;
+    pseudoMercator.tryForward(
+        source: projectionSource,
+        result: pseudoMercatorProjected);
+
+    GeographicCoordinate!double pseudoMercatorReversed;
+    pseudoMercator.tryReverse(
+        source: pseudoMercatorProjected,
+        result: pseudoMercatorReversed);
+
     TransverseMercator!double tm;
     TransverseMercator!double.tryFromParameters(
         ellipsoid: ellipsoid,
@@ -358,6 +376,7 @@ private void checkedNamedArgumentContract()
     cast(void) axesEllipsoid;
     cast(void) sphereEllipsoid;
     cast(void) projected;
+    cast(void) pseudoMercatorReversed;
     cast(void) convertedGeodetic;
     cast(void) translated;
     cast(void) pvTarget;
@@ -526,6 +545,21 @@ private void throwingNamedArgumentContract()
         toPositionVector(
             source: cfCanonical);
 
+    const pseudoMercator =
+        PseudoMercator!double.fromParameters(
+            ellipsoid: ellipsoid,
+            longitudeOfNaturalOrigin: longitude,
+            falseEasting: 500_000.0,
+            falseNorthing: 1_000_000.0);
+
+    const pseudoMercatorForward =
+        pseudoMercator.forward(
+            source: source);
+
+    const pseudoMercatorReverse =
+        pseudoMercator.reverse(
+            source: pseudoMercatorForward);
+
     const tm =
         TransverseMercator!double.fromParameters(
             ellipsoid: ellipsoid,
@@ -650,6 +684,7 @@ private void throwingNamedArgumentContract()
     cast(void) cfTarget;
     cast(void) convertedCf;
     cast(void) convertedPv;
+    cast(void) pseudoMercatorReverse;
     cast(void) tmReverse;
     cast(void) tmForwardFactors;
     cast(void) tmReverseFactors;
