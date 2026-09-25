@@ -1,6 +1,6 @@
 # v1 public API audit
 
-Status: **V1-A source inventory complete — external aggregate compile check pending**
+Status: **V1-A complete — source inventory and external aggregate compile check passed**
 
 The v1 feature freeze is active. This audit determines the concrete public API
 that may later be accepted and frozen for v1.0.
@@ -254,6 +254,17 @@ tryGeodeticToTopocentric / geodeticToTopocentric
 tryTopocentricToGeodetic / topocentricToGeodetic
 ~~~
 
+### Projection factors
+
+`ConformalProjectionFactors<T>` is a public result value type. Its component
+factory is not part of the aggregate public surface; externally produced
+instances are obtained from projection factor operations. Public accessors:
+
+~~~text
+meridianConvergence
+pointScale
+~~~
+
 ### Transverse Mercator
 
 ~~~text
@@ -371,6 +382,37 @@ This is recorded as an audit finding only. V1-H will reconcile documentation
 after the candidate API has passed the semantic gates; V1-A must not make prose
 documentation authoritative over source.
 
+## V1-A external aggregate compile check
+
+An external DUB consumer using only `import geodesy;` was built against this
+audit branch. The check exercised representative construction, conversion,
+projection, UTM, topocentric, static transformation, geodesic, and result-value
+surface through the aggregate import.
+
+During construction of the consumer, source-signature reconciliation corrected
+three assumptions in the audit/test draft without changing production code:
+
+- `TopocentricFrame.fromGeodeticOrigin` takes `(ellipsoid, origin)`;
+- `forwardUtm` and `reverseUtm` take the ellipsoid before the source;
+- `ConformalProjectionFactors.fromComponents` is not public and is excluded
+  from the candidate surface.
+
+Baseline result on the audit commit lineage:
+
+~~~text
+internal unittest regression
+    DMD 2.111.0: PASS — 22 modules
+    LDC 1.41.0: PASS — 22 modules
+
+external aggregate consumer
+    DMD 2.111.0: PASS — build and link
+    LDC 1.41.0: PASS — build and link
+~~~
+
+The check establishes aggregate accessibility for the exercised candidate
+surface. It does not freeze the API and does not substitute for the broader
+compatibility matrix in V1-I.
+
 ## V1-A completion criteria
 
 V1-A may be closed only when:
@@ -384,5 +426,7 @@ V1-A may be closed only when:
 5. the inventory is independently compile-checked from an external
    `import geodesy;` consumer before it becomes the baseline for V1-B.
 
-The compile check in item 5 should test existence and accessibility only. It
-must not convert the candidate inventory into an API freeze.
+The compile check in item 5 tests existence and accessibility only. It does
+not convert the candidate inventory into an API freeze.
+
+All five V1-A criteria are satisfied. V1-A is closed; V1-B may begin.
