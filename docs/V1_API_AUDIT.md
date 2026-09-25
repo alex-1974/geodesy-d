@@ -27,6 +27,85 @@ V1-J  final API-freeze and release gate
 A later gate may add, rename, remove, or change candidate API before the final
 API freeze when the change is justified by the audit.
 
+## V1-B naming and API-family consistency
+
+Status: **active — audit only**
+
+V1-B reviews the candidate surface accepted by V1-A for naming and family
+consistency. It does not change production API merely to make names visually
+uniform; differences remain acceptable when they encode different semantics.
+
+### V1-B review dimensions
+
+~~~text
+B1  checked / throwing pair names
+B2  construction and factory vocabulary
+B3  coordinate component and property vocabulary
+B4  prepared-operation method families
+B5  argument ordering across related free functions and methods
+B6  transformation direction / convention naming
+B7  projection parameter vocabulary
+B8  result-type and accessor vocabulary
+B9  type / enum / alias naming
+B10 aggregate-visible conditional or validation-only declarations
+~~~
+
+The review must classify each difference as one of:
+
+~~~text
+consistent
+intentional semantic specialization
+candidate inconsistency
+conditional/debug-only surface requiring a visibility decision
+~~~
+
+### Initial family map
+
+The source surface already shows several strong naming families:
+
+- checked factories generally use `tryFrom...` and throwing factories use the
+  same suffix without `try`;
+- checked operations generally use `try...` and throwing operations use the
+  same operation name without `try`;
+- coordinate accessors use domain names rather than generic tuple positions:
+  `latitude/longitude`, `x/y/z`, `easting/northing`, and
+  `east/north/up`;
+- prepared projections use `tryForward/forward` and
+  `tryReverse/reverse`;
+- factor operations extend that vocabulary as
+  `tryForwardFactors/forwardFactors` and
+  `tryReverseFactors/reverseFactors`;
+- static transformation functions use the operation name after
+  `tryApply/apply`;
+- projection parameter properties consistently use EPSG-style names such as
+  `latitudeOfNaturalOrigin`, `longitudeOfNaturalOrigin`,
+  `scaleFactorAtNaturalOrigin`, `falseEasting`, and `falseNorthing`
+  where the parameter is semantically present.
+
+### Initial items requiring explicit V1-B review
+
+1. `GeographicCoordinate.fromComponents` has no checked
+   `tryFromComponents` peer, unlike the other coordinate value types. This
+   may be intentional because its components are already validated strong
+   types; V1-B must classify rather than normalize it automatically.
+2. `Geodesic` exposes checked `tryDirect` and `tryInverse` operations but
+   no throwing `direct` / `inverse` peers. This is a family difference and
+   requires a semantic/API decision.
+3. UTM one-shot operations use the same checked/throwing naming family as
+   prepared projections, but take the ellipsoid before the source. Argument
+   ordering must be compared with conversion and transformation free
+   functions before v1 freezes parameter order.
+4. `GeocentricTranslation.inverse` and Helmert
+   `toCoordinateFrame/toPositionVector` are conversion/inversion operations
+   rather than checked/throwing pairs; their naming should be reviewed as a
+   transformation family, not forced into projection vocabulary.
+5. `TransverseMercator.tryReverseNewtonTrace` becomes public only under
+   `GeodesyTmNewtonValidation`. V1-B records this conditional public name;
+   V1-F will decide whether a validation build is allowed to alter the public
+   module surface.
+
+No item above is yet a requested production change.
+
 ## V1-A inventory basis
 
 The inventory is derived from the production modules publicly re-exported by
