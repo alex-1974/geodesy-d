@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-G2 public API / aggregate / runtime contracts PASS — PM-G3 research-kernel equivalence ACTIVE
+Status: PM-G3 research-kernel equivalence PASS — PM-G4 controlled compiler matrix ACTIVE
 
 ## Goal
 
@@ -248,9 +248,9 @@ PM-E — independent differential validation — PASS
     See `PM_E1C1_REVERSE_RESULTS.md`.
 
     PM-E is complete. PM-F public API is accepted. PM-G0 production endpoint
-    qualification, PM-G1 production module extraction, and PM-G2 public API /
-    aggregate / runtime contracts are complete; PM-G3 research-kernel
-    equivalence is active.
+    qualification, PM-G1 production module extraction, PM-G2 public API /
+    aggregate / runtime contracts, and PM-G3 research-kernel equivalence are
+    complete; PM-G4 controlled compiler matrix validation is active.
 
 PM-F — public API gate — PASS
     The accepted surface is documented in `PM_F_PUBLIC_API.md`.
@@ -304,11 +304,23 @@ PM-G — production/platform acceptance — ACTIVE
 
         See `PM_G2_API_RUNTIME_RESULTS.md`.
 
-    PM-G3 — research-kernel equivalence — ACTIVE
-        Demonstrate production behaviour against the qualified research
-        differential and endpoint gates.
+    PM-G3 — research-kernel equivalence — PASS
+        The production differential driver reproduces the qualified PM-E1C1
+        forward and reverse corpus/results under DMD 2.111.0 and LDC 1.41.0.
 
-    PM-G4 — controlled compiler matrix — PENDING
+        Forward input, raw driver output, and oracle reports are byte-identical.
+        Reverse input and oracle reports are byte-identical; normalized raw
+        reverse output is equivalent after removing the research-only
+        `eastDelta` observability field.
+
+        The production path preserves the exact same known real-scalar
+        characterization: 86/88 correctly-rounded forward northings with two
+        1-ULP cases, and 90/102 correctly-rounded sparse reverse latitudes with
+        a 2-ULP maximum. No new production mismatch exists.
+
+        See `PM_G3_EQUIVALENCE_RESULTS.md`.
+
+    PM-G4 — controlled compiler matrix — ACTIVE
         Run the production implementation over the full supported DMD/LDC
         matrix. PM-G0's matrix qualifies the endpoint algorithm only.
 

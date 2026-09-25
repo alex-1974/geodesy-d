@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACTIVE — PM-G3 EQUIVALENCE
+Pseudo-Mercator                         ACTIVE — PM-G4 COMPILER MATRIX
 ```
 
 Continue in this order:
@@ -219,10 +219,15 @@ Root aggregate exposure, positive and negative API contracts, named-argument
 source compatibility, checked-operation attributes, runtime boundary/failure
 semantics, and full repository tests pass under DMD 2.111.0 and LDC 1.41.0.
 
-PM-G3 production-to-research equivalence is active.
+PM-G3 production-to-research equivalence is complete. Under DMD 2.111.0 and
+LDC 1.41.0 the production differential driver reproduces the qualified
+PM-E1C1 forward and reverse corpus/results, including the already-characterized
+real-scalar rounding cases and PM-G0 endpoint policy.
 
-Subsequent PM-G gates validate the full controlled DMD/LDC matrix and platform /
-release / regression boundaries before Pseudo-Mercator is marked accepted.
+PM-G4 controlled compiler matrix validation is active.
+
+The final PM-G5 gate validates platform / release / regression boundaries before
+Pseudo-Mercator is marked accepted.
 
 ### P1 — consumer-confirmed geodesic extensions
 
