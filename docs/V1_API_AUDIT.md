@@ -106,6 +106,65 @@ The source surface already shows several strong naming families:
 
 No item above is yet a requested production change.
 
+
+### B1/B2 — checked/throwing pairs and factory vocabulary
+
+Status: **reviewed**
+
+The dominant construction convention is coherent:
+
+~~~text
+tryFromX(args..., out result)  -> checked, non-throwing construction
+fromX(args...)                 -> throwing construction
+~~~
+
+This family is used by angular values, ellipsoids, finite coordinate values,
+prepared frames/projections, UTM zone/projection values, static
+transformations, and the prepared geodesic solver. `Ellipsoid.trySphere /
+sphere` is an intentional noun factory rather than a `From...` spelling and
+still follows the checked/throwing prefix relationship.
+
+Classification of apparent exceptions:
+
+- `GeographicCoordinate.fromComponents`: **intentional semantic
+  specialization**. Its inputs are already domain-validating strong
+  `Latitude` and `Longitude` values, so construction has no additional
+  failure path. Adding `tryFromComponents` would create a checked operation
+  with no condition to check.
+- `GeodesicDirectResult` and `GeodesicInverseResult` component factories:
+  **not public API**. They are private result-construction helpers and are
+  removed from the V1-A public-member inventory.
+- `ConformalProjectionFactors`: likewise exposes result accessors, not a
+  public component factory.
+- `Geodesic.tryDirect` / `tryInverse` without throwing peers:
+  **candidate API decision**, not a naming defect by itself. These operations
+  have algorithm/domain failure paths and currently expose only the checked
+  form. V1-D must decide the desired failure contract; V1-B must not invent
+  throwing peers before that decision.
+- `tryStandardUtmZone` without a throwing `standardUtmZone`:
+  **candidate API decision** for the same reason. Automatic zone selection has
+  an explicit unsupported latitude region; whether a throwing convenience
+  belongs in v1 is a failure-semantics question for V1-D.
+
+For operations that already provide both forms, the naming is consistent:
+
+~~~text
+tryForward / forward
+tryReverse / reverse
+tryForwardFactors / forwardFactors
+tryReverseFactors / reverseFactors
+tryApplyGeocentricTranslation / applyGeocentricTranslation
+tryApplyPositionVectorHelmert / applyPositionVectorHelmert
+tryApplyCoordinateFrameHelmert / applyCoordinateFrameHelmert
+tryForwardUtm / forwardUtm
+tryReverseUtm / reverseUtm
+~~~
+
+**B1/B2 conclusion:** no production rename or factory rename is justified at
+this gate. The two missing throwing counterparts are carried forward to V1-D
+as explicit semantic decisions.
+
+
 ## V1-A inventory basis
 
 The inventory is derived from the production modules publicly re-exported by
@@ -404,12 +463,10 @@ Geodesic:
     tryInverse
 
 GeodesicDirectResult:
-    fromComponents
     position
     finalAzimuth
 
 GeodesicInverseResult:
-    fromComponents
     distance
     initialAzimuth
     finalAzimuth
