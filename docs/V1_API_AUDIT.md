@@ -436,6 +436,67 @@ current V1-B production-API correction candidate remains the one-shot UTM
 argument order from B5.
 
 
+### B10 — conditional / validation-only public surface
+
+Status: **reviewed — visibility issue identified**
+
+`geodesy.projection.transverse_mercator` conditionally declares
+`TransverseMercatorNewtonTrace` when `GeodesyTmNewtonValidation` is enabled.
+Inside the same version block, `TransverseMercator<T>` temporarily switches
+to `public:` and exposes:
+
+~~~d
+bool tryReverseNewtonTrace(
+    const ProjectedCoordinate!T source,
+    out GeographicCoordinate!T result,
+    out TransverseMercatorNewtonTrace trace) const
+~~~
+
+The trace records implementation-validation details such as iteration count,
+convergence residual, maximum correction, intermediate `tauPrime`, and
+Newton applicability. The surrounding instrumented kernels remain private.
+
+**Classification:** **conditional/debug-only surface requiring a visibility
+decision**. This is not merely a naming concern: enabling a validation version
+changes the externally visible API of an aggregate-exported production module.
+The trace also exposes algorithm/validation details that are not part of the
+normal Transverse Mercator semantic contract.
+
+V1-B records the names as internally coherent for their validation purpose,
+but does not accept them as v1 public API. V1-F must decide the module /
+visibility boundary and ensure validation instrumentation does not
+accidentally enlarge the supported production surface.
+
+### V1-B summary
+
+~~~text
+B1  checked / throwing pair names                  REVIEWED
+B2  construction and factory vocabulary            REVIEWED
+B3  coordinate component/property vocabulary       PASS
+B4  prepared-operation method families             PASS
+B5  argument ordering / UFCS                       1 correction candidate
+B6  transformation direction/convention naming     PASS
+B7  projection parameter vocabulary                PASS
+B8  result/accessor vocabulary                     PASS
+B9  type/enum/alias naming                         PASS
+B10 conditional/validation-only declarations       1 V1-F visibility issue
+~~~
+
+V1-B therefore identifies no general naming redesign. Two items leave this
+gate:
+
+1. **Pre-v1 API correction candidate:** reorder the one-shot UTM family from
+   `(ellipsoid, source)` to `(source, ellipsoid)` so ordinary calls and UFCS
+   align with the rest of the free conversion/transformation API.
+2. **V1-F visibility issue:** prevent validation-only Transverse Mercator
+   instrumentation from becoming accidental supported public surface.
+
+The absence of throwing geodesic and automatic-UTM-zone convenience
+operations remains a V1-D failure-contract decision rather than a naming
+defect.
+
+
+
 
 
 
