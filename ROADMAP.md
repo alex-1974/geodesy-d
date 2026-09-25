@@ -51,7 +51,7 @@ TOPO-A .. TOPO-G   PASS
 The bounded EPSG 9836/9837 topocentric surface is now integrated into `main`.
 
 Transverse Mercator / UTM projection factors are accepted under ADR-0011.
-Pseudo-Mercator is now accepted after completion of PM-A through PM-G5.
+Pseudo-Mercator is accepted after completion of PM-A through PM-G5 and was integrated into `main` by PR #19.
 
 ## Geodesic acceptance state
 
@@ -168,7 +168,7 @@ Automatic UTM zone-selection helpers do not gain separate factor operations.
 Broader non-conformal projection differentials and CRS-level factor discovery
 remain outside this accepted slice.
 
-### P0 — Pseudo-Mercator
+### P0 — Pseudo-Mercator — accepted 2026-09-25
 
 Add a bounded forward/reverse Pseudo-Mercator mathematical kernel suitable for
 the projection used by common web maps.
@@ -193,44 +193,15 @@ The public name is now accepted as `PseudoMercator`. PM-F rejects a
 `WebMercator` alias for the initial API; CRS and tile-policy naming remain
 outside this mathematical projection type.
 
-PM-A through PM-E are complete. Method semantics, represented domain,
-scalar-specific numerical paths, independent forward/reverse differential
-evidence, controlled compiler behaviour, and the current research performance
-boundary are qualified.
+Pseudo-Mercator is accepted after completion of PM-A through PM-G5 and is integrated into `main` by PR #19.
 
-PM-F is complete. The accepted public surface is recorded in
-`research/pseudo-mercator/PM_F_PUBLIC_API.md`.
+The accepted `PseudoMercator!T` surface provides prepared checked/throwing construction and forward/reverse operations for `float`, `double`, and platform `real`. The forward latitude domain is bounded to [-88 deg,+88 deg], longitude uses the accepted principal-sheet and represented-endpoint policy, and the source ellipsoid is retained while EPSG method 1024 coordinate equations use only its semi-major axis.
 
-PM-G is now the active gate.
+PM-G5 completed release-build, full-repository regression, aggregate/external-consumer, research-leakage, platform-assumption, and documentation-consistency acceptance. The controlled six-compiler PM-G4 matrix and final baseline DMD/LDC checks passed with zero failed checks.
 
-PM-G0 production endpoint qualification is complete. The selected endpoint is
-derived from the actual principal branch by finite public-lattice bisection,
-with the prepared legal public east longitude retained as the authoritative
-exact reverse identity. The durable gate passes 8682 origins and 51975 endpoint
-round-trip checks with zero failures across the controlled six-compiler matrix.
+The accepted slice deliberately excludes a `WebMercator` alias, CRS/EPSG lookup, projection-factor API, one-shot free helpers, and web-map tile/zoom/XYZ/TMS policy. These remain outside the bounded mathematical kernel.
 
-PM-G1 production module extraction is complete. The production module
-`geodesy.projection.pseudo_mercator` implements the accepted PM-F surface and
-qualified PM-E/PM-G0 semantics. Baseline module and full-repository tests pass
-under DMD 2.111.0 and LDC 1.41.0.
-
-PM-G2 public API / aggregate / runtime contract validation is complete.
-Root aggregate exposure, positive and negative API contracts, named-argument
-source compatibility, checked-operation attributes, runtime boundary/failure
-semantics, and full repository tests pass under DMD 2.111.0 and LDC 1.41.0.
-
-PM-G3 production-to-research equivalence is complete. Under DMD 2.111.0 and
-LDC 1.41.0 the production differential driver reproduces the qualified
-PM-E1C1 forward and reverse corpus/results, including the already-characterized
-real-scalar rounding cases and PM-G0 endpoint policy.
-
-PM-G4 controlled compiler matrix validation is complete. Public API contracts,
-PM-G2 API/runtime contracts, PM-G3 production/research equivalence, and the full
-repository test suite pass across DMD 2.111.0/2.112.1/2.113.0 and
-LDC 1.41.0/1.42.0/1.43.0, with zero failed checks.
-
-PM-G5 is now active. This final gate validates platform / release / regression
-boundaries before Pseudo-Mercator is marked accepted.
+The authoritative acceptance evidence is retained under `research/pseudo-mercator/`.
 
 ### P1 — consumer-confirmed geodesic extensions
 

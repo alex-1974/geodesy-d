@@ -287,6 +287,62 @@ reverse policy as the corresponding coordinate operations.
 See ADR-0006 and `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` for the accepted
 domain, numerical, scalar, and platform contract.
 
+## Pseudo-Mercator — current unreleased accepted surface
+
+The aggregate public API exports the accepted bounded EPSG method 1024 operation:
+
+~~~text
+PseudoMercator<T>
+~~~
+
+for `T = float | double | real`.
+
+Construction uses:
+
+~~~text
+tryFromParameters / fromParameters
+~~~
+
+with the parameters:
+
+~~~text
+Ellipsoid<T>
+Longitude<T> longitudeOfNaturalOrigin
+T falseEasting
+T falseNorthing
+~~~
+
+A prepared operation exposes read-only `ellipsoid`,
+`longitudeOfNaturalOrigin`, `falseEasting`, and `falseNorthing`
+properties together with:
+
+~~~text
+tryForward / forward
+tryReverse / reverse
+~~~
+
+`PseudoMercator<T>.init` is intentionally invalid. Checked construction and
+projection operations are `pure nothrow @safe @nogc`; throwing convenience
+operations report invalid parameters, failed operations, or points outside the
+supported domain through `GeodesyValueException`.
+
+The forward latitude domain is the closed interval [-88 deg,+88 deg].
+Longitude uses the principal wrapped sheet [-pi,+pi) with the accepted
+representation-aware east-endpoint policy. Reverse northing limits are derived
+from the represented forward values at the two latitude boundaries.
+
+The complete source `Ellipsoid<T>` is retained as semantic state, while EPSG
+method 1024 coordinate equations depend only on its semi-major axis. Flattening
+therefore does not affect projected coordinates.
+
+The initial public surface deliberately does not provide a `WebMercator`
+alias, latitude-of-natural-origin or scale-factor parameters, conformal
+projection factors, one-shot free forward/reverse helpers, CRS/EPSG lookup, or
+web-map tile/zoom/XYZ/TMS policy.
+
+The PM-A through PM-G5 research and acceptance evidence is retained under
+`research/pseudo-mercator/`.
+
 ## UTM — current unreleased accepted surface
 
 The UTM layer exports:
