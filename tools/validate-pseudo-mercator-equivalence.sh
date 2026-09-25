@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo="$(cd "$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
-dc="\${DC:-dmd}"
+repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dc="${DC:-dmd}"
 
 command -v "$dc" >/dev/null 2>&1 || {
     echo "error: D compiler '$dc' not found in PATH" >&2
