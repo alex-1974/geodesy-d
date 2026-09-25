@@ -6,7 +6,8 @@
  * Composes the already accepted pieces:
  *
  *   PM-B   q   = asinh(tan(phi))
- *   PM-C   phi = atan(sinh(q))
+ *   PM-C   phi = atan(sinh(q)) semantic inverse reference
+ *   PM-E1C1 scalar-qualified reverse numerical evaluation
  *   PM-D   latitude/domain and [-pi,+pi) longitude policy
  *   PM-E1A represented easting endpoint policy
  *
@@ -31,6 +32,9 @@ import std.math :
     PI,
     asinh,
     atan,
+    atan2,
+    copysign,
+    expm1,
     fabs,
     isFinite,
     nextDown,
@@ -699,6 +703,149 @@ private WorkingScalar!T eastingFromLongitudeDifference(T)(
 }
 
 
+
+private void quotientExpansion(T)(
+    const WorkingScalar!T numerator,
+    const WorkingScalar!T denominator,
+    out WorkingScalar!T high,
+    out WorkingScalar!T low)
+{
+    alias W = WorkingScalar!T;
+
+    /*
+     * Recover the rounding residual of numerator / denominator without
+     * FMA.  twoProduct decomposes denominator * quotient into an exact
+     * high/low product.  PM-E1C1B verified that numerator - product is
+     * exact throughout the researched reverse domain, allowing the
+     * product residual to reconstruct the division remainder with one
+     * correction division.
+     */
+    const W quotient =
+        numerator / denominator;
+
+    W product;
+    W productResidual;
+
+    twoProduct!T(
+        denominator,
+        quotient,
+        product,
+        productResidual);
+
+    const W remainder =
+        (
+            numerator
+            - product
+        )
+        - productResidual;
+
+    const W correction =
+        remainder / denominator;
+
+    twoSum(
+        quotient,
+        correction,
+        high,
+        low);
+}
+
+
+private WorkingScalar!T addLongitudeParts(T)(
+    const T longitude0,
+    const WorkingScalar!T deltaHigh,
+    const WorkingScalar!T deltaLow)
+{
+    alias W = WorkingScalar!T;
+
+    const W origin =
+        workingCanonicalLongitude!T(
+            longitude0);
+
+    /*
+     * Form:
+     *
+     *     origin + deltaHigh + deltaLow
+     *
+     * as an expansion before principal-sheet reduction.
+     */
+    W main;
+    W mainResidual;
+
+    twoSum(
+        origin,
+        deltaHigh,
+        main,
+        mainResidual);
+
+    W tail;
+    W tailResidual;
+
+    twoSum(
+        mainResidual,
+        deltaLow,
+        tail,
+        tailResidual);
+
+    W sum;
+    W sumResidual;
+
+    twoSum(
+        main,
+        tail,
+        sum,
+        sumResidual);
+
+    W high;
+    W low;
+
+    normalizeExpansion!T(
+        sum,
+        sumResidual
+            + tailResidual,
+        high,
+        low);
+
+    const W p =
+        pi!W;
+
+    int periodSign = 0;
+
+    if (high > p
+        || (high == p
+            && low >= cast(W) 0))
+    {
+        periodSign = -1;
+    }
+    else if (high < -p
+        || (high == -p
+            && low < cast(W) 0))
+    {
+        periodSign = 1;
+    }
+
+    if (periodSign != 0)
+    {
+        W wrappedHigh;
+        W wrappedLow;
+
+        addSplitPeriodParts!T(
+            high,
+            low,
+            periodSign,
+            wrappedHigh,
+            wrappedLow);
+
+        high =
+            wrappedHigh;
+
+        low =
+            wrappedLow;
+    }
+
+    return high + low;
+}
+
+
 private WorkingScalar!T addLongitude(T)(
     const T longitude0,
     const WorkingScalar!T delta)
@@ -718,8 +865,57 @@ private WorkingScalar!T addLongitude(T)(
         sum,
         residual);
 
-    return normalizeWorking!T(
-        sum + residual);
+    /*
+     * Preserve the twoSum expansion through principal-sheet reduction
+     * instead of collapsing it before wrapping.  This retains the
+     * longitude-origin addition residual until after any split-period
+     * correction.
+     */
+    const W p =
+        pi!W;
+
+    int periodSign = 0;
+
+    /*
+     * sum/residual is a non-overlapping expansion.  If sum is strictly
+     * beyond a boundary the residual cannot cross an adjacent
+     * representable boundary; equality must inspect the residual.
+     */
+    if (sum > p
+        || (sum == p
+            && residual >= cast(W) 0))
+    {
+        periodSign = -1;
+    }
+    else if (sum < -p
+        || (sum == -p
+            && residual < cast(W) 0))
+    {
+        periodSign = 1;
+    }
+
+    W high;
+    W low;
+
+    if (periodSign == 0)
+    {
+        normalizeExpansion!T(
+            sum,
+            residual,
+            high,
+            low);
+    }
+    else
+    {
+        addSplitPeriodParts!T(
+            sum,
+            residual,
+            periodSign,
+            high,
+            low);
+    }
+
+    return high + low;
 }
 
 
@@ -904,7 +1100,9 @@ private bool findRepresentedEastMaximum(T)(
 }
 
 
-private struct ResearchPseudoMercator(T)
+private struct ResearchPseudoMercator(
+    T,
+    bool UseQResidualCorrection = true)
 if (isGeodesyScalar!T)
 {
     alias W =
@@ -1286,11 +1484,12 @@ public:
             return false;
         }
 
+        const W deltaNumerator =
+            cast(W) source.easting
+            - _falseEastingWorking;
+
         W deltaLongitude =
-            (
-                cast(W) source.easting
-                - _falseEastingWorking
-            ) / _a;
+            deltaNumerator / _a;
 
         if (!isFinite(
                 deltaLongitude))
@@ -1301,15 +1500,26 @@ public:
         const W p =
             pi!W;
 
+        W deltaLongitudeHigh =
+            deltaLongitude;
+
+        W deltaLongitudeLow =
+            cast(W) 0;
+
         /*
-         * PM-E1A easting classifier.
+         * Prepared public endpoint identities are authoritative.
+         *
+         * A rounded public easting can reconstruct to a single-W
+         * quotient inside [-pi,+pi) even when that exact represented
+         * value is a prepared endpoint anchor.  Endpoint identity must
+         * therefore precede the ordinary quotient interval.
+         *
+         * Ordinary values use the compensated quotient only after the
+         * represented-domain classifier has accepted them.
          */
-        if (deltaLongitude >= -p
-            && deltaLongitude < p)
-        {
-            // Ordinary represented point.
-        }
-        else if (source.easting
+        bool useCompensatedLongitude =
+            false;
+        if (source.easting
             == _westEastingBoundary)
         {
             deltaLongitude =
@@ -1320,6 +1530,23 @@ public:
         {
             deltaLongitude =
                 _eastLegalDelta;
+        }
+        else if (deltaLongitude >= -p
+            && deltaLongitude < p)
+        {
+            quotientExpansion!T(
+                deltaNumerator,
+                _a,
+                deltaLongitudeHigh,
+                deltaLongitudeLow);
+
+            /*
+             * The ordinary represented-domain classifier has accepted
+             * this value.  Use the compensated quotient for numerical
+             * longitude reconstruction.
+             */
+            useCompensatedLongitude =
+                true;
         }
         else
         {
@@ -1342,11 +1569,13 @@ public:
         }
         else
         {
+            const W northingNumerator =
+                cast(W) source.northing
+                - _falseNorthingWorking;
+
             const W q =
-                (
-                    cast(W) source.northing
-                    - _falseNorthingWorking
-                ) / _a;
+                northingNumerator
+                / _a;
 
             if (!isFinite(
                     q))
@@ -1354,15 +1583,262 @@ public:
                 return false;
             }
 
-            const W phi =
-                atan(
-                    sinh(
-                        q));
+            T latitudeRadians;
 
-            if (!isFinite(
-                    phi)
-                || !Latitude!T.tryFromRadians(
-                    cast(T) phi,
+            static if (is(T == double))
+            {
+                /*
+                 * PM-E1C1 reverse-latitude selection for binary64.
+                 *
+                 * Reconstruct q from the represented public northing in
+                 * extended real precision, then evaluate the selected R2
+                 * identity there.  Widening an already-rounded double q
+                 * would not recover the lost subtraction/division bits.
+                 */
+                const real qExtended =
+                    (
+                        cast(real)
+                            source.northing
+                        - cast(real)
+                            _falseNorthingWorking
+                    )
+                    / cast(real)
+                        _a;
+
+                if (!isFinite(
+                        qExtended))
+                {
+                    return false;
+                }
+
+                const real phiExtended =
+                    atan(
+                        sinh(
+                            qExtended));
+
+                if (!isFinite(
+                        phiExtended))
+                {
+                    return false;
+                }
+
+                latitudeRadians =
+                    cast(T)
+                        phiExtended;
+            }
+            else static if (is(T == real))
+            {
+                /*
+                 * PM-E1C1 reverse-latitude selection for real.
+                 *
+                 * R6 is algebraically equivalent to the PM-C inverse:
+                 *
+                 *   u   = expm1(|q|)
+                 *   phi = copysign(
+                 *       2 * atan2(u, u + 2),
+                 *       q)
+                 *
+                 * The qualified x86 extended-precision corpus showed a
+                 * lower numerical worst case than the direct R2
+                 * evaluation and preserved signed zero through the
+                 * near-zero/subnormal audit.
+                 */
+                const real magnitude =
+                    fabs(q);
+
+                const real u =
+                    expm1(
+                        magnitude);
+
+                const real phiMagnitude =
+                    cast(real) 2
+                    * atan2(
+                        u,
+                        u
+                            + cast(real) 2);
+
+                const real phiReal =
+                    copysign(
+                        phiMagnitude,
+                        q);
+
+                if (!isFinite(
+                        phiReal))
+                {
+                    return false;
+                }
+
+                static if (UseQResidualCorrection)
+                {
+                /*
+                 * PM-E1C1 selected reverse-latitude evaluation for `real`.
+                 *
+                 * R6 above evaluates
+                 *
+                 *     phi(q)
+                 *       = copysign(
+                 *             2 * atan2(
+                 *                 expm1(abs(q)),
+                 *                 expm1(abs(q)) + 2),
+                 *             q)
+                 *
+                 * at the ordinary rounded quotient
+                 *
+                 *     q = northingNumerator / a.
+                 *
+                 * Retain the division residual of that already-computed
+                 * quotient without repeating the quotient division.
+                 * twoProduct(a, q) provides the rounded product and product
+                 * residual; the remaining quotient correction is
+                 *
+                 *     deltaQ =
+                 *         (
+                 *             (
+                 *                 northingNumerator
+                 *                 - product
+                 *             )
+                 *             - productResidual
+                 *         )
+                 *         / a.
+                 *
+                 * The first-order inverse-latitude correction uses
+                 *
+                 *     dphi/dq = sech(q).
+                 *
+                 * R6 has already computed
+                 *
+                 *     u = expm1(abs(q)),
+                 *
+                 * so exp(abs(q)) = u + 1 and therefore
+                 *
+                 *     sech(q)
+                 *       = 2 * (u + 1)
+                 *         / ((u + 1)^2 + 1).
+                 *
+                 * This avoids another transcendental evaluation.
+                 *
+                 * The correction is skipped when deltaQ is exactly zero so
+                 * the selected R6 signed-zero behaviour is preserved.
+                 *
+                 * PM-E1C1 qualification on the tested x86 extended-precision
+                 * `real` toolchain observed at most 3 ULP over the exact
+                 * 714656-case composed reverse corpus.  This is an empirical
+                 * research bound, not a platform-independent mathematical
+                 * guarantee.
+                 */
+                W qProduct;
+                W qProductResidual;
+
+                twoProduct!T(
+                    _a,
+                    q,
+                    qProduct,
+                    qProductResidual);
+
+                const W qRemainder =
+                    (
+                        northingNumerator
+                        - qProduct
+                    )
+                    - qProductResidual;
+
+                const real qResidual =
+                    qRemainder
+                    / _a;
+
+                if (qResidual == cast(real) 0)
+                {
+                    latitudeRadians =
+                        phiReal;
+                }
+                else
+                {
+                    /*
+                     * R6 already computed:
+                     *
+                     *     u = expm1(abs(q))
+                     *
+                     * Hence exp(abs(q)) = u + 1 and
+                     *
+                     *     sech(q)
+                     *       = 2 * exp(abs(q))
+                     *         / (exp(2*abs(q)) + 1)
+                     *       = 2 * (u + 1)
+                     *         / ((u + 1)^2 + 1).
+                     *
+                     * Avoid another transcendental evaluation.
+                     */
+                    const real expMagnitude =
+                        u
+                        + cast(real) 1;
+
+                    const real sechQ =
+                        (
+                            cast(real) 2
+                            * expMagnitude
+                        )
+                        / (
+                            expMagnitude
+                            * expMagnitude
+                            + cast(real) 1
+                        );
+
+                    const real latitudeCorrection =
+                        qResidual
+                        * sechQ;
+
+                    const real correctedPhiReal =
+                        phiReal
+                        + latitudeCorrection;
+
+                    if (!isFinite(
+                            correctedPhiReal))
+                    {
+                        return false;
+                    }
+
+                    latitudeRadians =
+                        correctedPhiReal;
+                }
+                }
+                else
+                {
+                    /*
+                     * Research-only performance control.
+                     *
+                     * Keep the selected R6 inverse but omit only
+                     * the quotient-residual latitude correction.
+                     * Normal/default research-kernel construction
+                     * retains UseQResidualCorrection == true.
+                     */
+                    latitudeRadians =
+                        phiReal;
+                }
+            }
+            else
+            {
+                /*
+                 * float retains the already-qualified R2 path in its
+                 * WorkingScalar (double) evaluation.
+                 */
+                const W phi =
+                    atan(
+                        sinh(
+                            q));
+
+                if (!isFinite(
+                        phi))
+                {
+                    return false;
+                }
+
+                latitudeRadians =
+                    cast(T)
+                        phi;
+            }
+
+            if (!Latitude!T.tryFromRadians(
+                    latitudeRadians,
                     latitude))
             {
                 return false;
@@ -1370,9 +1846,14 @@ public:
         }
 
         const W longitudeWorking =
-            addLongitude!T(
-                _longitudeOfNaturalOrigin.radians,
-                deltaLongitude);
+            useCompensatedLongitude
+                ? addLongitudeParts!T(
+                    _longitudeOfNaturalOrigin.radians,
+                    deltaLongitudeHigh,
+                    deltaLongitudeLow)
+                : addLongitude!T(
+                    _longitudeOfNaturalOrigin.radians,
+                    deltaLongitude);
 
         if (!isFinite(
                 longitudeWorking))
@@ -2191,6 +2672,280 @@ private void probeScalar(T)(
 }
 
 
+version(PseudoMercatorReverseBenchmark)
+{
+    import core.time : MonoTime;
+    import std.stdio : writefln;
+
+    __gshared real benchmarkSink = 0;
+
+    private struct Timing
+    {
+        long ns;
+        size_t successes;
+        real checksum;
+    }
+
+    private Timing timed(bool Correction)(
+        ref ResearchPseudoMercator!(
+            real,
+            Correction) projection,
+        const(ProjectedCoordinate!real)[] corpus,
+        size_t passes)
+    {
+        real checksum = 0;
+        size_t successes = 0;
+
+        const start = MonoTime.currTime;
+
+        foreach (_; 0 .. passes)
+        {
+            foreach (ref const p; corpus)
+            {
+                GeographicCoordinate!real g;
+
+                if (projection.tryReverse(p, g))
+                {
+                    ++successes;
+
+                    checksum +=
+                        g.latitude.radians
+                        + 0.125L
+                            * g.longitude.radians;
+                }
+                else
+                {
+                    checksum += 1;
+                }
+            }
+        }
+
+        const elapsed =
+            (MonoTime.currTime - start)
+                .total!"nsecs";
+
+        benchmarkSink += checksum;
+
+        return Timing(
+            elapsed,
+            successes,
+            checksum);
+    }
+
+    private void runProfile(
+        string name,
+        real a,
+        real lon0Deg,
+        real fe,
+        real fn)
+    {
+        enum size_t corpusSize = 32_768;
+        enum size_t warmupPasses = 4;
+        enum size_t measuredPasses = 8;
+        enum size_t repetitions = 21;
+
+        Longitude!real lon0;
+
+        if (!Longitude!real.tryFromDegrees(
+                lon0Deg,
+                lon0))
+        {
+            writefln(
+                "FAIL\tprofile=%s\tlongitude0",
+                name);
+            return;
+        }
+
+        ResearchPseudoMercator!(
+            real,
+            false) baseline;
+
+        ResearchPseudoMercator!(
+            real,
+            true) selected;
+
+        if (!ResearchPseudoMercator!(
+                real,
+                false).tryPrepare(
+                    a,
+                    lon0,
+                    fe,
+                    fn,
+                    baseline))
+        {
+            writefln(
+                "FAIL\tprofile=%s\tbaseline_prepare",
+                name);
+            return;
+        }
+
+        if (!ResearchPseudoMercator!(
+                real,
+                true).tryPrepare(
+                    a,
+                    lon0,
+                    fe,
+                    fn,
+                    selected))
+        {
+            writefln(
+                "FAIL\tprofile=%s\tselected_prepare",
+                name);
+            return;
+        }
+
+        auto corpus =
+            new ProjectedCoordinate!real[
+                corpusSize];
+
+        ulong state =
+            0x9e3779b97f4a7c15UL;
+
+        enum real denominator =
+            cast(real)(
+                (1UL << 53) - 1UL);
+
+        foreach (i; 0 .. corpus.length)
+        {
+            state =
+                state
+                * 6364136223846793005UL
+                + 1442695040888963407UL;
+
+            const real qUnit =
+                cast(real)(state >> 11)
+                / denominator;
+
+            state =
+                state
+                * 6364136223846793005UL
+                + 1442695040888963407UL;
+
+            const real lonUnit =
+                cast(real)(state >> 11)
+                / denominator;
+
+            const real q =
+                -3.75L
+                + 7.5L * qUnit;
+
+            const real dlon =
+                -2.75L
+                + 5.5L * lonUnit;
+
+            if (!ProjectedCoordinate!real
+                    .tryFromComponents(
+                        fe + a * dlon,
+                        fn + a * q,
+                        corpus[i]))
+            {
+                writefln(
+                    "FAIL\tprofile=%s\tcorpus=%s",
+                    name,
+                    i);
+                return;
+            }
+        }
+
+        const warmB =
+            timed!false(
+                baseline,
+                corpus,
+                warmupPasses);
+
+        const warmS =
+            timed!true(
+                selected,
+                corpus,
+                warmupPasses);
+
+        writefln(
+            "META"
+            ~ "\tprofile=%s"
+            ~ "\toperations=%s"
+            ~ "\trepetitions=%s"
+            ~ "\twarm_baseline=%s"
+            ~ "\twarm_selected=%s",
+            name,
+            corpusSize * measuredPasses,
+            repetitions,
+            warmB.successes,
+            warmS.successes);
+
+        foreach (rep; 0 .. repetitions)
+        {
+            Timing b;
+            Timing s;
+
+            const bool baselineFirst =
+                (rep & 1) == 0;
+
+            if (baselineFirst)
+            {
+                b = timed!false(
+                    baseline,
+                    corpus,
+                    measuredPasses);
+
+                s = timed!true(
+                    selected,
+                    corpus,
+                    measuredPasses);
+            }
+            else
+            {
+                s = timed!true(
+                    selected,
+                    corpus,
+                    measuredPasses);
+
+                b = timed!false(
+                    baseline,
+                    corpus,
+                    measuredPasses);
+            }
+
+            writefln(
+                "RESULT"
+                ~ "\tprofile=%s"
+                ~ "\trep=%s"
+                ~ "\torder=%s"
+                ~ "\tbaseline_ns=%s"
+                ~ "\tselected_ns=%s"
+                ~ "\tbaseline_success=%s"
+                ~ "\tselected_success=%s",
+                name,
+                rep,
+                baselineFirst ? "BS" : "SB",
+                b.ns,
+                s.ns,
+                b.successes,
+                s.successes);
+        }
+    }
+
+    void main()
+    {
+        runProfile(
+            "wgs84_zero",
+            6_378_137L,
+            0L,
+            0L,
+            0L);
+
+        runProfile(
+            "offset_p170",
+            6_378_137L,
+            170L,
+            500_000L,
+            -2_000_000L);
+
+        writefln(
+            "SINK\t%.21g",
+            benchmarkSink);
+    }
+}
+else
 version (PseudoMercatorDifferential)
 {
     /*

@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-E1C1A forward differential complete — PM-E1C1B reverse differential next
+Status: PM-E independent differential validation complete — PM-F public API gate next
 
 ## Goal
 
@@ -207,7 +207,7 @@ PM-D — domain and longitude-policy gate — PASS
     against represented forward boundaries, and easting uses working-precision
     principal-sheet classification. See `PM_D_DOMAIN_POLICY.md`.
 
-PM-E — independent differential validation — ACTIVE
+PM-E — independent differential validation — PASS
     PM-E0 PASS: local PROJ `webmerc` is qualified as a numerical differential
     reference over the shared supported domain. Exact +pi endpoint policy is
     intentionally treated separately from numerical agreement.
@@ -223,31 +223,31 @@ PM-E — independent differential validation — ACTIVE
     deterministic 18-profile / 144-round-trip corpus has zero failures and
     byte-identical DMD/LDC output. See `PM_E1B_KERNEL_RESULTS.md`.
 
-    PM-E1C0 PASS: the accepted PM-E1B kernel now has a versioned
-    machine-readable differential driver. Normal E1B behaviour remains
-    byte-identical across DMD/LDC; the driver smoke corpus is also
-    byte-identical and preserves the +pi -> -pi principal-sheet tie.
+    PM-E1C0 PASS: the accepted PM-E1B kernel has a versioned machine-readable
+    differential driver. Normal E1B behaviour remains byte-identical across
+    DMD/LDC; the driver smoke corpus is also byte-identical and preserves the
+    +pi -> -pi principal-sheet tie.
     See `PM_E1C0_DIFFERENTIAL_DRIVER.md`.
 
     PM-E1C1A PASS: representation-aware forward differential validation is
-    complete against an independent high-precision analytical oracle, with
-    the PM-E0-qualified PROJ `webmerc` implementation retained as a secondary
-    reference for compatible double cases. The 264-case corpus is byte-
-    identical across DMD/LDC. Easting is correctly rounded for all tested
-    float/double/real cases; Northing is correctly rounded for all float and
-    double cases and 86/88 real cases, with exactly two remaining 1-ULP real
-    Northing cases. The selected research path retains the high/low longitude
-    difference through split-period reduction and `twoProduct`, uses
-    compensated affine arithmetic, evaluates the complete double Northing
-    chain internally in `real`, and prepares double Northing boundaries through
-    the same widened path. See `PM_E1C1_FORWARD_RESULTS.md`.
+    complete against an independent high-precision analytical oracle.
+    Easting is correctly rounded for all tested float/double/real cases;
+    Northing is correctly rounded for all float and double cases and 86/88
+    real cases, with exactly two remaining 1-ULP real Northing cases.
+    See `PM_E1C1_FORWARD_RESULTS.md`.
 
-    PM-E1C1B NEXT: run representation-aware reverse differential validation
-    against the independent analytical inverse and, where policy-compatible,
-    the PM-E0-qualified PROJ `webmerc` implementation. Preserve PM-D
-    pre-inverse Northing/easting classification, represented endpoint policy,
-    canonical half-open longitude output, and explicit distinction between
-    numerical error and intentional principal-sheet policy differences.
+    PM-E1C1B PASS: representation-aware reverse differential validation is
+    complete against an independent high-precision analytical inverse.
+    `float` and `double` are correctly rounded throughout the qualified
+    differential corpus. `real` has a two-ULP sparse-corpus maximum and a
+    three-ULP observed maximum over the 714656-case exact composed corpus.
+    Differential and exact-corpus outputs are byte-identical across the
+    controlled DMD 2.111/2.112.1/2.113 and LDC 1.41/1.42/1.43 matrix.
+    Signed zero is preserved. The selected `real` path uses R6 plus the
+    optimized quotient-residual / `sech(q)` correction.
+    See `PM_E1C1_REVERSE_RESULTS.md`.
+
+    PM-E is complete. PM-F public API design is next.
 
 PM-F — public API gate
     Only after PM-A through PM-E, resolve the public type name,

@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         NEXT
+Pseudo-Mercator                         ACTIVE — PM-F NEXT
 ```
 
 Continue in this order:
@@ -192,6 +192,15 @@ consumers as appropriate.
 The public name (`PseudoMercator`, `WebMercator`, or another precise domain
 name) is not predetermined by this roadmap and must be resolved during the
 research/API-design gate.
+
+PM-A through PM-E are complete. Method semantics, represented domain,
+scalar-specific numerical paths, independent forward/reverse differential
+evidence, controlled compiler behaviour, and the current research performance
+boundary are qualified.
+
+PM-F is now the active gate. No production type or public operation is accepted
+until the API surface, preparation model, checked/throwing operations,
+default-state semantics, and documentation contract are resolved.
 
 ### P1 — consumer-confirmed geodesic extensions
 
