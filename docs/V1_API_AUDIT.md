@@ -316,8 +316,8 @@ The checked variants must preserve the same receiver/order convention as
 their throwing peers, with the `out result` parameter last.
 
 **B5 conclusion:** all reviewed public free operation families are naturally
-UFCS-capable except the one-shot UTM family, whose ellipsoid-first ordering is
-carried forward as a concrete pre-v1 API correction candidate.
+UFCS-capable. The one-shot UTM family's ellipsoid-first ordering was identified
+as the exception and accepted for pre-v1 correction to source-first ordering.
 
 
 ### B6-B9 — transformation, projection, result, and type vocabulary
@@ -485,9 +485,11 @@ B10 conditional/validation-only declarations       1 V1-F visibility issue
 V1-B therefore identifies no general naming redesign. Two items leave this
 gate:
 
-1. **Pre-v1 API correction candidate:** reorder the one-shot UTM family from
-   `(ellipsoid, source)` to `(source, ellipsoid)` so ordinary calls and UFCS
-   align with the rest of the free conversion/transformation API.
+1. **Pre-v1 API correction accepted:** the one-shot UTM family is reordered
+   from `(ellipsoid, source)` to `(source, ellipsoid)` so ordinary calls and
+   UFCS align with the rest of the free conversion/transformation API. The
+   implementation change is made on the audit branch and requires compiler,
+   unittest, and external-consumer validation before V1-B closes.
 2. **V1-F visibility issue:** prevent validation-only Transverse Mercator
    instrumentation from becoming accidental supported public surface.
 
