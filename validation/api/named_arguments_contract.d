@@ -189,6 +189,21 @@ private void checkedNamedArgumentContract()
         degrees: 15.0,
         result: longitude15);
 
+    TransverseMercator!double tm;
+    TransverseMercator!double.tryFromParameters(
+        ellipsoid: ellipsoid,
+        latitudeOfNaturalOrigin: latitude0,
+        longitudeOfNaturalOrigin: longitude15,
+        scaleFactorAtNaturalOrigin: 0.9996,
+        falseEasting: 500_000.0,
+        falseNorthing: 0.0,
+        result: tm);
+
+    const projectionSource =
+        GeographicCoordinate!double.fromComponents(
+            latitude: latitude0,
+            longitude: longitude15);
+
     PseudoMercator!double pseudoMercator;
     PseudoMercator!double.tryFromParameters(
         ellipsoid: ellipsoid,
@@ -206,21 +221,6 @@ private void checkedNamedArgumentContract()
     pseudoMercator.tryReverse(
         source: pseudoMercatorProjected,
         result: pseudoMercatorReversed);
-
-    TransverseMercator!double tm;
-    TransverseMercator!double.tryFromParameters(
-        ellipsoid: ellipsoid,
-        latitudeOfNaturalOrigin: latitude0,
-        longitudeOfNaturalOrigin: longitude15,
-        scaleFactorAtNaturalOrigin: 0.9996,
-        falseEasting: 500_000.0,
-        falseNorthing: 0.0,
-        result: tm);
-
-    const projectionSource =
-        GeographicCoordinate!double.fromComponents(
-            latitude: latitude0,
-            longitude: longitude15);
 
     ProjectedCoordinate!double tmProjected;
     tm.tryForward(
