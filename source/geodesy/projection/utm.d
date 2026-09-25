@@ -783,8 +783,8 @@ public:
  * instead.
  */
 bool tryForwardUtm(T)(
-    const Ellipsoid!T ellipsoid,
     const GeographicCoordinate!T source,
+    const Ellipsoid!T ellipsoid,
     out UtmCoordinate!T result)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -831,16 +831,16 @@ if (isGeodesyScalar!T)
 
 /** Throwing convenience wrapper for `tryForwardUtm`. */
 UtmCoordinate!T forwardUtm(T)(
-    const Ellipsoid!T ellipsoid,
-    const GeographicCoordinate!T source)
+    const GeographicCoordinate!T source,
+    const Ellipsoid!T ellipsoid)
     @safe
 if (isGeodesyScalar!T)
 {
     UtmCoordinate!T result;
 
     if (!tryForwardUtm(
-            ellipsoid,
             source,
+            ellipsoid,
             result))
     {
         throw new GeodesyValueException(
@@ -858,8 +858,8 @@ if (isGeodesyScalar!T)
  * The result is not automatically reassigned to another zone or hemisphere.
  */
 bool tryReverseUtm(T)(
-    const Ellipsoid!T ellipsoid,
     const UtmCoordinate!T source,
+    const Ellipsoid!T ellipsoid,
     out GeographicCoordinate!T result)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -890,16 +890,16 @@ if (isGeodesyScalar!T)
 
 /** Throwing convenience wrapper for `tryReverseUtm`. */
 GeographicCoordinate!T reverseUtm(T)(
-    const Ellipsoid!T ellipsoid,
-    const UtmCoordinate!T source)
+    const UtmCoordinate!T source,
+    const Ellipsoid!T ellipsoid)
     @safe
 if (isGeodesyScalar!T)
 {
     GeographicCoordinate!T result;
 
     if (!tryReverseUtm(
-            ellipsoid,
             source,
+            ellipsoid,
             result))
     {
         throw new GeodesyValueException(
