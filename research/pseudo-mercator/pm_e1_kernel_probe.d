@@ -930,9 +930,40 @@ private bool validPublicLongitude(T)(
 
 
 /*
- * Research-only characterization helper inherited from PM-E1A.
+ * Return true when a longitudeDifferenceParts() result belongs to the
+ * non-negative/eastward half of the already reduced principal sheet.
  *
- * This must not be mistaken for a production preparation algorithm.
+ * Do not compare the expansion again with one rounded pi!W value.
+ * longitudeDifferenceParts() performs the sheet reduction itself and retains
+ * the split-period residual required by the qualified PM-E1C1 forward kernel.
+ */
+private bool legalPositiveLongitudeDifference(T)(
+    const WorkingScalar!T high,
+    const WorkingScalar!T low)
+{
+    alias W = WorkingScalar!T;
+
+    if (high > cast(W) 0)
+        return true;
+
+    if (high < cast(W) 0)
+        return false;
+
+    return low >= cast(W) 0;
+}
+
+
+/*
+ * Prepare the greatest represented public longitude that still belongs to
+ * the positive/eastward principal branch.
+ *
+ * PM-E1A used a fixed 4096-neighbour characterization scan around a rounded
+ * opposite meridian. PM-G0 showed that this is not a production-safe
+ * definition once the later PM-E1C1 high/low longitude-difference semantics
+ * are used: for double and real, the old oracle can stop before the actual
+ * branch transition.
+ *
+ * The qualified preparation rule searches the public T lattice directly.
  */
 private bool findRepresentedEastMaximum(T)(
     const T longitude0,
@@ -944,44 +975,6 @@ private bool findRepresentedEastMaximum(T)(
 {
     alias W = WorkingScalar!T;
 
-    enum size_t searchRadius =
-        4096;
-
-    const W p =
-        pi!W;
-
-    const W origin =
-        workingCanonicalLongitude!T(
-            longitude0);
-
-    const W twoP =
-        cast(W) 2 * p;
-
-    W opposite =
-        origin + p;
-
-    if (opposite >= p)
-        opposite -= twoP;
-    else if (opposite < -p)
-        opposite += twoP;
-
-    T centre =
-        cast(T) opposite;
-
-    const T publicPi =
-        pi!T;
-
-    if (!validPublicLongitude(
-            centre))
-    {
-        centre =
-            centre > cast(T) 0
-                ? publicPi
-                : -publicPi;
-    }
-
-    bool found = false;
-
     representedEasting =
         T.nan;
 
@@ -991,112 +984,214 @@ private bool findRepresentedEastMaximum(T)(
     legalLongitude =
         T.nan;
 
-    size_t bestDistance =
-        size_t.max;
+    const T canonicalOrigin =
+        canonicalPublicRadians!T(
+            longitude0);
 
+    const T publicPi =
+        pi!T;
 
-    void consider(
-        const T candidate,
-        const size_t distance)
+    W deltaHigh;
+    W deltaLow;
+
+    if (canonicalOrigin == -publicPi)
     {
-        if (!validPublicLongitude(
-                candidate))
-            return;
-
-        W deltaHigh;
-        W deltaLow;
+        /*
+         * +/-pi are duplicate public representations of the normalized
+         * -pi origin. The excluded east seam is public zero.
+         */
+        legalLongitude =
+            nextDown(
+                cast(T) 0);
 
         longitudeDifferenceParts!T(
-            candidate,
+            legalLongitude,
             longitude0,
             deltaHigh,
             deltaLow);
 
-        const W delta =
-            deltaHigh
-            + deltaLow;
-
-        if (!(delta >= cast(W) 0)
-            || !(delta < p))
-            return;
-
-        if (!found
-            || delta > legalDelta)
+        if (!legalPositiveLongitudeDifference!T(
+                deltaHigh,
+                deltaLow))
         {
-            const W easting =
-                eastingFromLongitudeDifference!T(
-                    cast(W) semiMajorAxis,
-                    cast(W) falseEasting,
-                    deltaHigh,
-                    deltaLow);
+            return false;
+        }
 
-            const T publicEasting =
-                cast(T) easting;
+        const T successor =
+            nextUp(
+                legalLongitude);
 
-            if (!isFinite(
-                    publicEasting))
-                return;
+        W successorHigh;
+        W successorLow;
 
-            found = true;
+        longitudeDifferenceParts!T(
+            successor,
+            longitude0,
+            successorHigh,
+            successorLow);
 
-            legalDelta =
-                delta;
-
-            legalLongitude =
-                candidate;
-
-            representedEasting =
-                publicEasting;
-
-            bestDistance =
-                distance;
+        if (legalPositiveLongitudeDifference!T(
+                successorHigh,
+                successorLow))
+        {
+            return false;
         }
     }
-
-
-    void scan(
-        const T scanCentre)
+    else
     {
-        consider(
-            scanCentre,
-            0);
+        T lower;
+        T upper;
 
-        T lower =
-            scanCentre;
-
-        T upper =
-            scanCentre;
-
-        foreach (distance;
-            1 .. searchRadius + 1)
+        if (canonicalOrigin <= cast(T) 0)
         {
             lower =
-                nextDown(lower);
+                canonicalOrigin;
 
             upper =
-                nextUp(upper);
+                publicPi;
+        }
+        else
+        {
+            lower =
+                -publicPi;
 
-            consider(
-                lower,
-                distance);
+            upper =
+                cast(T) 0;
+        }
 
-            consider(
-                upper,
-                distance);
+        W lowerHigh;
+        W lowerLow;
+
+        longitudeDifferenceParts!T(
+            lower,
+            longitude0,
+            lowerHigh,
+            lowerLow);
+
+        if (!legalPositiveLongitudeDifference!T(
+                lowerHigh,
+                lowerLow))
+        {
+            return false;
+        }
+
+        W upperHigh;
+        W upperLow;
+
+        longitudeDifferenceParts!T(
+            upper,
+            longitude0,
+            upperHigh,
+            upperLow);
+
+        if (legalPositiveLongitudeDifference!T(
+                upperHigh,
+                upperLow))
+        {
+            return false;
+        }
+
+        while (nextUp(lower) != upper)
+        {
+            T middle =
+                lower
+                + (upper - lower)
+                    / cast(T) 2;
+
+            if (!(middle > lower))
+            {
+                middle =
+                    nextUp(
+                        lower);
+            }
+
+            if (!(middle < upper))
+            {
+                middle =
+                    nextDown(
+                        upper);
+            }
+
+            W middleHigh;
+            W middleLow;
+
+            longitudeDifferenceParts!T(
+                middle,
+                longitude0,
+                middleHigh,
+                middleLow);
+
+            if (legalPositiveLongitudeDifference!T(
+                    middleHigh,
+                    middleLow))
+            {
+                lower =
+                    middle;
+            }
+            else
+            {
+                upper =
+                    middle;
+            }
+        }
+
+        legalLongitude =
+            lower;
+
+        longitudeDifferenceParts!T(
+            legalLongitude,
+            longitude0,
+            deltaHigh,
+            deltaLow);
+
+        if (!legalPositiveLongitudeDifference!T(
+                deltaHigh,
+                deltaLow))
+        {
+            return false;
+        }
+
+        W successorHigh;
+        W successorLow;
+
+        longitudeDifferenceParts!T(
+            upper,
+            longitude0,
+            successorHigh,
+            successorLow);
+
+        if (legalPositiveLongitudeDifference!T(
+                successorHigh,
+                successorLow))
+        {
+            return false;
         }
     }
 
+    const W easting =
+        eastingFromLongitudeDifference!T(
+            cast(W) semiMajorAxis,
+            cast(W) falseEasting,
+            deltaHigh,
+            deltaLow);
 
-    scan(
-        centre);
+    const T publicEasting =
+        cast(T) easting;
 
-    if (centre == -publicPi)
-        scan(publicPi);
-    else if (centre == publicPi)
-        scan(-publicPi);
+    if (!isFinite(
+            publicEasting))
+    {
+        return false;
+    }
 
-    return found
-        && bestDistance < searchRadius;
+    representedEasting =
+        publicEasting;
+
+    legalDelta =
+        deltaHigh
+        + deltaLow;
+
+    return true;
 }
 
 
@@ -1361,6 +1456,12 @@ public:
     }
 
 
+    @property T eastLegalLongitude() const
+    {
+        return _eastLegalLongitude;
+    }
+
+
     bool tryForward(
         const GeographicCoordinate!T source,
         out ProjectedCoordinate!T result) const
@@ -1519,6 +1620,15 @@ public:
          */
         bool useCompensatedLongitude =
             false;
+
+        /*
+         * Exact prepared east-endpoint identity is stronger than a
+         * reconstructed longitude delta. In particular, at longitude0
+         * +/-pi the final legal public longitude is nextDown(0), while its
+         * high/low delta may collapse back to pi when represented as one W.
+         */
+        bool usePreparedEastLongitude =
+            false;
         if (source.easting
             == _westEastingBoundary)
         {
@@ -1528,8 +1638,15 @@ public:
         else if (source.easting
             == _eastLegalMaximum)
         {
+            /*
+             * The prepared public longitude is the authoritative inverse
+             * identity for this represented endpoint.
+             */
             deltaLongitude =
                 _eastLegalDelta;
+
+            usePreparedEastLongitude =
+                true;
         }
         else if (deltaLongitude >= -p
             && deltaLongitude < p)
@@ -1845,34 +1962,46 @@ public:
             }
         }
 
-        const W longitudeWorking =
-            useCompensatedLongitude
-                ? addLongitudeParts!T(
-                    _longitudeOfNaturalOrigin.radians,
-                    deltaLongitudeHigh,
-                    deltaLongitudeLow)
-                : addLongitude!T(
-                    _longitudeOfNaturalOrigin.radians,
-                    deltaLongitude);
-
-        if (!isFinite(
-                longitudeWorking))
-        {
-            return false;
-        }
-
-        const T longitudePublic =
-            canonicalPublicRadians!T(
-                cast(T)
-                    longitudeWorking);
-
         Longitude!T longitude;
 
-        if (!Longitude!T.tryFromRadians(
-                longitudePublic,
-                longitude))
+        if (usePreparedEastLongitude)
         {
-            return false;
+            if (!Longitude!T.tryFromRadians(
+                    _eastLegalLongitude,
+                    longitude))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            const W longitudeWorking =
+                useCompensatedLongitude
+                    ? addLongitudeParts!T(
+                        _longitudeOfNaturalOrigin.radians,
+                        deltaLongitudeHigh,
+                        deltaLongitudeLow)
+                    : addLongitude!T(
+                        _longitudeOfNaturalOrigin.radians,
+                        deltaLongitude);
+
+            if (!isFinite(
+                    longitudeWorking))
+            {
+                return false;
+            }
+
+            const T longitudePublic =
+                canonicalPublicRadians!T(
+                    cast(T)
+                        longitudeWorking);
+
+            if (!Longitude!T.tryFromRadians(
+                    longitudePublic,
+                    longitude))
+            {
+                return false;
+            }
         }
 
         /*
@@ -3056,7 +3185,8 @@ version (PseudoMercatorDifferential)
             ~ "northN=%.40g\t"
             ~ "westE=%.40g\t"
             ~ "eastE=%.40g\t"
-            ~ "eastDelta=%.40g",
+            ~ "eastDelta=%.40g\t"
+            ~ "eastLon=%.40g",
             fields[1],
             scalarName,
             semiMajorAxis,
@@ -3067,7 +3197,8 @@ version (PseudoMercatorDifferential)
             projection.northNorthingBoundary,
             projection.westEastingBoundary,
             projection.eastLegalMaximum,
-            projection.eastLegalDelta);
+            projection.eastLegalDelta,
+            projection.eastLegalLongitude);
     }
 
 
@@ -3361,6 +3492,300 @@ version (PseudoMercatorDifferential)
                     scalarName);
             }
         }
+    }
+}
+else version (PseudoMercatorG0Endpoint)
+{
+    private bool checkG0EndpointOrigin(T)(
+        const string scalarName,
+        const T longitude0Radians,
+        const T semiMajorAxis,
+        const T falseEasting,
+        const T falseNorthing,
+        ref size_t checks,
+        ref size_t failures)
+    {
+        alias W = WorkingScalar!T;
+
+        Longitude!T longitude0;
+
+        if (!Longitude!T.tryFromRadians(
+                longitude0Radians,
+                longitude0))
+        {
+            ++failures;
+            return false;
+        }
+
+        T eastEasting;
+        W eastDelta;
+        T eastLongitude;
+
+        if (!findRepresentedEastMaximum!T(
+                longitude0.radians,
+                semiMajorAxis,
+                falseEasting,
+                eastEasting,
+                eastDelta,
+                eastLongitude))
+        {
+            ++failures;
+            return false;
+        }
+
+        ResearchPseudoMercator!T projection;
+
+        if (!ResearchPseudoMercator!T.tryPrepare(
+                semiMajorAxis,
+                longitude0,
+                falseEasting,
+                falseNorthing,
+                projection))
+        {
+            ++failures;
+            return false;
+        }
+
+        if (projection.eastLegalMaximum != eastEasting
+            || projection.eastLegalLongitude != eastLongitude)
+        {
+            ++failures;
+            return false;
+        }
+
+        Latitude!T zeroLatitude;
+
+        if (!Latitude!T.tryFromRadians(
+                cast(T) 0,
+                zeroLatitude))
+        {
+            ++failures;
+            return false;
+        }
+
+        Longitude!T legalLongitude;
+
+        if (!Longitude!T.tryFromRadians(
+                eastLongitude,
+                legalLongitude))
+        {
+            ++failures;
+            return false;
+        }
+
+        legalLongitude =
+            legalLongitude.normalized;
+
+        const GeographicCoordinate!T source =
+            GeographicCoordinate!T.fromComponents(
+                zeroLatitude,
+                legalLongitude);
+
+        ProjectedCoordinate!T forwardResult;
+
+        ++checks;
+
+        if (!projection.tryForward(
+                source,
+                forwardResult))
+        {
+            ++failures;
+            return false;
+        }
+
+        if (forwardResult.easting != eastEasting
+            || forwardResult.northing != falseNorthing)
+        {
+            ++failures;
+            return false;
+        }
+
+        ProjectedCoordinate!T endpoint;
+
+        if (!ProjectedCoordinate!T.tryFromComponents(
+                eastEasting,
+                falseNorthing,
+                endpoint))
+        {
+            ++failures;
+            return false;
+        }
+
+        GeographicCoordinate!T reverseResult;
+
+        ++checks;
+
+        if (!projection.tryReverse(
+                endpoint,
+                reverseResult))
+        {
+            ++failures;
+            return false;
+        }
+
+        if (reverseResult.latitude.radians != cast(T) 0
+            || reverseResult.longitude.radians != legalLongitude.radians)
+        {
+            ++failures;
+            return false;
+        }
+
+        ProjectedCoordinate!T reforwardResult;
+
+        ++checks;
+
+        if (!projection.tryForward(
+                reverseResult,
+                reforwardResult))
+        {
+            ++failures;
+            return false;
+        }
+
+        if (reforwardResult.easting != eastEasting
+            || reforwardResult.northing != falseNorthing)
+        {
+            ++failures;
+            return false;
+        }
+
+        return true;
+    }
+
+
+    private void checkG0EndpointScalar(T)(
+        const string scalarName,
+        ref size_t totalOrigins,
+        ref size_t totalChecks,
+        ref size_t totalFailures)
+    {
+        size_t origins;
+        size_t checks;
+        size_t failures;
+
+        foreach (i; -1440 .. 1441)
+        {
+            const real degrees =
+                cast(real) i / 8.0L;
+
+            Longitude!T longitude0;
+
+            if (!Longitude!T.tryFromDegrees(
+                    cast(T) degrees,
+                    longitude0))
+            {
+                ++origins;
+                ++failures;
+                continue;
+            }
+
+            ++origins;
+
+            checkG0EndpointOrigin!T(
+                scalarName,
+                longitude0.radians,
+                cast(T) 1,
+                cast(T) 0,
+                cast(T) 0,
+                checks,
+                failures);
+
+            checkG0EndpointOrigin!T(
+                scalarName,
+                longitude0.radians,
+                cast(T) 6_378_137,
+                cast(T) 500_000,
+                cast(T) 1_250_000,
+                checks,
+                failures);
+        }
+
+        const T p =
+            pi!T;
+
+        const T h =
+            p / cast(T) 2;
+
+        foreach (origin; [
+            -p,
+            nextUp(-p),
+            nextDown(-h),
+            -h,
+            nextUp(-h),
+            nextDown(cast(T) 0),
+            cast(T) 0,
+            nextUp(cast(T) 0),
+            nextDown(h),
+            h,
+            nextUp(h),
+            nextDown(p),
+            p
+        ])
+        {
+            if (!validPublicLongitude(
+                    origin))
+            {
+                continue;
+            }
+
+            ++origins;
+
+            checkG0EndpointOrigin!T(
+                scalarName,
+                origin,
+                cast(T) 6_378_137,
+                cast(T) 500_000,
+                cast(T) 1_250_000,
+                checks,
+                failures);
+        }
+
+        totalOrigins += origins;
+        totalChecks += checks;
+        totalFailures += failures;
+
+        writefln(
+            "SUMMARY\t%s\torigins=%u\tchecks=%u\tfailures=%u",
+            scalarName,
+            origins,
+            checks,
+            failures);
+    }
+
+
+    void main()
+    {
+        size_t origins;
+        size_t checks;
+        size_t failures;
+
+        checkG0EndpointScalar!float(
+            "float",
+            origins,
+            checks,
+            failures);
+
+        checkG0EndpointScalar!double(
+            "double",
+            origins,
+            checks,
+            failures);
+
+        checkG0EndpointScalar!real(
+            "real",
+            origins,
+            checks,
+            failures);
+
+        writefln(
+            "RESULT\torigins=%u\tchecks=%u\tfailures=%u",
+            origins,
+            checks,
+            failures);
+
+        if (failures != 0)
+            throw new Exception(
+                "PM-G0 endpoint acceptance probe failed.");
     }
 }
 else

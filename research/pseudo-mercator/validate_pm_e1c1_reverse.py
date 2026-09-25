@@ -1171,42 +1171,52 @@ def expected_reverse(
     #
     # Longitude oracle.
     #
-    if case.easting_policy == "west":
-        delta = -round_binary(
-            mp.pi,
-            working_precision,
-        )
-
-    elif case.easting_policy == "east":
-        delta = working_value(
+    if case.easting_policy == "east":
+        #
+        # PM-G0 represented-domain policy:
+        # the prepared public longitude is the authoritative inverse
+        # identity for the exact represented east endpoint.
+        #
+        expected_longitude = public_value(
             boundary_values[
-                "eastDelta"
+                "eastLon"
             ],
             scalar,
         )
 
+        exact_longitude = (
+            expected_longitude
+        )
+
     else:
-        delta = (
-            easting
-            - fe
-        ) / a
+        if case.easting_policy == "west":
+            delta = -round_binary(
+                mp.pi,
+                working_precision,
+            )
 
-    exact_longitude = canonical_math(
-        lon0
-        + delta
-    )
+        else:
+            delta = (
+                easting
+                - fe
+            ) / a
 
-    expected_longitude = round_binary(
-        exact_longitude,
-        precision,
-    )
+        exact_longitude = canonical_math(
+            lon0
+            + delta
+        )
 
-    expected_longitude = (
-        canonical_public(
-            expected_longitude,
+        expected_longitude = round_binary(
+            exact_longitude,
             precision,
         )
-    )
+
+        expected_longitude = (
+            canonical_public(
+                expected_longitude,
+                precision,
+            )
+        )
 
     return {
         "exact_lat":
@@ -1477,6 +1487,10 @@ def main() -> int:
             "worst_lon_abs":
                 None,
             "numerical_cases": 0,
+            "east_policy_cases": 0,
+            "east_policy_matches": 0,
+            "non_east_lon_cases": 0,
+            "non_east_lon_matches": 0,
         }
         for scalar in (
             "float",
@@ -1575,6 +1589,15 @@ def main() -> int:
 
         stat["cases"] += 1
 
+        if case.easting_policy == "east":
+            stat[
+                "east_policy_cases"
+            ] += 1
+        else:
+            stat[
+                "non_east_lon_cases"
+            ] += 1
+
         if lat_round_ulp == 0:
             stat[
                 "lat_matches"
@@ -1597,6 +1620,15 @@ def main() -> int:
             stat[
                 "lon_matches"
             ] += 1
+
+            if case.easting_policy == "east":
+                stat[
+                    "east_policy_matches"
+                ] += 1
+            else:
+                stat[
+                    "non_east_lon_matches"
+                ] += 1
         else:
             mismatches.append(
                 (
@@ -1717,9 +1749,21 @@ def main() -> int:
         )
 
         print(
-            "  correctly-rounded longitude:",
+            "  longitude contract matches:",
             f'{stat["lon_matches"]}/'
             f'{stat["cases"]}',
+        )
+
+        print(
+            "  east endpoint policy matches:",
+            f'{stat["east_policy_matches"]}/'
+            f'{stat["east_policy_cases"]}',
+        )
+
+        print(
+            "  non-east longitude oracle matches:",
+            f'{stat["non_east_lon_matches"]}/'
+            f'{stat["non_east_lon_cases"]}',
         )
 
         print(

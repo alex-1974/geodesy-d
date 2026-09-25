@@ -6,7 +6,10 @@ PM-E1C1B is accepted.
 
 The complete PM-E independent-differential gate is therefore complete.
 
-PM-F, the public API gate, is next.
+PM-F, the public API gate, was subsequently accepted.
+
+PM-G0 has now qualified production east-endpoint derivation and exact prepared
+endpoint identity. PM-G1 production module extraction is next.
 
 ## Purpose
 
@@ -90,9 +93,11 @@ matrix.
 ~~~text
 accepted cases:                       102
 correctly rounded latitude:       102 / 102
-correctly rounded longitude:      102 / 102
+longitude contract matches:       102 / 102
+  east endpoint policy:            12 / 12
+  non-east longitude oracle:       90 / 90
 maximum rounded latitude delta:       0 ULP
-maximum rounded longitude delta:      0 ULP
+maximum longitude contract delta:     0 ULP
 ~~~
 
 ### `double`
@@ -100,9 +105,11 @@ maximum rounded longitude delta:      0 ULP
 ~~~text
 accepted cases:                       102
 correctly rounded latitude:       102 / 102
-correctly rounded longitude:      102 / 102
+longitude contract matches:       102 / 102
+  east endpoint policy:            12 / 12
+  non-east longitude oracle:       90 / 90
 maximum rounded latitude delta:       0 ULP
-maximum rounded longitude delta:      0 ULP
+maximum longitude contract delta:     0 ULP
 ~~~
 
 ### `real`
@@ -110,18 +117,30 @@ maximum rounded longitude delta:      0 ULP
 ~~~text
 accepted cases:                       102
 correctly rounded latitude:        90 / 102
-correctly rounded longitude:      102 / 102
+longitude contract matches:       102 / 102
+  east endpoint policy:            12 / 12
+  non-east longitude oracle:       90 / 90
 maximum rounded latitude delta:       2 ULP
-maximum rounded longitude delta:      0 ULP
+maximum longitude contract delta:     0 ULP
 ~~~
 
-The twelve `real` latitude mismatches in the sparse corpus are all one- or
-two-ULP deviations.
+PM-G0 refines the longitude-oracle terminology. Ordinary and west-side
+represented values continue to be evaluated against the independent analytical
+longitude oracle. Exact prepared east endpoints are represented-domain policy
+cases evaluated against their prepared public `eastLegalLongitude`.
+
+The twelve remaining sparse-corpus mismatches are exclusively the previously
+qualified `real` latitude cases; there are no longitude-contract mismatches.
 
 ## Reverse longitude selection
 
 Prepared represented endpoint identities are authoritative before the ordinary
 quotient interval.
+
+PM-G0 strengthens the east side of that rule: the exact represented east
+easting reverses directly to the prepared public `eastLegalLongitude`.
+Reconstructing that identity through one collapsed `eastLegalDelta` loses
+information at principal-sheet seam collisions and is not the production rule.
 
 For ordinary represented easting, the accepted path reconstructs the quotient
 with a compensated residual.
@@ -538,4 +557,7 @@ latitude real:
 
 PM-E independent differential validation is complete.
 
-PM-F public API design is next.
+PM-F public API design was subsequently accepted.
+
+PM-G0 production endpoint qualification is complete. PM-G1 production module
+extraction is next.

@@ -277,6 +277,34 @@ without separate justification.
 The research kernel used by the next PM-E1 stage may precompute these anchors
 with the validated characterization helper.
 
+## PM-G0 supersession addendum
+
+PM-G0 later re-evaluated this production non-decision after PM-E1C1 qualified
+the final high/low principal-longitude reduction.
+
+The fixed-radius `4096`-neighbour helper remains valid historical PM-E1A
+characterization evidence, but it is **superseded as a production endpoint
+oracle**.
+
+PM-G0 demonstrated cases where the PM-E1A candidate was not maximal: its
+immediate public successor still belonged to the legal eastward branch.
+
+PM-G0 therefore selects:
+
+~~~text
+actual longitudeDifferenceParts() branch semantics
+    + finite public-lattice bisection
+    + adjacent-value maximality
+~~~
+
+PM-G0 also establishes that reverse endpoint identity must retain the exact
+prepared public `eastLegalLongitude`. A collapsed `eastLegalDelta` is not
+sufficient at principal-sheet seam collisions.
+
+See `PM_G0_ENDPOINT_RESULTS.md`.
+
+The historical PM-E1A measurements are retained rather than rewritten.
+
 ## PM-E1A decision
 
 PM-E1A passes.

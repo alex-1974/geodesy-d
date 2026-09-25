@@ -88,7 +88,7 @@ Current P0 state:
 ```text
 topocentric ENU                         ACCEPTED
 Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACTIVE — PM-G NEXT
+Pseudo-Mercator                         ACTIVE — PM-G1 PRODUCTION
 ```
 
 Continue in this order:
@@ -189,9 +189,9 @@ It does not own:
 Those remain responsibilities of `proj-d`, `imagery-d`, or higher-level
 consumers as appropriate.
 
-The public name (`PseudoMercator`, `WebMercator`, or another precise domain
-name) is not predetermined by this roadmap and must be resolved during the
-research/API-design gate.
+The public name is now accepted as `PseudoMercator`. PM-F rejects a
+`WebMercator` alias for the initial API; CRS and tile-policy naming remain
+outside this mathematical projection type.
 
 PM-A through PM-E are complete. Method semantics, represented domain,
 scalar-specific numerical paths, independent forward/reverse differential
@@ -201,10 +201,21 @@ boundary are qualified.
 PM-F is complete. The accepted public surface is recorded in
 `research/pseudo-mercator/PM_F_PUBLIC_API.md`.
 
-PM-G is now the active gate. Production work must implement exactly the
-accepted surface, then validate aggregate API exposure, checked/throwing
-semantics, DMD/LDC builds, supported platforms, and regression boundaries
-before Pseudo-Mercator is marked accepted.
+PM-G is now the active gate.
+
+PM-G0 production endpoint qualification is complete. The selected endpoint is
+derived from the actual principal branch by finite public-lattice bisection,
+with the prepared legal public east longitude retained as the authoritative
+exact reverse identity. The durable gate passes 8682 origins and 51975 endpoint
+round-trip checks with zero failures across the controlled six-compiler matrix.
+
+PM-G1 production module extraction is active. It must implement exactly the
+accepted PM-F surface and qualified PM-E/PM-G0 semantics.
+
+Subsequent PM-G gates validate public API / aggregate / runtime contracts,
+production-to-research equivalence, the full controlled DMD/LDC matrix, and
+platform / release / regression boundaries before Pseudo-Mercator is marked
+accepted.
 
 ### P1 — consumer-confirmed geodesic extensions
 
