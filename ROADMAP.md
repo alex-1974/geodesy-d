@@ -50,8 +50,8 @@ TOPO-A .. TOPO-G   PASS
 
 The bounded EPSG 9836/9837 topocentric surface is now integrated into `main`.
 
-The next admitted P0 research slice is Transverse Mercator / UTM projection
-factors, followed by Pseudo-Mercator.
+Transverse Mercator / UTM projection factors are accepted under ADR-0011.
+Pseudo-Mercator is now accepted after completion of PM-A through PM-G5.
 
 ## Geodesic acceptance state
 
@@ -87,8 +87,8 @@ Current P0 state:
 
 ```text
 topocentric ENU                         ACCEPTED
-Transverse Mercator / UTM factors      NEXT
-Pseudo-Mercator                         PENDING
+Transverse Mercator / UTM factors      ACCEPTED
+Pseudo-Mercator                         ACCEPTED — PM-A .. PM-G5 PASS
 ```
 
 Continue in this order:
@@ -189,9 +189,48 @@ It does not own:
 Those remain responsibilities of `proj-d`, `imagery-d`, or higher-level
 consumers as appropriate.
 
-The public name (`PseudoMercator`, `WebMercator`, or another precise domain
-name) is not predetermined by this roadmap and must be resolved during the
-research/API-design gate.
+The public name is now accepted as `PseudoMercator`. PM-F rejects a
+`WebMercator` alias for the initial API; CRS and tile-policy naming remain
+outside this mathematical projection type.
+
+PM-A through PM-E are complete. Method semantics, represented domain,
+scalar-specific numerical paths, independent forward/reverse differential
+evidence, controlled compiler behaviour, and the current research performance
+boundary are qualified.
+
+PM-F is complete. The accepted public surface is recorded in
+`research/pseudo-mercator/PM_F_PUBLIC_API.md`.
+
+PM-G is now the active gate.
+
+PM-G0 production endpoint qualification is complete. The selected endpoint is
+derived from the actual principal branch by finite public-lattice bisection,
+with the prepared legal public east longitude retained as the authoritative
+exact reverse identity. The durable gate passes 8682 origins and 51975 endpoint
+round-trip checks with zero failures across the controlled six-compiler matrix.
+
+PM-G1 production module extraction is complete. The production module
+`geodesy.projection.pseudo_mercator` implements the accepted PM-F surface and
+qualified PM-E/PM-G0 semantics. Baseline module and full-repository tests pass
+under DMD 2.111.0 and LDC 1.41.0.
+
+PM-G2 public API / aggregate / runtime contract validation is complete.
+Root aggregate exposure, positive and negative API contracts, named-argument
+source compatibility, checked-operation attributes, runtime boundary/failure
+semantics, and full repository tests pass under DMD 2.111.0 and LDC 1.41.0.
+
+PM-G3 production-to-research equivalence is complete. Under DMD 2.111.0 and
+LDC 1.41.0 the production differential driver reproduces the qualified
+PM-E1C1 forward and reverse corpus/results, including the already-characterized
+real-scalar rounding cases and PM-G0 endpoint policy.
+
+PM-G4 controlled compiler matrix validation is complete. Public API contracts,
+PM-G2 API/runtime contracts, PM-G3 production/research equivalence, and the full
+repository test suite pass across DMD 2.111.0/2.112.1/2.113.0 and
+LDC 1.41.0/1.42.0/1.43.0, with zero failed checks.
+
+PM-G5 is now active. This final gate validates platform / release / regression
+boundaries before Pseudo-Mercator is marked accepted.
 
 ### P1 — consumer-confirmed geodesic extensions
 

@@ -882,6 +882,197 @@ numerically sensitive trigonometric, normalization or solver arithmetic.
 No additional production optimization is justified before a new profile or a
 concrete consumer demonstrates a material need.
 
+## Pseudo-Mercator PM-E1C1 reverse research benchmark
+
+PM-E1C1B includes a research-only performance qualification for the
+extended-precision `real` reverse-latitude specialization.
+
+Correctness and numerical selection were completed before this performance
+comparison.
+
+The measured question is deliberately narrow:
+
+~~~text
+baseline:
+    selected R6 reverse-latitude evaluation
+    without quotient-residual correction
+
+selected:
+    same R6 evaluation
+    plus the optimized quotient-residual correction
+~~~
+
+The correction reconstructs the residual of the already-computed quotient and
+uses the R6 `expm1(abs(q))` intermediate to obtain `sech(q)` without an
+additional transcendental evaluation.
+
+### Reproducible harness
+
+The benchmark kernel is part of the Pseudo-Mercator research probe:
+
+~~~text
+research/pseudo-mercator/pm_e1_kernel_probe.d
+~~~
+
+and is enabled only with:
+
+~~~text
+PseudoMercatorReverseBenchmark
+~~~
+
+The controlled compiler-matrix runner is:
+
+~~~text
+research/pseudo-mercator/benchmark_pm_e1c1_reverse.py
+~~~
+
+Typical invocation:
+
+~~~sh
+python3 research/pseudo-mercator/benchmark_pm_e1c1_reverse.py
+~~~
+
+The runner:
+
+- uses explicit project-controlled compiler names;
+- builds DMD and LDC separately;
+- uses release/optimized compilation;
+- pins each process to one logical CPU;
+- prepares the corpus before the timed region;
+- runs 21 repetitions per profile;
+- alternates baseline-selected and selected-baseline execution order;
+- records raw process output under `/tmp` by default;
+- verifies that every timed reverse operation succeeds.
+
+The two qualifying profiles are:
+
+~~~text
+wgs84_zero:
+    a       = 6378137
+    lon0    = 0 degrees
+    FE      = 0
+    FN      = 0
+
+offset_p170:
+    a       = 6378137
+    lon0    = +170 degrees
+    FE      = +500000
+    FN      = -2000000
+~~~
+
+Each measured result contains:
+
+~~~text
+32768 prepared projected coordinates
+8 measured passes
+262144 reverse operations per timing
+21 repetitions
+~~~
+
+The qualifying durable run on 2026-09-25 used:
+
+~~~text
+Linux 6.17.0-22-generic x86_64
+logical benchmark CPU: 0
+
+DMD 2.111.0
+DMD 2.112.1
+DMD 2.113.0
+
+LDC 1.41.0   frontend 2.111.0   LLVM 20.1.5
+LDC 1.42.0   frontend 2.112.1   LLVM 21.1.8
+LDC 1.43.0   frontend 2.113.0   LLVM 22.1.8
+~~~
+
+All six compiler configurations built and completed both profiles.
+
+Each compiler output contained:
+
+~~~text
+META rows:     2
+RESULT rows:  42
+FAIL rows:     0
+SINK rows:     1
+~~~
+
+### Selected-correction overhead
+
+Median paired overhead of the selected residual correction:
+
+~~~text
+compiler       offset_p170    wgs84_zero
+
+DMD 2.111.0      +12.867 %      +16.407 %
+DMD 2.112.1      +14.587 %      +16.135 %
+DMD 2.113.0      +12.538 %      +15.165 %
+
+LDC 1.41.0        +3.028 %       +3.963 %
+LDC 1.42.0        +4.520 %       +6.089 %
+LDC 1.43.0        +5.705 %       +5.100 %
+~~~
+
+LDC release builds are the normative project performance configuration.
+
+The selected correction therefore adds approximately three to six percent in
+the qualified LDC workload.
+
+The correction is retained because the broad exact `real` corpus improves from
+an observed four-ULP worst case without the correction to three ULP with the
+selected correction, while avoiding the much larger cost of the rejected
+full-quotient-expansion / additional-`cosh` implementation.
+
+No compiler-specific numerical path is introduced.
+
+### DMD 2.112.x diagnostic observation
+
+The durable matrix independently reproduces the previously isolated DMD
+2.112.1 absolute-performance anomaly.
+
+Baseline medians from the durable runner:
+
+~~~text
+compiler          wgs84_zero    offset_p170
+                  ns/op         ns/op
+
+DMD 2.111.0        372.319       440.637
+DMD 2.112.1        380.271      1399.867
+DMD 2.113.0        367.675       448.730
+~~~
+
+The separate four-version diagnostic additionally measured DMD 2.112.0 and
+established the compiler boundary:
+
+~~~text
+DMD 2.111.0    normal
+DMD 2.112.0    slow
+DMD 2.112.1    slow
+DMD 2.113.0    normal
+~~~
+
+Factor isolation showed that the DMD 2.112.x slowdown is not specific to
+longitude wrapping and is not caused by the quotient-residual correction.
+
+Non-zero false Easting, non-zero false Northing, or non-zero longitude of
+natural origin were independently sufficient to expose the slowdown in the
+diagnostic corpus.
+
+The observation is therefore treated as a DMD 2.112.x toolchain regression in
+this research workload rather than as a Pseudo-Mercator algorithm defect.
+
+No geodesy-d workaround is justified:
+
+- numerical output is unchanged;
+- the selected correction is not the root cause;
+- DMD 2.113.0 no longer exhibits the regression;
+- LDC is the normative performance compiler.
+
+The complete numerical rationale, exact-corpus distribution and candidate
+selection are documented in:
+
+~~~text
+research/pseudo-mercator/PM_E1C1_REVERSE_RESULTS.md
+~~~
+
 ## CI
 
 Normal CI should verify that benchmark code still builds.
