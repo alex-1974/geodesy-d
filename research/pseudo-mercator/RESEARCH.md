@@ -1,6 +1,6 @@
 # Pseudo-Mercator research
 
-Status: PM-G4 controlled compiler matrix PASS — PM-G5 platform / release / regression acceptance ACTIVE
+Status: PM-G5 platform / release / regression acceptance PASS — Pseudo-Mercator ACCEPTED
 
 ## Goal
 
@@ -250,7 +250,7 @@ PM-E — independent differential validation — PASS
     PM-E is complete. PM-F public API is accepted. PM-G0 production endpoint
     qualification, PM-G1 production module extraction, PM-G2 public API /
     aggregate / runtime contracts, and PM-G3 research-kernel equivalence are
-    complete; PM-G4 controlled compiler matrix validation is complete and PM-G5 platform / release / regression acceptance is active.
+    complete; PM-G4 controlled compiler matrix validation and PM-G5 platform / release / regression acceptance are complete.
 
 PM-F — public API gate — PASS
     The accepted surface is documented in `PM_F_PUBLIC_API.md`.
@@ -269,7 +269,7 @@ PM-F — public API gate — PASS
     Receiver semantics and future free-function parameter ordering follow the
     workspace UFCS policy without duplicating member/free API.
 
-PM-G — production/platform acceptance — ACTIVE
+PM-G — production/platform acceptance — PASS
 
     PM-G0 — production endpoint qualification — PASS
         `PM_G0_ENDPOINT_RESULTS.md` qualifies actual-principal-branch
@@ -329,10 +329,15 @@ PM-G — production/platform acceptance — ACTIVE
 
         See `PM_G4_COMPILER_MATRIX_RESULTS.md`.
 
-    PM-G5 — platform / release / regression acceptance — ACTIVE
-        Complete supported-platform, release-build, packaging/documentation,
-        and repository regression validation before Pseudo-Mercator is marked
-        accepted.
+    PM-G5 — platform / release / regression acceptance — PASS
+        Release builds, repository regression, external DUB consumer/package
+        exposure, research-leakage audit, x86_64 Linux platform/real-width
+        evidence, and final documentation consistency all pass.
+
+        See `PM_G5_RESULTS.md`.
+
+        Pseudo-Mercator is accepted on the research branch. Integration into
+        main, versioning, and release remain separate actions.
 
 ## Explicit non-goals for this slice
 
