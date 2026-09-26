@@ -1342,3 +1342,103 @@ UTM prepared ellipsoid             metre-scale numeric a policy,
 The next pass checks endpoint inclusivity, forward/reverse symmetry,
 sphere acceptance, and whether these restrictions are mathematical,
 algorithmic, or policy constraints consistently documented across modules.
+
+
+### E4/E5 — domain and UTM unit-policy review
+
+The identified boundaries separate cleanly into definition/policy and bounded
+algorithm support.
+
+#### Generic ellipsoidal operations
+
+`Geodesic` and `TransverseMercator` accept the inclusive support profile
+
+~~~text
+0 <= f <= 0.01
+~~~
+
+so a sphere (`f == 0`) is a supported generic ellipsoid. The upper
+flattening bound is an explicit library/algorithm support profile rather than
+a property of `Ellipsoid!T` itself.
+
+#### Transverse Mercator
+
+The public bounded forward sheet accepts non-polar points through the
+inclusive nominal boundary
+
+~~~text
+abs(delta longitude) <= 60 degrees
+~~~
+
+with only representation-level slack used to classify values that round
+around the exact boundary. That slack does not widen the documented
+mathematical domain. Reverse performs representation-aware boundary handling
+against the same bounded sheet.
+
+#### Pseudo-Mercator
+
+The accepted forward latitude domain is explicitly inclusive:
+
+~~~text
+-88 degrees <= latitude <= +88 degrees
+~~~
+
+The bounded reverse representation is prepared from those same endpoint
+latitudes. Longitude seam handling uses the principal half-open sheet while
+preserving the public `Longitude` type's broader closed endpoint
+representation.
+
+#### Automatic versus explicit UTM
+
+Automatic standard-zone selection intentionally accepts
+
+~~~text
+-80 degrees <= latitude < +84 degrees
+~~~
+
+so `-80` is included and `+84` is excluded. This is a policy boundary of
+automatic standard UTM selection, not the mathematical domain of the prepared
+Transverse Mercator operation.
+
+An explicitly prepared `UtmProjection` does not reapply that automatic
+latitude band. Existing tests deliberately demonstrate that an explicit zone
+can forward/reverse a point at exactly +84 degrees when the bounded underlying
+TM operation accepts it. This separation is coherent.
+
+#### UTM metre convention
+
+The UTM implementation fixes
+
+~~~text
+false easting          500000
+southern false northing 10000000
+~~~
+
+These constants are metre-valued UTM parameters. Because geodesy-d's generic
+coordinate and ellipsoid types intentionally carry no runtime unit metadata,
+`UtmProjection` cannot infer or convert a caller's linear unit. Accepting an
+ellipsoid expressed in kilometres or feet while applying these fixed numeric
+offsets would silently mix units.
+
+The current UTM precondition
+
+~~~text
+6000000 <= semi-major axis <= 7000000
+0 < f <= 0.01
+~~~
+
+is therefore accepted for v1 as a deliberate **terrestrial metre-scale input
+policy**, not as general unit detection. It rejects obvious unit mismatch and
+restricts the convenience abstraction to the conventional terrestrial UTM
+use case.
+
+The documentation should continue to state that the ellipsoid axes supplied
+to `UtmProjection` are numerically in metres. The numeric range is a guard
+for that API contract, not proof of dimensional metadata.
+
+UTM also intentionally excludes `f == 0`: the generic Transverse Mercator
+implementation supports a sphere, while the UTM convenience policy accepts
+supported oblate terrestrial ellipsoids only. Existing tests enforce this
+distinction.
+
+No source change is required by this review.
