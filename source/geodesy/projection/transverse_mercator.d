@@ -1,7 +1,19 @@
 /**
  * Bounded generic Transverse Mercator projection.
- *
+ * 
  * The public parameter semantics follow EPSG coordinate operation method 9807.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
  */
 module geodesy.projection.transverse_mercator;
 
@@ -437,15 +449,41 @@ private ComplexPair!T pairWithRealAdded(T)(
 
 
 /**
- * Prepared bounded Transverse Mercator operation with EPSG 9807 parameters.
+ * Prepared bounded Transverse Mercator projection.
  *
- * The first implementation supports spherical and moderately oblate
- * ellipsoids with `0 <= f <= 0.01`. Non-polar forward inputs are restricted to
- * `abs(delta longitude) <= 60 degrees`.
+ * Parameters follow the conventional EPSG Transverse Mercator model:
+ * ellipsoid, latitude/longitude of natural origin, natural-origin scale
+ * factor, false easting, and false northing.
  *
- * `float` uses `double` working precision with sixth-order Krueger series.
- * `double` and `real` use eighth-order series to support the bounded
- * wide-domain accuracy contract.
+ * The supported ellipsoid domain is spherical/oblate with
+ * `0 <= flattening <= 0.01`. Non-polar forward inputs are bounded to
+ * `abs(delta longitude) <= 60 degrees` from the central meridian. Linear
+ * projected coordinates use the same unit as the ellipsoid axes and false
+ * offsets.
+ *
+ * `.init` is invalid. Prepared objects are intended for reuse.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const tm = TransverseMercator!double.fromParameters(
+ *     wgs84!double(),
+ *     Latitude!double.fromDegrees(0.0),
+ *     Longitude!double.fromDegrees(15.0),
+ *     0.9996,
+ *     500_000.0,
+ *     0.0);
+ *
+ * const source = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.0),
+ *     Longitude!double.fromDegrees(16.0));
+ *
+ * const projected = tm.forward(source);
+ * const factors = tm.forwardFactors(source);
+ * assert(projected.easting > 500_000.0);
+ * assert(factors.pointScale > 0.0);
+ * ---
  */
 struct TransverseMercator(T)
 if (isGeodesyScalar!T)
