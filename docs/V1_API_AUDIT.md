@@ -1253,7 +1253,7 @@ V1-D.
 
 ## V1-E — scalar / unit / canonicalization / domain contracts
 
-Status: **in progress**
+Status: **COMPLETE / PASS**
 
 Review dimensions:
 
@@ -1442,3 +1442,63 @@ supported oblate terrestrial ellipsoids only. Existing tests enforce this
 distinction.
 
 No source change is required by this review.
+
+
+### E5 — cross-module canonicalization and scalar closure
+
+Final representation-sensitive review:
+
+- `Longitude!T` deliberately preserves both legal antimeridian spellings
+  (`-pi` and `+pi`). `normalized` maps the latter to the unique
+  half-open `[-pi,+pi)` representation. UTM automatic-zone selection uses
+  this normalization explicitly.
+- Geodesic mathematics canonicalizes equivalent antimeridian inputs internally
+  and has regression coverage showing `+180` and `-180` behave
+  equivalently.
+- Geodesic result conventions canonicalize mathematically zero coincidence
+  outputs to positive zero, with explicit `signbit` regression tests.
+- Geographic pole longitude is treated as geometrically degenerate where the
+  operation requires a canonical output. Transverse Mercator reverse uses its
+  natural-origin longitude for the represented pole; factor operations use
+  their documented canonical pole convention.
+- Topocentric frame preparation intentionally differs: when a geodetic pole
+  origin is supplied, its explicit longitude defines the local frame
+  orientation and is therefore preserved rather than normalized away. This is
+  a semantic distinction, not a canonicalization inconsistency.
+- `float` public operations commonly promote internal working arithmetic to
+  `double`; `double` and `real` retain their corresponding supported
+  working paths where required. Public results remain scalar `T`.
+- All principal public families instantiate for `real`; no v1 API was found
+  that advertises the shared scalar policy while structurally excluding
+  `real`.
+
+These rules are mutually compatible: public value representation is preserved
+unless an operation has a documented need for a unique representative.
+
+### V1-E gate result
+
+Status: **COMPLETE / PASS**
+
+~~~text
+E1  public scalar policy                         PASS
+E2  angular and linear unit contracts            PASS
+E3  canonicalization and endpoint representation PASS
+E4  mathematical / projection domain boundaries  PASS
+E5  cross-module contract consistency            PASS
+~~~
+
+No source correction is required by V1-E.
+
+Accepted v1 contract distinctions include:
+
+- generic linear coordinates are unit-agnostic but require operation-local
+  unit consistency;
+- UTM is deliberately a metre-scale convenience API because its fixed false
+  offsets are metre-valued;
+- generic geodesic/TM support includes spheres, while UTM convenience policy
+  is restricted to supported oblate terrestrial ellipsoids;
+- automatic UTM latitude policy is distinct from explicit-zone TM domain;
+- closed public longitude representation and operation-specific half-open
+  canonicalization coexist deliberately;
+- signed-zero and pole conventions are operation semantics where geometric
+  degeneracy requires a unique result.
