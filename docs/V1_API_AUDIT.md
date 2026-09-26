@@ -1723,7 +1723,7 @@ No source/API correction is required by V1-H.
 
 ## V1-I — external consumer and compiler/platform matrix
 
-Status: **in progress**
+Status: **COMPLETE / PASS**
 
 Review dimensions:
 
@@ -1779,3 +1779,43 @@ external named arguments — LDC 1.41   PASS — build + link
 V1-I will add a representative direct-public-module consumer and release-build
 consumer check. This tests that supported use does not accidentally depend on
 the root aggregate or debug/unittest configuration.
+
+
+### Direct-module and release consumer validation
+
+A consumer outside the repository imported representative public modules
+directly rather than through `import geodesy;`. It exercised strong angular
+types, WGS 84, geographic coordinates, one-shot UTM forward/reverse, and the
+prepared geodesic inverse API.
+
+Observed validation:
+
+~~~text
+DMD 2.111 debug direct-module consumer    PASS — build + link
+LDC 1.41 debug direct-module consumer     PASS — build + link
+DMD 2.111 release direct-module consumer  PASS — build + link
+LDC 1.41 release direct-module consumer   PASS — build + link
+release consumer execution                PASS
+repository worktree                       clean
+~~~
+
+### V1-I gate result
+
+Status: **COMPLETE / PASS**
+
+~~~text
+I1 declared minimum frontend/toolchain contract  PASS
+I2 normal DMD/LDC compiler gate                  PASS
+I3 accepted hosted OS/architecture matrix        PASS
+I4 external aggregate consumer                   PASS
+I5 external named-argument/source consumer       PASS
+I6 direct public-module import consumer          PASS
+I7 release-build consumer path                   PASS
+~~~
+
+The v1 required platform baseline is the non-experimental hosted matrix already
+accepted by the operation validation programs. Windows/AArch64 remains
+informational/experimental and is not promoted to a required v1 platform by
+this gate.
+
+No source/API correction is required by V1-I.
