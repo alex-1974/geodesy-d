@@ -29,17 +29,6 @@ import geodesy.scalar : isGeodesyScalar;
  *
  * Construction and access perform no allocation.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * assert(vienna.latitude.degrees > 48.0);
- * assert(vienna.longitude.degrees > 16.0);
- * ---
  */
 struct GeographicCoordinate(T)
 if (isGeodesyScalar!T)
@@ -73,6 +62,21 @@ public:
         return _longitude;
     }
 }
+
+/// Example constructing a geographic coordinate.
+@safe unittest
+{
+    import geodesy;
+    
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    
+    assert(vienna.latitude.degrees > 48.0);
+    assert(vienna.longitude.degrees > 16.0);
+    
+}
+
 
 
 unittest
