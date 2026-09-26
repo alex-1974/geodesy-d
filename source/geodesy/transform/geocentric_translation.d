@@ -32,22 +32,6 @@ import geodesy.scalar : isFiniteGeodesyScalar, isGeodesyScalar;
  * `inverse` returns the exact inverse parameterization by negating all three
  * translations. Construction rejects non-finite parameters.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const shift = GeocentricTranslation!double.fromComponents(
- *     84.87, 96.49, 116.95);
- *
- * const source = GeocentricCoordinate!double.fromComponents(
- *     3_771_793.97, 140_253.34, 5_124_304.35);
- *
- * const target = source.applyGeocentricTranslation(shift);
- * const recovered = target.applyGeocentricTranslation(shift.inverse);
- *
- * assert(target.x > source.x);
- * assert(recovered == source);
- * ---
  */
 struct GeocentricTranslation(T)
 if (isGeodesyScalar!T)
@@ -149,6 +133,25 @@ public:
         return result;
     }
 }
+
+/// Example using struct GeocentricTranslation(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const shift = GeocentricTranslation!double.fromComponents(
+        84.87, 96.49, 116.95);
+    
+    const source = GeocentricCoordinate!double.fromComponents(
+        3_771_793.97, 140_253.34, 5_124_304.35);
+    
+    const target = source.applyGeocentricTranslation(shift);
+    const recovered = target.applyGeocentricTranslation(shift.inverse);
+    
+    assert(target.x > source.x);
+    assert(recovered == source);
+}
+
 
 
 /**
