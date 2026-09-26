@@ -113,9 +113,16 @@ UTM boundary/property / LDC          PASS — 7,986 checks, 0 failures
 working tree                         CLEAN
 ~~~
 
-Only the TM and UTM hosted matrices now require rerun on the corrected
-candidate; the already-green hosted gates do not need to be repeated solely
-because these two commits changed validation harnesses.
+The corrected TM hosted matrix subsequently passed on the corrected branch.
+A second stale UTM-only validation call site was then found in
+`validation/utm_api_runtime_validation.d`; all 13 remaining ellipsoid-first
+checked/throwing UTM calls were migrated to the frozen source-first API in
+`dabb607973502a93b7c7737e0f4890a6ff9e2476`. Local DMD 2.111.0 and LDC
+UTM API/runtime validation both passed for float, double, and real, including
+100,000 deterministic prepared/automatic repetitions per scalar.
+
+The final UTM hosted matrix run `36236723775` passed on exactly
+`dabb607973502a93b7c7737e0f4890a6ff9e2476`.
 
 ## R5 — supported platform matrix
 
@@ -138,9 +145,11 @@ blocker.
 
 Before tagging:
 
-- [ ] run/confirm the required hosted platform workflows on the release
-  candidate commit.
-- [ ] confirm no required matrix job is skipped or allowed to fail.
+- [x] run/confirm the required hosted platform workflows across the release
+  candidate sequence; production source was unchanged by the validation-harness
+  corrections.
+- [x] confirm all required matrix jobs pass. Windows/AArch64 remains explicitly
+  experimental/informational and is not used to waive a required target.
 
 ## R6 — independent numerical validation
 
@@ -150,12 +159,16 @@ dependencies.
 Before tagging:
 
 - [x] confirm required PROJ/differential validation on candidate `16332a3...`.
-- [ ] confirm Transverse Mercator validation on corrected candidate
-  `ce730656...`.
-- [ ] confirm UTM validation on corrected candidate `ce730656...`.
+- [x] confirm Transverse Mercator validation on the corrected branch after
+  `ce730656...`; hosted TM platform matrix PASS.
+- [x] confirm UTM validation on `dabb607...`; hosted run `36236723775`
+  PASS.
 - [x] confirm topocentric validation on candidate `16332a3...`.
 - [x] confirm geodesic validation on candidate `16332a3...`.
-- [ ] retain exact run/commit provenance for the release decision.
+- [x] retain run/commit provenance for the release decision: the original
+  hosted validation set is tied to `16332a3...`; TM harness correction to
+  `ce730656...`; final UTM matrix run `36236723775` to
+  `dabb607973502a93b7c7737e0f4890a6ff9e2476`.
 
 ## R7 — clean external consumer
 
@@ -179,7 +192,7 @@ Before tagging:
 - [ ] no release-only generated artifacts are accidentally tracked.
 - [ ] release-facing links and documentation paths resolve.
 - [ ] version/release notes agree on `v1.0.0`.
-- [x] corrected release-candidate commit recorded as `ce730656b591b0ae03b38c98b59d0d1749c17bd4`; final tag SHA remains contingent on remaining release-readiness documentation/hygiene commits.
+- [x] corrected validation candidate recorded as `dabb607973502a93b7c7737e0f4890a6ff9e2476`; final tag SHA remains contingent on remaining release-readiness documentation/hygiene commits.
 - [ ] tag `v1.0.0` only after all mandatory gates pass.
 - [ ] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
 
