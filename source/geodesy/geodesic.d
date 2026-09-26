@@ -1015,6 +1015,30 @@ public:
     }
 
 
+    /** Throwing convenience wrapper for `tryDirect`. */
+    GeodesicDirectResult!T direct(
+        const GeographicCoordinate!T start,
+        const Angle!T initialAzimuth,
+        const T distance) const
+        @safe
+    {
+        GeodesicDirectResult!T result;
+
+        if (!tryDirect(
+                start,
+                initialAzimuth,
+                distance,
+                result))
+        {
+            throw new GeodesyValueException(
+                "Direct geodesic solution requires a valid solver, finite "
+                ~ "inputs, and a finite representable result.");
+        }
+
+        return result;
+    }
+
+
     /**
      * Solve the inverse geodesic problem without throwing.
      *
@@ -1109,6 +1133,28 @@ public:
                     finalAzimuth));
 
         return true;
+    }
+
+
+    /** Throwing convenience wrapper for `tryInverse`. */
+    GeodesicInverseResult!T inverse(
+        const GeographicCoordinate!T start,
+        const GeographicCoordinate!T end) const
+        @safe
+    {
+        GeodesicInverseResult!T result;
+
+        if (!tryInverse(
+                start,
+                end,
+                result))
+        {
+            throw new GeodesyValueException(
+                "Inverse geodesic solution requires a valid solver, finite "
+                ~ "inputs, and a finite representable result.");
+        }
+
+        return result;
     }
 }
 
@@ -1381,6 +1427,47 @@ unittest
         1_000_000.0,
         result));
 }
+
+
+unittest
+{
+    import std.exception : assertThrown;
+
+    const ellipsoid = wgs84!double();
+    const solver = Geodesic!double.fromEllipsoid(ellipsoid);
+
+    const start =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+
+    const end =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(40.7128),
+            Longitude!double.fromDegrees(-74.0060));
+
+    const directResult = solver.direct(
+        start,
+        Angle!double.fromDegrees(90.0),
+        1_000.0);
+    assert(directResult.position.latitude.radians
+        == directResult.position.latitude.radians);
+
+    const inverseResult = solver.inverse(start, end);
+    assert(inverseResult.distance >= 0.0);
+
+    const invalid = Geodesic!double.init;
+
+    assertThrown!GeodesyValueException(
+        invalid.direct(
+            start,
+            Angle!double.fromDegrees(90.0),
+            1_000.0));
+
+    assertThrown!GeodesyValueException(
+        invalid.inverse(start, end));
+}
+
 
 
 unittest
