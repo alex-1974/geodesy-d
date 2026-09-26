@@ -76,10 +76,18 @@ public:
         return _deltaZ;
     }
 
-    /**
-     * Checked non-throwing construction.
+        /**
+     * Construct source-to-target translation parameters without throwing.
      *
-     * Returns false when any parameter is NaN or infinite.
+     * Params:
+     *     deltaX = Finite X translation in the coordinate linear unit.
+     *     deltaY = Finite Y translation in the same linear unit.
+     *     deltaZ = Finite Z translation in the same linear unit.
+     *     result = Receives the translation on success.
+     *
+     * Returns:
+     *     `true` when all parameters are finite; otherwise `false`. On
+     *     failure `result` remains unchanged.
      */
     static bool tryFromComponents(
         const T deltaX,
@@ -99,7 +107,20 @@ public:
         return true;
     }
 
-    /** Throwing convenience constructor. */
+        /**
+     * Construct source-to-target translation parameters.
+     *
+     * Params:
+     *     deltaX = Finite X translation in the coordinate linear unit.
+     *     deltaY = Finite Y translation in the same linear unit.
+     *     deltaZ = Finite Z translation in the same linear unit.
+     *
+     * Returns:
+     *     The translation parameter set.
+     *
+     * Throws:
+     *     `GeodesyValueException` when any parameter is non-finite.
+     */
     static GeocentricTranslation!T fromComponents(
         const T deltaX,
         const T deltaY,
@@ -131,13 +152,19 @@ public:
 
 
 /**
- * Apply EPSG method 1031:
+ * Apply EPSG method 1031 in the source-to-target direction.
  *
- *   Xt = Xs + dX
- *   Yt = Ys + dY
- *   Zt = Zs + dZ
+ * The source coordinate and translations must use the same linear unit.
  *
- * Returns false only if finite inputs overflow to a non-finite result in T.
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     translation = Source-to-target translation parameters.
+ *     result = Receives the target geocentric coordinate on success.
+ *
+ * Returns:
+ *     `true` when the finite input arithmetic produces a finite target in
+ *     scalar type `T`; otherwise `false`. On failure `result` remains
+ *     unchanged.
  */
 bool tryApplyGeocentricTranslation(T)(
     const GeocentricCoordinate!T source,
@@ -154,7 +181,21 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Throwing convenience wrapper for `tryApplyGeocentricTranslation`. */
+/**
+ * Apply EPSG method 1031 in the source-to-target direction.
+ *
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     translation = Source-to-target translation parameters in the same
+ *         linear unit.
+ *
+ * Returns:
+ *     The target geocentric coordinate.
+ *
+ * Throws:
+ *     `GeodesyValueException` when finite arithmetic cannot produce a
+ *     finite representable target.
+ */
 GeocentricCoordinate!T applyGeocentricTranslation(T)(
     const GeocentricCoordinate!T source,
     const GeocentricTranslation!T translation)
