@@ -31,6 +31,8 @@ fi
 
 echo "Generating ddox input for ${#public_sources[@]} public modules from $source_root..."
 
+python3 "$source_root/tools/verify-public-module-ddoc.py" "$source_root"
+
 (
     cd "$source_root"
     "$compiler" -o- -wi -Xf"$json_file" -Df"$dummy_file" -Isource "${public_sources[@]}"
