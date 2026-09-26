@@ -149,21 +149,6 @@ if (isGeodesyScalar!W)
  *
  * No allocation is performed.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const source = GeodeticCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(53.0),
- *     Longitude!double.fromDegrees(2.0),
- *     73.0);
- *
- * const xyz = geodeticToGeocentric(source, wgs84!double());
- * assert(xyz.x > 0.0);
- *
- * GeocentricCoordinate!double checked;
- * assert(tryGeodeticToGeocentric(source, wgs84!double(), checked));
- * ---
  */
 bool tryGeodeticToGeocentric(T)(
     const GeodeticCoordinate!T source,
@@ -196,6 +181,24 @@ if (isGeodesyScalar!T)
         z,
         result);
 }
+
+/// Example using bool tryGeodeticToGeocentric(T)( const GeodeticCoordinate!T source, const Ellipsoid!T ellipsoid, out Geocent.
+@safe unittest
+{
+    import geodesy;
+    
+    const source = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(53.0),
+        Longitude!double.fromDegrees(2.0),
+        73.0);
+    
+    const xyz = geodeticToGeocentric(source, wgs84!double());
+    assert(xyz.x > 0.0);
+    
+    GeocentricCoordinate!double checked;
+    assert(tryGeodeticToGeocentric(source, wgs84!double(), checked));
+}
+
 
 
 /**
@@ -986,21 +989,6 @@ if (isGeodesyScalar!W)
  *
  * No allocation is performed.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const xyz = GeocentricCoordinate!double.fromComponents(
- *     3_771_793.968,
- *       140_253.342,
- *     5_124_304.349);
- *
- * const geo = geocentricToGeodetic(xyz, wgs84!double());
- * assert(geo.latitude.degrees > 53.0);
- *
- * GeodeticCoordinate!double checked;
- * assert(tryGeocentricToGeodetic(xyz, wgs84!double(), checked));
- * ---
  *
  * References:
  *     EPSG Guidance Note 7-2, method 9602;
@@ -1061,6 +1049,24 @@ if (isGeodesyScalar!T)
         height,
         result);
 }
+
+/// Example using bool tryGeocentricToGeodetic(T)( const GeocentricCoordinate!T source, const Ellipsoid!T ellipsoid, out Geode.
+@safe unittest
+{
+    import geodesy;
+    
+    const xyz = GeocentricCoordinate!double.fromComponents(
+        3_771_793.968,
+          140_253.342,
+        5_124_304.349);
+    
+    const geo = geocentricToGeodetic(xyz, wgs84!double());
+    assert(geo.latitude.degrees > 53.0);
+    
+    GeodeticCoordinate!double checked;
+    assert(tryGeocentricToGeodetic(xyz, wgs84!double(), checked));
+}
+
 
 
 /**
