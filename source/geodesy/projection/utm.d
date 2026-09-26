@@ -1,9 +1,42 @@
 /**
- * Universal Transverse Mercator policy, coordinate tagging, and projection.
- * 
- * Numerical projection is delegated to the accepted bounded
- * `TransverseMercator!T` implementation. This module owns UTM zone,
- * hemisphere, fixed-parameter, and standard automatic-zone policy.
+ * Universal Transverse Mercator policy, tagging, and prepared projection.
+ *
+ * UTM is implemented as a policy layer over the accepted bounded Transverse
+ * Mercator implementation. This module owns zone and hemisphere semantics,
+ * standard automatic-zone selection, fixed UTM parameters, tagged coordinates,
+ * and explicit prepared-zone operations without duplicating the numerical
+ * Transverse Mercator kernel.
+ *
+ * Standards:
+ *     UTM semantics follow the conventional EPSG/IOGP Transverse Mercator
+ *     operation model and the documented UTM zone/hemisphere policy.
+ *
+ * Domain:
+ *     Zones are 1 through 60. Automatic standard-zone forward projection uses
+ *     the documented UTM latitude band; explicit prepared-zone operations do
+ *     not silently reapply automatic zone selection.
+ *
+ * Units:
+ *     UTM easting, northing, false offsets, and supported ellipsoid axes are
+ *     metre-valued by public policy.
+ *
+ * Numerics:
+ *     Coordinate and factor mathematics delegate to the validated prepared
+ *     `TransverseMercator` implementation; this module adds UTM policy rather
+ *     than a second projection algorithm.
+ *
+ * Performance:
+ *     `UtmProjection` reuses prepared Transverse Mercator state across
+ *     repeated operations. Checked numerical paths are allocation-free.
+ *
+ * Validation:
+ *     Policy, parameterization, boundaries, runtime API, PROJ differential
+ *     behaviour, and GeographicLib oracle cases are covered by dedicated
+ *     deterministic validators.
+ *
+ * See_Also:
+ *     `UtmZone`, `UtmCoordinate`, `UtmProjection`,
+ *     `TransverseMercator`
  *
  * Authors:
  *     Alexander Bernardi
