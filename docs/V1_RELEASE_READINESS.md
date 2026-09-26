@@ -178,11 +178,18 @@ debug/release builds, and execution.
 
 Release readiness additionally requires:
 
-- [ ] build from the package artifact/registry candidate rather than the local
-  repository path.
-- [ ] exercise `import geodesy;` from a fresh consumer.
-- [ ] run with the minimum frontend.
-- [ ] run with LDC/current supported toolchain.
+- [x] build a fresh external DUB consumer outside the repository/workspace
+  against the release-candidate package path on
+  `fba5cad64adfccefafa60af22f475d9d3d5b71e6`.
+- [x] exercise `import geodesy;` and representative frozen UTM/geodesic API;
+  build, link, and execution PASS in debug and release configurations.
+- [x] run with minimum DMD frontend 2.111.0 — debug/release PASS.
+- [x] run with LDC — debug/release PASS.
+
+The pre-publish R7 consumer gate is complete. DUB identifies the untagged
+candidate as `0.2.0+commit.124.gfba5cad`, as expected before a v1 tag exists.
+A fresh consumer against the actual `v1.0.0` registry package remains a
+post-publish verification item and cannot be completed before publication.
 
 ## R8 — repository and release hygiene
 
