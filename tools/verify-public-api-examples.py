@@ -93,11 +93,11 @@ def documented_unittest_count(source_root: Path) -> int:
         fail(f"public source tree is missing: {source_dir}")
 
     count = 0
-    inline_example = re.compile(r"^[ \\t]*\\*[ \\t]+Example:[ \\t]*$", re.MULTILINE)
+    inline_example = re.compile(r"^[ \t]*\*[ \t]+Example:[ \t]*$", re.MULTILINE)
     documented_unittest = re.compile(
-        r"^[ \\t]*///[^\\n]*\\n"
-        r"(?:[ \\t]*@[A-Za-z_][A-Za-z0-9_]*(?:\\([^\\n]*\\))?[ \\t]+)*"
-        r"unittest\\b",
+        r"^[ \t]*///[^\n]*\n"
+        r"(?:[ \t]*@[A-Za-z_][A-Za-z0-9_]*(?:\([^\n]*\))?[ \t]+)*"
+        r"unittest\b",
         re.MULTILINE,
     )
 
