@@ -301,7 +301,7 @@ private bool geodeticTau(T)(
 
 version (GeodesyTmNewtonValidation)
 {
-    struct TransverseMercatorNewtonTrace
+    package struct TransverseMercatorNewtonTrace
     {
         int iterations;
         real convergenceResidual = real.nan;
@@ -886,7 +886,7 @@ private:
 
     version (GeodesyTmNewtonValidation)
     {
-    public:
+    package:
         bool tryReverseNewtonTrace(
             const ProjectedCoordinate!T source,
             out GeographicCoordinate!T result,
