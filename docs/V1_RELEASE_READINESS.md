@@ -20,27 +20,30 @@ No tag or release is authorized merely by completing an individual item below.
 - [x] package name: `geodesy-d`.
 - [x] MIT license declared.
 - [x] minimum D frontend: `>=2.111.0`.
-- [ ] audit DUB package contents for unintended research/validation/repository files.
+- [ ] audit DUB package contents for unintended research/validation/repository files. Repository inspection shows extensive `research/`, `validation/`, `tools/`, `docs/`, and CI content; the actual DUB package artifact still needs inspection rather than assuming repository presence equals publication.
 - [ ] verify a clean packaged/fetched consumer rather than only a path dependency.
-- [ ] confirm release-facing package description and metadata.
+- [x] confirm release-facing package description and metadata.
 
 ## R3 — release-facing documentation
 
 Current audit findings:
 
-- `docs/README.md` still presents v0.1 as the release status.
-- `ROADMAP.md` still identifies v0.2.0 as the released compatibility baseline.
-- `docs/API.md` still labels several accepted v1 surfaces as “current
-  unreleased”.
-- the historical v0.1 readiness document records a `CHANGELOG.md`, but no
-  `CHANGELOG.md` is present in the current repository tree.
+The initial documentation audit found stale pre-freeze status wording in
+`docs/README.md`, `ROADMAP.md`, and `docs/API.md`. Those release-facing
+statements have been reconciled to describe a frozen v1 release candidate
+without claiming that `v1.0.0` is already tagged.
+
+An initial tree-filter check incorrectly reported `CHANGELOG.md` absent. A
+full repository-tree check confirmed that it is present and already records
+0.1.x, 0.2.0, and unreleased post-0.2 work. The readiness audit corrects that
+finding rather than preserving it.
 
 Required before v1.0.0:
 
-- [ ] reconcile README/docs status with the frozen v1 scope.
-- [ ] reconcile ROADMAP release-policy wording for the v1 release candidate.
-- [ ] remove stale “unreleased” wording from the frozen v1 API reference.
-- [ ] restore/create and verify `CHANGELOG.md` with a v1.0.0 entry.
+- [x] reconcile README/docs status with the frozen v1 scope.
+- [x] reconcile ROADMAP release-policy wording for the v1 release candidate.
+- [x] remove stale “unreleased” wording from the frozen v1 API reference.
+- [x] verify existing `CHANGELOG.md` and prepare its v1.0.0 release-candidate entry.
 - [ ] prepare concise v1.0.0 release notes.
 
 ## R4 — normal compiler and release-build gate
