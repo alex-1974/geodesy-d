@@ -1044,7 +1044,7 @@ private bool findRepresentedEastMaximum(T)(
  * Prepared bounded Pseudo-Mercator operation with EPSG 1024 parameters.
  *
  * The forward latitude domain is [-88 degrees,+88 degrees]. Longitude uses the
- * principal wrapped sheet [-pi,+pi) with represented endpoint rules qualified
+ * principal wrapped sheet from -pi inclusive to +pi exclusive, with represented endpoint rules qualified
  * by PM-G0.
  */
 struct PseudoMercator(T)
