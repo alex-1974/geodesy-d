@@ -1719,3 +1719,63 @@ The remaining reviewed documentation agrees with source on:
 - TM, Pseudo-Mercator, UTM, geodesic, and conversion domain distinctions.
 
 No source/API correction is required by V1-H.
+
+
+## V1-I — external consumer and compiler/platform matrix
+
+Status: **in progress**
+
+Review dimensions:
+
+~~~text
+I1  declared minimum frontend/toolchain contract
+I2  normal DMD/LDC compiler gate
+I3  accepted hosted OS/architecture matrix
+I4  external aggregate consumer
+I5  external named-argument/source-contract consumer
+I6  direct public-module import consumer
+I7  release-build consumer path
+~~~
+
+### Existing toolchain and platform evidence
+
+The package manifest declares:
+
+~~~text
+frontend >= 2.111.0
+~~~
+
+Normal CI covers:
+
+~~~text
+DMD 2.111.0
+DMD latest
+LDC latest
+~~~
+
+Accepted operation-specific hosted matrices additionally cover LDC 1.41.0 on:
+
+~~~text
+Linux x86_64
+Linux AArch64
+Windows x86_64
+macOS AArch64
+macOS x86_64
+~~~
+
+and DMD 2.111.0 on Linux x86_64. Windows/AArch64 with LDC 1.41.0 remains
+explicitly experimental/informational and is not part of the required v1
+platform baseline.
+
+Earlier v1 audit gates have already established:
+
+~~~text
+external import geodesy — DMD 2.111   PASS — build + link
+external import geodesy — LDC 1.41    PASS — build + link
+external named arguments — DMD 2.111  PASS — build + link
+external named arguments — LDC 1.41   PASS — build + link
+~~~
+
+V1-I will add a representative direct-public-module consumer and release-build
+consumer check. This tests that supported use does not accidentally depend on
+the root aggregate or debug/unittest configuration.
