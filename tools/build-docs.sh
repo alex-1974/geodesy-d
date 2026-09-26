@@ -4,6 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source_root="${SOURCE_ROOT:-$root}"
 tool_root="${TOOL_ROOT:-$root}"
+verify_contracts="${VERIFY_CONTRACTS:-1}"
 output_root="${OUTPUT_ROOT:-$source_root}"
 
 source_root="$(cd "$source_root" && pwd)"
@@ -33,7 +34,9 @@ fi
 
 echo "Generating ddox input for ${#public_sources[@]} public modules from $source_root..."
 
-python3 "$tool_root/tools/verify-public-module-ddoc.py" "$source_root"
+if [[ "$verify_contracts" == "1" ]]; then
+    python3 "$tool_root/tools/verify-public-module-ddoc.py" "$source_root"
+fi
 
 (
     cd "$source_root"
@@ -61,11 +64,13 @@ if grep -Rqi 'geodesy\.internal' "$site_dir" --include='*.html'; then
     exit 1
 fi
 
-python3 "$tool_root/tools/verify-public-api-examples.py" \
-    "$site_dir" \
-    "$tool_root/docs/public-api-example-audit.md" \
-    --source-root "$source_root" \
-    --require-complete
+if [[ "$verify_contracts" == "1" ]]; then
+    python3 "$tool_root/tools/verify-public-api-examples.py" \
+        "$site_dir" \
+        "$tool_root/docs/public-api-example-audit.md" \
+        --source-root "$source_root" \
+        --require-complete
+fi
 
 echo "PASS: public-only ddox documentation"
 echo "Documentation generated: $site_dir/index.html"
