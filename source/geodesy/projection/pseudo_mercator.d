@@ -1130,11 +1130,23 @@ public:
     }
 
 
-    /**
-     * Prepare a Pseudo-Mercator operation without throwing.
+        /**
+     * Prepare a bounded Pseudo-Mercator operation without throwing.
      *
-     * Flattening is retained as source-ellipsoid state but does not enter the
-     * coordinate equations.
+     * Flattening is retained as source-ellipsoid identity but does not enter
+     * EPSG method 1024 coordinate equations. Linear offsets use the same unit
+     * as the ellipsoid semi-major axis.
+     *
+     * Params:
+     *     ellipsoid = Valid ellipsoid supplying the positive finite semi-major axis.
+     *     longitudeOfNaturalOrigin = Natural-origin longitude.
+     *     falseEasting = Finite false easting in the ellipsoid linear unit.
+     *     falseNorthing = Finite false northing in the ellipsoid linear unit.
+     *     result = Receives the prepared operation on success.
+     *
+     * Returns:
+     *     `true` when all parameters and derived represented bounds are valid;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -1312,7 +1324,22 @@ public:
     }
 
 
-    /** Prepare a Pseudo-Mercator operation or throw on invalid parameters. */
+        /**
+     * Prepare a bounded Pseudo-Mercator operation.
+     *
+     * Params:
+     *     ellipsoid = Valid ellipsoid supplying the positive finite semi-major axis.
+     *     longitudeOfNaturalOrigin = Natural-origin longitude.
+     *     falseEasting = Finite false easting in the ellipsoid linear unit.
+     *     falseNorthing = Finite false northing in the ellipsoid linear unit.
+     *
+     * Returns:
+     *     The prepared operation.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the parameters or represented bounds
+     *     cannot form a valid supported operation.
+     */
     static PseudoMercator fromParameters(
         const Ellipsoid!T ellipsoid,
         const Longitude!T longitudeOfNaturalOrigin,
@@ -1369,7 +1396,22 @@ public:
     }
 
 
-    /** Project a geographic coordinate on the bounded Pseudo-Mercator sheet. */
+        /**
+     * Project a geographic coordinate on the bounded Pseudo-Mercator sheet.
+     *
+     * Latitude must lie in the supported closed interval [-88,+88] degrees.
+     * Longitude is interpreted on the principal wrapped sheet relative to the
+     * configured natural origin. Output uses the ellipsoid linear unit.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *     result = Receives projected easting and northing on success.
+     *
+     * Returns:
+     *     `true` when this operation is valid, the source is in the supported
+     *     domain, and the projected result is finite and representable;
+     *     otherwise `false`. On failure `result` remains unchanged.
+     */
     bool tryForward(
         const GeographicCoordinate!T source,
         out ProjectedCoordinate!T result) const
@@ -1453,7 +1495,20 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for \`tryForward\`. */
+        /**
+     * Project a geographic coordinate on the bounded Pseudo-Mercator sheet.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *
+     * Returns:
+     *     Projected easting and northing in the ellipsoid linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the prepared operation is invalid,
+     *     the source lies outside the supported domain, or no finite
+     *     representable result can be produced.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1473,7 +1528,21 @@ public:
     }
 
 
-    /** Reverse a projected coordinate from the bounded represented sheet. */
+        /**
+     * Reverse a projected coordinate from the bounded represented sheet.
+     *
+     * The represented sheet is the one produced by the corresponding forward
+     * operation, including its latitude and wrapped-longitude boundaries.
+     *
+     * Params:
+     *     source = Projected easting and northing in the ellipsoid linear unit.
+     *     result = Receives the geographic coordinate on success.
+     *
+     * Returns:
+     *     `true` when this operation is valid and `source` belongs to the
+     *     supported represented sheet with a finite representable inverse;
+     *     otherwise `false`. On failure `result` remains unchanged.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1758,7 +1827,20 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for \`tryReverse\`. */
+        /**
+     * Reverse a projected coordinate from the bounded represented sheet.
+     *
+     * Params:
+     *     source = Projected easting and northing in the ellipsoid linear unit.
+     *
+     * Returns:
+     *     The corresponding geographic coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the prepared operation is invalid,
+     *     the coordinate is outside the represented sheet, or no finite
+     *     representable inverse can be produced.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
