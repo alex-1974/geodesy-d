@@ -78,17 +78,6 @@ if (isGeodesyScalar!T)
  * Valid zones are exactly 1 through 60; `.init` is intentionally invalid.
  * The zone central meridian is available in integral degrees.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const zone33 = UtmZone.fromNumber(33);
- * assert(zone33.isValid);
- * assert(zone33.centralMeridianDegrees == 15);
- *
- * UtmZone checked;
- * assert(!UtmZone.tryFromNumber(61, checked));
- * ---
  */
 struct UtmZone
 {
@@ -178,6 +167,20 @@ public:
     }
 }
 
+/// Example using struct UtmZone.
+@safe unittest
+{
+    import geodesy;
+    
+    const zone33 = UtmZone.fromNumber(33);
+    assert(zone33.isValid);
+    assert(zone33.centralMeridianDegrees == 15);
+    
+    UtmZone checked;
+    assert(!UtmZone.tryFromNumber(61, checked));
+}
+
+
 
 /**
  * Projected UTM coordinate carrying zone and north/south false-northing
@@ -187,20 +190,6 @@ public:
  * identifier, EPSG code, MGRS latitude band, height, or axis metadata.
  * `.init` is invalid because its zone is invalid.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const coordinate = UtmCoordinate!double.fromComponents(
- *     UtmZone.fromNumber(33),
- *     UtmHemisphere.north,
- *     500_000.0,
- *     5_340_000.0);
- *
- * assert(coordinate.isValid);
- * assert(coordinate.zone.number == 33);
- * assert(coordinate.easting == 500_000.0);
- * ---
  */
 struct UtmCoordinate(T)
 if (isGeodesyScalar!T)
@@ -334,6 +323,23 @@ public:
     }
 }
 
+/// Example using struct UtmCoordinate(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const coordinate = UtmCoordinate!double.fromComponents(
+        UtmZone.fromNumber(33),
+        UtmHemisphere.north,
+        500_000.0,
+        5_340_000.0);
+    
+    assert(coordinate.isValid);
+    assert(coordinate.zone.number == 33);
+    assert(coordinate.easting == 500_000.0);
+}
+
+
 
 /*
  * Return the ordinary six-degree UTM zone for a longitude already normalized
@@ -396,20 +402,6 @@ if (isGeodesyScalar!T)
  *     `true` inside the standard automatic UTM latitude domain; `false`
  *     outside it.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * UtmZone zone;
- * UtmHemisphere hemisphere;
- * assert(tryStandardUtmZone(vienna, zone, hemisphere));
- * assert(zone.number == 33);
- * assert(hemisphere == UtmHemisphere.north);
- * ---
  */
 bool tryStandardUtmZone(T)(
     const GeographicCoordinate!T source,
@@ -490,6 +482,23 @@ if (isGeodesyScalar!T)
     return true;
 }
 
+/// Example using bool tryStandardUtmZone(T)( const GeographicCoordinate!T source, out UtmZone zone, out UtmHemisphere hemisph.
+@safe unittest
+{
+    import geodesy;
+    
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    
+    UtmZone zone;
+    UtmHemisphere hemisphere;
+    assert(tryStandardUtmZone(vienna, zone, hemisphere));
+    assert(zone.number == 33);
+    assert(hemisphere == UtmHemisphere.north);
+}
+
+
 
 
 private T utmScaleFactor(T)()
@@ -549,23 +558,6 @@ if (isGeodesyScalar!T)
  * does not recompute zone or hemisphere from each source point. Reuse this
  * prepared type for bulk work in a known zone.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const projection = UtmProjection!double.fromZone(
- *     wgs84!double(),
- *     UtmZone.fromNumber(33),
- *     UtmHemisphere.north);
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * const xy = projection.forward(vienna);
- * const back = projection.reverse(xy);
- * assert(back.latitude.degrees > 48.0);
- * ---
  */
 struct UtmProjection(T)
 if (isGeodesyScalar!T)
@@ -990,6 +982,26 @@ public:
     }
 }
 
+/// Example using struct UtmProjection(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const projection = UtmProjection!double.fromZone(
+        wgs84!double(),
+        UtmZone.fromNumber(33),
+        UtmHemisphere.north);
+    
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    
+    const xy = projection.forward(vienna);
+    const back = projection.reverse(xy);
+    assert(back.latitude.degrees > 48.0);
+}
+
+
 
 /**
  * Project a geographic coordinate using standard automatic UTM zone and
@@ -1008,21 +1020,6 @@ public:
  * Returns:
  *     `true` when automatic policy selection and projection succeed.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * const utm = vienna.forwardUtm(wgs84!double());
- * assert(utm.zone.number == 33);
- * assert(utm.hemisphere == UtmHemisphere.north);
- *
- * const back = utm.reverseUtm(wgs84!double());
- * assert(back.latitude.degrees > 48.0);
- * ---
  */
 bool tryForwardUtm(T)(
     const GeographicCoordinate!T source,
@@ -1069,6 +1066,24 @@ if (isGeodesyScalar!T)
     result = candidate;
     return true;
 }
+
+/// Example using bool tryForwardUtm(T)( const GeographicCoordinate!T source, const Ellipsoid!T ellipsoid, out UtmCoordinate!T.
+@safe unittest
+{
+    import geodesy;
+    
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    
+    const utm = vienna.forwardUtm(wgs84!double());
+    assert(utm.zone.number == 33);
+    assert(utm.hemisphere == UtmHemisphere.north);
+    
+    const back = utm.reverseUtm(wgs84!double());
+    assert(back.latitude.degrees > 48.0);
+}
+
 
 
 /**
