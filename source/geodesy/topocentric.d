@@ -1,5 +1,38 @@
 /**
- * Local topocentric East/North/Up coordinate types and operations.
+ * Prepared local East/North/Up coordinates and EPSG topocentric conversions.
+ *
+ * TopocentricFrame binds an ellipsoid and origin to a reusable right-handed
+ * local ENU orientation. It supports both geocentric and geodetic entry points
+ * while preserving the distinct pole/origin semantics required by those forms.
+ * General Euclidean geometry after conversion to the local frame remains
+ * outside this module.
+ *
+ * Standards:
+ *     EPSG method 9836 -- Geocentric/topocentric conversions.
+ *     EPSG method 9837 -- Geographic/topocentric conversions.
+ *     EPSG method 9602 is used by the defined 9836/9837 decomposition.
+ *
+ * Units:
+ *     East, north, up, geocentric coordinates, geodetic height, and ellipsoid
+ *     axes use the same caller-selected linear unit.
+ *
+ * Numerics:
+ *     The frame caches its working-precision origin and orientation. Public
+ *     float geodetic/topocentric paths retain double working precision across
+ *     the internal 9602/9836 composition so Earth-scale binary32 intermediates
+ *     do not unnecessarily destroy local differences.
+ *
+ * Performance:
+ *     Origin conversion and trigonometric orientation are prepared once for
+ *     repeated point conversion. Checked operations are allocation-free.
+ *
+ * Validation:
+ *     Dedicated validation covers EPSG semantics, pole/origin cases, scalar
+ *     behaviour, portable properties, and compiler/platform matrices.
+ *
+ * See_Also:
+ *     `TopocentricCoordinate`, `TopocentricFrame`,
+ *     `GeodeticCoordinate`, `GeocentricCoordinate`
  *
  * Authors:
  *     Alexander Bernardi

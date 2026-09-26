@@ -1,5 +1,28 @@
 /**
- * Local factors of conformal map projections.
+ * Local meridian-convergence and point-scale results for conformal projections.
+ *
+ * The module gives projection factors their own strong result type instead of
+ * returning unrelated raw scalars. The current public producers are prepared
+ * Transverse Mercator and UTM operations; the type deliberately does not claim
+ * to model the more general distortion quantities required by non-conformal
+ * projections.
+ *
+ * Units:
+ *     Meridian convergence is an `Angle`; point scale is dimensionless.
+ *
+ * Numerics:
+ *     Reverse factors are evaluated at the accepted post-policy
+ *     working-precision geographic point rather than after unnecessary public
+ *     scalar rounding. Exact geographic poles use the documented canonical
+ *     convergence convention.
+ *
+ * Validation:
+ *     Factor semantics were independently checked against GeographicLib,
+ *     analytic spherical references, binary32 projected-input cases, boundary
+ *     policy tests, and DMD/LDC agreement before promotion to the public API.
+ *
+ * See_Also:
+ *     `TransverseMercator`, `UtmProjection`
  *
  * Authors:
  *     Alexander Bernardi

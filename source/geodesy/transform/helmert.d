@@ -1,9 +1,37 @@
 /**
- * Static 7-parameter Helmert transformations in the geocentric domain.
- * 
- * The public type model makes the EPSG rotation convention a compile-time
- * property. EPSG 1033 Position Vector and EPSG 1032 Coordinate Frame
- * share the same parameter model while retaining distinct conventions.
+ * Static 7-parameter EPSG Helmert transformations in geocentric coordinates.
+ *
+ * The rotation convention is encoded in the public type so Position Vector and
+ * Coordinate Frame parameters cannot be silently mixed. Both conventions share
+ * one parameter model while remaining distinct D types, and explicit
+ * conversion between conventions negates only the rotation parameters.
+ *
+ * Standards:
+ *     EPSG method 1033 -- Position Vector transformation (geocentric domain).
+ *     EPSG method 1032 -- Coordinate Frame rotation (geocentric domain).
+ *
+ * Units:
+ *     Translations use the geocentric coordinate linear unit. Canonical
+ *     rotations are strong angles in radians; the EPSG interchange factory
+ *     accepts arc-seconds. Scale difference is dimensionless, with a
+ *     parts-per-million interchange form.
+ *
+ * Numerics:
+ *     Implements the EPSG small-angle linearized rotation equations rather
+ *     than silently substituting an exact finite-angle 3D rotation.
+ *
+ * Performance:
+ *     Prepared parameters transform coordinates with allocation-free
+ *     constant-space arithmetic.
+ *
+ * Validation:
+ *     Convention mapping and numerical results are covered by EPSG semantics,
+ *     internal tests, and PROJ differential comparisons for both 1032 and
+ *     1033.
+ *
+ * See_Also:
+ *     `PositionVectorHelmert`, `CoordinateFrameHelmert`,
+ *     `GeocentricTranslation`, `GeocentricCoordinate`
  *
  * Authors:
  *     Alexander Bernardi

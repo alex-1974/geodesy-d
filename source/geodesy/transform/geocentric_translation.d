@@ -1,5 +1,31 @@
 /**
- * EPSG method 1031: Geocentric translations in the geocentric domain.
+ * EPSG 1031 geocentric translations with explicit source-to-target semantics.
+ *
+ * The module models the three translation parameters as a strong immutable
+ * transformation value. Translation units remain explicit through their
+ * relationship to the geocentric coordinates, `.init` is the identity, and
+ * the exact inverse parameterization is available by sign reversal.
+ *
+ * Standards:
+ *     EPSG method 1031 -- Geocentric translations (geocentric domain).
+ *
+ * Units:
+ *     X/Y/Z translations use the same linear unit as source and target
+ *     geocentric coordinates.
+ *
+ * Numerics:
+ *     The transformation is direct component-wise translation; no approximate
+ *     rotation or iterative numerical method is involved.
+ *
+ * Performance:
+ *     Transformation is constant-space, allocation-free component arithmetic.
+ *
+ * Validation:
+ *     Validated with EPSG/IOGP semantics, internal contract tests, and PROJ
+ *     Helmert translation-only differential comparisons.
+ *
+ * See_Also:
+ *     `GeocentricCoordinate`, `Helmert7`
  *
  * Authors:
  *     Alexander Bernardi

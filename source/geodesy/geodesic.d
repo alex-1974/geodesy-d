@@ -1,17 +1,40 @@
 /**
- * Direct and inverse ellipsoidal geodesic mathematics.
- * 
- * The implementation contract is defined by ADR-0008.
- * 
- * The current implementation provides:
- * 
- * - prepared ellipsoid state;
- * - public angular canonicalization semantics;
- * - analytical spherical geodesic handling;
- * - the Karney series direct solution for supported oblate ellipsoids;
- * - robust Karney-style inverse dispatch and safeguarded iteration.
- * 
- * The public direct and inverse surface is aggregate-exported by `geodesy`.
+ * Robust direct and inverse ellipsoidal geodesics on a prepared ellipsoid.
+ *
+ * The module solves the classical surface-geodesic problems with a
+ * Karney-family auxiliary-sphere/series implementation rather than
+ * Vincenty-style inverse iteration. The design explicitly covers difficult
+ * configurations such as nearly antipodal points, poles, coincident points,
+ * very short paths, and longitude discontinuities within its documented
+ * ellipsoid domain.
+ *
+ * Domain:
+ *     Prepared solvers support `a > 0` and `0 <= f <= 0.01`, including
+ *     spheres. Positions are surface `GeographicCoordinate` values; no datum
+ *     or CRS identity is embedded.
+ *
+ * Units:
+ *     Returned distances use the same linear unit as the ellipsoid semi-major
+ *     axis. Azimuths use strong `Angle` values.
+ *
+ * Numerics:
+ *     The implementation follows Karney's geodesic formulation with
+ *     scalar-dependent working precision and series order. Public float
+ *     calculations use promoted double working precision.
+ *
+ * Performance:
+ *     `Geodesic` prepares reusable ellipsoid-dependent coefficients once for
+ *     repeated direct and inverse operations. Checked numerical operations are
+ *     allocation-free.
+ *
+ * Validation:
+ *     Accepted through analytical/special-case tests, deterministic corpora,
+ *     published/high-precision reference data, and differential comparison
+ *     with GeographicLib geodesic implementations and PROJ as appropriate.
+ *
+ * See_Also:
+ *     `Geodesic`, `GeodesicDirectResult`, `GeodesicInverseResult`,
+ *     `GeographicCoordinate`
  *
  * Authors:
  *     Alexander Bernardi

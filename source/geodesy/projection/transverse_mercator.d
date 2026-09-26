@@ -1,7 +1,45 @@
 /**
- * Bounded generic Transverse Mercator projection.
- * 
- * The public parameter semantics follow EPSG coordinate operation method 9807.
+ * Bounded generic Transverse Mercator with EPSG 9807 parameter semantics.
+ *
+ * TransverseMercator is a prepared projection object for repeated forward,
+ * reverse, and conformal-factor evaluation. It deliberately separates generic
+ * Transverse Mercator mathematics from UTM zoning policy and precomputes
+ * ellipsoid/series/origin state instead of rebuilding it for each point.
+ *
+ * Standards:
+ *     Public operation parameters and semantics follow EPSG method 9807 --
+ *     Transverse Mercator.
+ *
+ * Domain:
+ *     The public forward contract is bounded to non-polar points within
+ *     60 degrees of the central meridian, with documented representation-aware
+ *     reverse and boundary semantics. Supported ellipsoids satisfy the
+ *     operation-specific flattening domain.
+ *
+ * Units:
+ *     False easting, false northing, projected coordinates, and ellipsoid axes
+ *     use the same caller-selected linear unit. Scale is dimensionless.
+ *
+ * Numerics:
+ *     Uses a Krueger/Karney series formulation with precomputed coefficients,
+ *     stable transcendental forms, Clenshaw evaluation, and safeguarded reverse
+ *     iteration. Public float uses double working precision and order 6;
+ *     double/real use the documented order-8 policy.
+ *
+ * Performance:
+ *     Projection coefficients and origin-dependent terms are prepared once.
+ *     Repeated checked forward/reverse/factor operations are allocation-free.
+ *     Controlled release-mode benchmarks are retained in the repository.
+ *
+ * Validation:
+ *     Qualified over the bounded domain with exact/reference corpora,
+ *     GeographicLib exact/reference implementations, PROJ differential tests,
+ *     boundary/property tests, scalar-specific tests, and compiler/platform
+ *     matrices.
+ *
+ * See_Also:
+ *     `UtmProjection`, `ConformalProjectionFactors`,
+ *     `GeographicCoordinate`, `ProjectedCoordinate`
  *
  * Authors:
  *     Alexander Bernardi

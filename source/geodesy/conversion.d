@@ -1,5 +1,38 @@
 /**
- * Geographic/geocentric coordinate conversions (EPSG method 9602).
+ * Geographic/geocentric coordinate conversion with a robust inverse.
+ *
+ * The module implements the EPSG 9602 geographic/geocentric operation family.
+ * Forward conversion follows the ellipsoidal Cartesian equations; reverse
+ * conversion uses a hybrid kernel designed to retain ordinary terrestrial
+ * throughput while providing deterministic, numerically robust behaviour for
+ * difficult interior and near-evolute positions.
+ *
+ * Standards:
+ *     EPSG method 9602 -- Geographic/geocentric conversions.
+ *
+ * Units:
+ *     Ellipsoidal height, geocentric X/Y/Z, and ellipsoid axes use the same
+ *     caller-selected linear unit.
+ *
+ * Numerics:
+ *     The oblate reverse combines a Fukushima/Halley fast path with a
+ *     stabilized Vermeille/Karney-style fallback. Public float reverse
+ *     conversion uses double working precision. The exact geocentre is
+ *     rejected because it has no unique geodetic inverse.
+ *
+ * Performance:
+ *     Checked conversion paths are allocation-free. The hybrid reverse was
+ *     selected only after numerical acceptance and controlled release-mode
+ *     benchmarking against the previous implementation and external
+ *     references.
+ *
+ * Validation:
+ *     Validated with EPSG/IOGP reference data, deterministic difficult-domain
+ *     corpora, GeographicLib, and PROJ where its semantics provide a suitable
+ *     independent comparison.
+ *
+ * See_Also:
+ *     `GeodeticCoordinate`, `GeocentricCoordinate`, `Ellipsoid`
  *
  * Authors:
  *     Alexander Bernardi

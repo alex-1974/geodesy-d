@@ -1,6 +1,24 @@
 /**
  * Geocentric Cartesian coordinate value type.
  *
+ * This module represents finite Earth-centred Cartesian X/Y/Z values without
+ * attaching datum, CRS, ellipsoid, or unit metadata. Keeping the coordinate
+ * value independent from those identities allows the same strong type to be
+ * used by conversion and reference-frame operations while requiring their
+ * semantic context to remain explicit.
+ *
+ * Units:
+ *     X, Y, and Z share one caller-selected linear unit. When used with an
+ *     ellipsoid or transformation parameters, all participating linear values
+ *     must use compatible units.
+ *
+ * Performance:
+ *     Checked construction and value access require no allocation.
+ *
+ * See_Also:
+ *     `GeodeticCoordinate`, `TopocentricCoordinate`,
+ *     `GeocentricTranslation`, `Helmert7`
+ *
  * Authors:
  *     Alexander Bernardi
  *

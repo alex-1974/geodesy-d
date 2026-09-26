@@ -8,6 +8,30 @@ import sys
 from pathlib import Path
 
 REQUIRED_SECTIONS = ("Authors:", "Copyright:", "License:", "Date:")
+NAMED_SECTION = re.compile(r"(?m)^\s*\*?\s*[A-Za-z][A-Za-z_ ]*:\s*$")
+
+
+def ddoc_prose_before_sections(doc: str) -> list[str]:
+    """Return substantive unnamed Ddoc paragraphs before the first named section."""
+    match = NAMED_SECTION.search(doc)
+    prose = doc[: match.start()] if match else doc
+
+    lines: list[str] = []
+    for raw in prose.splitlines():
+        line = re.sub(r"^\s*\*?\s?", "", raw).strip()
+        if not line:
+            lines.append("")
+            continue
+        if line.startswith("---"):
+            continue
+        lines.append(line)
+
+    paragraphs = [
+        " ".join(part.split())
+        for part in re.split(r"\n\s*\n", "\n".join(lines))
+        if part.strip()
+    ]
+    return [part for part in paragraphs if part and not part.startswith("import ")]
 
 
 def main() -> int:
@@ -48,6 +72,22 @@ def main() -> int:
                 f"{path.relative_to(root)}: missing module Ddoc sections: {', '.join(missing)}"
             )
 
+        prose = ddoc_prose_before_sections(doc)
+        if not prose:
+            failures.append(
+                f"{path.relative_to(root)}: missing module Ddoc summary"
+            )
+        elif len(prose) < 2:
+            failures.append(
+                f"{path.relative_to(root)}: missing substantive module Ddoc description "
+                "after the summary"
+            )
+        elif len(prose[1]) < 80:
+            failures.append(
+                f"{path.relative_to(root)}: module Ddoc description is too short "
+                "to explain the module role"
+            )
+
     if failures:
         for failure in failures:
             print(f"error: {failure}", file=sys.stderr)
@@ -55,7 +95,7 @@ def main() -> int:
 
     print(
         f"PASS: public module Ddoc contract covers {len(sources)} modules "
-        f"({', '.join(REQUIRED_SECTIONS)})"
+        f"(summary + description; {', '.join(REQUIRED_SECTIONS)})"
     )
     return 0
 

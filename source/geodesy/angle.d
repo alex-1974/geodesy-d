@@ -1,6 +1,27 @@
 /**
  * Strong angular and geographic angular-coordinate value types.
  *
+ * This module separates unrestricted finite angles from latitude and longitude
+ * domains so callers cannot accidentally substitute raw scalars for geographic
+ * angular concepts. Values are stored canonically in radians while explicit
+ * factories support radians and degrees. Latitude and longitude own their
+ * public domain and canonicalization rules.
+ *
+ * Domain:
+ *     `Angle` accepts every finite represented angle. `Latitude` is bounded
+ *     to the geographic latitude interval. `Longitude` exposes the documented
+ *     geographic input interval and a unique normalized representation.
+ *
+ * Units:
+ *     Canonical storage is radians. Degree conversion is explicit at the API
+ *     boundary.
+ *
+ * Performance:
+ *     Value construction, conversion, and access require no allocation.
+ *
+ * See_Also:
+ *     `GeographicCoordinate`, `GeodeticCoordinate`
+ *
  * Authors:
  *     Alexander Bernardi
  *
