@@ -822,13 +822,17 @@ public:
         return result;
     }
 
-    /**
-     * Compute conformal projection factors for a geographic coordinate in this
-     * explicit UTM zone.
+        /**
+     * Evaluate conformal projection factors at a geographic source position.
      *
-     * Factor mathematics and the bounded longitude domain are delegated to the
-     * prepared Transverse Mercator projection. The automatic UTM latitude band
-     * is not imposed.
+     * Params:
+     *     source = Geographic position interpreted in this explicit UTM zone.
+     *     result = Receives meridian convergence and point scale on success.
+     *
+     * Returns:
+     *     `true` when this projection is valid and delegated TM factor
+     *     evaluation succeeds; otherwise `false`. On failure `result` is
+     *     reset to `ConformalProjectionFactors!T.init`.
      */
     bool tryForwardFactors(
         const GeographicCoordinate!T source,
@@ -843,7 +847,18 @@ public:
             result);
     }
 
-    /** Throwing convenience wrapper for `tryForwardFactors`. */
+        /**
+     * Evaluate conformal projection factors at a geographic source position.
+     *
+     * Params:
+     *     source = Geographic position interpreted in this explicit UTM zone.
+     *
+     * Returns:
+     *     Meridian convergence and point scale.
+     *
+     * Throws:
+     *     `GeodesyValueException` when factor evaluation is unsupported.
+     */
     ConformalProjectionFactors!T forwardFactors(
         const GeographicCoordinate!T source) const
         @safe
@@ -861,12 +876,20 @@ public:
         return result;
     }
 
-    /**
-     * Reverse a coordinate in this explicit UTM zone.
+        /**
+     * Reverse a coordinate in this explicit UTM zone without throwing.
      *
-     * The standard automatic UTM latitude band is not imposed here. The
-     * explicit zone and hemisphere define a fixed Transverse Mercator
-     * projection, subject to the bounded generic projection domain.
+     * The automatic UTM latitude band, zone selection, and hemisphere
+     * selection are not reapplied.
+     *
+     * Params:
+     *     source = Projected easting and northing in metres.
+     *     result = Receives the geographic coordinate on success.
+     *
+     * Returns:
+     *     `true` when this projection is valid and delegated bounded TM
+     *     reverse succeeds; otherwise `false`. On failure `result` remains
+     *     unchanged.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
@@ -912,13 +935,17 @@ public:
         return result;
     }
 
-    /**
-     * Compute conformal projection factors for a represented coordinate in
-     * this explicit UTM zone.
+        /**
+     * Evaluate conformal factors at a represented projected coordinate.
      *
-     * Reverse acceptance, representation-aware boundary handling, pole
-     * convention, and factor mathematics are delegated to the prepared
-     * Transverse Mercator projection.
+     * Params:
+     *     source = Projected easting and northing in metres.
+     *     result = Receives meridian convergence and point scale on success.
+     *
+     * Returns:
+     *     `true` when this projection is valid and delegated reverse-factor
+     *     evaluation succeeds; otherwise `false`. On failure `result` is
+     *     reset to `ConformalProjectionFactors!T.init`.
      */
     bool tryReverseFactors(
         const ProjectedCoordinate!T source,
@@ -933,7 +960,18 @@ public:
             result);
     }
 
-    /** Throwing convenience wrapper for `tryReverseFactors`. */
+        /**
+     * Evaluate conformal factors at a represented projected coordinate.
+     *
+     * Params:
+     *     source = Projected easting and northing in metres.
+     *
+     * Returns:
+     *     Meridian convergence and point scale.
+     *
+     * Throws:
+     *     `GeodesyValueException` when reverse factor evaluation is unsupported.
+     */
     ConformalProjectionFactors!T reverseFactors(
         const ProjectedCoordinate!T source) const
         @safe
