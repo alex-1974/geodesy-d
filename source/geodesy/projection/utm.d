@@ -1,9 +1,21 @@
 /**
  * Universal Transverse Mercator policy, coordinate tagging, and projection.
- *
+ * 
  * Numerical projection is delegated to the accepted bounded
  * `TransverseMercator!T` implementation. This module owns UTM zone,
  * hemisphere, fixed-parameter, and standard automatic-zone policy.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
  */
 module geodesy.projection.utm;
 
@@ -63,7 +75,20 @@ if (isGeodesyScalar!T)
 /**
  * Strong UTM zone number.
  *
- * Valid zones are exactly 1 through 60. `.init` is intentionally invalid.
+ * Valid zones are exactly 1 through 60; `.init` is intentionally invalid.
+ * The zone central meridian is available in integral degrees.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const zone33 = UtmZone.fromNumber(33);
+ * assert(zone33.isValid);
+ * assert(zone33.centralMeridianDegrees == 15);
+ *
+ * UtmZone checked;
+ * assert(!UtmZone.tryFromNumber(61, checked));
+ * ---
  */
 struct UtmZone
 {
@@ -134,13 +159,27 @@ public:
 
 
 /**
- * Projected UTM coordinate carrying the zone and false-northing convention
- * required for unambiguous reverse projection.
+ * Projected UTM coordinate carrying zone and north/south false-northing
+ * convention for unambiguous reverse projection.
  *
- * Easting and northing are in metres.
+ * Easting and northing are always metres. The value carries no datum, CRS
+ * identifier, EPSG code, MGRS latitude band, height, or axis metadata.
+ * `.init` is invalid because its zone is invalid.
  *
- * This value carries no datum, CRS identifier, EPSG code, MGRS latitude band,
- * height, or axis metadata.
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const coordinate = UtmCoordinate!double.fromComponents(
+ *     UtmZone.fromNumber(33),
+ *     UtmHemisphere.north,
+ *     500_000.0,
+ *     5_340_000.0);
+ *
+ * assert(coordinate.isValid);
+ * assert(coordinate.zone.number == 33);
+ * assert(coordinate.easting == 500_000.0);
+ * ---
  */
 struct UtmCoordinate(T)
 if (isGeodesyScalar!T)
@@ -294,16 +333,34 @@ if (isGeodesyScalar!T)
 /**
  * Select the standard UTM zone and hemisphere for a geographic coordinate.
  *
- * The accepted automatic UTM latitude region is:
- *
- *     -80 degrees <= latitude < 84 degrees
- *
- * Longitude is canonicalized from -180 degrees inclusive to +180 degrees exclusive before zone
- * selection. Norway and Svalbard exceptions are applied.
- *
+ * The automatic latitude domain is -80 degrees inclusive to +84 degrees
+ * exclusive. Longitude is canonicalized to the principal half-open interval
+ * before zone selection. Norway and Svalbard exceptions are applied.
  * Latitude zero uses the northern false-northing convention.
  *
- * Returns false outside the standard UTM latitude region.
+ * Params:
+ *     source = Geographic coordinate used for automatic policy selection.
+ *     zone = Receives the selected UTM zone.
+ *     hemisphere = Receives the north/south false-northing convention.
+ *
+ * Returns:
+ *     `true` inside the standard automatic UTM latitude domain; `false`
+ *     outside it.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const vienna = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * UtmZone zone;
+ * UtmHemisphere hemisphere;
+ * assert(tryStandardUtmZone(vienna, zone, hemisphere));
+ * assert(zone.number == 33);
+ * assert(hemisphere == UtmHemisphere.north);
+ * ---
  */
 bool tryStandardUtmZone(T)(
     const GeographicCoordinate!T source,
@@ -434,16 +491,32 @@ if (isGeodesyScalar!T)
  * Prepared Universal Transverse Mercator projection for one explicit zone and
  * north/south false-northing convention.
  *
- * UTM projection mathematics is delegated entirely to
- * `TransverseMercator!T`. This type adds only the fixed UTM parameters,
- * terrestrial-metre ellipsoid policy, zone, and hemisphere.
+ * Mathematics is delegated to `TransverseMercator!T`; this wrapper adds the
+ * fixed UTM parameters, zone/hemisphere state, and terrestrial-metre
+ * ellipsoid policy. Accepted ellipsoids have numerically metre-valued
+ * semi-major axes in [6,000,000,7,000,000] and `0 < f <= 0.01`.
  *
- * The selected zone does not need to be the automatic standard zone for a
- * geographic point. Explicit neighboring-zone use is therefore supported
- * whenever the bounded Transverse Mercator longitude domain accepts it.
+ * Explicit-zone use does not reapply the automatic -80/+84 latitude band and
+ * does not recompute zone or hemisphere from each source point. Reuse this
+ * prepared type for bulk work in a known zone.
  *
- * The selected hemisphere is likewise an explicit false-northing convention;
- * it is not required to match the sign of a source latitude.
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const projection = UtmProjection!double.fromZone(
+ *     wgs84!double(),
+ *     UtmZone.fromNumber(33),
+ *     UtmHemisphere.north);
+ *
+ * const vienna = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * const xy = projection.forward(vienna);
+ * const back = projection.reverse(xy);
+ * assert(back.latitude.degrees > 48.0);
+ * ---
  */
 struct UtmProjection(T)
 if (isGeodesyScalar!T)
@@ -775,12 +848,37 @@ public:
 
 
 /**
- * Project a geographic coordinate using the standard automatic UTM zone and
+ * Project a geographic coordinate using standard automatic UTM zone and
  * hemisphere policy.
  *
- * This convenience operation prepares the selected zone for this call. Bulk
- * callers processing points in a known zone should reuse `UtmProjection!T`
- * instead.
+ * The accepted automatic latitude domain is -80 degrees inclusive to +84
+ * degrees exclusive. Zone selection applies the Norway and Svalbard
+ * exceptions. This convenience operation prepares the selected zone per call;
+ * bulk callers in a known zone should reuse `UtmProjection!T`.
+ *
+ * Params:
+ *     source = Geographic source coordinate.
+ *     ellipsoid = Supported terrestrial oblate ellipsoid in metres.
+ *     result = Receives tagged UTM zone, hemisphere, easting, and northing.
+ *
+ * Returns:
+ *     `true` when automatic policy selection and projection succeed.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const vienna = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * const utm = vienna.forwardUtm(wgs84!double());
+ * assert(utm.zone.number == 33);
+ * assert(utm.hemisphere == UtmHemisphere.north);
+ *
+ * const back = utm.reverseUtm(wgs84!double());
+ * assert(back.latitude.degrees > 48.0);
+ * ---
  */
 bool tryForwardUtm(T)(
     const GeographicCoordinate!T source,
