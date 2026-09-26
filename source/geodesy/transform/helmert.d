@@ -1,9 +1,21 @@
 /**
  * Static 7-parameter Helmert transformations in the geocentric domain.
- *
+ * 
  * The public type model makes the EPSG rotation convention a compile-time
  * property. EPSG 1033 Position Vector and EPSG 1032 Coordinate Frame
  * share the same parameter model while retaining distinct conventions.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
  */
 module geodesy.transform.helmert;
 
@@ -27,15 +39,40 @@ enum HelmertConvention
 
 
 /**
- * Seven source-to-target Helmert parameters.
+ * Seven source-to-target Helmert parameters with rotation convention encoded
+ * in the type.
  *
- * Canonical storage:
- *
- * - translations: same linear unit as geocentric X/Y/Z;
- * - rotations: radians through `Angle!T`;
- * - scale difference: dimensionless fraction, so scale factor M = 1 + dS.
- *
+ * Canonical storage uses the geocentric coordinate linear unit for
+ * translations, radians through `Angle!T` for rotations, and a dimensionless
+ * scale difference `dS`, with multiplication factor `M = 1 + dS`.
  * `.init` is the identity transformation.
+ *
+ * `fromArcSecondsAndPpm` accepts the common EPSG interchange representation:
+ * rotations in arc-seconds and scale difference in parts per million. EPSG
+ * 1033 Position Vector and EPSG 1032 Coordinate Frame use opposite signs for
+ * equivalent rotations; use `toCoordinateFrame` or `toPositionVector` to
+ * convert the parameter representation without changing the represented
+ * source-to-target transformation.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const source = GeocentricCoordinate!double.fromComponents(
+ *     3_657_660.66, 255_768.55, 5_201_382.11);
+ *
+ * const positionVector = PositionVectorHelmert!double
+ *     .fromArcSecondsAndPpm(
+ *         0.0, 0.0, 4.5,
+ *         0.0, 0.0, 0.554,
+ *         0.219);
+ *
+ * const target = source.applyPositionVectorHelmert(positionVector);
+ * const coordinateFrame = positionVector.toCoordinateFrame;
+ * const sameTarget = source.applyCoordinateFrameHelmert(coordinateFrame);
+ *
+ * assert(target == sameTarget);
+ * ---
  */
 struct Helmert7(T, HelmertConvention convention)
 if (isGeodesyScalar!T)
