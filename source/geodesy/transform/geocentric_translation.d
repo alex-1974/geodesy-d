@@ -1,4 +1,18 @@
-/** EPSG method 1031: Geocentric translations (geocentric domain). */
+/**
+ * EPSG method 1031: Geocentric translations in the geocentric domain.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.transform.geocentric_translation;
 
 import geodesy.errors : GeodesyValueException;
@@ -8,12 +22,32 @@ import geodesy.scalar : isFiniteGeodesyScalar, isGeodesyScalar;
 
 /**
  * Translation parameters from a source geocentric frame to a target
- * geocentric frame.
+ * geocentric frame using EPSG method 1031.
  *
- * All three values use the same linear unit as the source and target
- * geocentric coordinates.
+ * All three translations use the same linear unit as source and target
+ * geocentric coordinates. The represented direction is source to target:
+ * target components equal source components plus the corresponding
+ * translation. `.init` is therefore the identity transformation.
  *
- * `.init` is the identity transformation.
+ * `inverse` returns the exact inverse parameterization by negating all three
+ * translations. Construction rejects non-finite parameters.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const shift = GeocentricTranslation!double.fromComponents(
+ *     84.87, 96.49, 116.95);
+ *
+ * const source = GeocentricCoordinate!double.fromComponents(
+ *     3_771_793.97, 140_253.34, 5_124_304.35);
+ *
+ * const target = source.applyGeocentricTranslation(shift);
+ * const recovered = target.applyGeocentricTranslation(shift.inverse);
+ *
+ * assert(target.x > source.x);
+ * assert(recovered == source);
+ * ---
  */
 struct GeocentricTranslation(T)
 if (isGeodesyScalar!T)
