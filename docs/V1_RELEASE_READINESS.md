@@ -1,6 +1,6 @@
 # geodesy-d v1.0 release readiness
 
-Status: **PRE-TAG READY**
+Status: **RELEASED — POST-PUBLISH VERIFICATION COMPLETE**
 
 This document defines the release-readiness gate after the completed v1
 feature freeze and public-API freeze. It is separate from API design:
@@ -30,9 +30,9 @@ No tag or release is authorized merely by completing an individual item below.
   observed 0.2.0 fetch was about 2 MiB. This is packaging overhead, not a
   correctness or API blocker, and does not justify an unproven manifest
   filtering mechanism immediately before v1.
-- [ ] verify a fresh consumer against the actual published `v1.0.0` registry
-  package after publication; this is a post-publish verification item and does
-  not precede creation of the tag/package.
+- [x] verify a fresh consumer against the actual published `v1.0.0` registry
+  package after publication. DUB resolved and fetched `geodesy-d 1.0.0` from
+  the registry; DMD and LDC both built, linked, and ran the external consumer.
 
 ## R3 — release-facing documentation
 
@@ -188,8 +188,13 @@ Release readiness additionally requires:
 
 The pre-publish R7 consumer gate is complete. DUB identifies the untagged
 candidate as `0.2.0+commit.124.gfba5cad`, as expected before a v1 tag exists.
-A fresh consumer against the actual `v1.0.0` registry package remains a
-post-publish verification item and cannot be completed before publication.
+Post-publish verification is complete against the actual registry package
+`geodesy-d 1.0.0`. A fresh external consumer first passed aggregate-import
+build/link/run with both DMD and LDC, then passed a representative public-API
+round trip using `wgs84!double()`, `GeographicCoordinate`, `forwardUtm`, and
+`reverseUtm` with both compilers. The only diagnostics were deprecation
+warnings for `std.math.approxEqual` in the consumer test itself; they did not
+originate in `geodesy-d`.
 
 ## R8 — repository and release hygiene
 
@@ -214,18 +219,17 @@ Before tagging:
   passed the public API contract, documentation/release metadata contract
   (24 Ddoc modules), DMD 2.111.0 unit tests (22 modules), LDC unit tests
   (22 modules), and LDC release build; final worktree CLEAN.
-- [ ] tag `v1.0.0` only after all mandatory gates pass.
-- [ ] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
+- [x] annotated tag `v1.0.0` created after all mandatory gates passed.
+- [x] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
 
 ## Release decision
 
-Current decision: **PRE-TAG GATES COMPLETE; FINAL TAG ACTION NOT YET AUTHORIZED**.
+Current decision: **v1.0.0 RELEASED; POST-PUBLISH VERIFICATION COMPLETE**.
 
-The public API is frozen and all pre-tag technical, documentation, consumer,
-platform, numerical, repository-hygiene, API-contract, documentation-contract,
-unit-test, and release-build gates are complete. Release metadata records
-`v1.0.0` with release date 2026-09-26. The validated pre-tag code/documentation
-HEAD is `4f6c207ec6bd8be3d457a2fe82da1de41e252eac`; this readiness-only update
-does not alter production source or release metadata. Tagging/releasing
-`v1.0.0` remains a separate explicit action. Post-publish registry
-verification remains intentionally deferred until a v1.0.0 package exists.
+The frozen v1 public API and all release-readiness gates are complete. The
+annotated `v1.0.0` tag resolves to
+`ff891996b84586d20f8fdb7122f1877f51763270`; the GitHub release was
+published on 2026-09-26. DUB registry publication and a fresh external
+registry consumer have been verified with both DMD and LDC, including
+representative public UTM API execution. R1 through R8 are therefore closed
+for v1.0.0.
