@@ -54,17 +54,6 @@ if (isGeodesyScalar!T)
  *
  * No allocation is performed by checked construction or value access.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const quarterTurn = Angle!double.fromDegrees(90.0);
- * assert(quarterTurn.degrees == 90.0);
- *
- * Angle!double checked;
- * assert(Angle!double.tryFromRadians(0.5, checked));
- * assert(!Angle!double.tryFromRadians(double.nan, checked));
- * ---
  */
 struct Angle(T)
 if (isGeodesyScalar!T)
@@ -176,6 +165,21 @@ public:
     }
 }
 
+/// Example using an angle with checked and throwing construction.
+@safe unittest
+{
+    import geodesy;
+    
+    const quarterTurn = Angle!double.fromDegrees(90.0);
+    assert(quarterTurn.degrees == 90.0);
+    
+    Angle!double checked;
+    assert(Angle!double.tryFromRadians(0.5, checked));
+    assert(!Angle!double.tryFromRadians(double.nan, checked));
+    
+}
+
+
 /**
  * Geodetic latitude in the closed interval [-pi/2, +pi/2] radians.
  *
@@ -183,16 +187,6 @@ public:
  * Checked factories return `false` for non-finite or out-of-domain input;
  * throwing factories throw `GeodesyValueException` for the same inputs.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const vienna = Latitude!double.fromDegrees(48.20849);
- * assert(vienna.degrees > 48.0);
- *
- * Latitude!double checked;
- * assert(!Latitude!double.tryFromDegrees(90.0001, checked));
- * ---
  */
 struct Latitude(T)
 if (isGeodesyScalar!T)
@@ -308,6 +302,20 @@ public:
     }
 }
 
+/// Example constructing and validating a latitude.
+@safe unittest
+{
+    import geodesy;
+    
+    const vienna = Latitude!double.fromDegrees(48.20849);
+    assert(vienna.degrees > 48.0);
+    
+    Latitude!double checked;
+    assert(!Latitude!double.tryFromDegrees(90.0001, checked));
+    
+}
+
+
 /**
  * Geodetic longitude in the closed interval [-pi,+pi] radians.
  *
@@ -319,17 +327,6 @@ public:
  * Checked factories return `false` for non-finite or out-of-domain input;
  * throwing factories throw `GeodesyValueException` for the same inputs.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const eastAntimeridian = Longitude!double.fromDegrees(180.0);
- * assert(eastAntimeridian.degrees == 180.0);
- * assert(eastAntimeridian.normalized.degrees == -180.0);
- *
- * Longitude!double checked;
- * assert(!Longitude!double.tryFromDegrees(181.0, checked));
- * ---
  */
 struct Longitude(T)
 if (isGeodesyScalar!T)
@@ -454,6 +451,21 @@ public:
         return fromRadiansUnchecked(_radians);
     }
 }
+
+/// Example constructing and normalizing a longitude.
+@safe unittest
+{
+    import geodesy;
+    
+    const eastAntimeridian = Longitude!double.fromDegrees(180.0);
+    assert(eastAntimeridian.degrees == 180.0);
+    assert(eastAntimeridian.normalized.degrees == -180.0);
+    
+    Longitude!double checked;
+    assert(!Longitude!double.tryFromDegrees(181.0, checked));
+    
+}
+
 
 
 /**
