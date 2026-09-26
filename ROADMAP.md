@@ -8,287 +8,151 @@ workspace is available locally under `.workspace/ROADMAP.md`.
 
 ## Current state
 
-The released line is:
+`v1.0.0` was released on 2026-09-26 and is the stable compatibility baseline.
+Its public API is frozen by the completed v1 audit and release-readiness
+program. The annotated release tag is immutable; development on `main` is now
+post-v1 work.
 
-```text
-v0.2.0
-```
-
-The released baseline provides:
+The v1 baseline provides:
 
 - strong angular and geographic/geocentric coordinate types;
 - reference ellipsoids;
 - EPSG 9602 geographic/geocentric conversion;
 - EPSG 1031 geocentric translation;
 - EPSG 1032/1033 static Helmert transformations;
-- bounded generic Transverse Mercator implementation;
-- UTM policy and projection layer;
-- first public direct/inverse ellipsoidal geodesic slice.
+- bounded Transverse Mercator and UTM projection mathematics;
+- Transverse Mercator / UTM conformal projection factors;
+- bounded Pseudo-Mercator;
+- prepared topocentric ENU transformations;
+- validated direct/inverse ellipsoidal geodesics.
 
-The geodesic implementation is code-complete for its current first-slice API,
-and the technical acceptance program defined by ADR-0008 is complete. PR #10
-integrated the accepted slice into `main`; PR #11 subsequently synchronized
-the D language-practice documentation and public API compatibility contracts.
+The release is published through GitHub and the DUB registry. Fresh external
+registry consumers have built, linked, and executed `geodesy-d 1.0.0` with
+both DMD and LDC, including representative UTM forward/reverse API use.
 
-ADR-0008 is now:
+## Post-v1 development policy
 
-```text
-Status: Accepted
-```
+Post-v1 work follows four rules:
 
-The accepted scope is the validated first direct/inverse public slice. Deferred
-geodesic capabilities remain future work and require their own consumer or
-research justification.
+1. preserve the frozen v1 source and semantic contract throughout compatible
+   `1.x` development;
+2. prefer additive, consumer-justified capability over speculative breadth;
+3. require correctness, numerical, semantic, consumer, or measured performance
+   evidence before changing an accepted numerical core;
+4. keep CRS databases, operation discovery, general Euclidean geometry,
+   raster/image processing, and application policy outside `geodesy-d`.
 
-The first post-v0.2 P0 capability is also complete:
+Compatible additive API may ship in `1.x`. A change that breaks the frozen v1
+contract requires an explicit compatibility/versioning decision and normally
+belongs to a future `2.0`.
 
-```text
-topocentric ENU    ACCEPTED
-ADR-0009           Accepted
-TOPO-A .. TOPO-G   PASS
-```
+## Post-v1 milestones
 
-The bounded EPSG 9836/9837 topocentric surface is now integrated into `main`.
+### M1 — Post-v1 Baseline
 
-Transverse Mercator / UTM projection factors are accepted under ADR-0011.
-Pseudo-Mercator is accepted after completion of PM-A through PM-G5 and was integrated into `main` by PR #19.
+**Goal:** establish the clean development baseline after the v1.0.0 release.
 
-## Geodesic acceptance state
+Scope:
 
-The authoritative status is maintained in
-`docs/GEODESIC_VALIDATION_PLAN.md`.
+- record v1.0.0 as the stable released baseline across release-facing docs;
+- close post-publish registry and external-consumer verification;
+- make `main` explicitly the post-v1 development line;
+- retain the frozen v1 contract as the compatibility reference;
+- document the `1.x` compatibility/versioning policy;
+- remove or reconcile stale pre-v1 planning language without rewriting
+  historical acceptance evidence.
 
-Current state after GEO-G:
+Exit criterion:
 
-```text
-GEO-A  contract and analytical semantics             PASS
-GEO-B  authoritative reference vectors               PASS
-GEO-C  GeographicLib Exact differential validation   PASS
-GEO-D  PROJ interoperability                         PASS
-GEO-E  adversarial inverse/convergence                PASS
-GEO-F  API/runtime contract                           PASS
-GEO-G  platform/compiler/real-width coverage          PASS
-```
+> Repository status, release documentation, and development policy consistently
+> describe v1.0.0 as released and `main` as post-v1 development.
 
-The mathematical production core should not be changed merely to continue the
-validation program. A core change is justified only when new evidence exposes a
-correctness, numerical, semantic, API, or performance defect.
+### M2 — Gap & Consumer Audit
 
-## Post-v0.2 sequence
+**Goal:** determine what geodesy-d should add next from concrete library and
+consumer needs rather than feature enumeration.
 
-The `v0.2.0` baseline completes the first admitted projection/geodesic sequence:
-bounded Transverse Mercator, UTM policy, and the first validated direct/inverse
-ellipsoidal geodesic slice.
+Audit inputs:
 
-Work toward `v1.0.0` follows the workspace rule of depth before breadth and
-research before new abstractions.
+- existing deferred items and research in this repository;
+- real requirements from `geo-d`, `geo3-d`, `raster-d`, `imagery-d`,
+  `osm-d`, the planned editor, and future `proj-d` / `locationref-d`
+  boundaries;
+- gaps exposed by external use of the frozen v1 API;
+- numerical edge cases and performance evidence from the v1 validation suite.
 
-Current P0 state:
+Classify findings as:
 
-```text
-topocentric ENU                         ACCEPTED
-Transverse Mercator / UTM factors      ACCEPTED
-Pseudo-Mercator                         ACCEPTED — PM-A .. PM-G5 PASS
-```
+- additive public API candidate;
+- numerical/algorithmic improvement;
+- performance opportunity;
+- validation or platform-coverage improvement;
+- documentation/ergonomics improvement;
+- interoperability requirement;
+- explicitly out of scope.
 
-Continue in this order:
+Candidate capabilities already deferred from pre-v1 work include a minimal
+prepared `GeodesicLine` and geodesic perimeter/signed-area accumulation.
+They are candidates, not commitments: admission requires consumer or research
+justification and a bounded acceptance contract.
 
-1. research and qualify the remaining admitted P0 v1.0 capability slices
-   defined below;
-2. for each remaining P0 slice, define the mathematical method, public semantics,
-   supported domain, scalar policy, failure semantics, independent validation,
-   and API shape before implementation is accepted;
-3. evaluate the two P1 geodesic extensions only against concrete consumer
-   requirements;
-4. after the accepted pre-v1 capability work is complete, perform a full
-   public-API, documentation, compatibility, and release-readiness audit before
-   freezing the v1 surface;
-5. require any further optimization work to begin from fresh profiling or
-   concrete consumer evidence.
+Exit criterion:
 
-Existing accepted numerical cores must not be changed merely to expand scope.
-A production-core change still requires correctness, numerical, semantic, API,
-consumer, or measured performance evidence.
+> A prioritized, evidence-backed backlog identifies the bounded scope proposed
+> for v1.1 and records deferred/out-of-scope work separately.
 
-## v1.0 target scope
+### M3 — v1.1 Development
 
-The goal for `v1.0.0` is a small but practically useful stable library for
-bounded Earth- and ellipsoid-dependent mathematics. Feature count is not a
-maturity metric, but the stable baseline should cover the common coordinate,
-projection, and geodesic building blocks expected by real consumers.
+**Goal:** implement and validate the additive scope admitted by M2 while
+preserving the frozen v1 contract.
 
-The following three capability slices are admitted P0 work before the v1 API
-freeze.
+For each admitted numerical/API slice:
 
-### P0 — topocentric ENU — accepted
+1. define ownership and consumer need;
+2. define mathematical method and references;
+3. define public semantics, units, domains, scalar policy, failure semantics,
+   canonicalization, and compatibility constraints;
+4. implement the smallest useful bounded slice;
+5. validate against authoritative vectors and, where practical, an independent
+   implementation;
+6. add regression and adversarial cases;
+7. validate DMD and LDC plus material platform-dependent behaviour;
+8. benchmark only after correctness is established;
+9. document the public API and provide compiled examples;
+10. rerun the frozen-v1 compatibility contract before acceptance.
 
-This capability was accepted on 2026-09-20 under ADR-0009 after completion of
-TOPO-A through TOPO-G and is integrated into `main`.
+Exit criterion:
 
-The accepted implementation provides a prepared local topocentric
-East/North/Up frame with forward and reverse
-conversion between Earth-fixed/geodetic coordinates and local ENU
-coordinates.
+> The admitted v1.1 scope is complete, independently validated, documented,
+> source-compatible with v1.0.0, and release-ready.
 
-The intended ownership boundary is:
+## Performance and numerical work
 
-- `geodesy-d` owns construction and transformation of the Earth-dependent
-  topocentric frame;
-- local Euclidean geometry performed after conversion to ENU belongs to
-  `geo-d` or to the consumer;
-- `geodesy-d` must not acquire a dependency on `geo-d` merely to represent or
-  transform ENU coordinates.
+The v1.0.0 release establishes the semantic baseline for optimization. Future
+performance work must compare equivalent behaviour and preserve that baseline.
 
-The accepted contract fixes the relevant EPSG semantics, origin and
-orientation conventions, singular cases, scalar policy, and independent
-validation evidence. See ADR-0009 and
-`docs/TOPOCENTRIC_VALIDATION_PLAN.md`.
+Initial performance work should:
 
-### P0 — Transverse Mercator / UTM projection factors — accepted 2026-09-21
+- establish reproducible DMD 2.111 and LDC 1.41 baselines;
+- identify hot paths through profiling or concrete consumers;
+- compare equivalent work with checksums, warm-up, repeated balanced runs, and
+  reported median/spread;
+- introduce compiler/version-specific implementations only for reproducible
+  gains with identical semantics and a portable reference path.
 
-This capability is accepted under ADR-0011.
-
-The implemented additive API provides:
-
-- `ConformalProjectionFactors!T`;
-- meridian convergence as `Angle!T`;
-- dimensionless isotropic point scale;
-- checked and throwing forward-factor operations on `TransverseMercator!T`;
-- checked and throwing reverse-factor operations on `TransverseMercator!T`;
-- the same four operations on prepared `UtmProjection!T` objects by exact
-  delegation to their underlying bounded Transverse Mercator operation.
-
-The existing coordinate forward/reverse API remains unchanged.
-
-Reverse factors use the same post-policy represented geographic point as public
-reverse projection, including representation-aware +/-60-degree boundary
-handling and the canonical pole convention defined by ADR-0011.
-
-Automatic UTM zone-selection helpers do not gain separate factor operations.
-Broader non-conformal projection differentials and CRS-level factor discovery
-remain outside this accepted slice.
-
-### P0 — Pseudo-Mercator — accepted 2026-09-25
-
-Add a bounded forward/reverse Pseudo-Mercator mathematical kernel suitable for
-the projection used by common web maps.
-
-`geodesy-d` owns only the projection mathematics and its numerical/domain
-contract.
-
-It does not own:
-
-- EPSG authority lookup or CRS objects;
-- axis/unit metadata;
-- automatic operation discovery;
-- WKT or PROJJSON;
-- zoom levels;
-- XYZ/TMS tile addressing;
-- tile bounds, URLs, caches, or raster handling.
-
-Those remain responsibilities of `proj-d`, `imagery-d`, or higher-level
-consumers as appropriate.
-
-The public name is now accepted as `PseudoMercator`. PM-F rejects a
-`WebMercator` alias for the initial API; CRS and tile-policy naming remain
-outside this mathematical projection type.
-
-Pseudo-Mercator is accepted after completion of PM-A through PM-G5 and is integrated into `main` by PR #19.
-
-The accepted `PseudoMercator!T` surface provides prepared checked/throwing construction and forward/reverse operations for `float`, `double`, and platform `real`. The forward latitude domain is bounded to [-88 deg,+88 deg], longitude uses the accepted principal-sheet and represented-endpoint policy, and the source ellipsoid is retained while EPSG method 1024 coordinate equations use only its semi-major axis.
-
-PM-G5 completed release-build, full-repository regression, aggregate/external-consumer, research-leakage, platform-assumption, and documentation-consistency acceptance. The controlled six-compiler PM-G4 matrix and final baseline DMD/LDC checks passed with zero failed checks.
-
-The accepted slice deliberately excludes a `WebMercator` alias, CRS/EPSG lookup, projection-factor API, one-shot free helpers, and web-map tile/zoom/XYZ/TMS policy. These remain outside the bounded mathematical kernel.
-
-The authoritative acceptance evidence is retained under `research/pseudo-mercator/`.
-
-### P1 — consumer-confirmed geodesic extensions
-
-Two geodesic extensions are legitimate `geodesy-d` functionality but are not
-automatic v1 blockers:
-
-- a minimal prepared `GeodesicLine` for repeated distance-based positions on
-  one geodesic;
-- geodesic perimeter and signed-area accumulation for a sequence of geographic
-  points/edges.
-
-They should be included before `v1.0.0` only when a concrete consumer
-demonstrates that the capability is needed before the API freeze. Otherwise
-they remain suitable additive `1.x` work.
-
-A geodesic area accumulator owns ellipsoidal measurement only. It must not grow
-into a polygon topology model. Ring validity, holes, overlay, containment,
-intersection topology, and general polygon representation belong to `geo-d`
-or higher-level consumers.
-
-`GeodesicLine`, if admitted before v1, should initially remain the smallest
-consumer-justified distance-mode slice. Arc mode, longitude unrolling, reduced
-length, geodesic scales, and other advanced quantities are separate extensions.
-
-### v1.0 capability non-goals
-
-The following are not required merely to reach `v1.0.0`:
-
-- arc-mode geodesic direct operation;
-- longitude unrolling;
-- public reduced length;
-- `M12` / `M21` geodesic scales;
-- geodesic intersections;
-- geodesic nearest-point operations;
-- rhumb lines;
-- prolate ellipsoids;
-- UPS or additional projection families;
-- time-dependent / 14-parameter frame transformations.
-
-These may be valid future `geodesy-d` work, but each requires its own consumer
-or research justification and acceptance contract.
-
-The following remain outside the `geodesy-d` domain regardless of the release
-milestone:
-
-- general Euclidean geometry and polygon topology;
-- MGRS, Geohash, and Open Location Code;
-- CRS databases, WKT/PROJJSON, transformation grids, and operation discovery;
-- raster/image processing and web-map tile infrastructure;
-- OpenStreetMap data models and file formats.
-
-After the accepted pre-v1 capability slices are complete, the final v1 gate is
-API stability rather than further breadth: every public symbol, public
-parameter name where source compatibility matters, default-state semantic,
-error/failure contract, scalar policy, canonicalization rule, and supported
-domain must be consciously accepted as part of the stable v1 contract.
-
-## v0.2.0 numerical surfaces
-
-### EPSG 9602 reverse
-
-The reverse geographic/geocentric conversion uses the accepted hybrid
-Fukushima/Halley plus extended Vermeille/Karney strategy.
-
-Its numerical semantics, terrestrial accuracy envelope, and performance
-evidence are recorded in ADR-0005 and the validation documentation.
-
-### Transverse Mercator
-
-ADR-0006 is accepted.
-
-The implementation provides a bounded generic Transverse Mercator operation
-with explicit scalar, ellipsoid, domain, and accuracy contracts.
-
-### UTM
-
-ADR-0007 is accepted.
-
-UTM remains a policy layer over the generic Transverse Mercator implementation.
-It does not own MGRS, CRS discovery, or authority-database functionality.
+Numerical research should continue to stress the accepted domains, especially
+poles, the antimeridian, nearly antipodal geodesics, TM/UTM boundaries, and
+`float`/`double`/`real` behaviour. New evidence may justify implementation
+changes, but accepted cores are not rewritten merely for novelty.
 
 ## Deferred geodesic capabilities
 
-The accepted direct/inverse slice intentionally does not include the advanced
-geodesic capabilities listed below:
+The accepted direct/inverse slice intentionally leaves advanced capabilities
+for separately justified future work:
 
 ~~~text
+prepared GeodesicLine
+geodesic perimeter / signed-area accumulation
 arc-mode direct
 longitude unrolling
 public reduced length
@@ -299,16 +163,10 @@ rhumb lines
 prolate ellipsoids
 ~~~
 
-These are not missing requirements of the current acceptance program and are
-not v1.0 blockers.
-
-`GeodesicLine` and geodesic perimeter/signed-area accumulation are treated
-separately as P1 consumer-confirmed candidates in the v1.0 target scope above.
-They are not automatically admitted merely because GeographicLib or another
-reference implementation exposes analogous functionality.
-
-Any advanced geodesic extension must be separately specified and independently
-validated before acceptance.
+A geodesic area accumulator may own ellipsoidal measurement over an ordered
+sequence of geographic points or edges. Polygon topology, ring validity,
+holes, overlay, containment, and general polygon representation remain outside
+this library.
 
 ## Responsibility boundary
 
@@ -320,27 +178,6 @@ validated before acceptance.
 - explicitly selected map-projection mathematics and projection factors;
 - ellipsoidal geodesics and ellipsoidal measurement along geodesic paths.
 
-The boundary is mathematical rather than application-specific.
-
-For local topocentric work, `geodesy-d` owns Earth/ECEF/geodetic to ENU frame
-construction and transformation. Once coordinates are represented in a local
-Euclidean frame, general geometry operations belong to `geo-d` or the
-consumer.
-
-For geodesic area/perimeter work, `geodesy-d` may own ellipsoidal accumulation
-over an ordered sequence of geographic points or geodesic edges. It does not
-own polygon topology, ring validity, hole semantics, overlay, containment, or
-general polygon modelling.
-
-For projections, `geodesy-d` may own a bounded mathematical projection kernel,
-its inverse, and operation-specific factors. It does not own CRS identifiers,
-authority databases, CRS metadata, WKT/PROJJSON, grid-resource management, or
-automatic coordinate-operation discovery.
-
-Pseudo-Mercator projection mathematics may therefore belong here, while
-slippy-map zoom/tile addressing, tile storage, URLs, caches, and raster
-processing do not.
-
 The cross-library ownership remains:
 
 ~~~text
@@ -350,9 +187,6 @@ EPSG database / WKT / PROJJSON / grids / discovery -> future proj-d
 raster / image / tile-engine processing            -> imagery-d
 OpenStreetMap data and formats                     -> osm-d
 ~~~
-
-The numerical core has no requirement to depend on `geo-d`, `imagery-d`, or
-`osm-d`.
 
 Adapters are preferred over unnecessary cross-library coupling. A dependency
 on another workspace library is justified only when it reflects genuine
@@ -380,35 +214,30 @@ Broad `@fastmath` is not a library policy.
 
 ## Release policy
 
-`v0.2.0` remains the latest tagged compatibility baseline. The v1 public API
-has completed its explicit freeze audit and is now the release-candidate
-contract for `v1.0.0`; it is not yet a tagged release.
+`v1.0.0` is the stable compatibility baseline.
 
-The planned path to `v1.0.0` is deliberately bounded:
+For the `1.x` line:
 
-1. qualify and accept the remaining P0 capability slices;
-2. admit P1 capability only when concrete consumer evidence justifies it;
-3. reconcile release-facing documentation and permanent API contracts;
-4. perform an explicit v1 public-API freeze and readiness audit — API freeze complete;
-5. validate the complete frozen surface across the supported compiler and
-   platform matrix before tagging — release-readiness validation in progress.
+- additive API is permitted when it preserves the frozen v1 contract;
+- implementation, validation, documentation, and performance work may evolve
+  without weakening documented semantics;
+- public parameter names, overload shapes, default-state semantics,
+  error/failure contracts, scalar policy, canonicalization, and supported
+  domains remain compatibility-sensitive;
+- breaking changes require an explicit versioning decision and are not folded
+  casually into a minor release.
 
-Post-v0.2 functionality is not considered release-ready merely because its
-implementation exists. Each major numerical slice must satisfy its own
-documented acceptance contract.
-
-`v1.0.0` does not require every conceivable geodetic feature. No additional
-feature family is required merely to make the library larger.
+The next release target is not defined by feature count. M2 determines the
+evidence-backed v1.1 scope; M3 implements only the capabilities admitted there.
 
 ## Workspace context
 
 When this repository is developed inside `d-geospatial-workspace`, current
 shared architecture and research context is exposed locally under:
 
-```text
+~~~text
 .workspace/
-```
+~~~
 
 Those files are not part of the `geodesy-d` repository or DUB package.
-
 The repository-level roadmap remains specific to `geodesy-d`.
