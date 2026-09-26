@@ -95,7 +95,9 @@ def documented_unittest_count(source_root: Path) -> int:
     count = 0
     inline_example = re.compile(r"^[ \\t]*\\*[ \\t]+Example:[ \\t]*$", re.MULTILINE)
     documented_unittest = re.compile(
-        r"^[ \\t]*///[^\\n]*\\n[ \\t]*(?:@[A-Za-z_][^\\n]*[ \\t]+)?unittest\\b",
+        r"^[ \\t]*///[^\\n]*\\n"
+        r"(?:[ \\t]*@[A-Za-z_][A-Za-z0-9_]*(?:\\([^\\n]*\\))?[ \\t]+)*"
+        r"unittest\\b",
         re.MULTILINE,
     )
 
