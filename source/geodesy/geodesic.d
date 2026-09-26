@@ -797,11 +797,18 @@ public:
     }
 
 
-    /**
-     * Prepare a solver without throwing.
+        /**
+     * Prepare a reusable direct/inverse solver without throwing.
      *
-     * Returns false for an invalid ellipsoid or flattening outside the
-     * initial geodesic support profile.
+     * Params:
+     *     ellipsoid = Valid spherical or oblate ellipsoid with
+     *         0 <= f <= 0.01. Its semi-major axis defines the distance unit.
+     *     result = Receives the prepared solver on success.
+     *
+     * Returns:
+     *     `true` when the ellipsoid and all derived solver coefficients are
+     *     finite and supported; otherwise `false`. A failed attempt leaves
+     *     `result` as `Geodesic!T.init`, even when it was previously valid.
      */
     static bool tryFromEllipsoid(
         const Ellipsoid!T ellipsoid,
@@ -851,7 +858,19 @@ public:
     }
 
 
-    /** Prepare a solver or throw for an unsupported ellipsoid. */
+        /**
+     * Prepare a reusable direct/inverse solver.
+     *
+     * Params:
+     *     ellipsoid = Valid spherical or oblate ellipsoid with
+     *         0 <= f <= 0.01.
+     *
+     * Returns:
+     *     The prepared solver; distances use the ellipsoid semi-major-axis unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid or unsupported ellipsoid.
+     */
     static Geodesic fromEllipsoid(
         const Ellipsoid!T ellipsoid)
         @safe
@@ -866,44 +885,42 @@ public:
     }
 
 
-    /**
- * Solve the direct geodesic problem without throwing.
- *
- * Starting from `start`, follow `initialAzimuth` for signed `distance`.
- * Distance uses the ellipsoid linear unit. A negative distance travels
- * backward along the same oriented geodesic. Returned longitude and final
- * azimuth use the library's canonical angular representation.
- *
- * Params:
- *     start = Geographic start position.
- *     initialAzimuth = Initial forward azimuth; arbitrary finite angle values
- *         are canonicalized by the solver.
- *     distance = Finite signed distance in the ellipsoid linear unit.
- *     result = Receives endpoint and final forward azimuth.
- *
- * Returns:
- *     `true` when the prepared solver is valid and a finite representable
- *     result is produced; otherwise `false`.
- *
- * Example:
- * ---
- * import geodesy;
- *
- * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
- * const start = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * GeodesicDirectResult!double result;
- * assert(solver.tryDirect(
- *     start,
- *     Angle!double.fromDegrees(90.0),
- *     1_000.0,
- *     result));
- *
- * assert(result.position.longitude.degrees > 16.37208);
- * ---
- */
+        /**
+     * Solve the direct geodesic problem without throwing.
+     *
+     * Starting from `start`, follow `initialAzimuth` for signed `distance`.
+     * Negative distance follows the same oriented geodesic backward. Returned
+     * longitude and final forward azimuth use the canonical interval from -pi
+     * inclusive to +pi exclusive. At zero distance the supplied oriented line
+     * is retained rather than applying inverse coincidence semantics.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     initialAzimuth = Initial forward azimuth; finite arbitrary-turn
+     *         values are canonicalized by the solver.
+     *     distance = Finite signed distance in the ellipsoid linear unit.
+     *     result = Receives endpoint and final forward azimuth.
+     *
+     * Returns:
+     *     `true` when the prepared solver is valid and a finite representable
+     *     result is produced; otherwise `false`. Before validation,
+     *     `result` is reset to `GeodesicDirectResult!T.init`.
+     *
+     * Example:
+     * ---
+     * import geodesy;
+     *
+     * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+     * const start = GeographicCoordinate!double.fromComponents(
+     *     Latitude!double.fromDegrees(48.20849),
+     *     Longitude!double.fromDegrees(16.37208));
+     *
+     * GeodesicDirectResult!double result;
+     * assert(solver.tryDirect(
+     *     start, Angle!double.fromDegrees(90.0), 1_000.0, result));
+     * assert(result.position.longitude.degrees > 16.37208);
+     * ---
+     */
     bool tryDirect(
         const GeographicCoordinate!T start,
         const Angle!T initialAzimuth,
@@ -1082,7 +1099,21 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for `tryDirect`. */
+        /**
+     * Solve the direct geodesic problem with throwing failure semantics.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     initialAzimuth = Initial forward azimuth.
+     *     distance = Finite signed distance in the ellipsoid linear unit.
+     *
+     * Returns:
+     *     Endpoint and final forward azimuth using canonical public angles.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the solver is invalid or no finite
+     *     representable direct solution can be produced.
+     */
     GeodesicDirectResult!T direct(
         const GeographicCoordinate!T start,
         const Angle!T initialAzimuth,
@@ -1106,47 +1137,43 @@ public:
     }
 
 
-    /**
- * Solve the inverse geodesic problem without throwing.
- *
- * Returns the shortest geodesic between `start` and `end`, together with
- * the forward azimuth at each endpoint. The final azimuth is the heading of
- * the same oriented geodesic continuing beyond the endpoint; it is not the
- * back azimuth.
- *
- * Coincident endpoints return the unique canonical result (+0,+0,+0).
- * Distance uses the ellipsoid linear unit; azimuths are canonicalized from
- * -pi inclusive to +pi exclusive.
- *
- * Params:
- *     start = Geographic start position.
- *     end = Geographic endpoint.
- *     result = Receives distance, initial azimuth, and final azimuth.
- *
- * Returns:
- *     `true` when the prepared solver is valid and a finite representable
- *     shortest-geodesic solution is produced; otherwise `false`.
- *
- * Example:
- * ---
- * import geodesy;
- *
- * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * const newYork = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(40.7128),
- *     Longitude!double.fromDegrees(-74.0060));
- *
- * GeodesicInverseResult!double result;
- * assert(solver.tryInverse(vienna, newYork, result));
- * assert(result.distance > 6_000_000.0);
- * assert(result.distance < 7_000_000.0);
- * ---
- */
+        /**
+     * Solve the shortest inverse geodesic problem without throwing.
+     *
+     * The final azimuth is the forward heading of the same oriented geodesic
+     * continuing beyond the endpoint, not the back azimuth. Coincident
+     * endpoints return canonical positive-zero distance and azimuths.
+     * Distance uses the ellipsoid linear unit; azimuths use the canonical
+     * interval from -pi inclusive to +pi exclusive.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     end = Geographic endpoint.
+     *     result = Receives distance, initial azimuth, and final azimuth.
+     *
+     * Returns:
+     *     `true` when the prepared solver is valid and a finite representable
+     *     shortest-geodesic solution is produced; otherwise `false`. Before
+     *     validation, `result` is reset to `GeodesicInverseResult!T.init`.
+     *
+     * Example:
+     * ---
+     * import geodesy;
+     *
+     * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+     * const vienna = GeographicCoordinate!double.fromComponents(
+     *     Latitude!double.fromDegrees(48.20849),
+     *     Longitude!double.fromDegrees(16.37208));
+     * const newYork = GeographicCoordinate!double.fromComponents(
+     *     Latitude!double.fromDegrees(40.7128),
+     *     Longitude!double.fromDegrees(-74.0060));
+     *
+     * GeodesicInverseResult!double result;
+     * assert(solver.tryInverse(vienna, newYork, result));
+     * assert(result.distance > 6_000_000.0);
+     * assert(result.distance < 7_000_000.0);
+     * ---
+     */
     bool tryInverse(
         const GeographicCoordinate!T start,
         const GeographicCoordinate!T end,
@@ -1235,7 +1262,20 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for `tryInverse`. */
+        /**
+     * Solve the shortest inverse geodesic problem with throwing semantics.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     end = Geographic endpoint.
+     *
+     * Returns:
+     *     Distance plus initial and final forward azimuths.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the solver is invalid or no finite
+     *     representable inverse solution can be produced.
+     */
     GeodesicInverseResult!T inverse(
         const GeographicCoordinate!T start,
         const GeographicCoordinate!T end) const
