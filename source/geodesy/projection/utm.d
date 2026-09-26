@@ -298,7 +298,7 @@ if (isGeodesyScalar!T)
  *
  *     -80 degrees <= latitude < 84 degrees
  *
- * Longitude is canonicalized to [-180 degrees, +180 degrees) before zone
+ * Longitude is canonicalized from -180 degrees inclusive to +180 degrees exclusive before zone
  * selection. Norway and Svalbard exceptions are applied.
  *
  * Latitude zero uses the northern false-northing convention.
