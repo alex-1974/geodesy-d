@@ -118,8 +118,8 @@ for version in "${versions[@]}"; do
     cp -a "$archive_dir/." "$source_dir/"
     apply_docs_compatibility "$version" "$source_dir"
 
-    SOURCE_ROOT="$source_dir" TOOL_ROOT="$root" OUTPUT_ROOT="$version_output" \
-        bash "$root/tools/build-docs.sh"
+    SOURCE_ROOT="$source_dir" TOOL_ROOT="$root" VERIFY_CONTRACTS=0 \
+        OUTPUT_ROOT="$version_output" bash "$root/tools/build-docs.sh"
 
     mkdir -p "$version_site"
     cp -a "$version_output/build/ddox/site/." "$version_site/"
