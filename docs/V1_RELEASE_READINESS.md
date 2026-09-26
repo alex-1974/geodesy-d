@@ -20,9 +20,19 @@ No tag or release is authorized merely by completing an individual item below.
 - [x] package name: `geodesy-d`.
 - [x] MIT license declared.
 - [x] minimum D frontend: `>=2.111.0`.
-- [ ] audit DUB package contents for unintended research/validation/repository files. Repository inspection shows extensive `research/`, `validation/`, `tools/`, `docs/`, and CI content; the actual DUB package artifact still needs inspection rather than assuming repository presence equals publication.
-- [ ] verify a clean packaged/fetched consumer rather than only a path dependency.
+- [x] audit the actual DUB registry package contents using a fresh local-cache
+  fetch of `geodesy-d@0.2.0` with DUB 1.40.0.
 - [x] confirm release-facing package description and metadata.
+- [x] accept the current registry snapshot policy for v1: the fetched package
+  includes repository development material such as `research/`, `validation/`,
+  `benchmarks/`, `tools/`, and documentation, while `sourcePaths "source"`
+  keeps the consumer build surface restricted to production sources. The
+  observed 0.2.0 fetch was about 2 MiB. This is packaging overhead, not a
+  correctness or API blocker, and does not justify an unproven manifest
+  filtering mechanism immediately before v1.
+- [ ] verify a fresh consumer against the actual published `v1.0.0` registry
+  package after publication; this is a post-publish verification item and does
+  not precede creation of the tag/package.
 
 ## R3 — release-facing documentation
 
@@ -125,7 +135,7 @@ Before tagging:
 - [ ] version/release notes agree on `v1.0.0`.
 - [ ] final candidate commit SHA is recorded.
 - [ ] tag `v1.0.0` only after all mandatory gates pass.
-- [ ] verify the published DUB package from a fresh consumer after publication.
+- [ ] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
 
 ## Release decision
 
