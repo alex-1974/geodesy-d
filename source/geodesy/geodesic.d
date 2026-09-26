@@ -1433,7 +1433,10 @@ unittest
 {
     import std.exception : assertThrown;
 
-    const ellipsoid = wgs84!double();
+    const ellipsoid =
+        Ellipsoid!double.fromFlattening(
+            6_378_137.0,
+            1.0 / 298.257223563);
     const solver = Geodesic!double.fromEllipsoid(ellipsoid);
 
     const start =
