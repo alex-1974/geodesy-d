@@ -403,27 +403,6 @@ public:
  * the same oriented geodesic backward. Inverse operations return the shortest
  * geodesic and canonical coincident-point semantics.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * const newYork = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(40.7128),
- *     Longitude!double.fromDegrees(-74.0060));
- *
- * const inverse = solver.inverse(vienna, newYork);
- * const direct = solver.direct(
- *     vienna, inverse.initialAzimuth, inverse.distance);
- *
- * assert(inverse.distance > 0.0);
- * assert(direct.position.latitude.degrees < 41.0);
- * ---
  */
 struct Geodesic(T)
 if (isGeodesyScalar!T)
@@ -1296,6 +1275,30 @@ public:
         return result;
     }
 }
+
+/// Example using struct Geodesic(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+    
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    
+    const newYork = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(40.7128),
+        Longitude!double.fromDegrees(-74.0060));
+    
+    const inverse = solver.inverse(vienna, newYork);
+    const direct = solver.direct(
+        vienna, inverse.initialAzimuth, inverse.distance);
+    
+    assert(inverse.distance > 0.0);
+    assert(direct.position.latitude.degrees < 41.0);
+}
+
 
 
 unittest
