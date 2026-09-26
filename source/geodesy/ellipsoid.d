@@ -1,11 +1,56 @@
-/** Reference ellipsoid value type and derived parameters. */
+/**
+ * Reference ellipsoid value type and derived parameters.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.ellipsoid;
 
 import geodesy.errors : GeodesyValueException;
 import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 
-/** A spherical or oblate reference ellipsoid stored canonically as (a, f). */
+/**
+ * A spherical or oblate reference ellipsoid stored canonically as semi-major
+ * axis `a` and flattening `f`.
+ *
+ * The semi-major axis defines the caller-selected linear unit. Operations
+ * combining an ellipsoid with heights or Cartesian coordinates require those
+ * values to use the same linear unit. `Ellipsoid.init` is intentionally
+ * invalid so accidental default construction cannot silently select a
+ * plausible Earth model.
+ *
+ * General construction accepts finite `a > 0` and `0 <= f < 1`.
+ * `fromInverseFlattening` requires a finite inverse flattening greater than
+ * one; construct spheres explicitly with `sphere`.
+ *
+ * Checked factories return `false` for invalid parameters. Their throwing
+ * peers throw `GeodesyValueException`. Derived properties do not allocate.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const earth = wgs84!double();
+ * assert(earth.isValid);
+ * assert(earth.semiMajorAxis == 6_378_137.0);
+ *
+ * const sphere = Ellipsoid!double.sphere(6_371_000.0);
+ * assert(sphere.flattening == 0.0);
+ * assert(sphere.semiMinorAxis == sphere.semiMajorAxis);
+ *
+ * assert(!Ellipsoid!double.init.isValid);
+ * ---
+ */
 struct Ellipsoid(T)
 if (isGeodesyScalar!T)
 {
@@ -189,7 +234,17 @@ public:
     }
 }
 
-/** WGS 84 reference ellipsoid, parameterized to the requested floating-point scalar. */
+/**
+ * WGS 84 reference ellipsoid, parameterized to the requested floating-point
+ * scalar.
+ *
+ * The semi-major axis is 6,378,137 metres and the inverse flattening is
+ * 298.257223563. Therefore values combined with this supplied ellipsoid use
+ * metres for their linear coordinates.
+ *
+ * Returns:
+ *     A valid WGS 84 `Ellipsoid!T`.
+ */
 Ellipsoid!T wgs84(T = double)() pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
