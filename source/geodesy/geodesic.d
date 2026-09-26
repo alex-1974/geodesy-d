@@ -354,7 +354,7 @@ public:
         return _distance;
     }
 
-    /** Forward azimuth at the start point, canonicalized to [-pi,+pi). */
+    /** Forward azimuth at the start point, canonicalized from -pi inclusive to +pi exclusive. */
     @property Angle!T initialAzimuth() const
         pure nothrow @safe @nogc
     {
@@ -362,7 +362,7 @@ public:
     }
 
     /**
-     * Forward azimuth at the endpoint, canonicalized to [-pi,+pi).
+     * Forward azimuth at the endpoint, canonicalized from -pi inclusive to +pi exclusive.
      *
      * This is not the back azimuth.
      */
@@ -1043,8 +1043,8 @@ public:
      * Solve the inverse geodesic problem without throwing.
      *
      * Returns the shortest geodesic distance and the forward azimuth at each
-     * endpoint. All public azimuths use GEO-A's canonical [-pi,+pi)
-     * representation.
+     * endpoint. All public azimuths use GEO-A's canonical half-open interval
+     * from -pi inclusive to +pi exclusive.
      *
      * Coincident endpoints return the unique canonical result (+0,+0,+0).
      */
