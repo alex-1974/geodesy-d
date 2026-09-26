@@ -1,6 +1,6 @@
 # geodesy-d v1.0 release readiness
 
-Status: **IN PROGRESS**
+Status: **PRE-TAG READY**
 
 This document defines the release-readiness gate after the completed v1
 feature freeze and public-API freeze. It is separate from API design:
@@ -208,7 +208,11 @@ Before tagging:
   `v1.0.0` candidate: historical `v0.2.0` references remain intentional,
   while CHANGELOG/release notes/readiness docs do not claim v1 has already
   been released.
-- [x] corrected validation candidate recorded as `dabb607973502a93b7c7737e0f4890a6ff9e2476`; final tag SHA remains contingent on remaining release-readiness documentation/hygiene commits.
+- [x] corrected validation candidate recorded as
+  `dabb607973502a93b7c7737e0f4890a6ff9e2476`; release metadata finalized
+  for `v1.0.0` with release date 2026-09-26. The final tag SHA is the
+  documentation-only release HEAD after this readiness update and must be
+  rechecked locally/through normal CI before tagging.
 - [ ] tag `v1.0.0` only after all mandatory gates pass.
 - [ ] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
 
@@ -217,8 +221,9 @@ Before tagging:
 Current decision: **PRE-TAG GATES COMPLETE; FINAL TAG ACTION NOT YET AUTHORIZED**.
 
 The public API is frozen and the pre-tag technical, documentation, consumer,
-platform, numerical, and repository-hygiene gates are complete. Before an
-actual tag, recheck the final documentation-only HEAD/worktree and convert the
-candidate release metadata to the chosen release date. Tagging/releasing
-`v1.0.0` remains a separate explicit action. Post-publish registry
-verification remains intentionally deferred until a v1.0.0 package exists.
+platform, numerical, and repository-hygiene gates are complete. Release
+metadata now records `v1.0.0` with release date 2026-09-26. Before an actual
+tag, recheck this final documentation-only HEAD/worktree and run the normal
+CI/documentation gate. Tagging/releasing `v1.0.0` remains a separate explicit
+action. Post-publish registry verification remains intentionally deferred until
+a v1.0.0 package exists.
