@@ -1064,24 +1064,6 @@ private bool findRepresentedEastMaximum(T)(
  * `.init` is invalid. Prepare the operation once and reuse it for multiple
  * forward/reverse calls.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const projection = PseudoMercator!double.fromParameters(
- *     wgs84!double(),
- *     Longitude!double.fromDegrees(0.0),
- *     0.0,
- *     0.0);
- *
- * const vienna = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208));
- *
- * const xy = projection.forward(vienna);
- * const back = projection.reverse(xy);
- * assert(back.latitude.degrees > 48.0);
- * ---
  */
 struct PseudoMercator(T)
 if (isGeodesyScalar!T)
@@ -1859,6 +1841,27 @@ public:
         return result;
     }
 }
+
+/// Example using struct PseudoMercator(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const projection = PseudoMercator!double.fromParameters(
+        wgs84!double(),
+        Longitude!double.fromDegrees(0.0),
+        0.0,
+        0.0);
+    
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    
+    const xy = projection.forward(vienna);
+    const back = projection.reverse(xy);
+    assert(back.latitude.degrees > 48.0);
+}
+
 
 
 unittest
