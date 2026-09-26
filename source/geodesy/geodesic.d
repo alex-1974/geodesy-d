@@ -1152,8 +1152,8 @@ unittest
     assert(!Geodesic!double.tryFromEllipsoid(
         Ellipsoid!double.init,
         candidate));
-    assert(candidate == Geodesic!double.init);
     assert(!candidate.isValid);
+    assert(!candidate.ellipsoid.isValid);
 
     assert(Geodesic!double.tryFromEllipsoid(
         sphere,
