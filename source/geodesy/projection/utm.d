@@ -111,7 +111,17 @@ public:
         return _number >= 1 && _number <= 60;
     }
 
-    /** Construct from a zone number without throwing. */
+        /**
+     * Construct a UTM zone number without throwing.
+     *
+     * Params:
+     *     number = Zone number in the closed interval [1,60].
+     *     result = Receives the zone on success.
+     *
+     * Returns:
+     *     `true` for a valid zone number; otherwise `false`. On failure
+     *     `result` remains unchanged.
+     */
     static bool tryFromNumber(
         const uint number,
         out UtmZone result)
@@ -124,7 +134,18 @@ public:
         return true;
     }
 
-    /** Construct from a zone number or throw for values outside 1 through 60. */
+        /**
+     * Construct a UTM zone number.
+     *
+     * Params:
+     *     number = Zone number in the closed interval [1,60].
+     *
+     * Returns:
+     *     The constructed zone.
+     *
+     * Throws:
+     *     `GeodesyValueException` outside [1,60].
+     */
     static UtmZone fromNumber(const uint number)
         @safe
     {
@@ -200,7 +221,20 @@ public:
             && isFiniteScalar(_projected.northing);
     }
 
-    /** Construct a tagged UTM coordinate without throwing. */
+        /**
+     * Construct a tagged UTM coordinate without throwing.
+     *
+     * Params:
+     *     zone = Valid UTM zone.
+     *     hemisphere = North/south false-northing convention.
+     *     easting = Finite easting in metres.
+     *     northing = Finite northing in metres.
+     *     result = Receives the tagged coordinate on success.
+     *
+     * Returns:
+     *     `true` for structurally valid input; otherwise `false`. On
+     *     failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const UtmZone zone,
         const UtmHemisphere hemisphere,
@@ -225,7 +259,22 @@ public:
         return true;
     }
 
-    /** Construct a tagged UTM coordinate or throw on invalid input. */
+        /**
+     * Construct a tagged UTM coordinate.
+     *
+     * Params:
+     *     zone = Valid UTM zone.
+     *     hemisphere = North/south false-northing convention.
+     *     easting = Finite easting in metres.
+     *     northing = Finite northing in metres.
+     *
+     * Returns:
+     *     The tagged UTM coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid zone or hemisphere, or
+     *     non-finite easting/northing.
+     */
     static UtmCoordinate fromComponents(
         const UtmZone zone,
         const UtmHemisphere hemisphere,
@@ -550,13 +599,22 @@ public:
             && _transverseMercator.isValid;
     }
 
-    /**
+        /**
      * Prepare an explicit UTM zone without throwing.
      *
-     * The ellipsoid must use metres numerically and satisfy:
+     * The ellipsoid is interpreted in metres and must satisfy
+     * 6,000,000 <= a <= 7,000,000 and 0 < f <= 0.01. Spheres are therefore
+     * intentionally excluded from UTM policy.
      *
-     *     6,000,000 <= a <= 7,000,000
-     *     0 < f <= 0.01
+     * Params:
+     *     ellipsoid = Supported terrestrial oblate ellipsoid in metres.
+     *     zone = Valid explicit UTM zone.
+     *     hemisphere = North/south false-northing convention.
+     *     result = Receives the prepared projection on success.
+     *
+     * Returns:
+     *     `true` when policy parameters and delegated TM preparation
+     *     succeed; otherwise `false`. On failure `result` remains unchanged.
      */
     static bool tryFromZone(
         const Ellipsoid!T ellipsoid,
@@ -606,7 +664,22 @@ public:
         return true;
     }
 
-    /** Prepare an explicit UTM zone or throw on invalid policy parameters. */
+        /**
+     * Prepare an explicit UTM zone.
+     *
+     * Params:
+     *     ellipsoid = Supported terrestrial oblate ellipsoid in metres with
+     *         6,000,000 <= a <= 7,000,000 and 0 < f <= 0.01.
+     *     zone = Valid explicit UTM zone.
+     *     hemisphere = North/south false-northing convention.
+     *
+     * Returns:
+     *     The prepared UTM projection.
+     *
+     * Throws:
+     *     `GeodesyValueException` for unsupported ellipsoid, zone, or
+     *     hemisphere parameters.
+     */
     static UtmProjection fromZone(
         const Ellipsoid!T ellipsoid,
         const UtmZone zone,
@@ -691,12 +764,20 @@ public:
         return _transverseMercator.falseNorthing;
     }
 
-    /**
+        /**
      * Project a geographic coordinate in this explicit UTM zone.
      *
-     * The standard automatic UTM latitude band is not imposed here.
-     * Zone and hemisphere are not recomputed from the source coordinate.
-     * The bounded generic Transverse Mercator domain remains authoritative.
+     * The automatic -80/+84 degree UTM latitude band is not reapplied and
+     * zone/hemisphere are not recomputed. The delegated bounded Transverse
+     * Mercator domain remains authoritative.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *     result = Receives easting and northing in metres on success.
+     *
+     * Returns:
+     *     `true` when this projection is valid and delegated TM projection
+     *     succeeds; otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -711,7 +792,19 @@ public:
             result);
     }
 
-    /** Throwing convenience wrapper for `tryForward`. */
+        /**
+     * Project a geographic coordinate in this explicit UTM zone.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *
+     * Returns:
+     *     Easting and northing in metres.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the prepared projection is invalid or
+     *     the source lies outside the delegated bounded TM domain.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -788,7 +881,20 @@ public:
             result);
     }
 
-    /** Throwing convenience wrapper for `tryReverse`. */
+        /**
+     * Reverse a coordinate in this explicit UTM zone.
+     *
+     * Params:
+     *     source = Projected easting and northing in metres.
+     *
+     * Returns:
+     *     The corresponding geographic coordinate without automatic zone or
+     *     hemisphere reassignment.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the prepared projection is invalid or
+     *     the coordinate lies outside the delegated bounded TM domain.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
@@ -927,7 +1033,21 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Throwing convenience wrapper for `tryForwardUtm`. */
+/**
+ * Automatic UTM forward projection with throwing failure semantics.
+ *
+ * Params:
+ *     source = Geographic source coordinate in the standard automatic UTM
+ *         latitude band (-80 degrees inclusive to +84 degrees exclusive).
+ *     ellipsoid = Supported terrestrial oblate ellipsoid in metres.
+ *
+ * Returns:
+ *     Tagged UTM zone, hemisphere, easting, and northing.
+ *
+ * Throws:
+ *     `GeodesyValueException` when automatic policy selection or projection
+ *     fails.
+ */
 UtmCoordinate!T forwardUtm(T)(
     const GeographicCoordinate!T source,
     const Ellipsoid!T ellipsoid)
@@ -954,6 +1074,16 @@ if (isGeodesyScalar!T)
  * Reverse a tagged UTM coordinate using its explicit zone and hemisphere.
  *
  * The result is not automatically reassigned to another zone or hemisphere.
+ *
+ * Params:
+ *     source = Structurally valid tagged UTM coordinate in metres.
+ *     ellipsoid = Supported terrestrial oblate ellipsoid in metres.
+ *     result = Receives the geographic coordinate on success.
+ *
+ * Returns:
+ *     `true` when explicit-zone preparation and delegated reverse TM
+ *     projection succeed; otherwise `false`. On failure `result` remains
+ *     unchanged.
  */
 bool tryReverseUtm(T)(
     const UtmCoordinate!T source,
@@ -986,7 +1116,21 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Throwing convenience wrapper for `tryReverseUtm`. */
+/**
+ * Reverse a tagged UTM coordinate using its explicit zone and hemisphere.
+ *
+ * Params:
+ *     source = Structurally valid tagged UTM coordinate in metres.
+ *     ellipsoid = Supported terrestrial oblate ellipsoid in metres.
+ *
+ * Returns:
+ *     The corresponding geographic coordinate without automatic zone or
+ *     hemisphere reassignment.
+ *
+ * Throws:
+ *     `GeodesyValueException` when the tagged coordinate, ellipsoid, or
+ *     delegated bounded TM reverse operation is invalid.
+ */
 GeographicCoordinate!T reverseUtm(T)(
     const UtmCoordinate!T source,
     const Ellipsoid!T ellipsoid)
