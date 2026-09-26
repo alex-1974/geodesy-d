@@ -86,8 +86,10 @@ The audit is complete when:
 3. every **existing** declaration renders an `Example`;
 4. every **family** declaration names the owning example family;
 5. examples compile through the public package surface where practical;
-6. a verifier checks the inventory against generated DDox output;
-7. the documentation build fails when a public page appears without classification or an expected example disappears.
+6. every **existing** example is implemented as a documented `unittest`, so the same example is compiler-checked and rendered by DDox;
+7. legacy inline `Example:` code blocks are rejected in public source modules;
+8. a verifier checks the source example count and inventory against generated DDox output;
+9. the documentation build fails when a public page appears without classification, an expected example disappears, or rendered and compiled example coverage diverge.
 
 
 ## Per-symbol classification
