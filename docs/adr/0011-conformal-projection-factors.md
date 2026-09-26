@@ -290,8 +290,8 @@ No separate UTM factor mathematics is introduced.
 Free functions analogous to:
 
 ~~~d
-tryForwardUtmFactors(...)
-tryReverseUtmFactors(...)
+UtmProjection.tryForwardFactors(...)
+UtmProjection.tryReverseFactors(...)
 ~~~
 
 are deferred.
