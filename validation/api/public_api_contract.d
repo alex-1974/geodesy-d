@@ -486,14 +486,14 @@ private void projectionApiContract()
 
     UtmCoordinate!double automatic;
     tryForwardUtm(
-        ellipsoid,
         source,
+        ellipsoid,
         automatic);
 
     GeographicCoordinate!double automaticReversed;
     tryReverseUtm(
-        ellipsoid,
         automatic,
+        ellipsoid,
         automaticReversed);
 
     cast(void) projectedCoordinate;
