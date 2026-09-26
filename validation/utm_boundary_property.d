@@ -189,8 +189,8 @@ private void validateAutomaticProperties(T)()
 
             const bool forwardOk =
                 tryForwardUtm(
-                    ellipsoid,
                     source,
+                    ellipsoid,
                     projected);
 
             const string prefix = format(
@@ -224,14 +224,14 @@ private void validateAutomaticProperties(T)()
 
             expect(
                 tryReverseUtm(
-                    ellipsoid,
                     projected,
+                    ellipsoid,
                     reversed),
                 prefix ~ " reverse accepted");
 
             if (!tryReverseUtm(
-                    ellipsoid,
                     projected,
+                    ellipsoid,
                     reversed))
                 continue;
 
@@ -308,9 +308,9 @@ private void validateLatitudeSemantics(T)()
 
         expect(
             tryForwardUtm(
-                ellipsoid,
-                source,
-                projected)
+                    source,
+                    ellipsoid,
+                    projected)
                 == test.expectedAccepted,
             T.stringof
                 ~ " automatic "
@@ -452,18 +452,18 @@ private void validateExplicitZonePreservation(T)()
 
         expect(
             tryReverseUtm(
-                ellipsoid,
-                tagged,
-                reversed),
+                    tagged,
+                    ellipsoid,
+                    reversed),
             format(
                 "%s zone %s tagged reverse",
                 T.stringof,
                 zoneNumber));
 
         if (!tryReverseUtm(
-                ellipsoid,
-                tagged,
-                reversed))
+                    tagged,
+                    ellipsoid,
+                    reversed))
             continue;
 
         const real residual =
@@ -558,14 +558,14 @@ private void validateHemisphereOverride(T)()
 
             expect(
                 tryReverseUtm(
-                    ellipsoid,
                     tagged,
+                    ellipsoid,
                     reversed),
                 prefix ~ " reverse");
 
             if (!tryReverseUtm(
-                    ellipsoid,
                     tagged,
+                    ellipsoid,
                     reversed))
                 continue;
 
@@ -651,9 +651,9 @@ private void validateRandomRoundTrip(T)()
         UtmCoordinate!T projected;
 
         if (!tryForwardUtm(
-                ellipsoid,
-                source,
-                projected))
+                    source,
+                    ellipsoid,
+                    projected))
         {
             ++localFailures;
             continue;
@@ -662,9 +662,9 @@ private void validateRandomRoundTrip(T)()
         GeographicCoordinate!T reversed;
 
         if (!tryReverseUtm(
-                ellipsoid,
-                projected,
-                reversed))
+                    projected,
+                    ellipsoid,
+                    reversed))
         {
             ++localFailures;
             continue;
