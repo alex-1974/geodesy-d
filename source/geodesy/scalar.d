@@ -1,5 +1,20 @@
 /**
- * Scalar policy shared by geodesy-d numerical value types.
+ * Scalar policy shared by geodesy-d numerical value types and operations.
+ *
+ * The public numerical surface deliberately supports the built-in floating
+ * scalar types float, double, and real. Public scalar choice does not force
+ * every algorithm to use that same type internally: numerically sensitive
+ * float operations may promote working arithmetic to double while preserving
+ * float at the public boundary.
+ *
+ * Numerics:
+ *     Double is the normative reference precision unless an operation-specific
+ *     contract states otherwise. Real is platform-dependent. There is no
+ *     library-wide epsilon; convergence and validation tolerances belong to
+ *     individual algorithms.
+ *
+ * See_Also:
+ *     Operation-specific `Numerics:` and `Validation:` documentation.
  *
  * Authors:
  *     Alexander Bernardi
