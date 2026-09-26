@@ -474,7 +474,7 @@ B1  checked / throwing pair names                  REVIEWED
 B2  construction and factory vocabulary            REVIEWED
 B3  coordinate component/property vocabulary       PASS
 B4  prepared-operation method families             PASS
-B5  argument ordering / UFCS                       1 correction candidate
+B5  argument ordering / UFCS                       PASS — correction verified
 B6  transformation direction/convention naming     PASS
 B7  projection parameter vocabulary                PASS
 B8  result/accessor vocabulary                     PASS
@@ -485,11 +485,12 @@ B10 conditional/validation-only declarations       1 V1-F visibility issue
 V1-B therefore identifies no general naming redesign. Two items leave this
 gate:
 
-1. **Pre-v1 API correction accepted:** the one-shot UTM family is reordered
-   from `(ellipsoid, source)` to `(source, ellipsoid)` so ordinary calls and
-   UFCS align with the rest of the free conversion/transformation API. The
-   implementation change is made on the audit branch and requires compiler,
-   unittest, and external-consumer validation before V1-B closes.
+1. **Pre-v1 API correction accepted and verified:** the one-shot UTM family
+   is reordered from `(ellipsoid, source)` to `(source, ellipsoid)` so ordinary
+   calls and UFCS align with the rest of the free conversion/transformation
+   API. DMD 2.111 and LDC 1.41 each pass all 22 module unittests, and an
+   external consumer using only `import geodesy;` builds and links with both
+   compilers while exercising throwing and checked source-first UFCS calls.
 2. **V1-F visibility issue:** prevent validation-only Transverse Mercator
    instrumentation from becoming accidental supported public surface.
 
@@ -903,3 +904,27 @@ The compile check in item 5 tests existence and accessibility only. It does
 not convert the candidate inventory into an API freeze.
 
 All five V1-A criteria are satisfied. V1-A is closed; V1-B may begin.
+
+
+### V1-B gate result
+
+Status: **COMPLETE / PASS**
+
+The naming and API-family audit is complete. The only production signature
+correction identified by this gate, source-first ordering for the one-shot UTM
+family, has been applied and verified with both baseline compilers and an
+external aggregate-import UFCS consumer.
+
+~~~text
+Internal DMD 2.111          PASS — 22 modules
+Internal LDC 1.41.0         PASS — 22 modules
+External UFCS consumer DMD  PASS — build + link
+External UFCS consumer LDC  PASS — build + link
+~~~
+
+The conditional Transverse Mercator Newton-validation surface is not accepted
+as normal v1 public API; its visibility/boundary resolution is carried to
+V1-F. Missing throwing counterparts identified in B1 remain explicit V1-D
+failure-semantics decisions.
+
+No other naming or API-family correction is required by V1-B.
