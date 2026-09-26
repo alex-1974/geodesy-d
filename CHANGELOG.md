@@ -6,6 +6,8 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ## [Unreleased]
 
+## [1.0.0] - release candidate
+
 ### Added
 
 - Public `TopocentricCoordinate!T` and prepared `TopocentricFrame!T` for
@@ -22,6 +24,14 @@ The project follows Semantic Versioning from the first tagged public release.
   `TransverseMercator!T` and `UtmProjection!T` projections.
 - ADR-0011 defining conformal projection-factor semantics, reverse
   representation policy, pole convention, and UTM delegation.
+
+### Changed
+
+- Added bounded EPSG method 1024 `PseudoMercator!T` with checked/throwing
+  construction and forward/reverse operations.
+- Completed the explicit v1 public-API audit and froze names, signatures,
+  parameter names/order, module boundaries, default-state semantics, failure
+  channels, scalar/unit/domain contracts, and aggregate exports.
 
 ### Validation
 
