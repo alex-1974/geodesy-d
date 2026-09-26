@@ -1,9 +1,8 @@
 # v1 public API audit
 
-Status: **V1-A complete — source inventory and external aggregate compile check passed**
+Status: **V1-J COMPLETE / PASS — v1 public API frozen**
 
-The v1 feature freeze is active. This audit determines the concrete public API
-that may later be accepted and frozen for v1.0.
+The v1 feature freeze is active. This audit determined the concrete public API accepted and frozen for v1.0.
 
 V1-A is deliberately descriptive. Presence in this inventory is **not**
 acceptance of a symbol, name, signature, default-state semantic, or module
@@ -1819,3 +1818,89 @@ informational/experimental and is not promoted to a required v1 platform by
 this gate.
 
 No source/API correction is required by V1-I.
+
+
+## V1-J — final API freeze
+
+Status: **COMPLETE / PASS**
+
+### Freeze preconditions
+
+All preceding gates are complete:
+
+~~~text
+V1-A  public-surface inventory                         PASS
+V1-B  naming and API-family consistency                PASS
+V1-C  .init / construction / mutability                PASS
+V1-D  checked / throwing / failure semantics           PASS
+V1-E  scalar / unit / canonicalization / domains       PASS
+V1-F  module / aggregate / visibility boundaries       PASS
+V1-G  source compatibility / named arguments           PASS
+V1-H  documentation vs actual API                      PASS
+V1-I  external consumer / compiler / platform matrix   PASS
+~~~
+
+No unresolved audit finding requires a public source/API correction before the
+freeze.
+
+### Frozen v1 public contract
+
+The v1 source contract is the public production surface exported by the
+accepted public modules on this audit lineage after V1-A through V1-I,
+including:
+
+- public type, enum, alias, free-function/template and public member names;
+- public signatures, overload shapes, argument ordering and parameter names;
+- checked/throwing operation pair structure and checked-only semantic
+  exceptions;
+- `.init`, construction, mutability and failure-state semantics;
+- scalar constraints, unit contracts, canonicalization and operation domains;
+- aggregate exports and direct public-module import boundaries;
+- documented exception channel `GeodesyValueException`;
+- accepted DMD/LDC source compatibility represented by the V1-I matrix.
+
+Public parameter identifiers are frozen source API because D named arguments
+can depend on them.
+
+### Historical audit notes
+
+Earlier sections intentionally retain descriptive snapshots from the audit as
+it progressed. Where they differ from the final contract, the later gate
+decision supersedes them. In particular:
+
+- V1-A recorded the then-current one-shot UTM order as
+  `ellipsoid, source`; V1-B changed and accepted the final source-first
+  `source, ellipsoid` order.
+- V1-D initially identified geodesic operations as checked-only; the gate then
+  added and accepted throwing `direct` / `inverse` peers.
+- V1-E initially flagged UTM's metre wording for review; the final accepted
+  contract is the documented terrestrial metre-scale numeric policy.
+- V1-F removed TM validation instrumentation from public visibility.
+
+These intermediate observations are audit history, not competing v1 contracts.
+
+### Compatibility rule after this gate
+
+From this gate onward, changes to the frozen public contract are compatibility
+changes and must be treated explicitly. Ordinary implementation,
+documentation, validation and performance work may continue when it preserves
+the frozen semantics and source surface.
+
+Additive API after v1 should be reviewed for family consistency and
+compatibility. A breaking change to the frozen v1 contract requires an
+explicit compatibility/versioning decision rather than an incidental cleanup.
+
+### V1-J gate result
+
+~~~text
+open API audit blockers                    NONE
+public API correction required             NO
+documentation parity                       PASS
+external consumer evidence                 PASS
+required compiler/platform evidence        PASS
+v1 public API freeze                       ACCEPTED
+~~~
+
+The public API audit is complete. The repository may proceed to the separate
+v1.0.0 release-readiness validation without reopening API design unless that
+validation exposes a concrete correctness or compatibility defect.
