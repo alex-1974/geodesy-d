@@ -572,6 +572,13 @@ public:
      *
      * Subtraction from the Earth-scale frame origin is performed in the
      * frame's prepared working scalar before any narrowing to public scalar T.
+     * Params:
+     *     source = Geocentric coordinate in the frame linear unit.
+     *     result = Receives local East/North/Up on success.
+     *
+     * Returns:
+     *     `true` for a valid frame and finite representable result; otherwise
+     *     `false`. On failure `result` remains unchanged.
      */
     bool tryGeocentricToTopocentric(
         const GeocentricCoordinate!T source,
@@ -603,6 +610,14 @@ public:
      *
      * Throws `GeodesyValueException` when the frame is invalid or no finite
      * public result can be represented.
+     * Params:
+     *     source = Geocentric coordinate in the frame linear unit.
+     *
+     * Returns:
+     *     Local East/North/Up in the same linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or unrepresentable result.
      */
     TopocentricCoordinate!T geocentricToTopocentric(
         const GeocentricCoordinate!T source) const
@@ -627,6 +642,13 @@ public:
      * Implements the reverse direction of EPSG method 9836. Because the
      * forward rotation is orthonormal, the reverse uses its transpose and then
      * restores the prepared geocentric origin.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *     result = Receives the geocentric coordinate on success.
+     *
+     * Returns:
+     *     `true` for a valid frame and finite representable result; otherwise
+     *     `false`. On failure `result` remains unchanged.
      */
     bool tryTopocentricToGeocentric(
         const TopocentricCoordinate!T source,
@@ -658,6 +680,14 @@ public:
      *
      * Throws `GeodesyValueException` when the frame is invalid or no finite
      * public result can be represented.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *
+     * Returns:
+     *     Geocentric coordinate in the same linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or unrepresentable result.
      */
     GeocentricCoordinate!T topocentricToGeocentric(
         const TopocentricCoordinate!T source) const
@@ -686,6 +716,13 @@ public:
      * scalar. For `float`, the represented public geodetic values are
      * promoted to `double` before Earth-scale ECEF coordinates are computed.
      * No `GeocentricCoordinate!float` intermediate is materialized.
+     * Params:
+     *     source = Geodetic coordinate whose height uses the frame linear unit.
+     *     result = Receives local East/North/Up on success.
+     *
+     * Returns:
+     *     `true` when composed EPSG 9837 succeeds with a finite representable
+     *     result; otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryGeodeticToTopocentric(
         const GeodeticCoordinate!T source,
@@ -736,6 +773,14 @@ public:
      * Throws `GeodesyValueException` when the frame is invalid or the
      * composed EPSG 9837 operation cannot produce a finite representable
      * public result.
+     * Params:
+     *     source = Geodetic coordinate whose height uses the frame linear unit.
+     *
+     * Returns:
+     *     Local East/North/Up in the frame linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or failed composed conversion.
      */
     TopocentricCoordinate!T geodeticToTopocentric(
         const GeodeticCoordinate!T source) const
@@ -763,6 +808,14 @@ public:
      * Working ECEF coordinates remain in the prepared working scalar until
      * the geodetic inverse is complete. Public scalar T is applied only to
      * the final latitude, longitude, and height.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *     result = Receives the canonical geodetic coordinate on success.
+     *
+     * Returns:
+     *     `true` when composed reverse EPSG 9837 succeeds with a finite
+     *     representable result; otherwise `false`. On failure `result`
+     *     remains unchanged.
      */
     bool tryTopocentricToGeodetic(
         const TopocentricCoordinate!T source,
@@ -840,6 +893,14 @@ public:
      * Throws `GeodesyValueException` when the frame is invalid or the
      * composed reverse EPSG 9837 operation cannot produce a defined finite
      * representable result.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *
+     * Returns:
+     *     Canonical geodetic coordinate with height in the frame linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or failed composed conversion.
      */
     GeodeticCoordinate!T topocentricToGeodetic(
         const TopocentricCoordinate!T source) const
