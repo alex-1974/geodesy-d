@@ -49,7 +49,18 @@ private:
     T _northing = 0;
 
 public:
-    /** Construct from finite easting and northing without throwing. */
+    /**
+     * Construct from finite easting and northing without throwing.
+     *
+     * Params:
+     *     easting = Finite easting in the caller-selected linear unit.
+     *     northing = Finite northing in the same linear unit.
+     *     result = Receives the constructed coordinate on success.
+     *
+     * Returns:
+     *     `true` on success; `false` when either component is NaN or
+     *     infinite. On failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const T easting,
         const T northing,
@@ -65,7 +76,19 @@ public:
         return true;
     }
 
-    /** Construct from finite easting and northing or throw. */
+    /**
+     * Construct from finite easting and northing.
+     *
+     * Params:
+     *     easting = Finite easting in the caller-selected linear unit.
+     *     northing = Finite northing in the same linear unit.
+     *
+     * Returns:
+     *     The constructed coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when either component is NaN or infinite.
+     */
     static ProjectedCoordinate fromComponents(
         const T easting,
         const T northing)
