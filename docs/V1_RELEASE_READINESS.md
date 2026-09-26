@@ -195,10 +195,9 @@ post-publish verification item and cannot be completed before publication.
 
 Before tagging:
 
-- [x] local release-candidate worktree was clean and synchronized at
-  `fba5cad64adfccefafa60af22f475d9d3d5b71e6` before the subsequent
-  readiness-documentation commit; final tag SHA will be rechecked after
-  documentation-only closure.
+- [x] final pre-tag release HEAD
+  `4f6c207ec6bd8be3d457a2fe82da1de41e252eac` was checked locally with a
+  clean, synchronized worktree after release-metadata finalization.
 - [x] no release-only generated/build artifacts are tracked. Observed local
   binaries, archives, Python caches, and `.workspace/` are ignored rather
   than tracked.
@@ -208,11 +207,13 @@ Before tagging:
   `v1.0.0` candidate: historical `v0.2.0` references remain intentional,
   while CHANGELOG/release notes/readiness docs do not claim v1 has already
   been released.
-- [x] corrected validation candidate recorded as
+- [x] corrected numerical-validation candidate recorded as
   `dabb607973502a93b7c7737e0f4890a6ff9e2476`; release metadata finalized
-  for `v1.0.0` with release date 2026-09-26. The final tag SHA is the
-  documentation-only release HEAD after this readiness update and must be
-  rechecked locally/through normal CI before tagging.
+  for `v1.0.0` with release date 2026-09-26.
+- [x] final pre-tag HEAD `4f6c207ec6bd8be3d457a2fe82da1de41e252eac`
+  passed the public API contract, documentation/release metadata contract
+  (24 Ddoc modules), DMD 2.111.0 unit tests (22 modules), LDC unit tests
+  (22 modules), and LDC release build; final worktree CLEAN.
 - [ ] tag `v1.0.0` only after all mandatory gates pass.
 - [ ] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
 
@@ -220,10 +221,11 @@ Before tagging:
 
 Current decision: **PRE-TAG GATES COMPLETE; FINAL TAG ACTION NOT YET AUTHORIZED**.
 
-The public API is frozen and the pre-tag technical, documentation, consumer,
-platform, numerical, and repository-hygiene gates are complete. Release
-metadata now records `v1.0.0` with release date 2026-09-26. Before an actual
-tag, recheck this final documentation-only HEAD/worktree and run the normal
-CI/documentation gate. Tagging/releasing `v1.0.0` remains a separate explicit
-action. Post-publish registry verification remains intentionally deferred until
-a v1.0.0 package exists.
+The public API is frozen and all pre-tag technical, documentation, consumer,
+platform, numerical, repository-hygiene, API-contract, documentation-contract,
+unit-test, and release-build gates are complete. Release metadata records
+`v1.0.0` with release date 2026-09-26. The validated pre-tag code/documentation
+HEAD is `4f6c207ec6bd8be3d457a2fe82da1de41e252eac`; this readiness-only update
+does not alter production source or release metadata. Tagging/releasing
+`v1.0.0` remains a separate explicit action. Post-publish registry
+verification remains intentionally deferred until a v1.0.0 package exists.
