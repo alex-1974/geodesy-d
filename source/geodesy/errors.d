@@ -1,5 +1,13 @@
 /**
- * Error types used by checked geodesy-d value construction and operations.
+ * Error channel for throwing geodesy-d value construction and operations.
+ *
+ * geodesy-d normally pairs checked `try...` APIs with throwing convenience
+ * peers. Checked operations report supported semantic failure with `false`;
+ * throwing peers use `GeodesyValueException` for the corresponding invalid
+ * input, unsupported domain, or unrepresentable-result conditions.
+ *
+ * See_Also:
+ *     Checked `try...` operations throughout the public `geodesy` API.
  *
  * Authors:
  *     Alexander Bernardi
