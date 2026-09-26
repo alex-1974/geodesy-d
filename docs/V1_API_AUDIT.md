@@ -1502,3 +1502,35 @@ Accepted v1 contract distinctions include:
   canonicalization coexist deliberately;
 - signed-zero and pole conventions are operation semantics where geometric
   degeneracy requires a unique result.
+
+
+## V1-F — module / aggregate / visibility / dependency boundaries
+
+Status: **in progress**
+
+Review dimensions:
+
+~~~text
+F1  root aggregate export surface
+F2  conditional / validation-only declarations
+F3  package/private implementation boundaries
+F4  internal module exposure
+F5  dependency direction between public and internal modules
+~~~
+
+Initial findings:
+
+- The root `geodesy` aggregate publicly re-exports the intended public modules.
+- Internal geodesic solver modules live under `geodesy.internal.*` and are not
+  root-aggregated.
+- `ProjectionFactorResearch` instrumentation is already `package`-scoped.
+- `GeodesyTmNewtonValidation` previously exposed
+  `TransverseMercatorNewtonTrace` and `tryReverseNewtonTrace` publicly when
+  enabled. This was corrected before v1 by making both package-visible.
+
+
+Validation note: the first attempted DUB validation command passed
+`-version=GeodesyTmNewtonValidation` after `--`, so DUB treated it as a
+runtime argument to the already-built test executable rather than a compiler
+version identifier. The normal DMD/LDC results are valid; the conditional
+build still requires a compile-time validation run.
