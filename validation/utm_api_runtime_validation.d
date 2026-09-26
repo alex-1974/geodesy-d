@@ -184,8 +184,8 @@ private bool operationalTrySurface(T)(
     GeographicCoordinate!T manualRecovered;
 
     if (!tryReverseUtm(
-            ellipsoid,
             manualTagged,
+            ellipsoid,
             manualRecovered))
         return false;
 
@@ -199,8 +199,8 @@ private bool operationalTrySurface(T)(
      * Automatic standard-zone operation.
      */
     if (!tryForwardUtm(
-            ellipsoid,
             source,
+            ellipsoid,
             automaticProjected))
         return false;
 
@@ -215,8 +215,8 @@ private bool operationalTrySurface(T)(
         return false;
 
     if (!tryReverseUtm(
-            ellipsoid,
             automaticProjected,
+            ellipsoid,
             automaticRecovered))
         return false;
 
@@ -254,13 +254,13 @@ private void throwingSurfaceCompiles(T)(
 
     const tagged =
         forwardUtm(
-            ellipsoid,
-            source);
+            source,
+            ellipsoid);
 
     const taggedRecovered =
         reverseUtm(
-            ellipsoid,
-            tagged);
+            tagged,
+            ellipsoid);
 
     /*
      * Keep results live.
@@ -317,16 +317,16 @@ private void validateScalar(T)()
     UtmCoordinate!T baselineAutomatic;
 
     assert(tryForwardUtm(
-        ellipsoid,
-        source,
-        baselineAutomatic));
+            source,
+            ellipsoid,
+            baselineAutomatic));
 
     GeographicCoordinate!T baselineAutomaticRecovered;
 
     assert(tryReverseUtm(
-        ellipsoid,
-        baselineAutomatic,
-        baselineAutomaticRecovered));
+            baselineAutomatic,
+            ellipsoid,
+            baselineAutomaticRecovered));
 
     /*
      * Instantiate and execute the pure/nothrow/@safe/@nogc probe.
@@ -418,8 +418,8 @@ private void validateScalar(T)()
         UtmCoordinate!T automatic;
 
         assert(tryForwardUtm(
-            ellipsoid,
             source,
+            ellipsoid,
             automatic));
 
         assert(automatic.zone.number
@@ -437,8 +437,8 @@ private void validateScalar(T)()
         GeographicCoordinate!T automaticRecovered;
 
         assert(tryReverseUtm(
-            ellipsoid,
             automatic,
+            ellipsoid,
             automaticRecovered));
 
         assert(automaticRecovered.latitude.radians
@@ -489,9 +489,9 @@ private void validateScalar(T)()
     assert(!invalidTagged.isValid);
 
     assert(!tryReverseUtm(
-        ellipsoid,
-        invalidTagged,
-        invalidRecovered));
+            invalidTagged,
+            ellipsoid,
+            invalidRecovered));
 
     /*
      * UTM construction policy rejects a sphere even though generic TM supports
@@ -521,9 +521,9 @@ private void validateScalar(T)()
     UtmCoordinate!T outsideTagged;
 
     assert(!tryForwardUtm(
-        ellipsoid,
-        automaticOutside,
-        outsideTagged));
+            automaticOutside,
+            ellipsoid,
+            outsideTagged));
 
     /*
      * Explicit prepared projection is not clipped to that automatic band.
@@ -591,8 +591,8 @@ private void validateScalar(T)()
     {
         const unused =
             forwardUtm(
-                ellipsoid,
-                automaticOutside);
+            automaticOutside,
+            ellipsoid);
     }
     catch (Exception)
     {
@@ -607,8 +607,8 @@ private void validateScalar(T)()
     {
         const unused =
             reverseUtm(
-                ellipsoid,
-                invalidTagged);
+            invalidTagged,
+            ellipsoid);
     }
     catch (Exception)
     {
