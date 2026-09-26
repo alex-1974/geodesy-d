@@ -56,7 +56,7 @@ replacements = {
             "     * Forward azimuth at the endpoint, canonicalized from -pi inclusive to +pi exclusive.",
         ),
         (
-            "     * endpoint. All public azimuths use GEO-A's canonical [-pi,+pi)\\n"
+            "     * endpoint. All public azimuths use GEO-A's canonical [-pi,+pi)\n"
             "     * representation.",
             "     * endpoint. All public azimuths use GEO-A's canonical half-open interval\\n"
             "     * from -pi inclusive to +pi exclusive.",
