@@ -25,7 +25,7 @@ fi
 
 echo "Generating ddox input for ${#public_sources[@]} public modules..."
 
-"$compiler" -o- -w -Xf"$json_file" -Df"$dummy_file" -Isource "${public_sources[@]}"
+"$compiler" -o- -wi -Xf"$json_file" -Df"$dummy_file" -Isource "${public_sources[@]}"
 rm -f "$dummy_file"
 
 dub run "ddox@$ddox_version" -- filter --min-protection=Public --only-documented "$json_file"
