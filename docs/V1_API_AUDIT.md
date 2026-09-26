@@ -932,7 +932,7 @@ No other naming or API-family correction is required by V1-B.
 
 ## V1-C — construction, `.init`, and mutability
 
-Status: **in progress**
+Status: **COMPLETE / PASS**
 
 Review dimensions:
 
@@ -1066,3 +1066,48 @@ receiver.
 
 No public invariant escape route has been identified.
 
+
+
+### V1-C gate result
+
+Status: **COMPLETE / PASS**
+
+~~~text
+C1  .init semantics                         PASS
+C2  factory completeness/invariant safety   PASS
+C3  mutability / invariant escape routes    PASS
+~~~
+
+The public construction model is coherent:
+
+- value types with meaningful zero/default semantics retain useful `.init`
+  values;
+- preparation-required types use an invalid `.init` state guarded by
+  `isValid`;
+- representation state is private and exposed through read-only accessors;
+- validated objects cannot be invalidated through public post-construction
+  mutation;
+- checked `tryFrom...` factories use D `out` semantics and either
+  validate-then-assign or candidate-then-commit construction.
+
+For the v1 construction family, a failed checked construction leaves the
+caller-visible `out` result in that type's `.init` state. This is a
+semantic state guarantee, not necessarily an equality expression:
+NaN-bearing representations such as `Geodesic.init` cannot in general be
+validated with `result == T.init` because IEEE NaN is not equal to itself.
+
+During this gate, `Geodesic.tryFromEllipsoid` was aligned with the common
+candidate-then-commit pattern so late preparation failure cannot expose a
+partially populated invalid solver. A regression test verifies that a
+previously valid solver becomes publicly invalid/default again after failed
+checked construction.
+
+Validation after the correction:
+
+~~~text
+DMD 2.111  PASS — 22 modules
+LDC 1.41   PASS — 22 modules
+~~~
+
+No further construction, `.init`, or mutability correction is required by
+V1-C.
