@@ -30,17 +30,6 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
  * Checked construction rejects non-finite components without throwing;
  * throwing construction uses `GeodesyValueException`.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const p = GeocentricCoordinate!double.fromComponents(
- *     4_085_000.0, 1_260_000.0, 4_717_000.0);
- *
- * assert(p.x == 4_085_000.0);
- * assert(p.y == 1_260_000.0);
- * assert(p.z == 4_717_000.0);
- * ---
  */
 struct GeocentricCoordinate(T)
 if (isGeodesyScalar!T)
@@ -123,6 +112,21 @@ public:
     /** Geocentric Z component. */
     @property T z() const pure nothrow @safe @nogc { return _z; }
 }
+
+/// Example constructing a geocentric coordinate.
+@safe unittest
+{
+    import geodesy;
+    
+    const p = GeocentricCoordinate!double.fromComponents(
+        4_085_000.0, 1_260_000.0, 4_717_000.0);
+    
+    assert(p.x == 4_085_000.0);
+    assert(p.y == 1_260_000.0);
+    assert(p.z == 4_717_000.0);
+    
+}
+
 
 unittest
 {
