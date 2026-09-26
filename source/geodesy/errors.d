@@ -15,10 +15,24 @@
  */
 module geodesy.errors;
 
-/** Thrown by convenience APIs when an input is invalid or a checked operation cannot produce a valid result. */
+/**
+ * Exception used by throwing convenience APIs when the corresponding checked
+ * operation would fail because of invalid input, unsupported domain, or an
+ * unrepresentable result.
+ *
+ * Checked `try...` APIs report the same semantic failures with `false`
+ * instead of throwing.
+ */
 final class GeodesyValueException : Exception
 {
-    /** Construct an exception with source location metadata. */
+    /**
+     * Construct an exception with source location metadata.
+     *
+     * Params:
+     *     message = Human-readable failure description.
+     *     file = Source file recorded on the exception.
+     *     line = Source line recorded on the exception.
+     */
     @safe this(string message, string file = __FILE__, size_t line = __LINE__)
     {
         super(message, file, line);
