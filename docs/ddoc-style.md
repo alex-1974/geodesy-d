@@ -73,7 +73,90 @@ Date:
 
 `Date:` records the current revision date of the module documentation and should change when the public contract documentation is materially revised.
 
-## 5. Public types
+## 6. Ddoc sections
+
+Ddoc defines the first paragraph as the Summary and subsequent unnamed
+paragraphs as the Description. Every public module must provide both: a short
+summary and a substantive description that explains the module's role to a
+caller. Metadata alone does not make a module documentation-complete.
+
+Use Ddoc's standard named sections where applicable:
+
+```text
+Params:
+Returns:
+Throws:
+Standards:
+See_Also:
+Authors:
+Copyright:
+License:
+Date:
+```
+
+`Standards:` names standards with which the documented declaration complies.
+Do not use it as a general bibliography. State the relationship precisely,
+for example whether an operation implements an EPSG method or merely follows
+its parameter semantics.
+
+`See_Also:` points callers to closely related public types or operations.
+
+geodesy-d additionally standardizes these user-defined sections:
+
+```text
+Domain:
+Units:
+Numerics:
+Performance:
+Validation:
+```
+
+`Domain:` records important mathematical, geographic, ellipsoid, projection,
+or representation limits.
+
+`Units:` records unit contracts and relationships when they are not already
+obvious from strong public types.
+
+`Numerics:` records caller-relevant numerical design: algorithm family,
+working-precision promotion, stability measures, convergence behaviour, or
+bounded approximation. It must not make a precision claim broader than the
+available numerical evidence.
+
+`Performance:` records meaningful cost properties such as asymptotic time and
+space complexity, allocation behaviour, reusable prepared state, or another
+measured/design property relevant to callers. Do not add ceremonial `O(1)`
+sections to trivial constructors, accessors, or value operations.
+
+`Validation:` records the independent reference, implementation, test corpus,
+or acceptance method actually used to validate the numerical contract. It
+must not claim validation that is only planned.
+
+Not every declaration needs every section. Sections are selected for semantic
+value, not uniform appearance.
+
+For substantial numerical operations, the preferred order is:
+
+```text
+Summary
+Description
+
+Params:
+Returns:
+Throws:
+Standards:
+Domain:
+Units:
+Numerics:
+Performance:
+Validation:
+See_Also:
+```
+
+Module documentation should normally explain purpose and scope first, then the
+module's important standards, domains, numerical/performance properties, and
+validation basis without duplicating every symbol-level contract.
+
+## 6. Public types
 
 Public types should document, where relevant:
 
@@ -90,7 +173,7 @@ Public types should document, where relevant:
 
 Coordinates must state whether datum, CRS, or ellipsoid identity is embedded. In `geodesy-d`, coordinate value types generally do not embed CRS or datum metadata.
 
-## 6. Units
+## 7. Units
 
 Unit contracts are part of the API.
 
@@ -105,7 +188,7 @@ Examples include:
 
 When an operation is unit-agnostic, state the relationship explicitly rather than merely saying "same unit".
 
-## 7. Domains and canonicalization
+## 8. Domains and canonicalization
 
 Document accepted domains explicitly.
 
@@ -122,7 +205,7 @@ Important examples include:
 
 Do not rely only on template constraints or implementation checks.
 
-## 8. Parameters, returns, and exceptions
+## 9. Parameters, returns, and exceptions
 
 Use Ddoc sections where they add semantic value:
 
@@ -140,7 +223,7 @@ Throws:
 
 Avoid ceremonial duplication for trivial field accessors where the declaration and summary are already sufficient.
 
-## 9. Checked and throwing APIs
+## 10. Checked and throwing APIs
 
 Checked `try...` APIs must document every supported reason for returning `false`.
 
@@ -150,7 +233,7 @@ Throwing convenience peers must document that they represent the same semantic o
 
 If an API intentionally has only a checked form or only a throwing form, document that choice where it matters.
 
-## 10. Non-finite values and singular cases
+## 11. Non-finite values and singular cases
 
 Distinguish among:
 
@@ -163,7 +246,7 @@ Relevant singular cases include the geocentre, poles, antimeridian representatio
 
 Tests verify these contracts; Ddoc must state user-visible behaviour.
 
-## 11. Numerical guarantees
+## 12. Numerical guarantees
 
 Numerical documentation should distinguish among:
 
@@ -178,7 +261,7 @@ Do not claim generic "precision" without naming the operation, scalar type, doma
 
 There is no library-wide epsilon.
 
-## 12. Allocation and complexity
+## 13. Allocation and complexity
 
 State allocation behaviour for computationally meaningful APIs where it matters.
 
@@ -196,7 +279,7 @@ This operation may allocate temporary storage.
 
 Document asymptotic complexity for non-trivial algorithms when it is informative to callers.
 
-## 13. Examples
+## 14. Examples
 
 Examples should be executable documented unittests and should normally use:
 
@@ -213,7 +296,7 @@ A public declaration may either:
 
 This classification is tracked in `docs/public-api-example-audit.md`.
 
-## 14. Tests are not documentation
+## 15. Tests are not documentation
 
 Behaviour intended as part of the public contract must not exist only in tests.
 
@@ -229,7 +312,7 @@ In particular, document:
 - singular and boundary cases;
 - numerical guarantees.
 
-## 15. ADRs and validation plans
+## 16. ADRs and validation plans
 
 ADRs explain persistent design decisions.
 
@@ -237,7 +320,7 @@ Validation plans document numerical evidence and acceptance gates.
 
 Ddoc states the resulting caller-visible contract. It should link conceptually to those documents without duplicating their full rationale.
 
-## 16. Definition of done
+## 17. Definition of done
 
 A public API family is documentation-complete when a caller can determine, where applicable:
 
