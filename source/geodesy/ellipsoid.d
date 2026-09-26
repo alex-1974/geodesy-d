@@ -175,7 +175,7 @@ public:
         return _flattening * (cast(T) 2 - _flattening);
     }
 
-    /** Second eccentricity squared `e'²`. */
+    /** Second eccentricity squared (e′²). */
     @property T secondEccentricitySquared() const pure nothrow @safe @nogc
     {
         const T e2 = firstEccentricitySquared;
