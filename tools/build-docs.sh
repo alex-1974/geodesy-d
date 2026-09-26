@@ -57,5 +57,10 @@ if grep -Rqi 'geodesy\.internal' "$site_dir" --include='*.html'; then
     exit 1
 fi
 
+python3 "$source_root/tools/verify-public-api-examples.py" \
+    "$site_dir" \
+    "$source_root/docs/public-api-example-audit.md" \
+    --require-complete
+
 echo "PASS: public-only ddox documentation"
 echo "Documentation generated: $site_dir/index.html"
