@@ -44,17 +44,6 @@ import geodesy.scalar :
  * non-finite components; the throwing factory reports the same failure with
  * `GeodesyValueException`.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const local = TopocentricCoordinate!double.fromComponents(
- *     12.5, -3.0, 1.25);
- *
- * assert(local.east == 12.5);
- * assert(local.north == -3.0);
- * assert(local.up == 1.25);
- * ---
  */
 struct TopocentricCoordinate(T)
 if (isGeodesyScalar!T)
@@ -169,6 +158,20 @@ public:
     }
 }
 
+/// Example using struct TopocentricCoordinate(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const local = TopocentricCoordinate!double.fromComponents(
+        12.5, -3.0, 1.25);
+    
+    assert(local.east == 12.5);
+    assert(local.north == -3.0);
+    assert(local.up == 1.25);
+}
+
+
 
 /**
  * A prepared local East/North/Up frame.
@@ -195,30 +198,6 @@ public:
  * orientation. A geocentric origin at the exact geocentre is rejected because
  * its geodetic inverse is not unique.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const origin = GeodeticCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208),
- *     171.0);
- *
- * const frame = TopocentricFrame!double.fromGeodeticOrigin(
- *     wgs84!double(), origin);
- *
- * const nearby = GeodeticCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20850),
- *     Longitude!double.fromDegrees(16.37210),
- *     172.0);
- *
- * const local = frame.geodeticToTopocentric(nearby);
- * const back = frame.topocentricToGeodetic(local);
- *
- * assert(frame.isValid);
- * assert(local.east == local.east);
- * assert(back.latitude.degrees > 48.0);
- * ---
  */
 struct TopocentricFrame(T)
 if (isGeodesyScalar!T)
@@ -919,6 +898,33 @@ public:
         return result;
     }
 }
+
+/// Example using struct TopocentricFrame(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const origin = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208),
+        171.0);
+    
+    const frame = TopocentricFrame!double.fromGeodeticOrigin(
+        wgs84!double(), origin);
+    
+    const nearby = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20850),
+        Longitude!double.fromDegrees(16.37210),
+        172.0);
+    
+    const local = frame.geodeticToTopocentric(nearby);
+    const back = frame.topocentricToGeodetic(local);
+    
+    assert(frame.isValid);
+    assert(local.east == local.east);
+    assert(back.latitude.degrees > 48.0);
+}
+
 
 
 unittest
