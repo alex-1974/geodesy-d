@@ -62,6 +62,7 @@ fi
 python3 "$source_root/tools/verify-public-api-examples.py" \
     "$site_dir" \
     "$source_root/docs/public-api-example-audit.md" \
+    --source-root "$source_root" \
     --require-complete
 
 echo "PASS: public-only ddox documentation"
