@@ -1249,3 +1249,96 @@ LDC 1.41   PASS — 22 modules
 
 No further failure-channel or checked/throwing correction is required by
 V1-D.
+
+
+## V1-E — scalar / unit / canonicalization / domain contracts
+
+Status: **in progress**
+
+Review dimensions:
+
+~~~text
+E1  public scalar policy
+E2  angular and linear unit contracts
+E3  canonicalization and endpoint representation
+E4  mathematical / projection domain boundaries
+E5  cross-module contract consistency
+~~~
+
+### E1 — scalar policy
+
+The public numerical family consistently constrains template scalar `T` with
+`isGeodesyScalar!T`, which accepts exactly the unqualified built-in
+floating-point types:
+
+~~~text
+float
+double
+real
+~~~
+
+Integral and qualified scalar types are intentionally excluded. Finite-value
+validation is centralized internally through `isFiniteGeodesyScalar`.
+No public value family with a conflicting scalar policy was identified in the
+initial pass.
+
+### E2 — unit model
+
+Angular strong types store radians. Degree factories/accessors are explicit
+conversion surfaces. Helmert canonical rotations use `Angle!T`; the
+arc-second/ppm factory is explicitly a unit-converting convenience factory.
+
+Linear units are deliberately not encoded in coordinate value types.
+Geodetic height, geocentric coordinates, projected coordinates, topocentric
+coordinates, ellipsoid axes, translations, and operation offsets must use the
+same linear unit within the operation that combines them.
+
+This is coherent for generic geodetic, conversion, projection, and transform
+operations.
+
+**UTM requires separate review.** `UtmProjection` documents a
+“terrestrial-metre ellipsoid policy” and accepts only
+
+~~~text
+6,000,000 <= semi-major axis <= 7,000,000
+0 < flattening <= 0.01
+~~~
+
+This numerically selects metre-scale terrestrial ellipsoids, but the type
+system contains no unit metadata and therefore cannot establish that the
+linear unit is actually metres. Before v1, this must be classified explicitly
+as either an intentional numeric policy/precondition or a misleading unit
+claim. No change is accepted yet.
+
+### E3 — angular canonicalization
+
+The public `Longitude!T` value domain is the closed interval
+`[-pi,+pi]`; both antimeridian endpoint representations are valid values.
+`Longitude.normalized` provides the unique half-open representation
+`[-pi,+pi)`.
+
+Operations that require unique longitude identity canonicalize explicitly
+rather than silently narrowing the public value type. This distinction is
+used consistently by UTM zone selection, geodesic mathematics, and bounded
+projection seam handling.
+
+General `Angle!T` is finite but intentionally unbounded. Latitude is the
+closed geodetic interval `[-pi/2,+pi/2]`.
+
+### E4 — domain contracts identified for detailed review
+
+Current explicit public operation domains include:
+
+~~~text
+Geodesic prepared ellipsoid        0 <= f <= 0.01
+Transverse Mercator ellipsoid      0 <= f <= 0.01
+Transverse Mercator forward        |delta longitude| <= 60 degrees
+Pseudo-Mercator forward latitude   [-88,+88] degrees
+Automatic standard UTM latitude    [-80,+84) degrees
+UTM prepared ellipsoid             metre-scale numeric a policy,
+                                   0 < f <= 0.01
+~~~
+
+The next pass checks endpoint inclusivity, forward/reverse symmetry,
+sphere acceptance, and whether these restrictions are mathematical,
+algorithmic, or policy constraints consistently documented across modules.
