@@ -1,5 +1,6 @@
 name "geodesy-d"
 description "Dependency-light pure-D geodetic mathematics."
+homepage "https://alex-1974.github.io/geodesy-d/"
 authors "Alexander Leisser"
 copyright "Copyright © 2026, Alexander Leisser"
 license "MIT"
