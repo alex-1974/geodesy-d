@@ -36,20 +36,6 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
  * Checked factories return `false` for invalid parameters. Their throwing
  * peers throw `GeodesyValueException`. Derived properties do not allocate.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const earth = wgs84!double();
- * assert(earth.isValid);
- * assert(earth.semiMajorAxis == 6_378_137.0);
- *
- * const sphere = Ellipsoid!double.sphere(6_371_000.0);
- * assert(sphere.flattening == 0.0);
- * assert(sphere.semiMinorAxis == sphere.semiMajorAxis);
- *
- * assert(!Ellipsoid!double.init.isValid);
- * ---
  */
 struct Ellipsoid(T)
 if (isGeodesyScalar!T)
@@ -326,6 +312,24 @@ public:
         return _flattening / (cast(T) 2 - _flattening);
     }
 }
+
+/// Example constructing Earth and spherical ellipsoids.
+@safe unittest
+{
+    import geodesy;
+    
+    const earth = wgs84!double();
+    assert(earth.isValid);
+    assert(earth.semiMajorAxis == 6_378_137.0);
+    
+    const sphere = Ellipsoid!double.sphere(6_371_000.0);
+    assert(sphere.flattening == 0.0);
+    assert(sphere.semiMinorAxis == sphere.semiMajorAxis);
+    
+    assert(!Ellipsoid!double.init.isValid);
+    
+}
+
 
 /**
  * WGS 84 reference ellipsoid, parameterized to the requested floating-point
