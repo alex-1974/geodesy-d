@@ -37,7 +37,59 @@ if count != 1:
         f"error: expected exactly one v1.0.0 DDOX compatibility target in {path}, found {count}"
     )
 
-path.write_text(source.replace(old, new, 1))
+source = source.replace(old, new, 1)
+
+replacements = {
+    "source/geodesy/angle.d": [
+        (
+            "    /** Return the unique half-open representation [-pi, +pi). */",
+            "    /** Return the unique representation from -pi inclusive to +pi exclusive. */",
+        ),
+    ],
+    "source/geodesy/geodesic.d": [
+        (
+            "    /** Forward azimuth at the start point, canonicalized to [-pi,+pi). */",
+            "    /** Forward azimuth at the start point, canonicalized from -pi inclusive to +pi exclusive. */",
+        ),
+        (
+            "     * Forward azimuth at the endpoint, canonicalized to [-pi,+pi).",
+            "     * Forward azimuth at the endpoint, canonicalized from -pi inclusive to +pi exclusive.",
+        ),
+        (
+            "     * endpoint. All public azimuths use GEO-A's canonical [-pi,+pi)\\n"
+            "     * representation.",
+            "     * endpoint. All public azimuths use GEO-A's canonical half-open interval\\n"
+            "     * from -pi inclusive to +pi exclusive.",
+        ),
+    ],
+    "source/geodesy/projection/pseudo_mercator.d": [
+        (
+            " * principal wrapped sheet [-pi,+pi) with represented endpoint rules qualified",
+            " * principal wrapped sheet from -pi inclusive to +pi exclusive, with represented endpoint rules qualified",
+        ),
+    ],
+    "source/geodesy/projection/utm.d": [
+        (
+            " * Longitude is canonicalized to [-180 degrees, +180 degrees) before zone",
+            " * Longitude is canonicalized from -180 degrees inclusive to +180 degrees exclusive before zone",
+        ),
+    ],
+}
+
+for relative, pairs in replacements.items():
+    target = path.parents[2] / relative
+    text = target.read_text()
+    for before, after in pairs:
+        found = text.count(before)
+        if found != 1:
+            raise SystemExit(
+                f"error: expected exactly one v1.0.0 Ddoc compatibility target "
+                f"in {target}: {before!r}; found {found}"
+            )
+        text = text.replace(before, after, 1)
+    target.write_text(text)
+
+path.write_text(source)
 PY
             ;;
         *)
