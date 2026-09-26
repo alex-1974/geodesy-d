@@ -1679,3 +1679,43 @@ intentional:
 From this gate forward, public parameter identifiers should be treated as part
 of the frozen v1 source contract unless a later audit gate uncovers a concrete
 defect.
+
+
+## V1-H — documentation vs actual API
+
+Status: **COMPLETE / PASS**
+
+Review dimensions:
+
+~~~text
+H1  README vs public API                         PASS after corrections
+H2  API reference vs public API                  PASS after corrections
+H3  ADR current-contract statements vs source    PASS after corrections
+H4  operation docs: units / domains / failures   PASS
+H5  .init and canonicalization documentation     PASS
+~~~
+
+Documentation drift corrected during V1-H:
+
+- README geodesic surface now records both checked and throwing
+  `tryDirect/direct` and `tryInverse/inverse` operations.
+- `docs/API.md` no longer describes geodesic operations as checked-only and
+  includes the accepted throwing wrappers.
+- ADR-0008 now records `direct` and `inverse` as accepted v1 operations.
+- ADR-0007 one-shot UTM signatures now use the accepted source-first
+  `source, ellipsoid` order.
+- ADR-0011 now names UTM factor operations as methods on prepared
+  `UtmProjection`: `tryForwardFactors` and `tryReverseFactors`, rather
+  than obsolete proposed free-function names.
+
+The remaining reviewed documentation agrees with source on:
+
+- invalid vs meaningful `.init` states;
+- generic operation-level linear-unit consistency;
+- UTM's explicit metre-scale policy;
+- longitude endpoint/canonicalization semantics;
+- topocentric pole-orientation semantics;
+- checked failure and throwing `GeodesyValueException` behavior;
+- TM, Pseudo-Mercator, UTM, geodesic, and conversion domain distinctions.
+
+No source/API correction is required by V1-H.
