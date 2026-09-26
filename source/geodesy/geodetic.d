@@ -70,7 +70,20 @@ private:
     }
 
 public:
-    /** Construct from strong angular values and finite ellipsoidal height without throwing. */
+    /**
+     * Construct from strong angular values and finite ellipsoidal height
+     * without throwing.
+     *
+     * Params:
+     *     latitude = Geodetic latitude.
+     *     longitude = Geodetic longitude.
+     *     ellipsoidalHeight = Finite height in the caller-selected linear unit.
+     *     result = Receives the constructed coordinate on success.
+     *
+     * Returns:
+     *     `true` on success; `false` when `ellipsoidalHeight` is NaN or
+     *     infinite. On failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const Latitude!T latitude,
         const Longitude!T longitude,
@@ -85,7 +98,20 @@ public:
         return true;
     }
 
-    /** Construct a geodetic coordinate or throw when height is non-finite. */
+    /**
+     * Construct a geodetic coordinate.
+     *
+     * Params:
+     *     latitude = Geodetic latitude.
+     *     longitude = Geodetic longitude.
+     *     ellipsoidalHeight = Finite height in the caller-selected linear unit.
+     *
+     * Returns:
+     *     The constructed coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when `ellipsoidalHeight` is NaN or infinite.
+     */
     static GeodeticCoordinate fromComponents(
         const Latitude!T latitude,
         const Longitude!T longitude,
