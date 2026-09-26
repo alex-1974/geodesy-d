@@ -4,6 +4,18 @@
  * The public operation retains its source ellipsoid for semantic identity, but
  * the coordinate equations use only the ellipsoid semi-major axis as required
  * by EPSG method 1024.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
  */
 module geodesy.projection.pseudo_mercator;
 
@@ -1043,9 +1055,33 @@ private bool findRepresentedEastMaximum(T)(
 /**
  * Prepared bounded Pseudo-Mercator operation with EPSG 1024 parameters.
  *
- * The forward latitude domain is [-88 degrees,+88 degrees]. Longitude uses the
- * principal wrapped sheet from -pi inclusive to +pi exclusive, with represented endpoint rules qualified
- * by PM-G0.
+ * The forward latitude domain is [-88,+88] degrees. Longitude uses the
+ * principal wrapped sheet from -pi inclusive to +pi exclusive. The ellipsoid
+ * semi-major axis and false offsets define the projected linear unit; the
+ * ellipsoid flattening is retained as semantic state but is not used by EPSG
+ * method 1024 equations.
+ *
+ * `.init` is invalid. Prepare the operation once and reuse it for multiple
+ * forward/reverse calls.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const projection = PseudoMercator!double.fromParameters(
+ *     wgs84!double(),
+ *     Longitude!double.fromDegrees(0.0),
+ *     0.0,
+ *     0.0);
+ *
+ * const vienna = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * const xy = projection.forward(vienna);
+ * const back = projection.reverse(xy);
+ * assert(back.latitude.degrees > 48.0);
+ * ---
  */
 struct PseudoMercator(T)
 if (isGeodesyScalar!T)
