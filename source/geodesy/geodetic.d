@@ -1,6 +1,22 @@
 /**
  * Three-dimensional geodetic coordinate value type.
  *
+ * A geodetic coordinate combines strong latitude and longitude values with a
+ * finite ellipsoidal height. Datum, CRS, ellipsoid identity, epoch, and unit
+ * metadata are deliberately not embedded; operations that need those concepts
+ * receive them explicitly.
+ *
+ * Units:
+ *     Latitude and longitude use the strong angular types. Ellipsoidal height
+ *     uses a caller-selected linear unit and must match the associated
+ *     ellipsoid where an operation combines them.
+ *
+ * Performance:
+ *     Checked construction and value access require no allocation.
+ *
+ * See_Also:
+ *     `GeographicCoordinate`, `GeocentricCoordinate`, `Ellipsoid`
+ *
  * Authors:
  *     Alexander Bernardi
  *
