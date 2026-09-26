@@ -242,7 +242,7 @@ public:
         return Angle!T.fromRadiansUnchecked(_radians);
     }
 
-    /** Return the unique half-open representation [-pi, +pi). */
+    /** Return the unique representation from -pi inclusive to +pi exclusive. */
     @property Longitude normalized() const pure nothrow @safe @nogc
     {
         if (_radians >= pi!T)
