@@ -27,6 +27,12 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("site", type=Path)
     parser.add_argument("audit", type=Path)
     parser.add_argument(
+        "--source-root",
+        type=Path,
+        default=Path("."),
+        help="source tree whose documented unittests back rendered examples",
+    )
+    parser.add_argument(
         "--require-complete",
         action="store_true",
         help="fail while any public page remains classified as add",
@@ -81,6 +87,31 @@ def audit_rows(audit: Path) -> dict[str, tuple[str, str]]:
     return rows
 
 
+def documented_unittest_count(source_root: Path) -> int:
+    source_dir = source_root / "source" / "geodesy"
+    if not source_dir.is_dir():
+        fail(f"public source tree is missing: {source_dir}")
+
+    count = 0
+    inline_example = re.compile(r"^[ \\t]*\\*[ \\t]+Example:[ \\t]*$", re.MULTILINE)
+    documented_unittest = re.compile(
+        r"^[ \\t]*///[^\\n]*\\n[ \\t]*(?:@[A-Za-z_][^\\n]*[ \\t]+)?unittest\\b",
+        re.MULTILINE,
+    )
+
+    for source in sorted(source_dir.rglob("*.d")):
+        relative = source.relative_to(source_dir)
+        if "internal" in relative.parts:
+            continue
+
+        text = source.read_text()
+        if inline_example.search(text):
+            fail(f"legacy inline Example block remains in public source: {source}")
+        count += len(documented_unittest.findall(text))
+
+    return count
+
+
 def main() -> None:
     args = parse_arguments()
 
@@ -91,6 +122,7 @@ def main() -> None:
 
     pages = rendered_pages(args.site)
     rows = audit_rows(args.audit)
+    compiled_examples = documented_unittest_count(args.source_root)
 
     missing = sorted(set(pages) - set(rows))
     stale = sorted(set(rows) - set(pages))
@@ -121,6 +153,13 @@ def main() -> None:
         if status == "existing" and not has_example:
             fail(f"expected rendered Example is missing: {name}")
 
+    if compiled_examples != counts["existing"]:
+        fail(
+            "documented unittest count does not match existing examples: "
+            f"{compiled_examples} documented unittests, "
+            f"{counts['existing']} existing audit rows"
+        )
+
     if args.require_complete and counts["add"]:
         fail(
             f"{counts['add']} public pages still require dedicated examples"
@@ -129,7 +168,7 @@ def main() -> None:
     print(
         "PASS: public API example audit covers "
         f"{len(pages)} pages "
-        f"(existing={counts['existing']}, "
+        f"(existing={counts['existing']} compiled, "
         f"add={counts['add']}, family={counts['family']})"
     )
 
