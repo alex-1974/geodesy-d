@@ -885,20 +885,6 @@ public:
      *     result is produced; otherwise `false`. Before validation,
      *     `result` is reset to `GeodesicDirectResult!T.init`.
      *
-     * Example:
-     * ---
-     * import geodesy;
-     *
-     * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
-     * const start = GeographicCoordinate!double.fromComponents(
-     *     Latitude!double.fromDegrees(48.20849),
-     *     Longitude!double.fromDegrees(16.37208));
-     *
-     * GeodesicDirectResult!double result;
-     * assert(solver.tryDirect(
-     *     start, Angle!double.fromDegrees(90.0), 1_000.0, result));
-     * assert(result.position.longitude.degrees > 16.37208);
-     * ---
      */
     bool tryDirect(
         const GeographicCoordinate!T start,
@@ -1077,6 +1063,23 @@ public:
         return true;
     }
 
+    /// Example using bool tryDirect( const GeographicCoordinate!T start, const Angle!T initialAzimuth, const T .
+    @safe unittest
+    {
+        import geodesy;
+        
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        
+        GeodesicDirectResult!double result;
+        assert(solver.tryDirect(
+            start, Angle!double.fromDegrees(90.0), 1_000.0, result));
+        assert(result.position.longitude.degrees > 16.37208);
+    }
+
+
 
         /**
      * Solve the direct geodesic problem with throwing failure semantics.
@@ -1135,23 +1138,6 @@ public:
      *     shortest-geodesic solution is produced; otherwise `false`. Before
      *     validation, `result` is reset to `GeodesicInverseResult!T.init`.
      *
-     * Example:
-     * ---
-     * import geodesy;
-     *
-     * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
-     * const vienna = GeographicCoordinate!double.fromComponents(
-     *     Latitude!double.fromDegrees(48.20849),
-     *     Longitude!double.fromDegrees(16.37208));
-     * const newYork = GeographicCoordinate!double.fromComponents(
-     *     Latitude!double.fromDegrees(40.7128),
-     *     Longitude!double.fromDegrees(-74.0060));
-     *
-     * GeodesicInverseResult!double result;
-     * assert(solver.tryInverse(vienna, newYork, result));
-     * assert(result.distance > 6_000_000.0);
-     * assert(result.distance < 7_000_000.0);
-     * ---
      */
     bool tryInverse(
         const GeographicCoordinate!T start,
@@ -1239,6 +1225,26 @@ public:
 
         return true;
     }
+
+    /// Example using bool tryInverse( const GeographicCoordinate!T start, const GeographicCoordinate!T end, out.
+    @safe unittest
+    {
+        import geodesy;
+        
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const newYork = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(40.7128),
+            Longitude!double.fromDegrees(-74.0060));
+        
+        GeodesicInverseResult!double result;
+        assert(solver.tryInverse(vienna, newYork, result));
+        assert(result.distance > 6_000_000.0);
+        assert(result.distance < 7_000_000.0);
+    }
+
 
 
         /**
