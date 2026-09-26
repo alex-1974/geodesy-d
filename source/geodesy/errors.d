@@ -1,4 +1,18 @@
-/** Error types used by checked geodesy-d value construction and operations. */
+/**
+ * Error types used by checked geodesy-d value construction and operations.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.errors;
 
 /** Thrown by convenience APIs when an input is invalid or a checked operation cannot produce a valid result. */
