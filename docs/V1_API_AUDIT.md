@@ -1573,3 +1573,62 @@ The conditional validation builds were compiled with the respective compiler
 version identifiers through `DFLAGS`, not passed as runtime arguments.
 
 No additional public/internal boundary correction is required by V1-F.
+
+
+## V1-G — source compatibility and named arguments
+
+Status: **in progress**
+
+Review dimensions:
+
+~~~text
+G1  public parameter names as source API
+G2  checked / throwing pair parameter-name parity
+G3  factory-pair parameter-name parity
+G4  source-first / UFCS call-shape stability
+G5  external named-argument consumer
+~~~
+
+### G1-G4 initial review
+
+D named arguments make public parameter identifiers potentially
+source-significant. The audit therefore treats them as part of the v1 source
+contract rather than as implementation-only spelling.
+
+Initial family review finds consistent vocabulary:
+
+~~~text
+source
+ellipsoid
+result
+zone
+hemisphere
+transform
+start / end
+initialAzimuth
+distance
+translationX/Y/Z
+rotationX/Y/Z
+scaleDifference
+~~~
+
+Checked/throwing operation pairs preserve the same input parameter names and
+ordering; checked forms add only the trailing `out result` channel.
+Construction pairs follow the same rule.
+
+The V1-B one-shot UTM correction was an intentional pre-v1 source break.
+Its accepted final shape is source-first:
+
+~~~d
+tryForwardUtm(source, ellipsoid, result)
+forwardUtm(source, ellipsoid)
+tryReverseUtm(source, ellipsoid, result)
+reverseUtm(source, ellipsoid)
+~~~
+
+The parameter names `source`, `ellipsoid`, and `result` are now treated
+as part of the v1 source contract.
+
+No additional naming/order correction has been identified so far. G5 will
+compile an external consumer that deliberately uses named arguments across
+representative public families.
