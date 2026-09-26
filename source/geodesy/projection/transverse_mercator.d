@@ -463,27 +463,6 @@ private ComplexPair!T pairWithRealAdded(T)(
  *
  * `.init` is invalid. Prepared objects are intended for reuse.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const tm = TransverseMercator!double.fromParameters(
- *     wgs84!double(),
- *     Latitude!double.fromDegrees(0.0),
- *     Longitude!double.fromDegrees(15.0),
- *     0.9996,
- *     500_000.0,
- *     0.0);
- *
- * const source = GeographicCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.0),
- *     Longitude!double.fromDegrees(16.0));
- *
- * const projected = tm.forward(source);
- * const factors = tm.forwardFactors(source);
- * assert(projected.easting > 500_000.0);
- * assert(factors.pointScale > 0.0);
- * ---
  */
 struct TransverseMercator(T)
 if (isGeodesyScalar!T)
@@ -2285,6 +2264,30 @@ public:
         return result;
     }
 }
+
+/// Example using struct TransverseMercator(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const tm = TransverseMercator!double.fromParameters(
+        wgs84!double(),
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(15.0),
+        0.9996,
+        500_000.0,
+        0.0);
+    
+    const source = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0));
+    
+    const projected = tm.forward(source);
+    const factors = tm.forwardFactors(source);
+    assert(projected.easting > 500_000.0);
+    assert(factors.pointScale > 0.0);
+}
+
 
 
 unittest
