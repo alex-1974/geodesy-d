@@ -1,4 +1,18 @@
-/** Strong angular and geographic angular-coordinate value types. */
+/**
+ * Strong angular and geographic angular-coordinate value types.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.angle;
 
 import std.math : PI;
@@ -30,7 +44,28 @@ if (isGeodesyScalar!T)
     return (radians / pi!T) * cast(T) 180;
 }
 
-/** A finite angle stored canonically in radians. */
+/**
+ * A finite angle stored canonically in radians.
+ *
+ * `.init` represents zero radians. Construction accepts `float`, `double`,
+ * or `real`; checked factories reject non-finite input without throwing,
+ * while throwing factories report the same failure with
+ * `GeodesyValueException`.
+ *
+ * No allocation is performed by checked construction or value access.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const quarterTurn = Angle!double.fromDegrees(90.0);
+ * assert(quarterTurn.degrees == 90.0);
+ *
+ * Angle!double checked;
+ * assert(Angle!double.tryFromRadians(0.5, checked));
+ * assert(!Angle!double.tryFromRadians(double.nan, checked));
+ * ---
+ */
 struct Angle(T)
 if (isGeodesyScalar!T)
 {
@@ -97,7 +132,24 @@ public:
     }
 }
 
-/** Geodetic latitude in the closed interval [-pi/2, +pi/2]. */
+/**
+ * Geodetic latitude in the closed interval [-pi/2, +pi/2] radians.
+ *
+ * The equivalent degree domain is [-90,+90]. `.init` is the equator.
+ * Checked factories return `false` for non-finite or out-of-domain input;
+ * throwing factories throw `GeodesyValueException` for the same inputs.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const vienna = Latitude!double.fromDegrees(48.20849);
+ * assert(vienna.degrees > 48.0);
+ *
+ * Latitude!double checked;
+ * assert(!Latitude!double.tryFromDegrees(90.0001, checked));
+ * ---
+ */
 struct Latitude(T)
 if (isGeodesyScalar!T)
 {
@@ -170,7 +222,29 @@ public:
     }
 }
 
-/** Geodetic longitude in the closed interval [-pi, +pi]. */
+/**
+ * Geodetic longitude in the closed interval [-pi,+pi] radians.
+ *
+ * The equivalent degree domain is [-180,+180]. Both antimeridian endpoint
+ * representations are accepted by construction. `normalized` maps the
+ * positive endpoint to the unique half-open representation from -pi
+ * inclusive to +pi exclusive. `.init` is the prime meridian.
+ *
+ * Checked factories return `false` for non-finite or out-of-domain input;
+ * throwing factories throw `GeodesyValueException` for the same inputs.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const eastAntimeridian = Longitude!double.fromDegrees(180.0);
+ * assert(eastAntimeridian.degrees == 180.0);
+ * assert(eastAntimeridian.normalized.degrees == -180.0);
+ *
+ * Longitude!double checked;
+ * assert(!Longitude!double.tryFromDegrees(181.0, checked));
+ * ---
+ */
 struct Longitude(T)
 if (isGeodesyScalar!T)
 {
