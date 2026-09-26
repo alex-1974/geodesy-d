@@ -1300,12 +1300,23 @@ public:
     }
 
 
-    /**
-     * Prepare a Transverse Mercator operation without throwing.
+        /**
+     * Prepare a bounded Transverse Mercator operation without throwing.
      *
-     * Returns false for an invalid ellipsoid, flattening above 0.01, a
-     * non-positive/non-finite scale factor, non-finite false offsets, or
-     * non-representable derived constants.
+     * Params:
+     *     ellipsoid = Valid spherical or oblate ellipsoid with flattening
+     *         0 <= f <= 0.01; its semi-major axis defines the linear unit.
+     *     latitudeOfNaturalOrigin = EPSG 8801 latitude of natural origin.
+     *     longitudeOfNaturalOrigin = EPSG 8802 longitude of natural origin.
+     *     scaleFactorAtNaturalOrigin = Finite positive EPSG 8805 scale factor.
+     *     falseEasting = Finite EPSG 8806 false easting in the ellipsoid linear unit.
+     *     falseNorthing = Finite EPSG 8807 false northing in the same linear unit.
+     *     result = Receives the prepared projection on success.
+     *
+     * Returns:
+     *     `true` when all parameters and derived constants are supported and
+     *     representable; otherwise `false`. On failure `result` remains
+     *     unchanged.
      */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -1366,7 +1377,25 @@ public:
     }
 
 
-    /** Prepare a Transverse Mercator operation or throw on invalid parameters. */
+        /**
+     * Prepare a bounded Transverse Mercator operation.
+     *
+     * Params:
+     *     ellipsoid = Valid spherical or oblate ellipsoid with flattening
+     *         0 <= f <= 0.01; its semi-major axis defines the linear unit.
+     *     latitudeOfNaturalOrigin = EPSG 8801 latitude of natural origin.
+     *     longitudeOfNaturalOrigin = EPSG 8802 longitude of natural origin.
+     *     scaleFactorAtNaturalOrigin = Finite positive EPSG 8805 scale factor.
+     *     falseEasting = Finite EPSG 8806 false easting in the ellipsoid linear unit.
+     *     falseNorthing = Finite EPSG 8807 false northing in the same linear unit.
+     *
+     * Returns:
+     *     The prepared projection.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the parameters or derived constants
+     *     cannot form a supported projection.
+     */
     static TransverseMercator fromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfNaturalOrigin,
@@ -2024,11 +2053,20 @@ public:
         }
 
 
-    /**
+        /**
      * Project a geographic coordinate.
      *
-     * Non-polar inputs outside `abs(delta longitude) <= 60 degrees` are
-     * rejected. Geographic poles are independent of source longitude.
+     * Non-polar inputs are accepted only for |delta longitude| <= 60 degrees
+     * from the natural-origin meridian. Geographic poles are independent of
+     * source longitude. Output uses the ellipsoid linear unit.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *     result = Receives projected easting and northing on success.
+     *
+     * Returns:
+     *     `true` for a valid projection and supported, representable source;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -2096,7 +2134,19 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for `tryForward`. */
+        /**
+     * Project a geographic coordinate.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *
+     * Returns:
+     *     Projected easting and northing in the ellipsoid linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the projection is invalid or the
+     *     source lies outside the supported bounded domain.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -2110,11 +2160,20 @@ public:
     }
 
 
-    /**
+        /**
      * Reverse a projected coordinate.
      *
-     * The result is rejected if it belongs outside the supported standard
-     * sheet/domain.
+     * The represented-coordinate sheet must correspond to the supported
+     * forward domain. Reverse handling preserves the projection's defined pole
+     * canonicalization and representation-aware sheet boundaries.
+     *
+     * Params:
+     *     source = Projected easting and northing in the ellipsoid linear unit.
+     *     result = Receives the geographic coordinate on success.
+     *
+     * Returns:
+     *     `true` for a valid projection and supported represented coordinate;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
@@ -2201,7 +2260,19 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for `tryReverse`. */
+        /**
+     * Reverse a projected coordinate.
+     *
+     * Params:
+     *     source = Projected easting and northing in the ellipsoid linear unit.
+     *
+     * Returns:
+     *     The corresponding geographic coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the projection is invalid or the
+     *     coordinate lies outside the supported represented sheet/domain.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
