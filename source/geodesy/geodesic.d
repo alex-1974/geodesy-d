@@ -1,17 +1,29 @@
 /**
  * Direct and inverse ellipsoidal geodesic mathematics.
- *
+ * 
  * The implementation contract is defined by ADR-0008.
- *
+ * 
  * The current implementation provides:
- *
+ * 
  * - prepared ellipsoid state;
  * - public angular canonicalization semantics;
  * - analytical spherical geodesic handling;
  * - the Karney series direct solution for supported oblate ellipsoids;
  * - robust Karney-style inverse dispatch and safeguarded iteration.
- *
+ * 
  * The public direct and inverse surface is aggregate-exported by `geodesy`.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
  */
 module geodesy.geodesic;
 
@@ -273,8 +285,12 @@ if (isGeodesyScalar!T)
 /**
  * Result of a direct geodesic operation.
  *
- * `finalAzimuth` is the forward azimuth at the endpoint: the heading of
- * the same oriented geodesic continuing beyond the endpoint.
+ * `position` is the endpoint. `finalAzimuth` is the forward azimuth at
+ * that endpoint: the heading of the same oriented geodesic if continued
+ * beyond the endpoint. It is not a back azimuth.
+ *
+ * Azimuths use the public canonical angle interval from -pi inclusive to +pi
+ * exclusive.
  */
 struct GeodesicDirectResult(T)
 if (isGeodesyScalar!T)
@@ -312,15 +328,14 @@ public:
 /**
  * Result of an inverse geodesic operation.
  *
- * `initialAzimuth` is the forward azimuth at the start point.
- * `finalAzimuth` is the forward azimuth of the same oriented geodesic at the
- * endpoint, i.e. the heading obtained by continuing beyond the endpoint.
+ * `distance` is the shortest geodesic distance and uses the same linear unit
+ * as the solver ellipsoid semi-major axis. `initialAzimuth` is the forward
+ * azimuth at the start; `finalAzimuth` is the forward azimuth of the same
+ * oriented geodesic at the endpoint, not the back azimuth.
  *
- * For coincident endpoints GEO-A defines a unique canonical result:
- *
- *     distance       = +0
- *     initialAzimuth = +0
- *     finalAzimuth   = +0
+ * Both azimuths are canonicalized from -pi inclusive to +pi exclusive.
+ * Coincident endpoints have the unique canonical result distance +0,
+ * initial azimuth +0, final azimuth +0.
  */
 struct GeodesicInverseResult(T)
 if (isGeodesyScalar!T)
@@ -377,18 +392,38 @@ public:
 /**
  * Prepared direct/inverse geodesic solver for one reference ellipsoid.
  *
- * The initial support profile is:
+ * Supported ellipsoids satisfy `a > 0` and `0 <= f <= 0.01`; no Earth-size
+ * restriction applies. Linear distances use the same unit as the ellipsoid
+ * semi-major axis. Exact spheres and supported oblate ellipsoids are handled.
  *
- *     a > 0
- *     0 <= f <= 0.01
+ * `.init` is invalid. Prepare a solver once and reuse it for multiple direct
+ * or inverse operations.
  *
- * No Earth-size restriction applies. Linear geodesic values use the same
- * unit as the ellipsoid semi-major axis.
+ * Direct operations accept finite signed distance. Negative distance follows
+ * the same oriented geodesic backward. Inverse operations return the shortest
+ * geodesic and canonical coincident-point semantics.
  *
- * The direct operation supports the exact sphere and the full initial
- * oblate-ellipsoid profile. The module remains intentionally outside the
- * aggregate export until the inverse solver and its validation gates are
- * complete.
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+ *
+ * const vienna = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * const newYork = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(40.7128),
+ *     Longitude!double.fromDegrees(-74.0060));
+ *
+ * const inverse = solver.inverse(vienna, newYork);
+ * const direct = solver.direct(
+ *     vienna, inverse.initialAzimuth, inverse.distance);
+ *
+ * assert(inverse.distance > 0.0);
+ * assert(direct.position.latitude.degrees < 41.0);
+ * ---
  */
 struct Geodesic(T)
 if (isGeodesyScalar!T)
@@ -832,11 +867,43 @@ public:
 
 
     /**
-     * Solve the direct geodesic problem without throwing.
-     *
-     * The spherical case is analytical.  Supported oblate ellipsoids use
-     * the Karney distance-series formulation prepared by this solver.
-     */
+ * Solve the direct geodesic problem without throwing.
+ *
+ * Starting from `start`, follow `initialAzimuth` for signed `distance`.
+ * Distance uses the ellipsoid linear unit. A negative distance travels
+ * backward along the same oriented geodesic. Returned longitude and final
+ * azimuth use the library's canonical angular representation.
+ *
+ * Params:
+ *     start = Geographic start position.
+ *     initialAzimuth = Initial forward azimuth; arbitrary finite angle values
+ *         are canonicalized by the solver.
+ *     distance = Finite signed distance in the ellipsoid linear unit.
+ *     result = Receives endpoint and final forward azimuth.
+ *
+ * Returns:
+ *     `true` when the prepared solver is valid and a finite representable
+ *     result is produced; otherwise `false`.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+ * const start = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * GeodesicDirectResult!double result;
+ * assert(solver.tryDirect(
+ *     start,
+ *     Angle!double.fromDegrees(90.0),
+ *     1_000.0,
+ *     result));
+ *
+ * assert(result.position.longitude.degrees > 16.37208);
+ * ---
+ */
     bool tryDirect(
         const GeographicCoordinate!T start,
         const Angle!T initialAzimuth,
@@ -1040,14 +1107,46 @@ public:
 
 
     /**
-     * Solve the inverse geodesic problem without throwing.
-     *
-     * Returns the shortest geodesic distance and the forward azimuth at each
-     * endpoint. All public azimuths use GEO-A's canonical half-open interval
-     * from -pi inclusive to +pi exclusive.
-     *
-     * Coincident endpoints return the unique canonical result (+0,+0,+0).
-     */
+ * Solve the inverse geodesic problem without throwing.
+ *
+ * Returns the shortest geodesic between `start` and `end`, together with
+ * the forward azimuth at each endpoint. The final azimuth is the heading of
+ * the same oriented geodesic continuing beyond the endpoint; it is not the
+ * back azimuth.
+ *
+ * Coincident endpoints return the unique canonical result (+0,+0,+0).
+ * Distance uses the ellipsoid linear unit; azimuths are canonicalized from
+ * -pi inclusive to +pi exclusive.
+ *
+ * Params:
+ *     start = Geographic start position.
+ *     end = Geographic endpoint.
+ *     result = Receives distance, initial azimuth, and final azimuth.
+ *
+ * Returns:
+ *     `true` when the prepared solver is valid and a finite representable
+ *     shortest-geodesic solution is produced; otherwise `false`.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+ *
+ * const vienna = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208));
+ *
+ * const newYork = GeographicCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(40.7128),
+ *     Longitude!double.fromDegrees(-74.0060));
+ *
+ * GeodesicInverseResult!double result;
+ * assert(solver.tryInverse(vienna, newYork, result));
+ * assert(result.distance > 6_000_000.0);
+ * assert(result.distance < 7_000_000.0);
+ * ---
+ */
     bool tryInverse(
         const GeographicCoordinate!T start,
         const GeographicCoordinate!T end,
