@@ -3,9 +3,11 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source_root="${SOURCE_ROOT:-$root}"
+tool_root="${TOOL_ROOT:-$root}"
 output_root="${OUTPUT_ROOT:-$source_root}"
 
 source_root="$(cd "$source_root" && pwd)"
+tool_root="$(cd "$tool_root" && pwd)"
 mkdir -p "$output_root"
 output_root="$(cd "$output_root" && pwd)"
 
@@ -31,7 +33,7 @@ fi
 
 echo "Generating ddox input for ${#public_sources[@]} public modules from $source_root..."
 
-python3 "$source_root/tools/verify-public-module-ddoc.py" "$source_root"
+python3 "$tool_root/tools/verify-public-module-ddoc.py" "$source_root"
 
 (
     cd "$source_root"
@@ -59,9 +61,9 @@ if grep -Rqi 'geodesy\.internal' "$site_dir" --include='*.html'; then
     exit 1
 fi
 
-python3 "$source_root/tools/verify-public-api-examples.py" \
+python3 "$tool_root/tools/verify-public-api-examples.py" \
     "$site_dir" \
-    "$source_root/docs/public-api-example-audit.md" \
+    "$tool_root/docs/public-api-example-audit.md" \
     --source-root "$source_root" \
     --require-complete
 
