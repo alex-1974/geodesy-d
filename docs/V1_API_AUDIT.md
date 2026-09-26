@@ -1111,3 +1111,60 @@ LDC 1.41   PASS — 22 modules
 
 No further construction, `.init`, or mutability correction is required by
 V1-C.
+
+
+## V1-D — failure and checked/throwing semantics
+
+Status: **in progress**
+
+Review dimensions:
+
+~~~text
+D1  checked / throwing operation pairs
+D2  checked-only operations and whether a throwing peer is semantically useful
+D3  failure-result state and output atomicity
+D4  exception type and failure-category consistency
+D5  receiver-invalid vs input-invalid behavior
+~~~
+
+### D1 — checked/throwing family inventory
+
+The dominant public operation convention is coherent:
+
+~~~text
+tryX(..., out result)  -> bool, nothrow, result channel
+X(...)                 -> value or exception
+~~~
+
+This pairing is present for validated construction, coordinate conversion,
+topocentric conversion, Transverse Mercator operations and factors,
+Pseudo-Mercator operations, UTM projection operations and factors, one-shot
+UTM operations, geocentric translation, and Helmert application.
+
+Two public checked-only families remain for explicit review:
+
+~~~text
+Geodesic.tryDirect / Geodesic.tryInverse
+tryStandardUtmZone
+~~~
+
+### D2 — preliminary semantic distinction
+
+These two cases are not automatically equivalent.
+
+`Geodesic.tryDirect` and `tryInverse` are ordinary solver operations on a
+prepared receiver and return a single result object. Their shape closely
+matches the projection/conversion families that already provide both checked
+and throwing forms. The absence of `direct` / `inverse` is therefore a
+candidate API-family asymmetry.
+
+`tryStandardUtmZone`, in contrast, is a domain-selection query with two
+outputs and an expected negative answer outside the standard UTM latitude
+region. Its `false` is naturally interpretable as “no standard UTM zone
+exists for this coordinate,” rather than necessarily an exceptional operation
+failure. A throwing `standardUtmZone` peer would also require either a new
+compound result type or a different return shape because the checked form has
+two outputs. This is therefore a semantic specialization, not yet evidence of
+a missing API.
+
+Detailed decisions follow after D3-D5.
