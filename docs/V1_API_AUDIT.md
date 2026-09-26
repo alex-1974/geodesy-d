@@ -1168,3 +1168,49 @@ two outputs. This is therefore a semantic specialization, not yet evidence of
 a missing API.
 
 Detailed decisions follow after D3-D5.
+
+
+### D3-D5 — failure-state, exception, and invalid-state semantics
+
+Status: **reviewed**
+
+**D3 output atomicity:** PASS. Public checked operations use D `out`
+destinations, so caller-visible outputs are reset to their type's `.init`
+state on entry. Nested checked operations preserve that behavior. Operations
+that require multi-step preparation use local intermediates/candidates before
+committing the final result. No public operation was found that exposes a
+partially successful output after returning `false`.
+
+**D4 exception consistency:** PASS. Throwing convenience wrappers consistently
+translate checked-operation failure to `GeodesyValueException`. They do not
+introduce a second public failure taxonomy for domain/preparation/numeric
+failure.
+
+**D5 invalid receiver vs invalid input:** PASS. Prepared-operation methods
+treat an invalid receiver as checked failure (`false`) and their throwing
+peers as `GeodesyValueException`. Domain rejection and non-representable
+numeric results use the same public channels. Error strings may describe the
+combined causes; callers that need branchable failure handling use the checked
+form.
+
+### D2 decision
+
+`tryStandardUtmZone` remains intentionally checked-only. Its negative result
+is a normal domain query outcome outside the standard UTM latitude region,
+and its two-output shape does not naturally map to the library's value-returning
+throwing-wrapper convention. No `standardUtmZone` peer is required for v1.
+
+`Geodesic.tryDirect` and `Geodesic.tryInverse` are different: they are
+ordinary operations on a prepared solver, each has a single public result
+type, and their failure channels match the projection/conversion families.
+For API-family consistency, v1 should add:
+
+~~~d
+GeodesicDirectResult!T direct(...);
+GeodesicInverseResult!T inverse(...);
+~~~
+
+Each is a thin throwing convenience wrapper over the existing checked method
+and throws `GeodesyValueException` when the solver is invalid, an input is
+outside the supported finite domain, or a finite representable result cannot
+be produced. No new failure category or algorithm is introduced.
