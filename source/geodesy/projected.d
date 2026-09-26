@@ -30,16 +30,6 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
  * non-finite components; throwing construction reports the same failure with
  * `GeodesyValueException`.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const p = ProjectedCoordinate!double.fromComponents(
- *     500_000.0, 5_340_000.0);
- *
- * assert(p.easting == 500_000.0);
- * assert(p.northing == 5_340_000.0);
- * ---
  */
 struct ProjectedCoordinate(T)
 if (isGeodesyScalar!T)
@@ -113,6 +103,20 @@ public:
         return _northing;
     }
 }
+
+/// Example constructing a projected coordinate.
+@safe unittest
+{
+    import geodesy;
+    
+    const p = ProjectedCoordinate!double.fromComponents(
+        500_000.0, 5_340_000.0);
+    
+    assert(p.easting == 500_000.0);
+    assert(p.northing == 5_340_000.0);
+    
+}
+
 
 
 unittest
