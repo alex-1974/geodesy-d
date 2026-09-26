@@ -126,8 +126,10 @@ for version in "${versions[@]}"; do
     test -f "$version_site/geodesy.html"
 done
 
-latest_site="$site_dir/$latest_version"
-cp -a "$latest_site/." "$site_dir/"
+current_output="$work_dir/output/current"
+SOURCE_ROOT="$root" TOOL_ROOT="$root" VERIFY_CONTRACTS=1 \
+    OUTPUT_ROOT="$current_output" bash "$root/tools/build-docs.sh"
+cp -a "$current_output/build/ddox/site/." "$site_dir/"
 
 cat > "$site_dir/versions.html" <<EOF
 <!doctype html>
@@ -135,10 +137,10 @@ cat > "$site_dir/versions.html" <<EOF
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>geodesy-d API documentation versions</title></head>
 <body>
 <h1>geodesy-d API documentation</h1>
-<p>The root documentation follows the current stable release: <strong>${latest_version}</strong>.</p>
+<p>The root documentation follows the current <strong>main</strong> branch.</p>
 <ul>
-<li><a href="./geodesy.html">${latest_version} — latest stable</a></li>
-<li><a href="./v1.0.0/geodesy.html">v1.0.0</a></li>
+<li><a href="./geodesy.html">current main</a></li>
+<li><a href="./v1.0.0/geodesy.html">v1.0.0 — latest stable release</a></li>
 </ul>
 </body>
 </html>
@@ -146,5 +148,8 @@ EOF
 
 test -f "$site_dir/geodesy.html"
 test -f "$site_dir/v1.0.0/geodesy.html"
-cmp "$site_dir/geodesy.html" "$site_dir/v1.0.0/geodesy.html"
-echo "PASS: root documentation matches v1.0.0"
+if cmp -s "$site_dir/geodesy.html" "$site_dir/v1.0.0/geodesy.html"; then
+    echo "note: current main documentation is identical to $latest_version"
+else
+    echo "PASS: current main documentation is distinct from $latest_version"
+fi
