@@ -85,9 +85,37 @@ working tree               CLEAN
 The API-contract rerun followed correction of a stale validation call site that
 still used the pre-V1-B UTM argument order; production API code was not changed.
 
-The normal GitHub Actions CI already defines the hosted compiler matrix. The
-release candidate must also have a green hosted run on the exact candidate
-commit.
+The normal GitHub Actions CI already defines the hosted compiler matrix. Hosted
+CI, PROJ differential validation, geodesic platform validation, and topocentric
+platform validation passed on candidate
+`16332a3d5221db89f5a1edd1341d4a0ed0a98a5d`.
+
+The same candidate exposed two stale validation harnesses, not production-code
+defects:
+
+- `validation/utm_boundary_property.d` still used the pre-V1-B ellipsoid-first
+  UTM free-function argument order.
+- `validation/transverse_mercator_newton_validation.d` lived outside the
+  `geodesy.projection` package after V1-F intentionally made Newton
+  instrumentation package-internal.
+
+Production API/library code was unchanged. The harness corrections landed in
+`509d2cf8f6eb0e190167fe9bc609c668bd5f92eb` and
+`ce730656b591b0ae03b38c98b59d0d1749c17bd4`.
+
+Local validation on `ce730656b591b0ae03b38c98b59d0d1749c17bd4` passed:
+
+~~~text
+TM Newton structured / DMD 2.111.0   PASS
+TM Newton structured / LDC           PASS
+UTM boundary/property / DMD 2.111.0  PASS — 7,986 checks, 0 failures
+UTM boundary/property / LDC          PASS — 7,986 checks, 0 failures
+working tree                         CLEAN
+~~~
+
+Only the TM and UTM hosted matrices now require rerun on the corrected
+candidate; the already-green hosted gates do not need to be repeated solely
+because these two commits changed validation harnesses.
 
 ## R5 — supported platform matrix
 
@@ -121,11 +149,12 @@ dependencies.
 
 Before tagging:
 
-- [ ] confirm required PROJ/differential validation on the release candidate.
-- [ ] confirm Transverse Mercator validation.
-- [ ] confirm UTM validation.
-- [ ] confirm topocentric validation.
-- [ ] confirm geodesic validation.
+- [x] confirm required PROJ/differential validation on candidate `16332a3...`.
+- [ ] confirm Transverse Mercator validation on corrected candidate
+  `ce730656...`.
+- [ ] confirm UTM validation on corrected candidate `ce730656...`.
+- [x] confirm topocentric validation on candidate `16332a3...`.
+- [x] confirm geodesic validation on candidate `16332a3...`.
 - [ ] retain exact run/commit provenance for the release decision.
 
 ## R7 — clean external consumer
@@ -150,7 +179,7 @@ Before tagging:
 - [ ] no release-only generated artifacts are accidentally tracked.
 - [ ] release-facing links and documentation paths resolve.
 - [ ] version/release notes agree on `v1.0.0`.
-- [ ] final candidate commit SHA is recorded.
+- [x] corrected release-candidate commit recorded as `ce730656b591b0ae03b38c98b59d0d1749c17bd4`; final tag SHA remains contingent on remaining release-readiness documentation/hygiene commits.
 - [ ] tag `v1.0.0` only after all mandatory gates pass.
 - [ ] verify the published DUB package from a fresh consumer after publication (post-publish verification; also tracked by R2/R7).
 
