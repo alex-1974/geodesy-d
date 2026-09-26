@@ -78,7 +78,19 @@ private:
     }
 
 public:
-    /** Construct from finite East/North/Up components without throwing. */
+        /**
+     * Construct finite East/North/Up components without throwing.
+     *
+     * Params:
+     *     east = Finite East component in the frame linear unit.
+     *     north = Finite North component in the same linear unit.
+     *     up = Finite Up component in the same linear unit.
+     *     result = Receives the coordinate on success.
+     *
+     * Returns:
+     *     `true` when all components are finite; otherwise `false`. On
+     *     failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const T east,
         const T north,
@@ -100,10 +112,19 @@ public:
         return true;
     }
 
-    /**
-     * Construct from East/North/Up components.
+        /**
+     * Construct finite East/North/Up components.
      *
-     * Throws `GeodesyValueException` when any component is non-finite.
+     * Params:
+     *     east = Finite East component in the frame linear unit.
+     *     north = Finite North component in the same linear unit.
+     *     up = Finite Up component in the same linear unit.
+     *
+     * Returns:
+     *     The local coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when any component is non-finite.
      */
     static TopocentricCoordinate fromComponents(
         const T east,
@@ -328,12 +349,21 @@ public:
         return _ellipsoid;
     }
 
-    /**
+        /**
      * Prepare a frame from a geodetic origin without throwing.
      *
      * At either geographic pole, the explicitly supplied longitude defines
-     * the East/North orientation and is therefore used directly rather than
-     * being reconstructed from ECEF.
+     * East/North orientation and is used directly rather than reconstructed
+     * from ECEF.
+     *
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Finite geodetic origin using the same linear unit for height.
+     *     result = Receives the prepared frame on success.
+     *
+     * Returns:
+     *     `true` when EPSG 9602 preparation and ENU orientation are finite;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     static bool tryFromGeodeticOrigin(
         const Ellipsoid!T ellipsoid,
@@ -388,11 +418,19 @@ public:
         return true;
     }
 
-    /**
+        /**
      * Prepare a frame from a geodetic origin.
      *
-     * Throws `GeodesyValueException` if the ellipsoid is invalid or a finite
-     * prepared frame cannot be produced.
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Finite geodetic origin using the same linear unit for height.
+     *
+     * Returns:
+     *     The prepared frame.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the ellipsoid is invalid or a finite
+     *     prepared frame cannot be produced.
      */
     static TopocentricFrame fromGeodeticOrigin(
         const Ellipsoid!T ellipsoid,
@@ -413,21 +451,25 @@ public:
         return result;
     }
 
-    /**
+        /**
      * Prepare a frame from a geocentric origin without throwing.
      *
-     * The supplied represented X/Y/Z values are retained as the prepared
-     * frame origin after promotion to the working scalar. They are not
-     * reconstructed from the derived geodetic coordinate.
+     * The supplied represented X/Y/Z values are retained after promotion to
+     * the working scalar; they are not reconstructed from the derived
+     * geodetic coordinate. Orientation follows canonical EPSG 9602 reverse
+     * semantics: the exact geocentre is rejected, a non-zero rotation-axis
+     * point is accepted with canonical zero longitude, and deep-interior
+     * origins inherit the canonical nearest-ellipsoid/min-|h| solution.
      *
-     * Orientation is obtained through the existing canonical reverse EPSG
-     * 9602 semantics. Consequently:
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Geocentric origin in the same linear unit.
+     *     result = Receives the prepared frame on success.
      *
-     * - the exact geocentre `(0,0,0)` is rejected;
-     * - a non-zero point on the rotation axis is accepted;
-     * - rotation-axis longitude is canonically zero;
-     * - deep-interior origins inherit the existing EPSG 9602 canonical
-     *   nearest-ellipsoid/min-|h| solution.
+     * Returns:
+     *     `true` when the origin has a defined canonical geodetic orientation
+     *     and finite ENU state; otherwise `false`. On failure `result`
+     *     remains unchanged.
      */
     static bool tryFromGeocentricOrigin(
         const Ellipsoid!T ellipsoid,
@@ -490,11 +532,19 @@ public:
         return true;
     }
 
-    /**
+        /**
      * Prepare a frame from a geocentric origin.
      *
-     * Throws `GeodesyValueException` if the ellipsoid is invalid, the origin
-     * is the exact geocentre, or a finite prepared frame cannot be produced.
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Geocentric origin in the same linear unit.
+     *
+     * Returns:
+     *     The prepared frame.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the ellipsoid is invalid, the origin
+     *     is the exact geocentre, or no finite prepared frame can be produced.
      */
     static TopocentricFrame fromGeocentricOrigin(
         const Ellipsoid!T ellipsoid,
