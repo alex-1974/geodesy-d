@@ -1,4 +1,18 @@
-/** Geodetic coordinate value type. */
+/**
+ * Three-dimensional geodetic coordinate value type.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.geodetic;
 
 import geodesy.angle : Latitude, Longitude;
@@ -6,12 +20,33 @@ import geodesy.errors : GeodesyValueException;
 import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 /**
- * A geodetic position represented by geodetic latitude, longitude, and
- * ellipsoidal height.
+ * A geodetic position represented by strong latitude and longitude values and
+ * finite ellipsoidal height.
  *
- * The linear unit of `ellipsoidalHeight` is not encoded in the type. When a
- * coordinate is used with an ellipsoid, height and ellipsoid axes must use the
- * same linear unit.
+ * The linear unit of `ellipsoidalHeight` is not encoded in the type. When
+ * used with an ellipsoid, the height and ellipsoid axes must use the same
+ * linear unit. No datum, CRS, or ellipsoid identity is embedded.
+ *
+ * `.init` represents latitude zero, longitude zero, and zero ellipsoidal
+ * height. Checked construction returns `false` for non-finite height;
+ * throwing construction reports the same failure with
+ * `GeodesyValueException`.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const vienna = GeodeticCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208),
+ *     171.0);
+ *
+ * assert(vienna.ellipsoidalHeight == 171.0);
+ *
+ * GeodeticCoordinate!double checked;
+ * assert(!GeodeticCoordinate!double.tryFromComponents(
+ *     vienna.latitude, vienna.longitude, double.nan, checked));
+ * ---
  */
 struct GeodeticCoordinate(T)
 if (isGeodesyScalar!T)
