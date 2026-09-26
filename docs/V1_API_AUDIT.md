@@ -1115,7 +1115,7 @@ V1-C.
 
 ## V1-D — failure and checked/throwing semantics
 
-Status: **in progress**
+Status: **COMPLETE / PASS**
 
 Review dimensions:
 
@@ -1214,3 +1214,38 @@ Each is a thin throwing convenience wrapper over the existing checked method
 and throws `GeodesyValueException` when the solver is invalid, an input is
 outside the supported finite domain, or a finite representable result cannot
 be produced. No new failure category or algorithm is introduced.
+
+
+### V1-D gate result
+
+Status: **COMPLETE / PASS**
+
+~~~text
+D1  checked / throwing operation pairs      PASS
+D2  checked-only semantic exceptions        PASS
+D3  failure-result/output atomicity         PASS
+D4  exception type consistency              PASS
+D5  invalid receiver/input behavior         PASS
+~~~
+
+Accepted v1 decisions:
+
+- `Geodesic.tryDirect` / `tryInverse` now have the throwing peers
+  `direct` / `inverse`.
+- The throwing peers are thin wrappers over the checked algorithms and throw
+  `GeodesyValueException` on checked-operation failure.
+- `tryStandardUtmZone` remains intentionally checked-only because `false`
+  is a normal domain-query outcome outside the standard UTM latitude region
+  and the operation naturally returns two outputs.
+- Checked-operation outputs preserve the library-wide D `out` failure-state
+  contract.
+
+Validation after the geodesic API-family correction:
+
+~~~text
+DMD 2.111  PASS — 22 modules
+LDC 1.41   PASS — 22 modules
+~~~
+
+No further failure-channel or checked/throwing correction is required by
+V1-D.
