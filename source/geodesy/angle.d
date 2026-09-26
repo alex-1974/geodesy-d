@@ -80,7 +80,17 @@ private:
     }
 
 public:
-    /** Construct from radians without throwing; returns false for non-finite input. */
+    /**
+     * Construct from radians without throwing.
+     *
+     * Params:
+     *     radians = Finite angle in radians.
+     *     result = Receives the constructed angle on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for NaN or infinity. On failure
+     *     `result` remains unchanged.
+     */
     static bool tryFromRadians(const T radians, out Angle result)
         pure nothrow @safe @nogc
     {
@@ -90,7 +100,18 @@ public:
         return true;
     }
 
-    /** Construct from degrees without throwing; returns false for non-finite input. */
+    /**
+     * Construct from degrees without throwing.
+     *
+     * Params:
+     *     degrees = Finite angle in degrees.
+     *     result = Receives the constructed angle on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for NaN, infinity, or when conversion
+     *     to scalar `T` does not produce a finite radian value. On failure
+     *     `result` remains unchanged.
+     */
     static bool tryFromDegrees(const T degrees, out Angle result)
         pure nothrow @safe @nogc
     {
@@ -99,7 +120,18 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
-    /** Construct from radians or throw `GeodesyValueException` for non-finite input. */
+    /**
+     * Construct from radians.
+     *
+     * Params:
+     *     radians = Finite angle in radians.
+     *
+     * Returns:
+     *     The constructed angle.
+     *
+     * Throws:
+     *     `GeodesyValueException` for NaN or infinity.
+     */
     static Angle fromRadians(const T radians)
         @safe
     {
@@ -109,7 +141,19 @@ public:
         return result;
     }
 
-    /** Construct from degrees or throw `GeodesyValueException` for non-finite input. */
+    /**
+     * Construct from degrees.
+     *
+     * Params:
+     *     degrees = Finite angle in degrees.
+     *
+     * Returns:
+     *     The constructed angle.
+     *
+     * Throws:
+     *     `GeodesyValueException` for NaN, infinity, or an unrepresentable
+     *     radian conversion in scalar `T`.
+     */
     static Angle fromDegrees(const T degrees)
         @safe
     {
@@ -164,7 +208,17 @@ private:
     }
 
 public:
-    /** Construct from radians; returns false outside [-pi/2,+pi/2] or for non-finite input. */
+    /**
+     * Construct a latitude from radians without throwing.
+     *
+     * Params:
+     *     radians = Latitude in the closed interval [-pi/2,+pi/2].
+     *     result = Receives the constructed latitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     On failure `result` remains unchanged.
+     */
     static bool tryFromRadians(const T radians, out Latitude result)
         pure nothrow @safe @nogc
     {
@@ -174,7 +228,17 @@ public:
         return true;
     }
 
-    /** Construct from degrees; returns false outside [-90,+90] or for non-finite input. */
+    /**
+     * Construct a latitude from degrees without throwing.
+     *
+     * Params:
+     *     degrees = Latitude in the closed interval [-90,+90] degrees.
+     *     result = Receives the constructed latitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     On failure `result` remains unchanged.
+     */
     static bool tryFromDegrees(const T degrees, out Latitude result)
         pure nothrow @safe @nogc
     {
@@ -183,7 +247,18 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
-    /** Construct from radians or throw when outside the latitude domain. */
+    /**
+     * Construct a latitude from radians.
+     *
+     * Params:
+     *     radians = Latitude in the closed interval [-pi/2,+pi/2].
+     *
+     * Returns:
+     *     The constructed latitude.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Latitude fromRadians(const T radians)
         @safe
     {
@@ -193,7 +268,18 @@ public:
         return result;
     }
 
-    /** Construct from degrees or throw when outside the latitude domain. */
+    /**
+     * Construct a latitude from degrees.
+     *
+     * Params:
+     *     degrees = Latitude in the closed interval [-90,+90] degrees.
+     *
+     * Returns:
+     *     The constructed latitude.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Latitude fromDegrees(const T degrees)
         @safe
     {
@@ -259,7 +345,18 @@ private:
     }
 
 public:
-    /** Construct from radians; returns false outside [-pi,+pi] or for non-finite input. */
+    /**
+     * Construct a longitude from radians without throwing.
+     *
+     * Params:
+     *     radians = Longitude in the closed interval [-pi,+pi].
+     *     result = Receives the constructed longitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     Both antimeridian endpoints are accepted. On failure `result`
+     *     remains unchanged.
+     */
     static bool tryFromRadians(const T radians, out Longitude result)
         pure nothrow @safe @nogc
     {
@@ -269,7 +366,18 @@ public:
         return true;
     }
 
-    /** Construct from degrees; returns false outside [-180,+180] or for non-finite input. */
+    /**
+     * Construct a longitude from degrees without throwing.
+     *
+     * Params:
+     *     degrees = Longitude in the closed interval [-180,+180] degrees.
+     *     result = Receives the constructed longitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     Both antimeridian endpoints are accepted. On failure `result`
+     *     remains unchanged.
+     */
     static bool tryFromDegrees(const T degrees, out Longitude result)
         pure nothrow @safe @nogc
     {
@@ -278,7 +386,18 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
-    /** Construct from radians or throw when outside the longitude domain. */
+    /**
+     * Construct a longitude from radians.
+     *
+     * Params:
+     *     radians = Longitude in the closed interval [-pi,+pi].
+     *
+     * Returns:
+     *     The constructed longitude; both antimeridian endpoints are preserved.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Longitude fromRadians(const T radians)
         @safe
     {
@@ -288,7 +407,18 @@ public:
         return result;
     }
 
-    /** Construct from degrees or throw when outside the longitude domain. */
+    /**
+     * Construct a longitude from degrees.
+     *
+     * Params:
+     *     degrees = Longitude in the closed interval [-180,+180] degrees.
+     *
+     * Returns:
+     *     The constructed longitude; both antimeridian endpoints are preserved.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Longitude fromDegrees(const T degrees)
         @safe
     {
