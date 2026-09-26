@@ -69,8 +69,25 @@ public API contract
 documentation contract
 ~~~
 
-The normal GitHub Actions CI already defines this matrix. The release candidate
-must have a green run on the exact candidate commit.
+Local release-candidate validation on commit
+`ca017a265c40004f56d8dababdec10d7cf32a325`:
+
+~~~text
+DMD 2.111.0 unit tests     PASS — 22 modules
+LDC unit tests             PASS — 22 modules
+DMD release build          PASS
+LDC release build          PASS
+public API contract        PASS
+documentation contract     PASS — 24 Ddoc module files
+working tree               CLEAN
+~~~
+
+The API-contract rerun followed correction of a stale validation call site that
+still used the pre-V1-B UTM argument order; production API code was not changed.
+
+The normal GitHub Actions CI already defines the hosted compiler matrix. The
+release candidate must also have a green hosted run on the exact candidate
+commit.
 
 ## R5 — supported platform matrix
 
