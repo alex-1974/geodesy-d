@@ -64,7 +64,19 @@ private:
     }
 
 public:
-    /** Construct from finite X/Y/Z components without throwing. */
+    /**
+     * Construct from finite X/Y/Z components without throwing.
+     *
+     * Params:
+     *     x = Finite geocentric X component.
+     *     y = Finite geocentric Y component.
+     *     z = Finite geocentric Z component.
+     *     result = Receives the constructed coordinate on success.
+     *
+     * Returns:
+     *     `true` on success; `false` when any component is NaN or infinite.
+     *     On failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const T x,
         const T y,
@@ -81,7 +93,20 @@ public:
         return true;
     }
 
-    /** Construct from X/Y/Z or throw when any component is non-finite. */
+    /**
+     * Construct from finite X/Y/Z components.
+     *
+     * Params:
+     *     x = Finite geocentric X component.
+     *     y = Finite geocentric Y component.
+     *     z = Finite geocentric Z component.
+     *
+     * Returns:
+     *     The constructed coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when any component is NaN or infinite.
+     */
     static GeocentricCoordinate fromComponents(const T x, const T y, const T z)
         @safe
     {
