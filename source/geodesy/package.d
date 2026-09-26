@@ -1,4 +1,18 @@
-/** Public import surface for geodesy-d. */
+/**
+ * Public import surface for geodesy-d.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy;
 
 public import geodesy.angle;
