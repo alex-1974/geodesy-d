@@ -54,25 +54,6 @@ enum HelmertConvention
  * convert the parameter representation without changing the represented
  * source-to-target transformation.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const source = GeocentricCoordinate!double.fromComponents(
- *     3_657_660.66, 255_768.55, 5_201_382.11);
- *
- * const positionVector = PositionVectorHelmert!double
- *     .fromArcSecondsAndPpm(
- *         0.0, 0.0, 4.5,
- *         0.0, 0.0, 0.554,
- *         0.219);
- *
- * const target = source.applyPositionVectorHelmert(positionVector);
- * const coordinateFrame = positionVector.toCoordinateFrame;
- * const sameTarget = source.applyCoordinateFrameHelmert(coordinateFrame);
- *
- * assert(target == sameTarget);
- * ---
  */
 struct Helmert7(T, HelmertConvention convention)
 if (isGeodesyScalar!T)
@@ -341,6 +322,28 @@ public:
         return result;
     }
 }
+
+/// Example using struct Helmert7(T, HelmertConvention convention) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const source = GeocentricCoordinate!double.fromComponents(
+        3_657_660.66, 255_768.55, 5_201_382.11);
+    
+    const positionVector = PositionVectorHelmert!double
+        .fromArcSecondsAndPpm(
+            0.0, 0.0, 4.5,
+            0.0, 0.0, 0.554,
+            0.219);
+    
+    const target = source.applyPositionVectorHelmert(positionVector);
+    const coordinateFrame = positionVector.toCoordinateFrame;
+    const sameTarget = source.applyCoordinateFrameHelmert(coordinateFrame);
+    
+    assert(target == sameTarget);
+}
+
 
 
 /** EPSG 1033 parameter type. */
