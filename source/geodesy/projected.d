@@ -1,4 +1,18 @@
-/** Canonical two-dimensional projected coordinate value type. */
+/**
+ * Canonical two-dimensional projected coordinate value type.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.projected;
 
 import geodesy.errors : GeodesyValueException;
@@ -6,13 +20,26 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 
 /**
- * A canonical projected coordinate represented as easting and northing.
+ * A canonical projected coordinate represented as finite easting and northing.
  *
- * The linear unit is not encoded in the type. Both components must use the
- * same linear unit as the projection operation that consumes or produced the
- * value.
+ * Both components use the same caller-selected linear unit as the projection
+ * operation that consumes or produced the value. The type deliberately
+ * carries no CRS, axis-order, datum, or unit metadata.
  *
- * This value deliberately carries no CRS, axis-order, or unit metadata.
+ * `.init` represents `(0,0)`. Checked construction returns `false` for
+ * non-finite components; throwing construction reports the same failure with
+ * `GeodesyValueException`.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const p = ProjectedCoordinate!double.fromComponents(
+ *     500_000.0, 5_340_000.0);
+ *
+ * assert(p.easting == 500_000.0);
+ * assert(p.northing == 5_340_000.0);
+ * ---
  */
 struct ProjectedCoordinate(T)
 if (isGeodesyScalar!T)
