@@ -1,6 +1,6 @@
 # geodesy-d v1.0.0 release notes
 
-Status: **release candidate**
+Release date: **2026-09-26**
 
 `geodesy-d` v1.0.0 establishes the first frozen public API for the
 dependency-light pure-D geodetic mathematics library. The v1 contract was
