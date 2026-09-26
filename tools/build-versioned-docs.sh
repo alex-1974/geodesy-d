@@ -27,7 +27,10 @@ for version in "${versions[@]}"; do
     mkdir -p "$source_dir"
     git archive "$version" | tar -x -C "$source_dir"
 
-    (cd "$source_dir" && bash tools/build-docs.sh)
+    (
+        cd "$source_dir"
+        bash "$root/tools/build-docs.sh"
+    )
 
     mkdir -p "$version_site"
     cp -a "$source_dir/build/ddox/site/." "$version_site/"
