@@ -1147,6 +1147,18 @@ unittest
     assert(candidate.isSphere);
     assert(candidate.ellipsoid.semiMajorAxis == 6_371_000.0);
 
+    // A failed checked construction resets the out result to exact .init,
+    // even when the caller passes a previously valid solver.
+    assert(!Geodesic!double.tryFromEllipsoid(
+        Ellipsoid!double.init,
+        candidate));
+    assert(candidate == Geodesic!double.init);
+    assert(!candidate.isValid);
+
+    assert(Geodesic!double.tryFromEllipsoid(
+        sphere,
+        candidate));
+
     const origin =
         GeographicCoordinate!double.fromComponents(
             Latitude!double.fromDegrees(0.0),
