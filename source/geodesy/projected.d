@@ -1,5 +1,20 @@
 /**
- * Canonical two-dimensional projected coordinate value type.
+ * Canonical two-dimensional projected easting/northing coordinate value type.
+ *
+ * ProjectedCoordinate represents the mathematical output/input of projection
+ * operations without pretending to be a complete projected CRS. It carries no
+ * datum, CRS, axis-order, or unit metadata; those semantics remain with the
+ * projection operation that creates or consumes the value.
+ *
+ * Units:
+ *     Easting and northing share one caller-selected linear unit and must use
+ *     the unit required by the associated projection.
+ *
+ * Performance:
+ *     Checked construction and value access require no allocation.
+ *
+ * See_Also:
+ *     `GeographicCoordinate`, `TransverseMercator`, `UtmCoordinate`
  *
  * Authors:
  *     Alexander Bernardi
