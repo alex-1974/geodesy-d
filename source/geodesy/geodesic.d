@@ -773,42 +773,46 @@ public:
         out Geodesic result)
         pure nothrow @safe @nogc
     {
-        result = Geodesic.init;
-
         if (!ellipsoid.isValid
             || ellipsoid.flattening > cast(T) 0.01)
             return false;
 
-        result._ellipsoid = ellipsoid;
-        result._a = cast(W) ellipsoid.semiMajorAxis;
-        result._f = cast(W) ellipsoid.flattening;
+        Geodesic candidate;
 
-        result._f1 = cast(W) 1 - result._f;
-        result._b = result._a * result._f1;
+        candidate._ellipsoid = ellipsoid;
+        candidate._a = cast(W) ellipsoid.semiMajorAxis;
+        candidate._f = cast(W) ellipsoid.flattening;
 
-        result._e2 =
-            result._f
-            * (cast(W) 2 - result._f);
+        candidate._f1 = cast(W) 1 - candidate._f;
+        candidate._b = candidate._a * candidate._f1;
 
-        result._ep2 =
-            result._e2
-            / (result._f1 * result._f1);
+        candidate._e2 =
+            candidate._f
+            * (cast(W) 2 - candidate._f);
 
-        result._n =
-            result._f
-            / (cast(W) 2 - result._f);
+        candidate._ep2 =
+            candidate._e2
+            / (candidate._f1 * candidate._f1);
+
+        candidate._n =
+            candidate._f
+            / (cast(W) 2 - candidate._f);
 
         enum int order = geodesicSeriesOrderFor!T;
 
         fillGeodesicA3x!(W, order)(
-            result._n,
-            result._a3x);
+            candidate._n,
+            candidate._a3x);
 
         fillGeodesicC3x!(W, order)(
-            result._n,
-            result._c3x);
+            candidate._n,
+            candidate._c3x);
 
-        return result.isValid;
+        if (!candidate.isValid)
+            return false;
+
+        result = candidate;
+        return true;
     }
 
 
