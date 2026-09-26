@@ -32,21 +32,6 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
  * throwing construction reports the same failure with
  * `GeodesyValueException`.
  *
- * Example:
- * ---
- * import geodesy;
- *
- * const vienna = GeodeticCoordinate!double.fromComponents(
- *     Latitude!double.fromDegrees(48.20849),
- *     Longitude!double.fromDegrees(16.37208),
- *     171.0);
- *
- * assert(vienna.ellipsoidalHeight == 171.0);
- *
- * GeodeticCoordinate!double checked;
- * assert(!GeodeticCoordinate!double.tryFromComponents(
- *     vienna.latitude, vienna.longitude, double.nan, checked));
- * ---
  */
 struct GeodeticCoordinate(T)
 if (isGeodesyScalar!T)
@@ -142,6 +127,25 @@ public:
         return _ellipsoidalHeight;
     }
 }
+
+/// Example constructing and validating a geodetic coordinate.
+@safe unittest
+{
+    import geodesy;
+    
+    const vienna = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208),
+        171.0);
+    
+    assert(vienna.ellipsoidalHeight == 171.0);
+    
+    GeodeticCoordinate!double checked;
+    assert(!GeodeticCoordinate!double.tryFromComponents(
+        vienna.latitude, vienna.longitude, double.nan, checked));
+    
+}
+
 
 unittest
 {
