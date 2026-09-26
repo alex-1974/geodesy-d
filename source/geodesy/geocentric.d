@@ -1,4 +1,18 @@
-/** Geocentric Cartesian coordinate value type. */
+/**
+ * Geocentric Cartesian coordinate value type.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.geocentric;
 
 import geodesy.errors : GeodesyValueException;
@@ -7,12 +21,26 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 /**
  * A geocentric Cartesian coordinate `(x, y, z)`.
  *
- * The type does not encode a CRS, datum, ellipsoid, or linear unit. When used
- * with an ellipsoid, all three components and the ellipsoid axes must use the
- * same linear unit.
+ * The type does not encode a CRS, datum, ellipsoid, or linear unit. All three
+ * components use one caller-selected linear unit; when combined with an
+ * ellipsoid, its axes must use that same unit.
  *
- * `(0, 0, 0)` is representable. Whether a mathematical operation is defined
- * at the geocentre is the responsibility of that operation.
+ * `.init` is the representable geocentre `(0,0,0)`. Whether an operation is
+ * mathematically defined there is the responsibility of that operation.
+ * Checked construction rejects non-finite components without throwing;
+ * throwing construction uses `GeodesyValueException`.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const p = GeocentricCoordinate!double.fromComponents(
+ *     4_085_000.0, 1_260_000.0, 4_717_000.0);
+ *
+ * assert(p.x == 4_085_000.0);
+ * assert(p.y == 1_260_000.0);
+ * assert(p.z == 4_717_000.0);
+ * ---
  */
 struct GeocentricCoordinate(T)
 if (isGeodesyScalar!T)
