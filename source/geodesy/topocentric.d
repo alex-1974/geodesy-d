@@ -1,4 +1,18 @@
-/** Local topocentric East/North/Up coordinate types and operations. */
+/**
+ * Local topocentric East/North/Up coordinate types and operations.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.topocentric;
 
 import std.math : cos, sin;
@@ -24,9 +38,23 @@ import geodesy.scalar :
  *
  * The type represents linear components only. It does not carry an origin,
  * ellipsoid, CRS, datum, or linear-unit tag. Interpretation requires a
- * separately prepared topocentric frame.
+ * separately prepared `TopocentricFrame!T`.
  *
- * `(0, 0, 0)` is a valid coordinate and is the `.init` value.
+ * `(0,0,0)` is valid and is the `.init` value. Checked construction rejects
+ * non-finite components; the throwing factory reports the same failure with
+ * `GeodesyValueException`.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const local = TopocentricCoordinate!double.fromComponents(
+ *     12.5, -3.0, 1.25);
+ *
+ * assert(local.east == 12.5);
+ * assert(local.north == -3.0);
+ * assert(local.up == 1.25);
+ * ---
  */
 struct TopocentricCoordinate(T)
 if (isGeodesyScalar!T)
@@ -124,11 +152,14 @@ public:
 /**
  * A prepared local East/North/Up frame.
  *
- * The frame binds an ellipsoid, a geocentric origin, and the orientation
- * derived from the origin's geodetic latitude and longitude.
+ * The frame binds an ellipsoid, a geocentric origin, and the local ENU
+ * orientation derived from the origin's geodetic latitude and longitude.
+ * `.init` is deliberately invalid; prepare a frame explicitly from either a
+ * geodetic or geocentric origin before use.
  *
- * `.init` is deliberately invalid. A frame must be prepared explicitly from
- * either a geodetic or geocentric origin before it can be used.
+ * Direct geocentric conversions implement EPSG method 9836. Direct geodetic
+ * conversions implement EPSG method 9837 by composing EPSG 9602 with 9836.
+ * All linear coordinates must use the same unit as the ellipsoid axes.
  *
  * The prepared numerical state uses `Epsg9602WorkingScalar!T`:
  *
@@ -136,8 +167,37 @@ public:
  * - `double` -> `double`
  * - `real`   -> `real`
  *
- * This prevents composed float operations from materializing Earth-scale
- * ECEF intermediates in binary32 before local subtraction.
+ * This prevents composed float operations from materializing Earth-scale ECEF
+ * intermediates in binary32 before local subtraction.
+ *
+ * At a geodetic pole, the explicitly supplied longitude defines ENU
+ * orientation. A geocentric origin at the exact geocentre is rejected because
+ * its geodetic inverse is not unique.
+ *
+ * Example:
+ * ---
+ * import geodesy;
+ *
+ * const origin = GeodeticCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20849),
+ *     Longitude!double.fromDegrees(16.37208),
+ *     171.0);
+ *
+ * const frame = TopocentricFrame!double.fromGeodeticOrigin(
+ *     wgs84!double(), origin);
+ *
+ * const nearby = GeodeticCoordinate!double.fromComponents(
+ *     Latitude!double.fromDegrees(48.20850),
+ *     Longitude!double.fromDegrees(16.37210),
+ *     172.0);
+ *
+ * const local = frame.geodeticToTopocentric(nearby);
+ * const back = frame.topocentricToGeodetic(local);
+ *
+ * assert(frame.isValid);
+ * assert(local.east == local.east);
+ * assert(back.latitude.degrees > 48.0);
+ * ---
  */
 struct TopocentricFrame(T)
 if (isGeodesyScalar!T)
