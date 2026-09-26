@@ -1,5 +1,27 @@
 /**
- * Reference ellipsoid value type and derived parameters.
+ * Reference ellipsoid value type, construction, and derived parameters.
+ *
+ * Ellipsoid makes the reference surface an explicit value instead of hidden
+ * global state. It supports spherical and oblate models, preserves the
+ * caller-selected linear unit of the semi-major axis, and deliberately gives
+ * `.init` an invalid state so accidental default construction cannot silently
+ * select a plausible Earth model.
+ *
+ * Domain:
+ *     General ellipsoid construction accepts finite `a > 0` and
+ *     `0 <= f < 1`. Individual numerical operations may intentionally impose
+ *     narrower documented domains.
+ *
+ * Units:
+ *     Axis values retain the caller-selected linear unit. Operations combining
+ *     coordinates or heights with an ellipsoid require compatible linear units.
+ *
+ * Performance:
+ *     Construction and derived-parameter access require no allocation.
+ *
+ * See_Also:
+ *     `wgs84`, `GeodeticCoordinate`, `Geodesic`,
+ *     `TransverseMercator`
  *
  * Authors:
  *     Alexander Bernardi
