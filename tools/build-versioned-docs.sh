@@ -8,14 +8,47 @@ latest_version='v1.0.0'
 versions=('v1.0.0')
 
 work_dir="$root/build/versioned-docs"
-sources_dir="$work_dir/sources"
+archives_dir="$work_dir/archives"
+staging_dir="$work_dir/staging"
 site_dir="$work_dir/site"
 
 rm -rf "$work_dir"
-mkdir -p "$sources_dir" "$site_dir"
+mkdir -p "$archives_dir" "$staging_dir" "$site_dir"
+
+apply_docs_compatibility()
+{
+    local version="$1"
+    local source_dir="$2"
+
+    case "$version" in
+        v1.0.0)
+            python3 - "$source_dir/source/geodesy/ellipsoid.d" <<'PY'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text()
+old = "/** Second eccentricity squared `e'²`. */"
+new = "/** Second eccentricity squared (e′²). */"
+
+count = source.count(old)
+if count != 1:
+    raise SystemExit(
+        f"error: expected exactly one v1.0.0 DDOX compatibility target in {path}, found {count}"
+    )
+
+path.write_text(source.replace(old, new, 1))
+PY
+            ;;
+        *)
+            ;;
+    esac
+}
 
 for version in "${versions[@]}"; do
-    source_dir="$sources_dir/$version"
+    archive_dir="$archives_dir/$version"
+    source_dir="$staging_dir/$version"
+    version_output="$work_dir/output/$version"
     version_site="$site_dir/$version"
 
     echo "=== $version ==="
@@ -24,16 +57,19 @@ for version in "${versions[@]}"; do
         exit 1
     }
 
-    mkdir -p "$source_dir"
-    git archive "$version" | tar -x -C "$source_dir"
+    mkdir -p "$archive_dir"
+    git archive "$version" | tar -x -C "$archive_dir"
 
-    (
-        cd "$source_dir"
-        bash "$root/tools/build-docs.sh"
-    )
+    # Keep the extracted tag archive pristine. Documentation-tool compatibility
+    # adjustments are applied only to a separate staging copy.
+    mkdir -p "$source_dir"
+    cp -a "$archive_dir/." "$source_dir/"
+    apply_docs_compatibility "$version" "$source_dir"
+
+    SOURCE_ROOT="$source_dir" OUTPUT_ROOT="$version_output"         bash "$root/tools/build-docs.sh"
 
     mkdir -p "$version_site"
-    cp -a "$source_dir/build/ddox/site/." "$version_site/"
+    cp -a "$version_output/build/ddox/site/." "$version_site/"
     test -f "$version_site/geodesy.html"
 done
 
