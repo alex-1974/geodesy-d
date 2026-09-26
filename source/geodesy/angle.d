@@ -1,4 +1,18 @@
-/** Strong angular and geographic angular-coordinate value types. */
+/**
+ * Strong angular and geographic angular-coordinate value types.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.angle;
 
 import std.math : PI;
@@ -30,7 +44,17 @@ if (isGeodesyScalar!T)
     return (radians / pi!T) * cast(T) 180;
 }
 
-/** A finite angle stored canonically in radians. */
+/**
+ * A finite angle stored canonically in radians.
+ *
+ * `.init` represents zero radians. Construction accepts `float`, `double`,
+ * or `real`; checked factories reject non-finite input without throwing,
+ * while throwing factories report the same failure with
+ * `GeodesyValueException`.
+ *
+ * No allocation is performed by checked construction or value access.
+ *
+ */
 struct Angle(T)
 if (isGeodesyScalar!T)
 {
@@ -45,7 +69,17 @@ private:
     }
 
 public:
-    /** Construct from radians without throwing; returns false for non-finite input. */
+    /**
+     * Construct from radians without throwing.
+     *
+     * Params:
+     *     radians = Finite angle in radians.
+     *     result = Receives the constructed angle on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for NaN or infinity. On failure
+     *     `result` remains unchanged.
+     */
     static bool tryFromRadians(const T radians, out Angle result)
         pure nothrow @safe @nogc
     {
@@ -55,7 +89,18 @@ public:
         return true;
     }
 
-    /** Construct from degrees without throwing; returns false for non-finite input. */
+    /**
+     * Construct from degrees without throwing.
+     *
+     * Params:
+     *     degrees = Finite angle in degrees.
+     *     result = Receives the constructed angle on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for NaN, infinity, or when conversion
+     *     to scalar `T` does not produce a finite radian value. On failure
+     *     `result` remains unchanged.
+     */
     static bool tryFromDegrees(const T degrees, out Angle result)
         pure nothrow @safe @nogc
     {
@@ -64,7 +109,18 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
-    /** Construct from radians or throw `GeodesyValueException` for non-finite input. */
+    /**
+     * Construct from radians.
+     *
+     * Params:
+     *     radians = Finite angle in radians.
+     *
+     * Returns:
+     *     The constructed angle.
+     *
+     * Throws:
+     *     `GeodesyValueException` for NaN or infinity.
+     */
     static Angle fromRadians(const T radians)
         @safe
     {
@@ -74,7 +130,19 @@ public:
         return result;
     }
 
-    /** Construct from degrees or throw `GeodesyValueException` for non-finite input. */
+    /**
+     * Construct from degrees.
+     *
+     * Params:
+     *     degrees = Finite angle in degrees.
+     *
+     * Returns:
+     *     The constructed angle.
+     *
+     * Throws:
+     *     `GeodesyValueException` for NaN, infinity, or an unrepresentable
+     *     radian conversion in scalar `T`.
+     */
     static Angle fromDegrees(const T degrees)
         @safe
     {
@@ -97,7 +165,29 @@ public:
     }
 }
 
-/** Geodetic latitude in the closed interval [-pi/2, +pi/2]. */
+/// Example using an angle with checked and throwing construction.
+@safe unittest
+{
+    import geodesy;
+    
+    const quarterTurn = Angle!double.fromDegrees(90.0);
+    assert(quarterTurn.degrees == 90.0);
+    
+    Angle!double checked;
+    assert(Angle!double.tryFromRadians(0.5, checked));
+    assert(!Angle!double.tryFromRadians(double.nan, checked));
+    
+}
+
+
+/**
+ * Geodetic latitude in the closed interval [-pi/2, +pi/2] radians.
+ *
+ * The equivalent degree domain is [-90,+90]. `.init` is the equator.
+ * Checked factories return `false` for non-finite or out-of-domain input;
+ * throwing factories throw `GeodesyValueException` for the same inputs.
+ *
+ */
 struct Latitude(T)
 if (isGeodesyScalar!T)
 {
@@ -112,7 +202,17 @@ private:
     }
 
 public:
-    /** Construct from radians; returns false outside [-pi/2,+pi/2] or for non-finite input. */
+    /**
+     * Construct a latitude from radians without throwing.
+     *
+     * Params:
+     *     radians = Latitude in the closed interval [-pi/2,+pi/2].
+     *     result = Receives the constructed latitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     On failure `result` remains unchanged.
+     */
     static bool tryFromRadians(const T radians, out Latitude result)
         pure nothrow @safe @nogc
     {
@@ -122,7 +222,17 @@ public:
         return true;
     }
 
-    /** Construct from degrees; returns false outside [-90,+90] or for non-finite input. */
+    /**
+     * Construct a latitude from degrees without throwing.
+     *
+     * Params:
+     *     degrees = Latitude in the closed interval [-90,+90] degrees.
+     *     result = Receives the constructed latitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     On failure `result` remains unchanged.
+     */
     static bool tryFromDegrees(const T degrees, out Latitude result)
         pure nothrow @safe @nogc
     {
@@ -131,7 +241,18 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
-    /** Construct from radians or throw when outside the latitude domain. */
+    /**
+     * Construct a latitude from radians.
+     *
+     * Params:
+     *     radians = Latitude in the closed interval [-pi/2,+pi/2].
+     *
+     * Returns:
+     *     The constructed latitude.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Latitude fromRadians(const T radians)
         @safe
     {
@@ -141,7 +262,18 @@ public:
         return result;
     }
 
-    /** Construct from degrees or throw when outside the latitude domain. */
+    /**
+     * Construct a latitude from degrees.
+     *
+     * Params:
+     *     degrees = Latitude in the closed interval [-90,+90] degrees.
+     *
+     * Returns:
+     *     The constructed latitude.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Latitude fromDegrees(const T degrees)
         @safe
     {
@@ -170,7 +302,32 @@ public:
     }
 }
 
-/** Geodetic longitude in the closed interval [-pi, +pi]. */
+/// Example constructing and validating a latitude.
+@safe unittest
+{
+    import geodesy;
+    
+    const vienna = Latitude!double.fromDegrees(48.20849);
+    assert(vienna.degrees > 48.0);
+    
+    Latitude!double checked;
+    assert(!Latitude!double.tryFromDegrees(90.0001, checked));
+    
+}
+
+
+/**
+ * Geodetic longitude in the closed interval [-pi,+pi] radians.
+ *
+ * The equivalent degree domain is [-180,+180]. Both antimeridian endpoint
+ * representations are accepted by construction. `normalized` maps the
+ * positive endpoint to the unique half-open representation from -pi
+ * inclusive to +pi exclusive. `.init` is the prime meridian.
+ *
+ * Checked factories return `false` for non-finite or out-of-domain input;
+ * throwing factories throw `GeodesyValueException` for the same inputs.
+ *
+ */
 struct Longitude(T)
 if (isGeodesyScalar!T)
 {
@@ -185,7 +342,18 @@ private:
     }
 
 public:
-    /** Construct from radians; returns false outside [-pi,+pi] or for non-finite input. */
+    /**
+     * Construct a longitude from radians without throwing.
+     *
+     * Params:
+     *     radians = Longitude in the closed interval [-pi,+pi].
+     *     result = Receives the constructed longitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     Both antimeridian endpoints are accepted. On failure `result`
+     *     remains unchanged.
+     */
     static bool tryFromRadians(const T radians, out Longitude result)
         pure nothrow @safe @nogc
     {
@@ -195,7 +363,18 @@ public:
         return true;
     }
 
-    /** Construct from degrees; returns false outside [-180,+180] or for non-finite input. */
+    /**
+     * Construct a longitude from degrees without throwing.
+     *
+     * Params:
+     *     degrees = Longitude in the closed interval [-180,+180] degrees.
+     *     result = Receives the constructed longitude on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for non-finite or out-of-domain input.
+     *     Both antimeridian endpoints are accepted. On failure `result`
+     *     remains unchanged.
+     */
     static bool tryFromDegrees(const T degrees, out Longitude result)
         pure nothrow @safe @nogc
     {
@@ -204,7 +383,18 @@ public:
         return tryFromRadians(degreesToRadians(degrees), result);
     }
 
-    /** Construct from radians or throw when outside the longitude domain. */
+    /**
+     * Construct a longitude from radians.
+     *
+     * Params:
+     *     radians = Longitude in the closed interval [-pi,+pi].
+     *
+     * Returns:
+     *     The constructed longitude; both antimeridian endpoints are preserved.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Longitude fromRadians(const T radians)
         @safe
     {
@@ -214,7 +404,18 @@ public:
         return result;
     }
 
-    /** Construct from degrees or throw when outside the longitude domain. */
+    /**
+     * Construct a longitude from degrees.
+     *
+     * Params:
+     *     degrees = Longitude in the closed interval [-180,+180] degrees.
+     *
+     * Returns:
+     *     The constructed longitude; both antimeridian endpoints are preserved.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite or out-of-domain input.
+     */
     static Longitude fromDegrees(const T degrees)
         @safe
     {
@@ -242,7 +443,7 @@ public:
         return Angle!T.fromRadiansUnchecked(_radians);
     }
 
-    /** Return the unique half-open representation [-pi, +pi). */
+    /** Return the unique representation from -pi inclusive to +pi exclusive. */
     @property Longitude normalized() const pure nothrow @safe @nogc
     {
         if (_radians >= pi!T)
@@ -250,6 +451,21 @@ public:
         return fromRadiansUnchecked(_radians);
     }
 }
+
+/// Example constructing and normalizing a longitude.
+@safe unittest
+{
+    import geodesy;
+    
+    const eastAntimeridian = Longitude!double.fromDegrees(180.0);
+    assert(eastAntimeridian.degrees == 180.0);
+    assert(eastAntimeridian.normalized.degrees == -180.0);
+    
+    Longitude!double checked;
+    assert(!Longitude!double.tryFromDegrees(181.0, checked));
+    
+}
+
 
 
 /**

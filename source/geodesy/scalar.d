@@ -1,4 +1,18 @@
-/** Scalar policy shared by geodesy-d numerical value types. */
+/**
+ * Scalar policy shared by geodesy-d numerical value types.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.scalar;
 
 /**

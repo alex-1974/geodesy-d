@@ -1,4 +1,18 @@
-/** Canonical two-dimensional projected coordinate value type. */
+/**
+ * Canonical two-dimensional projected coordinate value type.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.projected;
 
 import geodesy.errors : GeodesyValueException;
@@ -6,13 +20,16 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 
 /**
- * A canonical projected coordinate represented as easting and northing.
+ * A canonical projected coordinate represented as finite easting and northing.
  *
- * The linear unit is not encoded in the type. Both components must use the
- * same linear unit as the projection operation that consumes or produced the
- * value.
+ * Both components use the same caller-selected linear unit as the projection
+ * operation that consumes or produced the value. The type deliberately
+ * carries no CRS, axis-order, datum, or unit metadata.
  *
- * This value deliberately carries no CRS, axis-order, or unit metadata.
+ * `.init` represents `(0,0)`. Checked construction returns `false` for
+ * non-finite components; throwing construction reports the same failure with
+ * `GeodesyValueException`.
+ *
  */
 struct ProjectedCoordinate(T)
 if (isGeodesyScalar!T)
@@ -22,7 +39,18 @@ private:
     T _northing = 0;
 
 public:
-    /** Construct from finite easting and northing without throwing. */
+    /**
+     * Construct from finite easting and northing without throwing.
+     *
+     * Params:
+     *     easting = Finite easting in the caller-selected linear unit.
+     *     northing = Finite northing in the same linear unit.
+     *     result = Receives the constructed coordinate on success.
+     *
+     * Returns:
+     *     `true` on success; `false` when either component is NaN or
+     *     infinite. On failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const T easting,
         const T northing,
@@ -38,7 +66,19 @@ public:
         return true;
     }
 
-    /** Construct from finite easting and northing or throw. */
+    /**
+     * Construct from finite easting and northing.
+     *
+     * Params:
+     *     easting = Finite easting in the caller-selected linear unit.
+     *     northing = Finite northing in the same linear unit.
+     *
+     * Returns:
+     *     The constructed coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when either component is NaN or infinite.
+     */
     static ProjectedCoordinate fromComponents(
         const T easting,
         const T northing)
@@ -63,6 +103,20 @@ public:
         return _northing;
     }
 }
+
+/// Example constructing a projected coordinate.
+@safe unittest
+{
+    import geodesy;
+    
+    const p = ProjectedCoordinate!double.fromComponents(
+        500_000.0, 5_340_000.0);
+    
+    assert(p.easting == 500_000.0);
+    assert(p.northing == 5_340_000.0);
+    
+}
+
 
 
 unittest

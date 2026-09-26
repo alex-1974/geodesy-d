@@ -6,15 +6,17 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**v0.1 released.**
+**v1.0 release candidate — public API frozen.**
 
 `geodesy-d v0.1.0` was tagged on September 9, 2026. The release contains strong
 angular/coordinate value types, reference ellipsoids, EPSG 9602 bidirectional
 geographic/geocentric conversion, EPSG 1031 geocentric translation, and EPSG
 1032/1033 static 7-parameter Helmert transformations.
 
-The v0.1 public API is documented and independently validated. Semantic
-Versioning applies from the `v0.1.0` release onward.
+The v1 public API has completed its explicit A–J audit and is frozen for the
+v1.0 release candidate. Release-readiness validation remains in progress;
+`v1.0.0` has not yet been tagged. Semantic Versioning applies from the first
+public release onward.
 
 ## Responsibility boundary
 
@@ -62,9 +64,9 @@ EPSG 1032  Coordinate Frame Helmert 7P
 Projection mathematics and ellipsoidal geodesics were intentionally not
 v0.1 release blockers.
 
-## Current post-v0.1 implementation
+## Frozen v1 implementation
 
-The current development line additionally contains:
+The frozen v1 release-candidate surface additionally contains:
 
 ```text
 bounded generic Transverse Mercator
@@ -167,7 +169,7 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 
 ## Documentation
 
-- `docs/API.md` — released public baseline plus current unreleased public surfaces.
+- `docs/API.md` — frozen v1 public API reference.
 - `docs/VALIDATION.md` — compiler and independent PROJ validation policy.
 - `docs/V0_1_READINESS.md` — release gate checklist.
 - `docs/REFERENCES.md` — reference hierarchy and validation sources.
@@ -194,8 +196,8 @@ The workspace-wide coordination roadmap is available locally as
 
 ## Release readiness
 
-The completed v0.1 release gate and its validation evidence are recorded in
-`docs/V0_1_READINESS.md`.
+The completed v0.1 release gate remains recorded in `docs/V0_1_READINESS.md`.
+The active v1 release-candidate gate is `docs/V1_RELEASE_READINESS.md`.
 
 
 ## Compiler compatibility

@@ -1,4 +1,18 @@
-/** Geographic/geocentric coordinate conversions. */
+/**
+ * Geographic/geocentric coordinate conversions (EPSG method 9602).
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.conversion;
 
 import std.math : atan2, cos, fabs, frexp, ldexp, sin, sqrt;
@@ -114,17 +128,27 @@ if (isGeodesyScalar!W)
  * Convert a geodetic coordinate to geocentric Cartesian coordinates.
  *
  * Implements the forward direction of EPSG coordinate operation method 9602
- * (Geographic/geocentric conversions).
+ * (Geographic/geocentric conversions). Longitude is interpreted relative to
+ * the prime meridian defining the geocentric X axis; conventional EPSG
+ * geocentric systems use Greenwich.
  *
- * The longitude is interpreted relative to the prime meridian defining the
- * geocentric X axis. For conventional EPSG geocentric systems this is the
- * Greenwich prime meridian.
+ * Ellipsoidal height and ellipsoid axes must use the same linear unit. The
+ * returned X/Y/Z components use that unit. No datum transformation is
+ * performed.
  *
- * The ellipsoidal height and the ellipsoid axes must use the same linear unit.
- * The returned X/Y/Z components use that same unit.
+ * Params:
+ *     source = Finite geodetic latitude, longitude, and ellipsoidal height.
+ *     ellipsoid = Valid spherical or oblate reference ellipsoid in the same
+ *         linear unit as `source.ellipsoidalHeight`.
+ *     result = Receives the geocentric coordinate on success.
  *
- * Returns false only when finite input values overflow or otherwise produce a
- * non-finite Cartesian result in scalar type T.
+ * Returns:
+ *     `true` when a finite representable Cartesian result is produced;
+ *     `false` for an invalid ellipsoid or when finite inputs overflow or
+ *     otherwise produce a non-finite result in scalar type `T`.
+ *
+ * No allocation is performed.
+ *
  */
 bool tryGeodeticToGeocentric(T)(
     const GeodeticCoordinate!T source,
@@ -158,8 +182,39 @@ if (isGeodesyScalar!T)
         result);
 }
 
+/// Example using bool tryGeodeticToGeocentric(T)( const GeodeticCoordinate!T source, const Ellipsoid!T ellipsoid, out Geocent.
+@safe unittest
+{
+    import geodesy;
+    
+    const source = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(53.0),
+        Longitude!double.fromDegrees(2.0),
+        73.0);
+    
+    const xyz = geodeticToGeocentric(source, wgs84!double());
+    assert(xyz.x > 0.0);
+    
+    GeocentricCoordinate!double checked;
+    assert(tryGeodeticToGeocentric(source, wgs84!double(), checked));
+}
 
-/** Throwing convenience wrapper for `tryGeodeticToGeocentric`. */
+
+
+/**
+ * Throwing convenience wrapper for `tryGeodeticToGeocentric`.
+ *
+ * Params:
+ *     source = Geodetic coordinate to convert.
+ *     ellipsoid = Reference ellipsoid in the same linear unit as the height.
+ *
+ * Returns:
+ *     The finite geocentric Cartesian coordinate.
+ *
+ * Throws:
+ *     `GeodesyValueException` when the ellipsoid is invalid or no finite
+ *     representable result can be produced.
+ */
 GeocentricCoordinate!T geodeticToGeocentric(T)(
     const GeodeticCoordinate!T source,
     const Ellipsoid!T ellipsoid)
@@ -898,41 +953,16 @@ if (isGeodesyScalar!W)
 
 
 /**
- * Convert geocentric Cartesian coordinates to a geodetic coordinate.
+ * Convert geocentric Cartesian coordinates to geodetic coordinates.
  *
- * Implements the reverse transformation represented by EPSG coordinate
- * operation method 9602 (Geographic/geocentric conversions).
+ * Implements the reverse direction of EPSG coordinate operation method 9602.
+ * X/Y/Z and the ellipsoid axes must use the same linear unit; the returned
+ * ellipsoidal height uses that unit. No datum transformation is performed.
  *
- * The inverse uses a hybrid numerical algorithm:
- *
- * $(UL
- *   $(LI Ordinary non-degenerate oblate cases use the homogeneous
- *        Halley-accelerated Cartesian-to-geodetic formulation described by
- *        Fukushima (2006). At most two Halley updates are attempted.)
- *   $(LI A scale-independent algebraic defect determines whether a Halley
- *        candidate is accepted; difficult cases are not forced through the
- *        fast path.)
- *   $(LI Rejected, multiple-root, cusp/evolute, and other difficult oblate
- *        cases use an extended Vermeille closed-form solution with the
- *        cancellation-avoiding branch choices used by Karney's
- *        GeographicLib implementation.)
- *   $(LI Spherical, rotation-axis, and very distant finite coordinates use
- *        dedicated analytic or scaled paths.)
- * )
- *
- * For deep-interior points where several geodetic normal-coordinate
- * representations exist, the robust branch selects the canonical
- * nearest-ellipsoid solution (equivalently the solution minimizing |h|).
- *
- * The exact ellipsoid centre (0, 0, 0) has no unique geodetic latitude,
- * longitude, or ellipsoidal height and therefore returns false.
- *
- * On the rotation axis (X == 0 && Y == 0, Z != 0), longitude is
- * indeterminate. This implementation returns longitude 0 by convention.
- *
- * `float` inputs retain a `float` public result but the numerically sensitive
- * inverse kernel is evaluated in `double` working precision. `double` and
- * `real` are evaluated in their own scalar type.
+ * The exact geocentre has no unique geodetic inverse and is rejected.
+ * On the rotation axis, longitude is indeterminate and is canonically returned
+ * as zero. The implementation provides robust spherical/oblate inverse
+ * semantics across the documented domain.
  *
  * Numerical accuracy contract for the validated terrestrial domain:
  *
@@ -940,35 +970,31 @@ if (isGeodesyScalar!W)
  * - latitude: the full legal range;
  * - ellipsoidal height: -20 km through +100 km.
  *
- * Within that domain, `float` results reproduce the represented Cartesian
- * position within 2 m and ellipsoidal height within 0.1 m.
+ * Within that domain, `float` results reproduce represented Cartesian
+ * position within 2 m and ellipsoidal height within 0.1 m. `double` and
+ * `real` reproduce represented Cartesian position within 1 mm. These are
+ * numerical conversion-error bounds, not datum, survey, GNSS, observation, or
+ * physical-position accuracy claims.
  *
- * `double` and `real` results reproduce the represented Cartesian position
- * within 1 mm.
+ * Params:
+ *     source = Finite geocentric Cartesian coordinate.
+ *     ellipsoid = Valid spherical or oblate reference ellipsoid using the
+ *         same linear unit as the Cartesian components.
+ *     result = Receives the geodetic coordinate on success.
  *
- * Here, represented Cartesian position means the ECEF coordinate obtained by
- * applying the forward conversion to the returned geodetic coordinate on the
- * same ellipsoid.
+ * Returns:
+ *     `true` when a defined finite representable inverse exists; `false`
+ *     for an invalid ellipsoid, the exact geocentre, or an unrepresentable
+ *     result.
  *
- * These limits describe numerical coordinate-conversion error only. They do
- * not describe datum, reference-frame, observation, survey, GNSS, or physical
- * position accuracy.
+ * No allocation is performed.
  *
- * Outside the validated terrestrial domain, the documented robust and
- * canonical inverse semantics still apply, but the same absolute accuracy
- * envelope is not claimed.
- *
- * The input X/Y/Z and ellipsoid axes must use the same linear unit. The
- * returned ellipsoidal height uses that same unit.
  *
  * References:
- * - T. Fukushima, "Transformation from Cartesian to geodetic coordinates
- *   accelerated by Halley's method", Journal of Geodesy 79 (2006),
- *   DOI 10.1007/s00190-006-0023-2.
- * - H. Vermeille, direct transformation from geocentric to geodetic
- *   coordinates.
- * - C. F. F. Karney, GeographicLib `Geocentric`, extended/stabilized
- *   Vermeille inverse formulation.
+ *     EPSG Guidance Note 7-2, method 9602;
+ *     T. Fukushima, Journal of Geodesy 79 (2006);
+ *     H. Vermeille, direct geocentric-to-geodetic transformation;
+ *     C. F. F. Karney, GeographicLib `Geocentric`.
  */
 bool tryGeocentricToGeodetic(T)(
     const GeocentricCoordinate!T source,
@@ -1024,8 +1050,39 @@ if (isGeodesyScalar!T)
         result);
 }
 
+/// Example using bool tryGeocentricToGeodetic(T)( const GeocentricCoordinate!T source, const Ellipsoid!T ellipsoid, out Geode.
+@safe unittest
+{
+    import geodesy;
+    
+    const xyz = GeocentricCoordinate!double.fromComponents(
+        3_771_793.968,
+          140_253.342,
+        5_124_304.349);
+    
+    const geo = geocentricToGeodetic(xyz, wgs84!double());
+    assert(geo.latitude.degrees > 53.0);
+    
+    GeodeticCoordinate!double checked;
+    assert(tryGeocentricToGeodetic(xyz, wgs84!double(), checked));
+}
 
-/** Throwing convenience wrapper for `tryGeocentricToGeodetic`. */
+
+
+/**
+ * Throwing convenience wrapper for `tryGeocentricToGeodetic`.
+ *
+ * Params:
+ *     source = Geocentric Cartesian coordinate to convert.
+ *     ellipsoid = Reference ellipsoid in the same linear unit as X/Y/Z.
+ *
+ * Returns:
+ *     The finite geodetic coordinate.
+ *
+ * Throws:
+ *     `GeodesyValueException` when the ellipsoid is invalid, the source is
+ *     the exact geocentre, or no finite representable inverse can be produced.
+ */
 GeodeticCoordinate!T geocentricToGeodetic(T)(
     const GeocentricCoordinate!T source,
     const Ellipsoid!T ellipsoid)

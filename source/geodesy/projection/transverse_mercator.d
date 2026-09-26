@@ -1,7 +1,19 @@
 /**
  * Bounded generic Transverse Mercator projection.
- *
+ * 
  * The public parameter semantics follow EPSG coordinate operation method 9807.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
  */
 module geodesy.projection.transverse_mercator;
 
@@ -301,7 +313,7 @@ private bool geodeticTau(T)(
 
 version (GeodesyTmNewtonValidation)
 {
-    struct TransverseMercatorNewtonTrace
+    package struct TransverseMercatorNewtonTrace
     {
         int iterations;
         real convergenceResidual = real.nan;
@@ -437,15 +449,20 @@ private ComplexPair!T pairWithRealAdded(T)(
 
 
 /**
- * Prepared bounded Transverse Mercator operation with EPSG 9807 parameters.
+ * Prepared bounded Transverse Mercator projection.
  *
- * The first implementation supports spherical and moderately oblate
- * ellipsoids with `0 <= f <= 0.01`. Non-polar forward inputs are restricted to
- * `abs(delta longitude) <= 60 degrees`.
+ * Parameters follow the conventional EPSG Transverse Mercator model:
+ * ellipsoid, latitude/longitude of natural origin, natural-origin scale
+ * factor, false easting, and false northing.
  *
- * `float` uses `double` working precision with sixth-order Krueger series.
- * `double` and `real` use eighth-order series to support the bounded
- * wide-domain accuracy contract.
+ * The supported ellipsoid domain is spherical/oblate with
+ * `0 <= flattening <= 0.01`. Non-polar forward inputs are bounded to
+ * `abs(delta longitude) <= 60 degrees` from the central meridian. Linear
+ * projected coordinates use the same unit as the ellipsoid axes and false
+ * offsets.
+ *
+ * `.init` is invalid. Prepared objects are intended for reuse.
+ *
  */
 struct TransverseMercator(T)
 if (isGeodesyScalar!T)
@@ -886,7 +903,7 @@ private:
 
     version (GeodesyTmNewtonValidation)
     {
-    public:
+    package:
         bool tryReverseNewtonTrace(
             const ProjectedCoordinate!T source,
             out GeographicCoordinate!T result,
@@ -1262,12 +1279,23 @@ public:
     }
 
 
-    /**
-     * Prepare a Transverse Mercator operation without throwing.
+        /**
+     * Prepare a bounded Transverse Mercator operation without throwing.
      *
-     * Returns false for an invalid ellipsoid, flattening above 0.01, a
-     * non-positive/non-finite scale factor, non-finite false offsets, or
-     * non-representable derived constants.
+     * Params:
+     *     ellipsoid = Valid spherical or oblate ellipsoid with flattening
+     *         0 <= f <= 0.01; its semi-major axis defines the linear unit.
+     *     latitudeOfNaturalOrigin = EPSG 8801 latitude of natural origin.
+     *     longitudeOfNaturalOrigin = EPSG 8802 longitude of natural origin.
+     *     scaleFactorAtNaturalOrigin = Finite positive EPSG 8805 scale factor.
+     *     falseEasting = Finite EPSG 8806 false easting in the ellipsoid linear unit.
+     *     falseNorthing = Finite EPSG 8807 false northing in the same linear unit.
+     *     result = Receives the prepared projection on success.
+     *
+     * Returns:
+     *     `true` when all parameters and derived constants are supported and
+     *     representable; otherwise `false`. On failure `result` remains
+     *     unchanged.
      */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -1328,7 +1356,25 @@ public:
     }
 
 
-    /** Prepare a Transverse Mercator operation or throw on invalid parameters. */
+        /**
+     * Prepare a bounded Transverse Mercator operation.
+     *
+     * Params:
+     *     ellipsoid = Valid spherical or oblate ellipsoid with flattening
+     *         0 <= f <= 0.01; its semi-major axis defines the linear unit.
+     *     latitudeOfNaturalOrigin = EPSG 8801 latitude of natural origin.
+     *     longitudeOfNaturalOrigin = EPSG 8802 longitude of natural origin.
+     *     scaleFactorAtNaturalOrigin = Finite positive EPSG 8805 scale factor.
+     *     falseEasting = Finite EPSG 8806 false easting in the ellipsoid linear unit.
+     *     falseNorthing = Finite EPSG 8807 false northing in the same linear unit.
+     *
+     * Returns:
+     *     The prepared projection.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the parameters or derived constants
+     *     cannot form a supported projection.
+     */
     static TransverseMercator fromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfNaturalOrigin,
@@ -1986,11 +2032,20 @@ public:
         }
 
 
-    /**
+        /**
      * Project a geographic coordinate.
      *
-     * Non-polar inputs outside `abs(delta longitude) <= 60 degrees` are
-     * rejected. Geographic poles are independent of source longitude.
+     * Non-polar inputs are accepted only for |delta longitude| <= 60 degrees
+     * from the natural-origin meridian. Geographic poles are independent of
+     * source longitude. Output uses the ellipsoid linear unit.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *     result = Receives projected easting and northing on success.
+     *
+     * Returns:
+     *     `true` for a valid projection and supported, representable source;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -2058,7 +2113,19 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for `tryForward`. */
+        /**
+     * Project a geographic coordinate.
+     *
+     * Params:
+     *     source = Geographic source coordinate.
+     *
+     * Returns:
+     *     Projected easting and northing in the ellipsoid linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the projection is invalid or the
+     *     source lies outside the supported bounded domain.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -2072,11 +2139,20 @@ public:
     }
 
 
-    /**
+        /**
      * Reverse a projected coordinate.
      *
-     * The result is rejected if it belongs outside the supported standard
-     * sheet/domain.
+     * The represented-coordinate sheet must correspond to the supported
+     * forward domain. Reverse handling preserves the projection's defined pole
+     * canonicalization and representation-aware sheet boundaries.
+     *
+     * Params:
+     *     source = Projected easting and northing in the ellipsoid linear unit.
+     *     result = Receives the geographic coordinate on success.
+     *
+     * Returns:
+     *     `true` for a valid projection and supported represented coordinate;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
@@ -2163,7 +2239,19 @@ public:
     }
 
 
-    /** Throwing convenience wrapper for `tryReverse`. */
+        /**
+     * Reverse a projected coordinate.
+     *
+     * Params:
+     *     source = Projected easting and northing in the ellipsoid linear unit.
+     *
+     * Returns:
+     *     The corresponding geographic coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the projection is invalid or the
+     *     coordinate lies outside the supported represented sheet/domain.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
@@ -2176,6 +2264,30 @@ public:
         return result;
     }
 }
+
+/// Example using struct TransverseMercator(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const tm = TransverseMercator!double.fromParameters(
+        wgs84!double(),
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(15.0),
+        0.9996,
+        500_000.0,
+        0.0);
+    
+    const source = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0));
+    
+    const projected = tm.forward(source);
+    const factors = tm.forwardFactors(source);
+    assert(projected.easting > 500_000.0);
+    assert(factors.pointScale > 0.0);
+}
+
 
 
 unittest

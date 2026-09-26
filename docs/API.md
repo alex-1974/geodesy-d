@@ -134,9 +134,9 @@ See ADR-0005 and `docs/operations/geographic-geocentric.md` for algorithmic and
 validation details.
 
 
-## EPSG 9836 / 9837 topocentric ENU — current unreleased accepted surface
+## EPSG 9836 / 9837 topocentric ENU — frozen v1 surface
 
-The current development line exports:
+The frozen v1 surface exports:
 
 ~~~text
 TopocentricCoordinate<T>
@@ -230,7 +230,7 @@ dimensionless fraction. The EPSG-style factory accepts arc-seconds and ppm.
 `pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is exposed in
 v0.1.
 
-## Conformal projection factors — current unreleased accepted surface
+## Conformal projection factors — frozen v1 surface
 
 The aggregate public API exports:
 
@@ -259,9 +259,9 @@ provided.
 See ADR-0011 for reverse representation policy, the exact-pole convention, and
 the rationale for using a conformal-specific result type.
 
-## Transverse Mercator — current unreleased accepted surface
+## Transverse Mercator — frozen v1 surface
 
-The current development line exports the accepted bounded generic Transverse
+The frozen v1 surface exports the accepted bounded generic Transverse
 Mercator operation:
 
 ~~~text
@@ -287,7 +287,7 @@ reverse policy as the corresponding coordinate operations.
 See ADR-0006 and `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` for the accepted
 domain, numerical, scalar, and platform contract.
 
-## Pseudo-Mercator — current unreleased accepted surface
+## Pseudo-Mercator — frozen v1 surface
 
 The aggregate public API exports the accepted bounded EPSG method 1024 operation:
 
@@ -343,7 +343,7 @@ web-map tile/zoom/XYZ/TMS policy.
 The PM-A through PM-G5 research and acceptance evidence is retained under
 `research/pseudo-mercator/`.
 
-## UTM — current unreleased accepted surface
+## UTM — frozen v1 surface
 
 The UTM layer exports:
 
@@ -381,9 +381,9 @@ formula is defined.
 See ADR-0007, ADR-0011, and `docs/UTM_VALIDATION_PLAN.md` for the accepted policy,
 parameterization, boundary, and platform contract.
 
-## Ellipsoidal geodesics — current unreleased surface
+## Ellipsoidal geodesics — frozen v1 surface
 
-The current development line exports the geodesic API through the aggregate:
+The frozen v1 surface exports the geodesic API through the aggregate:
 
 ```d
 import geodesy;
@@ -410,8 +410,7 @@ static Geodesic!T Geodesic!T.fromEllipsoid(
     @safe;
 ```
 
-The operational surface is deliberately checked-only in the first geodesic
-slice:
+The operational surface follows the library's checked/throwing operation pattern:
 
 ```d
 bool tryDirect(
@@ -426,6 +425,17 @@ bool tryInverse(
     const GeographicCoordinate!T end,
     out GeodesicInverseResult!T result) const
     pure nothrow @safe @nogc;
+
+GeodesicDirectResult!T direct(
+    const GeographicCoordinate!T start,
+    const Angle!T initialAzimuth,
+    const T distance) const
+    @safe;
+
+GeodesicInverseResult!T inverse(
+    const GeographicCoordinate!T start,
+    const GeographicCoordinate!T end) const
+    @safe;
 ```
 
 `GeodesicDirectResult!T` contains the endpoint position and the forward azimuth

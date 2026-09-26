@@ -385,8 +385,8 @@ Geodesic!T
 GeodesicDirectResult!T
 GeodesicInverseResult!T
 
-tryDirect(...)
-tryInverse(...)
+tryDirect(...) / direct(...)
+tryInverse(...) / inverse(...)
 ~~~
 
 for `float`, `double`, and platform `real`.

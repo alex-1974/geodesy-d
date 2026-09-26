@@ -1,4 +1,18 @@
-/** EPSG method 1031: Geocentric translations (geocentric domain). */
+/**
+ * EPSG method 1031: Geocentric translations in the geocentric domain.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.transform.geocentric_translation;
 
 import geodesy.errors : GeodesyValueException;
@@ -8,12 +22,16 @@ import geodesy.scalar : isFiniteGeodesyScalar, isGeodesyScalar;
 
 /**
  * Translation parameters from a source geocentric frame to a target
- * geocentric frame.
+ * geocentric frame using EPSG method 1031.
  *
- * All three values use the same linear unit as the source and target
- * geocentric coordinates.
+ * All three translations use the same linear unit as source and target
+ * geocentric coordinates. The represented direction is source to target:
+ * target components equal source components plus the corresponding
+ * translation. `.init` is therefore the identity transformation.
  *
- * `.init` is the identity transformation.
+ * `inverse` returns the exact inverse parameterization by negating all three
+ * translations. Construction rejects non-finite parameters.
+ *
  */
 struct GeocentricTranslation(T)
 if (isGeodesyScalar!T)
@@ -42,10 +60,18 @@ public:
         return _deltaZ;
     }
 
-    /**
-     * Checked non-throwing construction.
+        /**
+     * Construct source-to-target translation parameters without throwing.
      *
-     * Returns false when any parameter is NaN or infinite.
+     * Params:
+     *     deltaX = Finite X translation in the coordinate linear unit.
+     *     deltaY = Finite Y translation in the same linear unit.
+     *     deltaZ = Finite Z translation in the same linear unit.
+     *     result = Receives the translation on success.
+     *
+     * Returns:
+     *     `true` when all parameters are finite; otherwise `false`. On
+     *     failure `result` remains unchanged.
      */
     static bool tryFromComponents(
         const T deltaX,
@@ -65,7 +91,20 @@ public:
         return true;
     }
 
-    /** Throwing convenience constructor. */
+        /**
+     * Construct source-to-target translation parameters.
+     *
+     * Params:
+     *     deltaX = Finite X translation in the coordinate linear unit.
+     *     deltaY = Finite Y translation in the same linear unit.
+     *     deltaZ = Finite Z translation in the same linear unit.
+     *
+     * Returns:
+     *     The translation parameter set.
+     *
+     * Throws:
+     *     `GeodesyValueException` when any parameter is non-finite.
+     */
     static GeocentricTranslation!T fromComponents(
         const T deltaX,
         const T deltaY,
@@ -95,15 +134,40 @@ public:
     }
 }
 
+/// Example using struct GeocentricTranslation(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const shift = GeocentricTranslation!double.fromComponents(
+        84.87, 96.49, 116.95);
+    
+    const source = GeocentricCoordinate!double.fromComponents(
+        3_771_793.97, 140_253.34, 5_124_304.35);
+    
+    const target = source.applyGeocentricTranslation(shift);
+    const recovered = target.applyGeocentricTranslation(shift.inverse);
+    
+    assert(target.x > source.x);
+    assert(recovered == source);
+}
+
+
 
 /**
- * Apply EPSG method 1031:
+ * Apply EPSG method 1031 in the source-to-target direction.
  *
- *   Xt = Xs + dX
- *   Yt = Ys + dY
- *   Zt = Zs + dZ
+ * The source coordinate and translations must use the same linear unit.
  *
- * Returns false only if finite inputs overflow to a non-finite result in T.
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     translation = Source-to-target translation parameters.
+ *     result = Receives the target geocentric coordinate on success.
+ *
+ * Returns:
+ *     `true` when the finite input arithmetic produces a finite target in
+ *     scalar type `T`; otherwise `false`. On failure `result` remains
+ *     unchanged.
  */
 bool tryApplyGeocentricTranslation(T)(
     const GeocentricCoordinate!T source,
@@ -120,7 +184,21 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Throwing convenience wrapper for `tryApplyGeocentricTranslation`. */
+/**
+ * Apply EPSG method 1031 in the source-to-target direction.
+ *
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     translation = Source-to-target translation parameters in the same
+ *         linear unit.
+ *
+ * Returns:
+ *     The target geocentric coordinate.
+ *
+ * Throws:
+ *     `GeodesyValueException` when finite arithmetic cannot produce a
+ *     finite representable target.
+ */
 GeocentricCoordinate!T applyGeocentricTranslation(T)(
     const GeocentricCoordinate!T source,
     const GeocentricTranslation!T translation)

@@ -1,4 +1,18 @@
-/** Local topocentric East/North/Up coordinate types and operations. */
+/**
+ * Local topocentric East/North/Up coordinate types and operations.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.topocentric;
 
 import std.math : cos, sin;
@@ -24,9 +38,12 @@ import geodesy.scalar :
  *
  * The type represents linear components only. It does not carry an origin,
  * ellipsoid, CRS, datum, or linear-unit tag. Interpretation requires a
- * separately prepared topocentric frame.
+ * separately prepared `TopocentricFrame!T`.
  *
- * `(0, 0, 0)` is a valid coordinate and is the `.init` value.
+ * `(0,0,0)` is valid and is the `.init` value. Checked construction rejects
+ * non-finite components; the throwing factory reports the same failure with
+ * `GeodesyValueException`.
+ *
  */
 struct TopocentricCoordinate(T)
 if (isGeodesyScalar!T)
@@ -50,7 +67,19 @@ private:
     }
 
 public:
-    /** Construct from finite East/North/Up components without throwing. */
+        /**
+     * Construct finite East/North/Up components without throwing.
+     *
+     * Params:
+     *     east = Finite East component in the frame linear unit.
+     *     north = Finite North component in the same linear unit.
+     *     up = Finite Up component in the same linear unit.
+     *     result = Receives the coordinate on success.
+     *
+     * Returns:
+     *     `true` when all components are finite; otherwise `false`. On
+     *     failure `result` remains unchanged.
+     */
     static bool tryFromComponents(
         const T east,
         const T north,
@@ -72,10 +101,19 @@ public:
         return true;
     }
 
-    /**
-     * Construct from East/North/Up components.
+        /**
+     * Construct finite East/North/Up components.
      *
-     * Throws `GeodesyValueException` when any component is non-finite.
+     * Params:
+     *     east = Finite East component in the frame linear unit.
+     *     north = Finite North component in the same linear unit.
+     *     up = Finite Up component in the same linear unit.
+     *
+     * Returns:
+     *     The local coordinate.
+     *
+     * Throws:
+     *     `GeodesyValueException` when any component is non-finite.
      */
     static TopocentricCoordinate fromComponents(
         const T east,
@@ -120,15 +158,32 @@ public:
     }
 }
 
+/// Example using struct TopocentricCoordinate(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const local = TopocentricCoordinate!double.fromComponents(
+        12.5, -3.0, 1.25);
+    
+    assert(local.east == 12.5);
+    assert(local.north == -3.0);
+    assert(local.up == 1.25);
+}
+
+
 
 /**
  * A prepared local East/North/Up frame.
  *
- * The frame binds an ellipsoid, a geocentric origin, and the orientation
- * derived from the origin's geodetic latitude and longitude.
+ * The frame binds an ellipsoid, a geocentric origin, and the local ENU
+ * orientation derived from the origin's geodetic latitude and longitude.
+ * `.init` is deliberately invalid; prepare a frame explicitly from either a
+ * geodetic or geocentric origin before use.
  *
- * `.init` is deliberately invalid. A frame must be prepared explicitly from
- * either a geodetic or geocentric origin before it can be used.
+ * Direct geocentric conversions implement EPSG method 9836. Direct geodetic
+ * conversions implement EPSG method 9837 by composing EPSG 9602 with 9836.
+ * All linear coordinates must use the same unit as the ellipsoid axes.
  *
  * The prepared numerical state uses `Epsg9602WorkingScalar!T`:
  *
@@ -136,8 +191,13 @@ public:
  * - `double` -> `double`
  * - `real`   -> `real`
  *
- * This prevents composed float operations from materializing Earth-scale
- * ECEF intermediates in binary32 before local subtraction.
+ * This prevents composed float operations from materializing Earth-scale ECEF
+ * intermediates in binary32 before local subtraction.
+ *
+ * At a geodetic pole, the explicitly supplied longitude defines ENU
+ * orientation. A geocentric origin at the exact geocentre is rejected because
+ * its geodetic inverse is not unique.
+ *
  */
 struct TopocentricFrame(T)
 if (isGeodesyScalar!T)
@@ -268,12 +328,21 @@ public:
         return _ellipsoid;
     }
 
-    /**
+        /**
      * Prepare a frame from a geodetic origin without throwing.
      *
      * At either geographic pole, the explicitly supplied longitude defines
-     * the East/North orientation and is therefore used directly rather than
-     * being reconstructed from ECEF.
+     * East/North orientation and is used directly rather than reconstructed
+     * from ECEF.
+     *
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Finite geodetic origin using the same linear unit for height.
+     *     result = Receives the prepared frame on success.
+     *
+     * Returns:
+     *     `true` when EPSG 9602 preparation and ENU orientation are finite;
+     *     otherwise `false`. On failure `result` remains unchanged.
      */
     static bool tryFromGeodeticOrigin(
         const Ellipsoid!T ellipsoid,
@@ -328,11 +397,19 @@ public:
         return true;
     }
 
-    /**
+        /**
      * Prepare a frame from a geodetic origin.
      *
-     * Throws `GeodesyValueException` if the ellipsoid is invalid or a finite
-     * prepared frame cannot be produced.
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Finite geodetic origin using the same linear unit for height.
+     *
+     * Returns:
+     *     The prepared frame.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the ellipsoid is invalid or a finite
+     *     prepared frame cannot be produced.
      */
     static TopocentricFrame fromGeodeticOrigin(
         const Ellipsoid!T ellipsoid,
@@ -353,21 +430,25 @@ public:
         return result;
     }
 
-    /**
+        /**
      * Prepare a frame from a geocentric origin without throwing.
      *
-     * The supplied represented X/Y/Z values are retained as the prepared
-     * frame origin after promotion to the working scalar. They are not
-     * reconstructed from the derived geodetic coordinate.
+     * The supplied represented X/Y/Z values are retained after promotion to
+     * the working scalar; they are not reconstructed from the derived
+     * geodetic coordinate. Orientation follows canonical EPSG 9602 reverse
+     * semantics: the exact geocentre is rejected, a non-zero rotation-axis
+     * point is accepted with canonical zero longitude, and deep-interior
+     * origins inherit the canonical nearest-ellipsoid/min-|h| solution.
      *
-     * Orientation is obtained through the existing canonical reverse EPSG
-     * 9602 semantics. Consequently:
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Geocentric origin in the same linear unit.
+     *     result = Receives the prepared frame on success.
      *
-     * - the exact geocentre `(0,0,0)` is rejected;
-     * - a non-zero point on the rotation axis is accepted;
-     * - rotation-axis longitude is canonically zero;
-     * - deep-interior origins inherit the existing EPSG 9602 canonical
-     *   nearest-ellipsoid/min-|h| solution.
+     * Returns:
+     *     `true` when the origin has a defined canonical geodetic orientation
+     *     and finite ENU state; otherwise `false`. On failure `result`
+     *     remains unchanged.
      */
     static bool tryFromGeocentricOrigin(
         const Ellipsoid!T ellipsoid,
@@ -430,11 +511,19 @@ public:
         return true;
     }
 
-    /**
+        /**
      * Prepare a frame from a geocentric origin.
      *
-     * Throws `GeodesyValueException` if the ellipsoid is invalid, the origin
-     * is the exact geocentre, or a finite prepared frame cannot be produced.
+     * Params:
+     *     ellipsoid = Valid ellipsoid defining the frame linear unit.
+     *     origin = Geocentric origin in the same linear unit.
+     *
+     * Returns:
+     *     The prepared frame.
+     *
+     * Throws:
+     *     `GeodesyValueException` when the ellipsoid is invalid, the origin
+     *     is the exact geocentre, or no finite prepared frame can be produced.
      */
     static TopocentricFrame fromGeocentricOrigin(
         const Ellipsoid!T ellipsoid,
@@ -462,6 +551,13 @@ public:
      *
      * Subtraction from the Earth-scale frame origin is performed in the
      * frame's prepared working scalar before any narrowing to public scalar T.
+     * Params:
+     *     source = Geocentric coordinate in the frame linear unit.
+     *     result = Receives local East/North/Up on success.
+     *
+     * Returns:
+     *     `true` for a valid frame and finite representable result; otherwise
+     *     `false`. On failure `result` remains unchanged.
      */
     bool tryGeocentricToTopocentric(
         const GeocentricCoordinate!T source,
@@ -493,6 +589,14 @@ public:
      *
      * Throws `GeodesyValueException` when the frame is invalid or no finite
      * public result can be represented.
+     * Params:
+     *     source = Geocentric coordinate in the frame linear unit.
+     *
+     * Returns:
+     *     Local East/North/Up in the same linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or unrepresentable result.
      */
     TopocentricCoordinate!T geocentricToTopocentric(
         const GeocentricCoordinate!T source) const
@@ -517,6 +621,13 @@ public:
      * Implements the reverse direction of EPSG method 9836. Because the
      * forward rotation is orthonormal, the reverse uses its transpose and then
      * restores the prepared geocentric origin.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *     result = Receives the geocentric coordinate on success.
+     *
+     * Returns:
+     *     `true` for a valid frame and finite representable result; otherwise
+     *     `false`. On failure `result` remains unchanged.
      */
     bool tryTopocentricToGeocentric(
         const TopocentricCoordinate!T source,
@@ -548,6 +659,14 @@ public:
      *
      * Throws `GeodesyValueException` when the frame is invalid or no finite
      * public result can be represented.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *
+     * Returns:
+     *     Geocentric coordinate in the same linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or unrepresentable result.
      */
     GeocentricCoordinate!T topocentricToGeocentric(
         const TopocentricCoordinate!T source) const
@@ -576,6 +695,13 @@ public:
      * scalar. For `float`, the represented public geodetic values are
      * promoted to `double` before Earth-scale ECEF coordinates are computed.
      * No `GeocentricCoordinate!float` intermediate is materialized.
+     * Params:
+     *     source = Geodetic coordinate whose height uses the frame linear unit.
+     *     result = Receives local East/North/Up on success.
+     *
+     * Returns:
+     *     `true` when composed EPSG 9837 succeeds with a finite representable
+     *     result; otherwise `false`. On failure `result` remains unchanged.
      */
     bool tryGeodeticToTopocentric(
         const GeodeticCoordinate!T source,
@@ -626,6 +752,14 @@ public:
      * Throws `GeodesyValueException` when the frame is invalid or the
      * composed EPSG 9837 operation cannot produce a finite representable
      * public result.
+     * Params:
+     *     source = Geodetic coordinate whose height uses the frame linear unit.
+     *
+     * Returns:
+     *     Local East/North/Up in the frame linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or failed composed conversion.
      */
     TopocentricCoordinate!T geodeticToTopocentric(
         const GeodeticCoordinate!T source) const
@@ -653,6 +787,14 @@ public:
      * Working ECEF coordinates remain in the prepared working scalar until
      * the geodetic inverse is complete. Public scalar T is applied only to
      * the final latitude, longitude, and height.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *     result = Receives the canonical geodetic coordinate on success.
+     *
+     * Returns:
+     *     `true` when composed reverse EPSG 9837 succeeds with a finite
+     *     representable result; otherwise `false`. On failure `result`
+     *     remains unchanged.
      */
     bool tryTopocentricToGeodetic(
         const TopocentricCoordinate!T source,
@@ -730,6 +872,14 @@ public:
      * Throws `GeodesyValueException` when the frame is invalid or the
      * composed reverse EPSG 9837 operation cannot produce a defined finite
      * representable result.
+     * Params:
+     *     source = Local East/North/Up in the frame linear unit.
+     *
+     * Returns:
+     *     Canonical geodetic coordinate with height in the frame linear unit.
+     *
+     * Throws:
+     *     `GeodesyValueException` for an invalid frame or failed composed conversion.
      */
     GeodeticCoordinate!T topocentricToGeodetic(
         const TopocentricCoordinate!T source) const
@@ -748,6 +898,33 @@ public:
         return result;
     }
 }
+
+/// Example using struct TopocentricFrame(T) if (isGeodesyScalar!T).
+@safe unittest
+{
+    import geodesy;
+    
+    const origin = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208),
+        171.0);
+    
+    const frame = TopocentricFrame!double.fromGeodeticOrigin(
+        wgs84!double(), origin);
+    
+    const nearby = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20850),
+        Longitude!double.fromDegrees(16.37210),
+        172.0);
+    
+    const local = frame.geodeticToTopocentric(nearby);
+    const back = frame.topocentricToGeodetic(local);
+    
+    assert(frame.isValid);
+    assert(local.east == local.east);
+    assert(back.latitude.degrees > 48.0);
+}
+
 
 
 unittest

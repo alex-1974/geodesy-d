@@ -1,4 +1,4 @@
-module transverse_mercator_newton_validation;
+module geodesy.projection.transverse_mercator_newton_validation;
 
 import std.conv : to;
 import std.math : fabs, isFinite;

@@ -573,8 +573,8 @@ Provide a convenience operation conceptually equivalent to:
 
 ~~~d
 bool tryForwardUtm(T)(
-    Ellipsoid!T ellipsoid,
     GeographicCoordinate!T source,
+    Ellipsoid!T ellipsoid,
     out UtmCoordinate!T result)
     pure nothrow @safe @nogc;
 ~~~
@@ -600,8 +600,8 @@ Provide a reverse convenience operation conceptually equivalent to:
 
 ~~~d
 bool tryReverseUtm(T)(
-    Ellipsoid!T ellipsoid,
     UtmCoordinate!T source,
+    Ellipsoid!T ellipsoid,
     out GeographicCoordinate!T result)
     pure nothrow @safe @nogc;
 ~~~

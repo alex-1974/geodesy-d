@@ -380,16 +380,18 @@ Broad `@fastmath` is not a library policy.
 
 ## Release policy
 
-`v0.2.0` is the released compatibility baseline.
+`v0.2.0` remains the latest tagged compatibility baseline. The v1 public API
+has completed its explicit freeze audit and is now the release-candidate
+contract for `v1.0.0`; it is not yet a tagged release.
 
 The planned path to `v1.0.0` is deliberately bounded:
 
 1. qualify and accept the remaining P0 capability slices;
 2. admit P1 capability only when concrete consumer evidence justifies it;
 3. reconcile release-facing documentation and permanent API contracts;
-4. perform an explicit v1 public-API freeze and readiness audit;
+4. perform an explicit v1 public-API freeze and readiness audit — API freeze complete;
 5. validate the complete frozen surface across the supported compiler and
-   platform matrix before tagging.
+   platform matrix before tagging — release-readiness validation in progress.
 
 Post-v0.2 functionality is not considered release-ready merely because its
 implementation exists. Each major numerical slice must satisfy its own

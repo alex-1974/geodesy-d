@@ -1,11 +1,42 @@
-/** Reference ellipsoid value type and derived parameters. */
+/**
+ * Reference ellipsoid value type and derived parameters.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     September 26, 2026
+ */
 module geodesy.ellipsoid;
 
 import geodesy.errors : GeodesyValueException;
 import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 
-/** A spherical or oblate reference ellipsoid stored canonically as (a, f). */
+/**
+ * A spherical or oblate reference ellipsoid stored canonically as semi-major
+ * axis `a` and flattening `f`.
+ *
+ * The semi-major axis defines the caller-selected linear unit. Operations
+ * combining an ellipsoid with heights or Cartesian coordinates require those
+ * values to use the same linear unit. `Ellipsoid.init` is intentionally
+ * invalid so accidental default construction cannot silently select a
+ * plausible Earth model.
+ *
+ * General construction accepts finite `a > 0` and `0 <= f < 1`.
+ * `fromInverseFlattening` requires a finite inverse flattening greater than
+ * one; construct spheres explicitly with `sphere`.
+ *
+ * Checked factories return `false` for invalid parameters. Their throwing
+ * peers throw `GeodesyValueException`. Derived properties do not allocate.
+ *
+ */
 struct Ellipsoid(T)
 if (isGeodesyScalar!T)
 {
@@ -46,7 +77,18 @@ public:
             && _flattening < cast(T) 1;
     }
 
-    /** Construct from semi-major axis and flattening without throwing. */
+    /**
+     * Construct from semi-major axis and flattening without throwing.
+     *
+     * Params:
+     *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
+     *     flattening = Finite flattening in the interval 0 <= f < 1.
+     *     result = Receives the constructed ellipsoid on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for invalid parameters. On failure
+     *     `result` remains unchanged.
+     */
     static bool tryFromFlattening(
         const T semiMajorAxis,
         const T flattening,
@@ -62,7 +104,19 @@ public:
         return true;
     }
 
-    /** Construct from semi-major axis and flattening or throw on invalid parameters. */
+    /**
+     * Construct from semi-major axis and flattening or throw on invalid parameters.
+     *
+     * Params:
+     *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
+     *     flattening = Finite flattening in the interval 0 <= f < 1.
+     *
+     * Returns:
+     *     The constructed spherical or oblate ellipsoid.
+     *
+     * Throws:
+     *     `GeodesyValueException` for invalid parameters.
+     */
     static Ellipsoid fromFlattening(const T semiMajorAxis, const T flattening)
         @safe
     {
@@ -73,7 +127,19 @@ public:
         return result;
     }
 
-    /** Construct from semi-major axis and inverse flattening without throwing. */
+    /**
+     * Construct from semi-major axis and inverse flattening without throwing.
+     *
+     * Params:
+     *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
+     *     inverseFlattening = Finite inverse flattening greater than one.
+     *     result = Receives the constructed ellipsoid on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for invalid parameters. Spheres are
+     *     intentionally not represented by infinite inverse flattening; use
+     *     `trySphere`. On failure `result` remains unchanged.
+     */
     static bool tryFromInverseFlattening(
         const T semiMajorAxis,
         const T inverseFlattening,
@@ -88,7 +154,19 @@ public:
             result);
     }
 
-    /** Construct from semi-major axis and inverse flattening or throw on invalid parameters. */
+    /**
+     * Construct from semi-major axis and inverse flattening or throw on invalid parameters.
+     *
+     * Params:
+     *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
+     *     inverseFlattening = Finite inverse flattening greater than one.
+     *
+     * Returns:
+     *     The constructed oblate ellipsoid.
+     *
+     * Throws:
+     *     `GeodesyValueException` for invalid parameters. Use `sphere` for a sphere.
+     */
     static Ellipsoid fromInverseFlattening(
         const T semiMajorAxis,
         const T inverseFlattening)
@@ -101,7 +179,19 @@ public:
         return result;
     }
 
-    /** Construct from semi-major and semi-minor axes without throwing. */
+    /**
+     * Construct from semi-major and semi-minor axes without throwing.
+     *
+     * Params:
+     *     semiMajorAxis = Finite positive semi-major axis.
+     *     semiMinorAxis = Finite positive semi-minor axis in the same linear unit,
+     *         with semiMinorAxis <= semiMajorAxis.
+     *     result = Receives the constructed ellipsoid on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for invalid axes. Equal axes construct
+     *     a sphere. On failure `result` remains unchanged.
+     */
     static bool tryFromAxes(
         const T semiMajorAxis,
         const T semiMinorAxis,
@@ -117,7 +207,20 @@ public:
         return tryFromFlattening(semiMajorAxis, flattening, result);
     }
 
-    /** Construct from semi-major and semi-minor axes or throw on invalid parameters. */
+    /**
+     * Construct from semi-major and semi-minor axes or throw on invalid parameters.
+     *
+     * Params:
+     *     semiMajorAxis = Finite positive semi-major axis.
+     *     semiMinorAxis = Finite positive semi-minor axis in the same linear unit,
+     *         with semiMinorAxis <= semiMajorAxis.
+     *
+     * Returns:
+     *     The constructed spherical or oblate ellipsoid.
+     *
+     * Throws:
+     *     `GeodesyValueException` for invalid axes.
+     */
     static Ellipsoid fromAxes(const T semiMajorAxis, const T semiMinorAxis)
         @safe
     {
@@ -128,14 +231,35 @@ public:
         return result;
     }
 
-    /** Construct a sphere without throwing; radius must be finite and positive. */
+    /**
+     * Construct a sphere without throwing; radius must be finite and positive.
+     *
+     * Params:
+     *     radius = Finite positive radius in the caller-selected linear unit.
+     *     result = Receives the constructed sphere on success.
+     *
+     * Returns:
+     *     `true` on success; `false` for a non-positive or non-finite radius.
+     *     On failure `result` remains unchanged.
+     */
     static bool trySphere(const T radius, out Ellipsoid result)
         pure nothrow @safe @nogc
     {
         return tryFromFlattening(radius, cast(T) 0, result);
     }
 
-    /** Construct a sphere or throw when the radius is invalid. */
+    /**
+     * Construct a sphere or throw when the radius is invalid.
+     *
+     * Params:
+     *     radius = Finite positive radius in the caller-selected linear unit.
+     *
+     * Returns:
+     *     The constructed sphere with zero flattening.
+     *
+     * Throws:
+     *     `GeodesyValueException` for a non-positive or non-finite radius.
+     */
     static Ellipsoid sphere(const T radius)
         @safe
     {
@@ -175,7 +299,7 @@ public:
         return _flattening * (cast(T) 2 - _flattening);
     }
 
-    /** Second eccentricity squared `e'²`. */
+    /** Second eccentricity squared (e′²). */
     @property T secondEccentricitySquared() const pure nothrow @safe @nogc
     {
         const T e2 = firstEccentricitySquared;
@@ -189,7 +313,35 @@ public:
     }
 }
 
-/** WGS 84 reference ellipsoid, parameterized to the requested floating-point scalar. */
+/// Example constructing Earth and spherical ellipsoids.
+@safe unittest
+{
+    import geodesy;
+    
+    const earth = wgs84!double();
+    assert(earth.isValid);
+    assert(earth.semiMajorAxis == 6_378_137.0);
+    
+    const sphere = Ellipsoid!double.sphere(6_371_000.0);
+    assert(sphere.flattening == 0.0);
+    assert(sphere.semiMinorAxis == sphere.semiMajorAxis);
+    
+    assert(!Ellipsoid!double.init.isValid);
+    
+}
+
+
+/**
+ * WGS 84 reference ellipsoid, parameterized to the requested floating-point
+ * scalar.
+ *
+ * The semi-major axis is 6,378,137 metres and the inverse flattening is
+ * 298.257223563. Therefore values combined with this supplied ellipsoid use
+ * metres for their linear coordinates.
+ *
+ * Returns:
+ *     A valid WGS 84 `Ellipsoid!T`.
+ */
 Ellipsoid!T wgs84(T = double)() pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
