@@ -1065,6 +1065,54 @@ private:
     }
 
 
+    bool ordinaryTerrestrialProfile() const
+        pure nothrow @safe @nogc
+    {
+        /*
+         * This profile must be invariant under a consistent change of the
+         * ellipsoid/projected linear unit.  In particular, do not infer metres
+         * from the numerical magnitude of the semi-major axis.
+         */
+        const W a = cast(W) _ellipsoid.semiMajorAxis;
+        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
+        const W falseEasting = cast(W) _falseEasting;
+        const W falseNorthing = cast(W) _falseNorthing;
+
+        return a > cast(W) 0
+            && isFiniteScalar(a)
+            && k0 >= cast(W) ordinaryScaleLowerBound!T()
+            && k0 <= cast(W) ordinaryScaleUpperBound!T()
+            && fabs(falseEasting) <= cast(W) 2 * a
+            && fabs(falseNorthing) <= cast(W) 2 * a;
+    }
+
+
+    W ordinaryLinearBudget() const
+        pure nothrow @safe @nogc
+    {
+        /*
+         * The accepted v1 metre validation budget was 1 mm for double/real
+         * and 2 m for float.  Express that contract as a dimensionless
+         * fraction of the WGS 84 semi-major axis so the same physical
+         * parameterization expressed in another linear unit receives the
+         * same acceptance decision.
+         *
+         * At a = 6_378_137 in the caller's linear unit this reproduces the
+         * v1 budget exactly.
+         */
+        enum W wgs84SemiMajorAxis = cast(W) 6_378_137.0L;
+
+        static if (is(T == float))
+            enum W referenceBudget = cast(W) 2.0;
+        else
+            enum W referenceBudget = cast(W) 0.001;
+
+        return referenceBudget
+            * cast(W) _ellipsoid.semiMajorAxis
+            / wgs84SemiMajorAxis;
+    }
+
+
     W longitudeDomainSlack() const
         pure nothrow @safe @nogc
     {
@@ -1093,31 +1141,15 @@ private:
          * Outside this profile there is deliberately no fixed metre accuracy
          * promise, so only the representational slack above is used.
          */
-        const W a = cast(W) _ellipsoid.semiMajorAxis;
-        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
-        const W falseEasting = cast(W) _falseEasting;
-        const W falseNorthing = cast(W) _falseNorthing;
-
-        const bool ordinaryTerrestrialProfile =
-            a >= cast(W) 6_000_000
-            && a <= cast(W) 7_000_000
-            && k0 >= cast(W) ordinaryScaleLowerBound!T()
-            && k0 <= cast(W) ordinaryScaleUpperBound!T()
-            && fabs(falseEasting) <= cast(W) 2 * a
-            && fabs(falseNorthing) <= cast(W) 2 * a;
-
-        if (ordinaryTerrestrialProfile)
+        if (ordinaryTerrestrialProfile())
         {
-            static if (is(T == float))
-                enum W linearBudget = cast(W) 2.0;
-            else
-                enum W linearBudget = cast(W) 0.001;
-
+            const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
             const W naturalScale = _a1 * k0;
 
             if (naturalScale > cast(W) 0 && isFiniteScalar(naturalScale))
             {
-                const W contractSlack = linearBudget / naturalScale;
+                const W contractSlack =
+                    ordinaryLinearBudget() / naturalScale;
                 if (contractSlack > slack)
                     slack = contractSlack;
             }
@@ -1146,20 +1178,7 @@ private:
          * N(phi) * cos(phi) * dLambda alone is too permissive when the local
          * projected scale exceeds one, e.g. public float at k0 = 1.1.
          */
-        const W a = cast(W) _ellipsoid.semiMajorAxis;
-        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
-        const W falseEasting = cast(W) _falseEasting;
-        const W falseNorthing = cast(W) _falseNorthing;
-
-        const bool ordinaryTerrestrialProfile =
-            a >= cast(W) 6_000_000
-            && a <= cast(W) 7_000_000
-            && k0 >= cast(W) ordinaryScaleLowerBound!T()
-            && k0 <= cast(W) ordinaryScaleUpperBound!T()
-            && fabs(falseEasting) <= cast(W) 2 * a
-            && fabs(falseNorthing) <= cast(W) 2 * a;
-
-        if (!ordinaryTerrestrialProfile)
+        if (!ordinaryTerrestrialProfile())
             return false;
 
         Latitude!T boundaryLatitude;
@@ -1197,12 +1216,10 @@ private:
         const W projectedResidual =
             hypot2(deltaEasting, deltaNorthing);
 
-        static if (is(T == float))
-            enum W linearBudget = cast(W) 2.0;
-        else
-            enum W linearBudget = cast(W) 0.001;
+        const W linearBudget = ordinaryLinearBudget();
 
         return isFiniteScalar(projectedResidual)
+            && isFiniteScalar(linearBudget)
             && projectedResidual <= linearBudget;
     }
 
@@ -1215,20 +1232,7 @@ private:
     {
         const W maxDelta = maxLongitudeDifference!W;
 
-        const W a = cast(W) _ellipsoid.semiMajorAxis;
-        const W k0 = cast(W) _scaleFactorAtNaturalOrigin;
-        const W falseEasting = cast(W) _falseEasting;
-        const W falseNorthing = cast(W) _falseNorthing;
-
-        const bool ordinaryTerrestrialProfile =
-            a >= cast(W) 6_000_000
-            && a <= cast(W) 7_000_000
-            && k0 >= cast(W) ordinaryScaleLowerBound!T()
-            && k0 <= cast(W) ordinaryScaleUpperBound!T()
-            && fabs(falseEasting) <= cast(W) 2 * a
-            && fabs(falseNorthing) <= cast(W) 2 * a;
-
-        if (!ordinaryTerrestrialProfile)
+        if (!ordinaryTerrestrialProfile())
         {
             return fabs(deltaLongitude)
                 <= maxDelta + longitudeDomainSlack();
@@ -2732,4 +2736,52 @@ unittest
     assertThrown!GeodesyValueException(
         TransverseMercator!double.fromParameters(
             tooFlat, lat0, lon0, 1.0, 0.0, 0.0));
+}
+
+
+/**
+ * Unit-invariance regression for the represented +60 degree TM boundary.
+ *
+ * The same WGS 84 operation expressed in metres and kilometres must make the
+ * same reverse-domain acceptance decisions for coordinates produced by its own
+ * forward operation.
+ */
+@safe unittest
+{
+    import geodesy.ellipsoid : Ellipsoid;
+    import geodesy.geographic : GeographicCoordinate;
+    import geodesy.angle : Latitude, Longitude;
+
+    foreach (unit; [1.0, 0.001])
+    {
+        const ellipsoid =
+            Ellipsoid!double.fromInverseFlattening(
+                6_378_137.0 * unit,
+                298.257223563);
+
+        const projection =
+            TransverseMercator!double.fromParameters(
+                ellipsoid,
+                Latitude!double.fromDegrees(0.0),
+                Longitude!double.fromDegrees(15.0),
+                0.9996,
+                500_000.0 * unit,
+                0.0);
+
+        foreach (i; 0 .. 2_000)
+        {
+            const latitudeDegrees =
+                -80.0 + 160.0 * i / 2_000.0;
+
+            const source =
+                GeographicCoordinate!double.fromComponents(
+                    Latitude!double.fromDegrees(latitudeDegrees),
+                    Longitude!double.fromDegrees(75.0));
+
+            const projected = projection.forward(source);
+
+            GeographicCoordinate!double reversed;
+            assert(projection.tryReverse(projected, reversed));
+        }
+    }
 }
