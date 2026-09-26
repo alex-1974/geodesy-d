@@ -1577,7 +1577,7 @@ No additional public/internal boundary correction is required by V1-F.
 
 ## V1-G — source compatibility and named arguments
 
-Status: **in progress**
+Status: **COMPLETE / PASS**
 
 Review dimensions:
 
@@ -1632,3 +1632,50 @@ as part of the v1 source contract.
 No additional naming/order correction has been identified so far. G5 will
 compile an external consumer that deliberately uses named arguments across
 representative public families.
+
+
+### G5 — external named-argument consumer
+
+A consumer outside the repository compiled representative named-argument calls
+against the root `geodesy` aggregate. Covered families included:
+
+- `Ellipsoid.fromFlattening`
+- `Latitude.fromDegrees`
+- `Longitude.fromDegrees`
+- `GeographicCoordinate.fromComponents`
+- `tryStandardUtmZone`
+- source-first `forwardUtm` / `reverseUtm`
+- checked `tryForwardUtm` / `tryReverseUtm`
+- `Geodesic.fromEllipsoid`
+- `Geodesic.inverse`
+
+Validation:
+
+~~~text
+External named-argument consumer DMD 2.111  PASS — build + link
+External named-argument consumer LDC 1.41   PASS — build + link
+~~~
+
+### V1-G gate result
+
+Status: **COMPLETE / PASS**
+
+~~~text
+G1  public parameter names as source API       PASS
+G2  checked / throwing parameter-name parity   PASS
+G3  factory-pair parameter-name parity         PASS
+G4  source-first / UFCS call-shape stability   PASS
+G5  external named-argument consumer            PASS
+~~~
+
+No additional source-compatibility correction is required by V1-G.
+
+The accepted pre-v1 source changes already recorded by earlier gates remain
+intentional:
+- one-shot UTM functions were changed to source-first order;
+- throwing `Geodesic.direct` and `Geodesic.inverse` peers were added;
+- validation-only TM instrumentation was removed from public visibility.
+
+From this gate forward, public parameter identifiers should be treated as part
+of the frozen v1 source contract unless a later audit gate uncovers a concrete
+defect.
