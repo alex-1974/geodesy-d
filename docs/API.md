@@ -410,8 +410,7 @@ static Geodesic!T Geodesic!T.fromEllipsoid(
     @safe;
 ```
 
-The operational surface is deliberately checked-only in the first geodesic
-slice:
+The operational surface follows the library's checked/throwing operation pattern:
 
 ```d
 bool tryDirect(
@@ -426,6 +425,17 @@ bool tryInverse(
     const GeographicCoordinate!T end,
     out GeodesicInverseResult!T result) const
     pure nothrow @safe @nogc;
+
+GeodesicDirectResult!T direct(
+    const GeographicCoordinate!T start,
+    const Angle!T initialAzimuth,
+    const T distance) const
+    @safe;
+
+GeodesicInverseResult!T inverse(
+    const GeographicCoordinate!T start,
+    const GeographicCoordinate!T end) const
+    @safe;
 ```
 
 `GeodesicDirectResult!T` contains the endpoint position and the forward azimuth
