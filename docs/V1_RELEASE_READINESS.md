@@ -54,7 +54,7 @@ Required before v1.0.0:
 - [x] reconcile ROADMAP release-policy wording for the v1 release candidate.
 - [x] remove stale “unreleased” wording from the frozen v1 API reference.
 - [x] verify existing `CHANGELOG.md` and prepare its v1.0.0 release-candidate entry.
-- [ ] prepare concise v1.0.0 release notes.
+- [x] prepare concise v1.0.0 release notes in `docs/V1_RELEASE_NOTES.md`.
 
 ## R4 — normal compiler and release-build gate
 
@@ -200,7 +200,9 @@ Before tagging:
 
 Current decision: **NOT YET READY TO TAG**.
 
-The public API is frozen, but release-facing documentation/package hygiene and
-candidate-commit validation remain open. These tasks must preserve the frozen
-v1 public contract unless a concrete correctness or compatibility defect
-requires an explicit freeze-reopening decision.
+The public API is frozen and R1 through R6 are complete for the pre-tag
+release-readiness sequence. Remaining pre-tag work is the clean external
+consumer/release-artifact path in R7 and final repository/release hygiene in
+R8. The actual tag/release remains a separate explicit action. Post-publish
+registry verification remains intentionally deferred until a v1.0.0 package
+exists.
