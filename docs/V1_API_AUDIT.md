@@ -928,3 +928,92 @@ V1-F. Missing throwing counterparts identified in B1 remain explicit V1-D
 failure-semantics decisions.
 
 No other naming or API-family correction is required by V1-B.
+
+
+## V1-C — construction, `.init`, and mutability
+
+Status: **in progress**
+
+Review dimensions:
+
+~~~text
+C1  .init semantics for every public value type
+C2  factory completeness and invariant preservation
+C3  mutability and invariant escape routes
+~~~
+
+### C1 — initial-state semantics
+
+The public value types fall into two deliberate groups.
+
+**Naturally meaningful zero/default values**
+
+~~~text
+Angle<T>                    0 radians
+Latitude<T>                 0 radians
+Longitude<T>                0 radians
+GeographicCoordinate<T>     (0 latitude, 0 longitude)
+GeodeticCoordinate<T>       (0 latitude, 0 longitude, 0 height)
+GeocentricCoordinate<T>     (0, 0, 0)
+ProjectedCoordinate<T>      (0, 0)
+TopocentricCoordinate<T>    (0, 0, 0)
+GeocentricTranslation<T>    identity translation
+Helmert7<T, convention>     identity transform
+GeodesicDirectResult<T>     zero/default result value
+GeodesicInverseResult<T>    canonical zero-distance-shaped result value
+ConformalProjectionFactors  zero/default storage value
+~~~
+
+The coordinate and transformation defaults are legitimate domain values.
+Identity defaults for translations and Helmert transforms are particularly
+useful and do not violate their representation contracts.
+
+The result/factor structs require a narrower interpretation: their `.init`
+values are representable storage values, but they are normally produced as
+outputs of successful operations rather than used as evidence that an
+operation succeeded. No `isValid` contract currently claims otherwise.
+
+**Intentionally invalid/preparation-required defaults**
+
+~~~text
+Ellipsoid<T>
+UtmZone
+UtmCoordinate<T>       (invalid because UtmZone.init is invalid)
+TopocentricFrame<T>
+Geodesic<T>
+TransverseMercator<T>
+PseudoMercator<T>
+UtmProjection<T>
+~~~
+
+These types require parameters or preparation before they can represent the
+supported operation/domain state. Their validity checks reject `.init`.
+`UtmHemisphere.init == UtmHemisphere.north` does not make
+`UtmCoordinate.init` or `UtmProjection.init` valid because their embedded
+`UtmZone.init` is invalid (and prepared projection state is additionally
+invalid).
+
+This composition is sound: the enum default is a legitimate hemisphere while
+the enclosing type's required zone/preparation state supplies the invalid
+sentinel.
+
+**C1 preliminary conclusion:** no contradictory `.init` state is identified.
+Result/factor default semantics should nevertheless be checked against their
+documentation in V1-H so users do not infer an operation-success guarantee
+from a default-constructed output value.
+
+### C2/C3 — construction and invariant preservation
+
+Public representation fields reviewed so far are private. Construction of
+validated values uses static factories or private/package unchecked helpers;
+public properties are read-only accessors. Prepared objects expose
+`isValid` and do not expose public setters for their parameter or derived
+state.
+
+Consequently, no direct post-construction mutation path has yet been found
+that can violate a validated invariant.
+
+Further C2 work must still verify every public factory's failure behavior,
+especially whether failed `tryFrom...` calls leave their `out` result in a
+well-defined invalid/default state. Detailed checked/throwing failure policy
+is then owned by V1-D.
