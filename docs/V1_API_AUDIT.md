@@ -1506,7 +1506,7 @@ Accepted v1 contract distinctions include:
 
 ## V1-F — module / aggregate / visibility / dependency boundaries
 
-Status: **in progress**
+Status: **COMPLETE / PASS**
 
 Review dimensions:
 
@@ -1534,3 +1534,42 @@ Validation note: the first attempted DUB validation command passed
 runtime argument to the already-built test executable rather than a compiler
 version identifier. The normal DMD/LDC results are valid; the conditional
 build still requires a compile-time validation run.
+
+
+### V1-F gate result
+
+Status: **COMPLETE / PASS**
+
+~~~text
+F1  root aggregate export surface              PASS
+F2  conditional / validation-only declarations PASS
+F3  package/private implementation boundaries  PASS
+F4  internal module exposure                    PASS
+F5  dependency direction / encapsulation        PASS
+~~~
+
+Findings and accepted corrections:
+
+- The root `geodesy` aggregate exports the intended public modules only.
+- `geodesy.internal.*` geodesic implementation modules are not root-exported
+  and establish `package(geodesy):` at module scope, so their otherwise
+  top-level declarations remain package-visible rather than public API.
+- `ProjectionFactorResearch` validation helpers were already package-scoped.
+- `GeodesyTmNewtonValidation` previously exposed
+  `TransverseMercatorNewtonTrace` and `tryReverseNewtonTrace` publicly when
+  the version identifier was enabled. Both were changed to package visibility
+  before v1.
+
+Validation of the visibility correction:
+
+~~~text
+Normal DMD 2.111             PASS — 22 modules
+Normal LDC 1.41              PASS — 22 modules
+TM validation DMD 2.111      PASS
+TM validation LDC 1.41       PASS
+~~~
+
+The conditional validation builds were compiled with the respective compiler
+version identifiers through `DFLAGS`, not passed as runtime arguments.
+
+No additional public/internal boundary correction is required by V1-F.
