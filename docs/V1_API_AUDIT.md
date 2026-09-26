@@ -1017,3 +1017,52 @@ Further C2 work must still verify every public factory's failure behavior,
 especially whether failed `tryFrom...` calls leave their `out` result in a
 well-defined invalid/default state. Detailed checked/throwing failure policy
 is then owned by V1-D.
+
+
+### C2 — factory invariant preservation and `out` semantics
+
+Status: **reviewed**
+
+All reviewed public checked factories take their destination as a D `out`
+parameter. D initializes an `out` argument to the destination type's
+`.init` value on function entry. Consequently, early validation failures
+leave the caller-visible result at `.init` even when the variable held a
+previously constructed value before the call.
+
+The implementations fall into two safe patterns:
+
+1. validate all input, then assign the public result once; or
+2. build and validate a local `candidate`, then assign the public result
+   only after all preparation succeeds.
+
+The second pattern is used by the more complex prepared objects such as
+`TopocentricFrame`, `TransverseMercator`, `PseudoMercator`, and
+`UtmProjection`. It prevents partially prepared state from escaping.
+
+`Geodesic.tryFromEllipsoid` is structurally different: it explicitly resets
+`result = Geodesic.init`, then prepares directly into `result` and finally
+returns `result.isValid`. If a late derived-state validity check were to fail,
+the caller could therefore receive a partially populated but invalid
+`Geodesic` rather than exact `.init`. This does not violate the current
+boolean-success contract, but it is inconsistent with the stronger
+failure-result behavior naturally provided by the other factories.
+
+**C2 finding:** before v1, decide whether checked construction guarantees
+exact `.init` on every failure. If that stronger family contract is adopted,
+`Geodesic.tryFromEllipsoid` should prepare a local candidate and assign
+`result` only after `candidate.isValid` succeeds. The change is
+implementation-only for successful calls but makes failure-state semantics
+uniform and testable.
+
+### C3 — mutability and invariant escape routes
+
+Status: **reviewed / PASS**
+
+The reviewed public value types keep representation state private and expose
+read-only properties. Validated/prepared state cannot be mutated through
+public field assignment or setters after construction. Public operations
+return new values or write separate `out` results rather than mutating the
+receiver.
+
+No public invariant escape route has been identified.
+
