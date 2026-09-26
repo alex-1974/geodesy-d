@@ -137,11 +137,23 @@ public:
         return cast(T) 1 + _scaleDifference;
     }
 
-    /**
-     * Checked construction from canonical units.
+        /**
+     * Construct Helmert parameters from canonical units without throwing.
      *
-     * Rotation arguments are already valid finite `Angle!T` values.
-     * Returns false when a translation or scale difference is NaN/infinite.
+     * Params:
+     *     translationX = Finite X translation in the geocentric linear unit.
+     *     translationY = Finite Y translation in the same linear unit.
+     *     translationZ = Finite Z translation in the same linear unit.
+     *     rotationX = Finite canonical X rotation in radians.
+     *     rotationY = Finite canonical Y rotation in radians.
+     *     rotationZ = Finite canonical Z rotation in radians.
+     *     scaleDifference = Finite dimensionless dS, with M = 1 + dS.
+     *     result = Receives the parameter set on success.
+     *
+     * Returns:
+     *     `true` when translations and scale difference are finite; otherwise
+     *     `false`. Strong `Angle!T` arguments are already finite by
+     *     construction. On failure `result` remains unchanged.
      */
     static bool tryFromCanonical(
         const T translationX,
@@ -170,7 +182,25 @@ public:
         return true;
     }
 
-    /** Throwing convenience factory from canonical units. */
+        /**
+     * Construct Helmert parameters from canonical units.
+     *
+     * Params:
+     *     translationX = Finite X translation in the geocentric linear unit.
+     *     translationY = Finite Y translation in the same linear unit.
+     *     translationZ = Finite Z translation in the same linear unit.
+     *     rotationX = Canonical X rotation in radians.
+     *     rotationY = Canonical Y rotation in radians.
+     *     rotationZ = Canonical Z rotation in radians.
+     *     scaleDifference = Finite dimensionless dS.
+     *
+     * Returns:
+     *     The convention-specific Helmert parameter set.
+     *
+     * Throws:
+     *     `GeodesyValueException` for non-finite translations or scale
+     *     difference.
+     */
     static Helmert7!(T, convention) fromCanonical(
         const T translationX,
         const T translationY,
@@ -196,11 +226,24 @@ public:
         return result;
     }
 
-    /**
-     * Checked factory for the common EPSG interchange representation.
+        /**
+     * Construct from the common EPSG arc-second/ppm representation without
+     * throwing.
      *
-     * Rotations are supplied in arc-seconds and scale difference in ppm.
-     * They are converted to canonical radians and a dimensionless fraction.
+     * Params:
+     *     translationX = Finite X translation in the geocentric linear unit.
+     *     translationY = Finite Y translation in the same linear unit.
+     *     translationZ = Finite Z translation in the same linear unit.
+     *     rotationXArcSeconds = Finite convention-specific X rotation in arc-seconds.
+     *     rotationYArcSeconds = Finite convention-specific Y rotation in arc-seconds.
+     *     rotationZArcSeconds = Finite convention-specific Z rotation in arc-seconds.
+     *     scaleDifferencePpm = Finite scale difference in parts per million.
+     *     result = Receives canonical parameters on success.
+     *
+     * Returns:
+     *     `true` when all inputs and their canonical conversions are finite
+     *     and representable; otherwise `false`. On failure `result`
+     *     remains unchanged.
      */
     static bool tryFromArcSecondsAndPpm(
         const T translationX,
@@ -254,7 +297,25 @@ public:
             result);
     }
 
-    /** Throwing EPSG-style arc-second/ppm factory. */
+        /**
+     * Construct from the common EPSG arc-second/ppm representation.
+     *
+     * Params:
+     *     translationX = Finite X translation in the geocentric linear unit.
+     *     translationY = Finite Y translation in the same linear unit.
+     *     translationZ = Finite Z translation in the same linear unit.
+     *     rotationXArcSeconds = Finite convention-specific X rotation in arc-seconds.
+     *     rotationYArcSeconds = Finite convention-specific Y rotation in arc-seconds.
+     *     rotationZArcSeconds = Finite convention-specific Z rotation in arc-seconds.
+     *     scaleDifferencePpm = Finite scale difference in parts per million.
+     *
+     * Returns:
+     *     The convention-specific Helmert parameter set in canonical storage.
+     *
+     * Throws:
+     *     `GeodesyValueException` when an input or canonical conversion is
+     *     non-finite or unrepresentable.
+     */
     static Helmert7!(T, convention) fromArcSecondsAndPpm(
         const T translationX,
         const T translationY,
@@ -335,11 +396,18 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1033 — Position Vector transformation
- * (geocentric domain).
+ * Apply EPSG method 1033 Position Vector in the source-to-target direction.
  *
- * Returns false when finite parameters/intermediate arithmetic produce a
- * non-finite target coordinate in scalar type T.
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     transform = Position Vector parameters using the same linear unit for
+ *         translations as `source`.
+ *     result = Receives the target coordinate on success.
+ *
+ * Returns:
+ *     `true` when scale-factor and transformation arithmetic produce a
+ *     finite target in scalar type `T`; otherwise `false`. On failure
+ *     `result` remains unchanged.
  */
 bool tryApplyPositionVectorHelmert(T)(
     const GeocentricCoordinate!T source,
@@ -352,7 +420,21 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Throwing convenience wrapper for EPSG 1033. */
+/**
+ * Apply EPSG method 1033 Position Vector in the source-to-target direction.
+ *
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     transform = Position Vector parameters with translations in the same
+ *         linear unit.
+ *
+ * Returns:
+ *     The target geocentric coordinate.
+ *
+ * Throws:
+ *     `GeodesyValueException` when transformation arithmetic cannot produce
+ *     a finite representable target.
+ */
 GeocentricCoordinate!T applyPositionVectorHelmert(T)(
     const GeocentricCoordinate!T source,
     const Helmert7!(T, HelmertConvention.positionVector) transform)
@@ -625,11 +707,18 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1032 — Coordinate Frame rotation
- * (geocentric domain).
+ * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
  *
- * Returns false when finite parameters/intermediate arithmetic produce a
- * non-finite target coordinate in scalar type T.
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     transform = Coordinate Frame parameters using the same linear unit for
+ *         translations as `source`.
+ *     result = Receives the target coordinate on success.
+ *
+ * Returns:
+ *     `true` when scale-factor and transformation arithmetic produce a
+ *     finite target in scalar type `T`; otherwise `false`. On failure
+ *     `result` remains unchanged.
  */
 bool tryApplyCoordinateFrameHelmert(T)(
     const GeocentricCoordinate!T source,
@@ -642,7 +731,21 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Throwing convenience wrapper for EPSG 1032. */
+/**
+ * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
+ *
+ * Params:
+ *     source = Source geocentric coordinate.
+ *     transform = Coordinate Frame parameters with translations in the same
+ *         linear unit.
+ *
+ * Returns:
+ *     The target geocentric coordinate.
+ *
+ * Throws:
+ *     `GeodesyValueException` when transformation arithmetic cannot produce
+ *     a finite representable target.
+ */
 GeocentricCoordinate!T applyCoordinateFrameHelmert(T)(
     const GeocentricCoordinate!T source,
     const Helmert7!(T, HelmertConvention.coordinateFrame) transform)
