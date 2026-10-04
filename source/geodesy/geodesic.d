@@ -348,37 +348,6 @@ public:
     }
 }
 
-    /// Example reading the final forward azimuth.
-    @safe unittest
-    {
-        import geodesy;
-        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
-        const start = GeographicCoordinate!double.fromComponents(
-            Latitude!double.fromDegrees(48.20849),
-            Longitude!double.fromDegrees(16.37208));
-        const end = GeographicCoordinate!double.fromComponents(
-            Latitude!double.fromDegrees(47.07071),
-            Longitude!double.fromDegrees(15.43950));
-        const result = solver.inverse(start, end);
-        assert(result.finalAzimuth.radians == result.finalAzimuth.radians);
-    }
-}
-
-/// Example using an inverse geodesic result.
-@safe unittest
-{
-    import geodesy;
-    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
-    const vienna = GeographicCoordinate!double.fromComponents(
-        Latitude!double.fromDegrees(48.20849),
-        Longitude!double.fromDegrees(16.37208));
-    const graz = GeographicCoordinate!double.fromComponents(
-        Latitude!double.fromDegrees(47.07071),
-        Longitude!double.fromDegrees(15.43950));
-    const result = solver.inverse(vienna, graz);
-    assert(result.distance > 0.0);
-}
-
 /// Example reading a direct-result endpoint and final azimuth.
 @safe unittest
 {
@@ -486,6 +455,36 @@ public:
     {
         return _finalAzimuth;
     }
+
+    /// Example reading the final forward azimuth.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const end = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+        const result = solver.inverse(start, end);
+        assert(result.finalAzimuth.radians == result.finalAzimuth.radians);
+    }
+}
+
+/// Example using an inverse geodesic result.
+@safe unittest
+{
+    import geodesy;
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    const graz = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(47.07071),
+        Longitude!double.fromDegrees(15.43950));
+    const result = solver.inverse(vienna, graz);
+    assert(result.distance > 0.0);
 }
 
 
