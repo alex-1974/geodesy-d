@@ -1,8 +1,13 @@
 # geodesy-d public API
 
-The tagged `v0.1.0` surface remains the historical release baseline. This
-document also records public APIs added on the current unreleased development
-line when their implementation surface has stabilized.
+This document defines the stable public **v1 API baseline** for `geodesy-d`.
+
+The baseline was frozen for v1.0.0 and remains authoritative across compatible
+v1.x releases. Patch releases may correct implementation or documentation
+defects without changing this public source contract.
+
+Historical pre-v1 API evolution remains available in git history and release
+records rather than being treated as the current contract.
 
 ## Aggregate import
 
@@ -11,9 +16,9 @@ import geodesy;
 ```
 
 `source/geodesy/package.d` is the intentional public aggregation surface.
-The tagged v0.1 API contract is compiled through this aggregate import, and
-post-v0.1 public modules are added here only after their implementation gate has
-passed.
+The frozen v1 API contract is compiled through this aggregate import. New
+public modules or symbols may be added in compatible v1.x releases only after
+their implementation, API, documentation, and validation gates have passed.
 
 ## Public scalar policy
 
@@ -227,8 +232,7 @@ Canonical rotations are `Angle<T>` in radians. Scale difference is a
 dimensionless fraction. The EPSG-style factory accepts arc-seconds and ppm.
 
 `toCoordinateFrame` and `toPositionVector` are
-`pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is exposed in
-v0.1.
+`pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is part of the frozen v1 surface.
 
 ## Conformal projection factors — frozen v1 surface
 
@@ -335,7 +339,7 @@ The complete source `Ellipsoid<T>` is retained as semantic state, while EPSG
 method 1024 coordinate equations depend only on its semi-major axis. Flattening
 therefore does not affect projected coordinates.
 
-The initial public surface deliberately does not provide a `WebMercator`
+The frozen v1 public surface deliberately does not provide a `WebMercator`
 alias, latitude-of-natural-origin or scale-factor parameters, conformal
 projection factors, one-shot free forward/reverse helpers, CRS/EPSG lookup, or
 web-map tile/zoom/XYZ/TMS policy.
@@ -476,8 +480,10 @@ Karney series. Platform `real` selects order 6, 7, or 8 according to its
 mantissa width; on the validated Linux x86-64 environment
 `real.mant_dig == 64`, so order 7 is used.
 
-The first slice does not expose `GeodesicLine`, reduced length, geodesic
-scales, area, longitude unrolling, polygon accumulation, or prolate ellipsoids.
+The frozen v1 geodesic surface does not expose `GeodesicLine`, reduced
+length, geodesic scales, area, longitude unrolling, polygon accumulation, or
+prolate ellipsoids. Compatible post-v1 additions are tracked separately in the
+roadmap and do not alter the v1.0 direct/inverse contract.
 
 See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
 numerical, canonicalization, and validation contract.
@@ -490,15 +496,14 @@ Run:
 tools/validate-api.sh
 ```
 
-The tagged v0.1 contract verifies externally that aggregate
-`import geodesy;` exposes its intended baseline surface, checked APIs retain
-their hot-path attributes, mutable parameter leakage is rejected,
-package/private helpers remain inaccessible, and Helmert convention selection
-cannot be omitted.
+The frozen v1 contract verifies externally that aggregate `import geodesy;`
+exposes its intended baseline surface, checked APIs retain their hot-path
+attributes, mutable parameter leakage is rejected, package/private helpers
+remain inaccessible, and Helmert convention selection cannot be omitted.
 
 The permanent aggregate contract also compiles a named-argument compatibility
 surface under DMD and LDC. Public parameter names are therefore treated as
-source compatibility for the current stabilized API.
+source compatibility within the stable v1 API line.
 
 The current geodesic aggregate surface is part of the permanent public API
 contract and is compile-checked under DMD and LDC using only `import geodesy;`.
