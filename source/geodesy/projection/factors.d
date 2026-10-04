@@ -82,12 +82,52 @@ public:
         return _meridianConvergence;
     }
 
+    /// Example reading meridian convergence.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const point = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const factors = projection.forwardFactors(point);
+        assert(factors.meridianConvergence.radians
+            == factors.meridianConvergence.radians);
+    }
+
     /** Dimensionless isotropic point scale. */
     @property T pointScale() const
         pure nothrow @safe @nogc
     {
         return _pointScale;
     }
+
+    /// Example reading the local point scale.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const point = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const factors = projection.forwardFactors(point);
+        assert(factors.pointScale > 0.0);
+    }
+}
+
+/// Example using conformal projection factors.
+@safe unittest
+{
+    import geodesy;
+    const projection = UtmProjection!double.fromZone(
+        wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+    const point = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    const factors = projection.forwardFactors(point);
+    assert(factors.pointScale > 0.0);
 }
 
 
