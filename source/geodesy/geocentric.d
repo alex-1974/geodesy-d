@@ -82,7 +82,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` when any component is NaN or infinite.
-     *     On failure `result` remains unchanged.
+     *     On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromComponents(
         const T x,

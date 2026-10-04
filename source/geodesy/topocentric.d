@@ -111,7 +111,7 @@ public:
      *
      * Returns:
      *     `true` when all components are finite; otherwise `false`. On
-     *     failure `result` remains unchanged.
+     *     failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromComponents(
         const T east,
@@ -375,7 +375,7 @@ public:
      *
      * Returns:
      *     `true` when EPSG 9602 preparation and ENU orientation are finite;
-     *     otherwise `false`. On failure `result` remains unchanged.
+     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromGeodeticOrigin(
         const Ellipsoid!T ellipsoid,
@@ -481,7 +481,7 @@ public:
      * Returns:
      *     `true` when the origin has a defined canonical geodetic orientation
      *     and finite ENU state; otherwise `false`. On failure `result`
-     *     remains unchanged.
+     *     is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromGeocentricOrigin(
         const Ellipsoid!T ellipsoid,
@@ -590,7 +590,7 @@ public:
      *
      * Returns:
      *     `true` for a valid frame and finite representable result; otherwise
-     *     `false`. On failure `result` remains unchanged.
+     *     `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryGeocentricToTopocentric(
         const GeocentricCoordinate!T source,
@@ -660,7 +660,7 @@ public:
      *
      * Returns:
      *     `true` for a valid frame and finite representable result; otherwise
-     *     `false`. On failure `result` remains unchanged.
+     *     `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryTopocentricToGeocentric(
         const TopocentricCoordinate!T source,
@@ -734,7 +734,7 @@ public:
      *
      * Returns:
      *     `true` when composed EPSG 9837 succeeds with a finite representable
-     *     result; otherwise `false`. On failure `result` remains unchanged.
+     *     result; otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryGeodeticToTopocentric(
         const GeodeticCoordinate!T source,
@@ -827,7 +827,7 @@ public:
      * Returns:
      *     `true` when composed reverse EPSG 9837 succeeds with a finite
      *     representable result; otherwise `false`. On failure `result`
-     *     remains unchanged.
+     *     is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryTopocentricToGeodetic(
         const TopocentricCoordinate!T source,

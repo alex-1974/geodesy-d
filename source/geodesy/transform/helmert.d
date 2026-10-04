@@ -162,7 +162,7 @@ public:
      * Returns:
      *     `true` when translations and scale difference are finite; otherwise
      *     `false`. Strong `Angle!T` arguments are already finite by
-     *     construction. On failure `result` remains unchanged.
+     *     construction. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromCanonical(
         const T translationX,
@@ -252,7 +252,7 @@ public:
      * Returns:
      *     `true` when all inputs and their canonical conversions are finite
      *     and representable; otherwise `false`. On failure `result`
-     *     remains unchanged.
+     *     is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromArcSecondsAndPpm(
         const T translationX,
@@ -438,7 +438,7 @@ if (isGeodesyScalar!T)
  * Returns:
  *     `true` when scale-factor and transformation arithmetic produce a
  *     finite target in scalar type `T`; otherwise `false`. On failure
- *     `result` remains unchanged.
+ *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
  */
 bool tryApplyPositionVectorHelmert(T)(
     const GeocentricCoordinate!T source,
@@ -749,7 +749,7 @@ if (isGeodesyScalar!T)
  * Returns:
  *     `true` when scale-factor and transformation arithmetic produce a
  *     finite target in scalar type `T`; otherwise `false`. On failure
- *     `result` remains unchanged.
+ *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
  */
 bool tryApplyCoordinateFrameHelmert(T)(
     const GeocentricCoordinate!T source,

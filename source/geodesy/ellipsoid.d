@@ -109,7 +109,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` for invalid parameters. On failure
-     *     `result` remains unchanged.
+     *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromFlattening(
         const T semiMajorAxis,
@@ -160,7 +160,7 @@ public:
      * Returns:
      *     `true` on success; `false` for invalid parameters. Spheres are
      *     intentionally not represented by infinite inverse flattening; use
-     *     `trySphere`. On failure `result` remains unchanged.
+     *     `trySphere`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromInverseFlattening(
         const T semiMajorAxis,
@@ -212,7 +212,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` for invalid axes. Equal axes construct
-     *     a sphere. On failure `result` remains unchanged.
+     *     a sphere. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromAxes(
         const T semiMajorAxis,
@@ -262,7 +262,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` for a non-positive or non-finite radius.
-     *     On failure `result` remains unchanged.
+     *     On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool trySphere(const T radius, out Ellipsoid result)
         pure nothrow @safe @nogc

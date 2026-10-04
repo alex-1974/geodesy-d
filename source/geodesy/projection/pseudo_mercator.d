@@ -1152,7 +1152,7 @@ public:
      *
      * Returns:
      *     `true` when all parameters and derived represented bounds are valid;
-     *     otherwise `false`. On failure `result` remains unchanged.
+     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -1416,7 +1416,7 @@ public:
      * Returns:
      *     `true` when this operation is valid, the source is in the supported
      *     domain, and the projected result is finite and representable;
-     *     otherwise `false`. On failure `result` remains unchanged.
+     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -1547,7 +1547,7 @@ public:
      * Returns:
      *     `true` when this operation is valid and `source` belongs to the
      *     supported represented sheet with a finite representable inverse;
-     *     otherwise `false`. On failure `result` remains unchanged.
+     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,

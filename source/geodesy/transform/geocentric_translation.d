@@ -97,7 +97,7 @@ public:
      *
      * Returns:
      *     `true` when all parameters are finite; otherwise `false`. On
-     *     failure `result` remains unchanged.
+     *     failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromComponents(
         const T deltaX,
