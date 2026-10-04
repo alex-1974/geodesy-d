@@ -57,7 +57,8 @@ private:
     T _y = 0;
     T _z = 0;
 
-    static GeocentricCoordinate fromComponentsUnchecked(
+    /** Construct an ECEF coordinate from components already validated as finite. */
+static GeocentricCoordinate fromComponentsUnchecked(
         const T x,
         const T y,
         const T z)
