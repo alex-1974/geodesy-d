@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 documentation audit
 
-Status: **COMPLETE — DECISIONS INCORPORATED IN PR #32**
+Status: **RELEASE-CONTENT DECISIONS COMPLETE — SOURCE QUALITY AUDIT OPEN**
 
 This document records the documentation decisions made during v1.0.1 release
 preparation. It is not normative public API documentation.
@@ -109,5 +109,18 @@ The release-facing content decisions are complete:
    project teaser; detailed validation/toolchain material stays in dedicated
    documents.
 
-Remaining documentation work is mechanical validation only: Markdown links,
-Ddoc/API documentation checks, and any fixes those checks expose.
+Release-content decisions are complete, but documentation quality is not yet
+signed off.
+
+The remaining source-level work is tracked by issue #52 and
+`docs/V1_0_1_DOCUMENTATION_QUALITY_AUDIT.md`. It includes:
+
+- reader-first public Ddoc review;
+- a rendered compiler-checked Example for every public DDox symbol page;
+- internal non-trivial function documentation;
+- rationale comments for important implementation decisions;
+- human review of the generated DDox site;
+- final strict documentation tooling.
+
+This work is a v1.0.1 release blocker, not merely a mechanical formatting
+check.
