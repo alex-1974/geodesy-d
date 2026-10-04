@@ -1135,6 +1135,15 @@ public:
             && validPublicLongitude(_eastLegalLongitude);
     }
 
+    /// Example checking whether a Pseudo-Mercator operation is prepared.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0.0), 0.0, 0.0);
+        assert(projection.isValid);
+    }
+
 
         /**
      * Prepare a bounded Pseudo-Mercator operation without throwing.
@@ -1329,6 +1338,20 @@ public:
         return true;
     }
 
+    /// Example preparing Pseudo-Mercator without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        PseudoMercator!double projection;
+        assert(PseudoMercator!double.tryFromParameters(
+            wgs84!double(),
+            Longitude!double.fromDegrees(0.0),
+            0.0,
+            0.0,
+            projection));
+        assert(projection.isValid);
+    }
+
 
         /**
      * Prepare a bounded Pseudo-Mercator operation.
@@ -1369,12 +1392,36 @@ public:
         return result;
     }
 
+    /// Example preparing a reusable Pseudo-Mercator projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(),
+            Longitude!double.fromDegrees(0.0),
+            500_000.0,
+            1_000_000.0);
+        assert(projection.falseEasting == 500_000.0);
+    }
+
 
     /** Source ellipsoid retained by the operation. */
     @property Ellipsoid!T ellipsoid() const
         pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the source ellipsoid.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(),
+            Longitude!double.fromDegrees(0.0),
+            500_000.0,
+            1_000_000.0);
+        assert(projection.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
 
@@ -1385,6 +1432,18 @@ public:
         return _longitudeOfNaturalOrigin;
     }
 
+    /// Example reading the natural-origin longitude.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(),
+            Longitude!double.fromDegrees(0.0),
+            500_000.0,
+            1_000_000.0);
+        assert(projection.longitudeOfNaturalOrigin.degrees == 0.0);
+    }
+
 
     /** False easting in the ellipsoid linear unit. */
     @property T falseEasting() const
@@ -1393,12 +1452,36 @@ public:
         return _falseEasting;
     }
 
+    /// Example reading the false easting.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(),
+            Longitude!double.fromDegrees(0.0),
+            500_000.0,
+            1_000_000.0);
+        assert(projection.falseEasting == 500_000.0);
+    }
+
 
     /** False northing in the ellipsoid linear unit. */
     @property T falseNorthing() const
         pure nothrow @safe @nogc
     {
         return _falseNorthing;
+    }
+
+    /// Example reading the false northing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(),
+            Longitude!double.fromDegrees(0.0),
+            500_000.0,
+            1_000_000.0);
+        assert(projection.falseNorthing == 1_000_000.0);
     }
 
 
@@ -1500,6 +1583,20 @@ public:
                 result);
     }
 
+    /// Example projecting a geographic coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0.0), 0.0, 0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        ProjectedCoordinate!double result;
+        assert(projection.tryForward(source, result));
+        assert(result.easting > 0.0);
+    }
+
 
         /**
      * Project a geographic coordinate on the bounded Pseudo-Mercator sheet.
@@ -1531,6 +1628,19 @@ public:
         }
 
         return result;
+    }
+
+    /// Example projecting a geographic coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0.0), 0.0, 0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const result = projection.forward(source);
+        assert(result.northing > 0.0);
     }
 
 
@@ -1832,6 +1942,21 @@ public:
         return true;
     }
 
+    /// Example reversing a projected coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0.0), 0.0, 0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const projected = projection.forward(source);
+        GeographicCoordinate!double result;
+        assert(projection.tryReverse(projected, result));
+        assert(result.latitude.degrees > 48.0);
+    }
+
 
         /**
      * Reverse a projected coordinate from the bounded represented sheet.
@@ -1863,6 +1988,19 @@ public:
         }
 
         return result;
+    }
+
+    /// Example reversing a Pseudo-Mercator coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PseudoMercator!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0.0), 0.0, 0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const roundTrip = projection.reverse(projection.forward(source));
+        assert(roundTrip.longitude.degrees > 16.0);
     }
 }
 
