@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 release readiness
 
-Status: **PRE-RELEASE — AUTOMATED GATES COMPLETE; HUMAN DDox REVIEW OPEN**
+Status: **PRE-RELEASE — DOCUMENTATION GATE COMPLETE; FINAL VALIDATION OPEN**
 
 This checklist is specific to v1.0.1. It does not replace the historical
 v1.0.0 release-readiness record.
@@ -94,14 +94,14 @@ Mandatory before tagging:
   release record;
 - [x] keep `docs/V1_RELEASE_NOTES.md` as the historical v1.0.0 release notes;
 - [x] prepare `docs/V1_0_1_RELEASE_NOTES.md`;
-- [ ] complete the one remaining issue #52 acceptance item: human visual review
-  of the generated DDox site;
+- [x] complete issue #52, including human visual review of the generated DDox
+  site;
 - [x] public Ddoc, 211/211 own DDox examples, internal-function Ddoc,
   decision-comment review, source-aware public-only filtering, and strict
   documentation tooling complete;
 - [x] final Ddoc/DDox documentation workflow green on `main` after PR #54.
 
-The documentation review is a release blocker by policy for v1.0.1.
+The documentation-quality gate is complete for v1.0.1.
 
 ## R6 — remaining repository state
 
@@ -141,11 +141,11 @@ After documentation sign-off:
 
 Current decision: **DO NOT TAG YET**.
 
-The release-facing document structure is agreed and the automated/source
-documentation-quality gate is complete. Issue #52 remains a release blocker
-only for the explicit human visual inspection of the generated DDox site.
+The release-facing document structure and full documentation-quality gate are
+complete. Issue #52 is closed after automated verification and maintainer visual
+review of the generated DDox site.
 
 Issue #18 is resolved. Issue #17 is explicitly deferred from the patch-release
-scope. After the DDox visual sign-off, the remaining work is the final
-release-candidate validation/consumer/metadata sequence. Tagging and
-publication remain separate explicit actions.
+scope. The remaining work is the final release-candidate
+validation/consumer/metadata sequence. Tagging and publication remain separate
+explicit actions.
