@@ -52,6 +52,15 @@ Post-v1 work follows these rules:
 
 No milestone number implies a promised release date.
 
+Milestones express the preferred development sequence, not a hard dependency
+graph. Evidence from real consumers may justify advancing an item from a later
+milestone without admitting the entire milestone.
+
+A capability is not admitted merely because GeographicLib, PROJ, or another
+reference implementation exposes it. New public abstractions should either
+complete an existing mathematical family or have concrete consumer,
+interoperability, numerical, or research justification.
+
 ---
 
 # M1 — Post-v1 Baseline
@@ -80,14 +89,29 @@ Exit criteria:
 
 M1 is intentionally feature-conservative.
 
+## M1.1 — v1.0.1 Hotfix
+
+The v1.0.1 patch is a narrow correctness/documentation release over the frozen
+v1 API.
+
+Included:
+
+- Transverse Mercator reverse-boundary unit invariance;
+- corrected public `out`-parameter failure semantics.
+
+It introduces no new public capability family.
+
 ---
 
-# M2 — Complete Geodesic Family
+# M2 — Geodesic Core Completion
 
 **Release intent:** primary **v1.1 candidate**.
 
 The first post-v1 feature milestone completes the existing Karney-family
-geodesic core instead of starting unrelated new families.
+geodesic core instead of starting unrelated new families. "Core completion"
+means the admitted direct/inverse, differential-quantity, prepared-line, and
+ellipsoidal measurement primitives; it does not imply that every possible
+ellipsoidal path operation is complete.
 
 Issues:
 
@@ -121,7 +145,8 @@ queries, rhumb lines, or prolate ellipsoids.
 # M3 — Navigation & Polar Geodesy
 
 **Goal:** complete the principal navigation/polar families after the geodesic
-core is mature.
+core is mature, unless concrete consumer evidence justifies advancing an
+individual item earlier.
 
 Issues:
 
@@ -138,6 +163,8 @@ navigation / projection
 ├── Polar Stereographic
 └── UPS
 ~~~
+
+Polar Stereographic, UPS, and Rhumb/RhumbLine form the intended M3 core.
 
 Additional projections are research/admission candidates rather than automatic
 scope. Candidate families include:
@@ -158,6 +185,10 @@ interoperability gap, or strong research case exists.
 
 **Goal:** extend the current static datum/reference-frame mathematics to modern
 time-dependent transformations.
+
+Dynamic Helmert is the primary planned capability. Molodensky and
+Molodensky-Badekas remain research/admission candidates rather than committed
+public API.
 
 Issues:
 
@@ -210,10 +241,12 @@ configurations.
 
 ---
 
-# M6 — Physical Geodesy
+# M6 — Physical Geodesy Research
 
 **Goal:** decide how far `geodesy-d` should extend from geometrical geodesy
-into physical geodesy.
+into physical geodesy. This milestone is research-first; it may conclude that
+some data-driven capabilities belong in a separate package rather than in
+`geodesy-d`.
 
 Issues:
 
@@ -258,8 +291,10 @@ geodesy
 │   ├── differential quantities
 │   ├── GeodesicLine
 │   ├── perimeter / area accumulation
-│   ├── rhumb
 │   └── advanced ellipsoidal geometry
+│
+├── navigation
+│   └── rhumb / RhumbLine
 │
 ├── projection
 │   ├── Transverse Mercator
@@ -273,12 +308,13 @@ geodesy
 │   ├── geocentric translation
 │   ├── static Helmert
 │   ├── dynamic Helmert
-│   ├── Molodensky
-│   └── Molodensky-Badekas
+│   └── additional datum transformations, if admitted
+│       ├── Molodensky
+│       └── Molodensky-Badekas
 │
 └── physical
-    ├── normal gravity
-    └── model interfaces if admitted
+    ├── normal gravity, if admitted
+    └── model interfaces or separate package boundary
 ~~~
 
 This is an architectural target, not a commitment that every candidate will be
