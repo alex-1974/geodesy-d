@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 documentation quality audit
 
-Status: **AUTOMATED/SOURCE GATES COMPLETE — HUMAN GENERATED-SITE REVIEW OPEN**
+Status: **COMPLETE — DOCUMENTATION QUALITY GATE PASSED**
 
 This audit applies the repository documentation standard in
 `docs/ddoc-style.md` to the v1 source tree.
@@ -67,12 +67,10 @@ The final PR #54 documentation run and the subsequent `main` push both
 generated public-only DDox successfully. The source-aware visibility filter
 removed internal declarations, and the strict 211/211 example audit passed.
 
-Human visual status: **OPEN**.
+Human visual status: **PASS**.
 
-A person must still inspect the generated site as rendered documentation and
-confirm that summaries, sections, examples, navigation, and links read
-correctly. This requirement is deliberately not inferred from successful
-generation.
+The generated site was visually reviewed by the maintainer and confirmed to
+look clean and read well. This completes the human review requirement.
 
 ## Q7 — release gate
 
@@ -81,10 +79,9 @@ generation.
 - [x] Q3 211/211 own compiled/rendered examples;
 - [x] Q4 internal function documentation complete;
 - [x] Q5 decision-comment audit complete;
-- [ ] Q6 generated DDox human visual review complete;
+- [x] Q6 generated DDox human visual review complete;
 - [x] DMD documentation generation passes;
 - [x] strict DDox example verifier passes;
 - [x] API documentation workflow is green on final `main` after PR #54.
 
-The remaining documentation blocker for v1.0.1 is the explicit human visual
-review of the generated site.
+The v1.0.1 documentation-quality gate is complete.
