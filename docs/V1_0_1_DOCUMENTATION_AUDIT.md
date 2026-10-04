@@ -1,130 +1,113 @@
 # geodesy-d v1.0.1 documentation audit
 
-Status: **DRAFT FOR DISCUSSION**
+Status: **COMPLETE — DECISIONS INCORPORATED IN PR #32**
 
-This document records documentation questions that should be resolved before
-v1.0.1. It is not itself normative public API documentation.
+This document records the documentation decisions made during v1.0.1 release
+preparation. It is not normative public API documentation.
 
-## 1. ROADMAP.md is materially stale
+## 1. ROADMAP.md
 
-The current roadmap still presents `v0.2.0` as the released line and describes
-work toward `v1.0.0`, even though v1.0.0 was released on 2026-09-26.
+Decision: the roadmap is a current planning document.
 
-A post-v1 rewrite already exists in PR #26, but that branch predates subsequent
-main changes and should not be merged mechanically.
+The stale pre-v1 plan has been replaced with a post-v1 milestone structure.
+Historical planning remains in git history.
 
-Decision required:
-
-- replace the old pre-v1 roadmap with a compact post-v1 roadmap;
-- retain the old planning text only in git history rather than in the current
-  roadmap;
-- define current milestones around post-v1 baseline cleanup, consumer/gap
-  audit, and evidence-driven v1.1 work.
-
-Recommended direction: adopt the structure of PR #26 after rebasing its content
-conceptually onto current main.
-
-## 2. docs/V1_RELEASE_READINESS.md is historically valuable but temporally stale
-
-The document still says:
+The active sequence is:
 
 ~~~text
-Status: PRE-TAG READY
-Current decision: PRE-TAG GATES COMPLETE; FINAL TAG ACTION NOT YET AUTHORIZED
+M1    Post-v1 Baseline
+M1.1  v1.0.1 Hotfix
+M2    Geodesic Core Completion
+M3    Navigation & Polar Geodesy
+M4    Reference Frames
+M5    Advanced Ellipsoidal Geometry
+M6    Physical Geodesy Research
 ~~~
 
-That was correct immediately before v1.0.0, but is false as a statement of
-current repository state.
+Milestones express preferred development order, not a hard dependency graph.
 
-Decision required:
+## 2. docs/V1_RELEASE_READINESS.md
 
-- preserve it as an immutable historical release record and change only its
-  heading/status framing to make that explicit; or
-- replace it with a post-publish-complete historical record based on PR #25.
+Decision: retain the file as the historical v1.0.0 release record and update it
+to the actual final post-publish state.
 
-Recommended direction: retain the file as a v1.0.0 historical record, update
-its status to released/post-publish verified, and avoid using it as the active
-v1.0.1 checklist. The new `V1_0_1_RELEASE_READINESS.md` should be authoritative
-for the patch release.
+The record now states that v1.0.0 was released and that post-publish DUB
+registry/external-consumer verification completed successfully. It is not the
+active checklist for v1.0.1.
 
 ## 3. docs/V1_RELEASE_NOTES.md
 
-The v1.0.0 release notes are valid historical release notes.
+Decision: keep the v1.0.0 release notes historical.
 
-Decision required:
+Later patch releases receive their own release notes rather than rewriting the
+v1.0.0 note.
 
-- keep them immutable apart from clearly historical framing; or
-- add a small navigation pointer to the changelog / later releases.
+v1.0.1 therefore uses:
 
-Recommended direction: keep the actual v1.0.0 content immutable. Do not rewrite
-historical release notes to describe v1.0.1.
+~~~text
+docs/V1_0_1_RELEASE_NOTES.md
+~~~
 
-## 4. docs/API.md version/status framing
+## 4. docs/API.md
 
-The detailed API content should remain authoritative for the frozen v1 API, but
-introductory language should not imply an unreleased or pre-freeze state.
+Decision: `docs/API.md` documents the stable v1 API baseline, not an exact
+v1.0.0 implementation snapshot.
 
-Review required:
+Compatible v1.x patch/minor work may correct defects or add compatible public
+capability while preserving the frozen v1 source-compatibility baseline.
 
-- release/version labels;
-- references to “current unreleased development line” or similar wording;
-- distinction between “frozen v1 API” and “exact v1.0.0 implementation state”;
-- failure semantics now corrected in source Ddoc.
-
-Recommended direction: describe the document as the stable v1 API baseline,
-not as a v1.0.0 snapshot. Patch releases may correct implementation and
-documentation defects without changing that API baseline.
+Stale pre-v1/v0.1 framing has been removed.
 
 ## 5. README.md
 
-The README is already much closer to current reality than ROADMAP.md, but the
-release-facing pass should verify:
+Decision: README is the repository entry page, not a technical design or
+validation document.
 
-- v1.0.0/v1.x status wording;
-- minimum frontend 2.111.0;
-- public feature list matches the frozen v1 surface;
-- documentation links point to current documents;
-- wording around validation does not overclaim the exact compiler matrix;
-- responsibility boundaries remain aligned with the workspace.
+It is intentionally limited to:
 
-Recommended direction: make the README describe the stable v1 line, not one
-specific patch version except where installation/version examples require it.
+- what `geodesy-d` is;
+- a concise capability list;
+- a short design teaser;
+- installation;
+- one representative public-API example;
+- links to detailed documentation;
+- license.
+
+The teaser may state supported, verifiable characteristics such as
+dependency-light pure D, strong typing, safety-oriented checked APIs,
+performance-conscious prepared numerical objects, and independent numerical
+validation. Broad unqualified claims such as “high-performance” or
+“ownership-safe” are avoided unless separately demonstrated and defined.
 
 ## 6. CHANGELOG.md
 
-The v1.0.1 `Unreleased` draft should contain only patch-release material:
+Decision: the v1.0.1 entry contains patch-release material only:
 
-- TM boundary unit-invariance correctness fix;
-- corrected public `out` failure-semantics documentation.
+- Transverse Mercator reverse-boundary unit-invariance correctness fix;
+- correction of public Ddoc for D `out` failure semantics;
+- explicit statement that the frozen v1 public source contract is preserved.
 
-Before release, convert `Unreleased` to `1.0.1` with the actual date.
+Before tagging, `Unreleased` must be converted to `1.0.1` with the actual
+release date.
 
-No v1.1 roadmap or toolchain work should be mixed into the patch changelog.
+## 7. Old documentation PRs
 
-## 7. Old open documentation PRs
+PR #25 and PR #26 were not merged directly because both predated current main.
 
-PR #25 and PR #26 both predate the current main history.
+Their still-valid content was incorporated into PR #32 and both PRs were closed
+as superseded.
 
-Recommended handling:
+## 8. Documentation sign-off
 
-- do not merge them directly;
-- reuse their validated content where still correct;
-- close them as superseded once equivalent current-main documentation changes
-  are merged.
+The release-facing content decisions are complete:
 
-## 8. Documentation sign-off questions
+1. ROADMAP is current-only planning: **yes**.
+2. v1.0.0 readiness is a completed historical release record: **yes**.
+3. `docs/API.md` targets the stable v1 API line: **yes**.
+4. release notes remain per-release historical documents: **yes**.
+5. README contains only entry-page information and a concise, supportable
+   project teaser; detailed validation/toolchain material stays in dedicated
+   documents.
 
-Before v1.0.1, explicitly agree on:
-
-1. Is `ROADMAP.md` a current planning document only, with old plans left to git
-   history?
-2. Should v1.0.0 readiness be kept as a historical record or rewritten to its
-   final post-publish state?
-3. Should `docs/API.md` target the entire stable v1 API line rather than a
-   specific patch release?
-4. Should release notes remain immutable per release, with later fixes only in
-   new release notes and CHANGELOG?
-5. How much validation/toolchain detail belongs in README versus dedicated
-   validation/readiness documents?
-
-No final release should occur until these questions are resolved.
+Remaining documentation work is mechanical validation only: Markdown links,
+Ddoc/API documentation checks, and any fixes those checks expose.
