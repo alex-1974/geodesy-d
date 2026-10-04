@@ -99,7 +99,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` for NaN or infinity. On failure
-     *     `result` remains unchanged.
+     *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromRadians(const T radians, out Angle result)
         pure nothrow @safe @nogc
@@ -120,7 +120,7 @@ public:
      * Returns:
      *     `true` on success; `false` for NaN, infinity, or when conversion
      *     to scalar `T` does not produce a finite radian value. On failure
-     *     `result` remains unchanged.
+     *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromDegrees(const T degrees, out Angle result)
         pure nothrow @safe @nogc
@@ -232,7 +232,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` for non-finite or out-of-domain input.
-     *     On failure `result` remains unchanged.
+     *     On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromRadians(const T radians, out Latitude result)
         pure nothrow @safe @nogc
@@ -252,7 +252,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` for non-finite or out-of-domain input.
-     *     On failure `result` remains unchanged.
+     *     On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromDegrees(const T degrees, out Latitude result)
         pure nothrow @safe @nogc
@@ -373,7 +373,7 @@ public:
      * Returns:
      *     `true` on success; `false` for non-finite or out-of-domain input.
      *     Both antimeridian endpoints are accepted. On failure `result`
-     *     remains unchanged.
+     *     is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromRadians(const T radians, out Longitude result)
         pure nothrow @safe @nogc
@@ -394,7 +394,7 @@ public:
      * Returns:
      *     `true` on success; `false` for non-finite or out-of-domain input.
      *     Both antimeridian endpoints are accepted. On failure `result`
-     *     remains unchanged.
+     *     is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromDegrees(const T degrees, out Longitude result)
         pure nothrow @safe @nogc
