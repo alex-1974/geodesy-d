@@ -137,8 +137,10 @@ After documentation sign-off:
   representative aggregate-import/UTM/geodesic consumer built, linked, and ran
   successfully in both debug and release mode with all six controlled
   compilers;
-- [ ] confirm the verified `geodesy-d-research` snapshot before merging the
-  production research split;
+- [x] confirm the verified `geodesy-d-research` snapshot before merging the
+  production research split: 116/116 paths and 1,280,863/1,280,863 bytes match
+  the pinned source commit with zero mode/size/blob mismatches; research CI is
+  green on `0bcc5cbfb7ef07684b38c238eb2f679f39ecd88a`;
 - [ ] confirm clean repository/release metadata;
 - [ ] convert the changelog `Unreleased` section into `1.0.1` with the actual
   release date;
