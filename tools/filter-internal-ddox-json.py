@@ -99,6 +99,35 @@ def child_qualified(parent: str | None, name: str) -> str:
     return parent + "." + name
 
 
+def canonical_symbol_name(name: str) -> str:
+    """Normalize DMD/DDox symbol spellings for source-visibility matching."""
+    name = re.sub(r"!([^)]*)", "", name)
+    name = re.sub(r"(?<=[A-Za-z0-9_])([^)]*)", "", name)
+    name = re.sub(r"s+", "", name)
+    return name.strip(".")
+
+
+def matches_internal(parent: str | None, name: str, internal: set[str]) -> bool:
+    candidates = {canonical_symbol_name(name)}
+    if parent:
+        candidates.add(canonical_symbol_name(child_qualified(parent, name)))
+
+    for candidate in candidates:
+        if candidate in internal:
+            return True
+
+        candidate_parts = candidate.split(".")
+        for symbol in internal:
+            symbol_parts = symbol.split(".")
+            if (
+                len(candidate_parts) >= len(symbol_parts)
+                and candidate_parts[-len(symbol_parts):] == symbol_parts
+            ):
+                return True
+
+    return False
+
+
 def filter_members(node, parent: str | None, internal: set[str]) -> int:
     removed = 0
 
@@ -106,12 +135,12 @@ def filter_members(node, parent: str | None, internal: set[str]) -> int:
         kept = []
         for item in node:
             item_name = item.get("name") if isinstance(item, dict) else None
-            fq = (
-                child_qualified(parent, item_name)
-                if parent and isinstance(item_name, str)
-                else None
-            )
-            if fq is not None and fq in internal:
+
+            if (
+                parent
+                and isinstance(item_name, str)
+                and matches_internal(parent, item_name, internal)
+            ):
                 removed += 1
                 continue
 
@@ -127,10 +156,25 @@ def filter_members(node, parent: str | None, internal: set[str]) -> int:
     name = node.get("name")
     current = parent
     if isinstance(name, str) and name:
-        current = child_qualified(parent, name)
+        current = canonical_symbol_name(child_qualified(parent, name))
 
-    for value in node.values():
-        if isinstance(value, (dict, list)):
+    for key in list(node):
+        value = node[key]
+
+        if isinstance(value, dict):
+            child_name = value.get("name")
+            if (
+                current
+                and isinstance(child_name, str)
+                and matches_internal(current, child_name, internal)
+            ):
+                del node[key]
+                removed += 1
+                continue
+
+            removed += filter_members(value, current, internal)
+
+        elif isinstance(value, list):
             removed += filter_members(value, current, internal)
 
     return removed
