@@ -87,6 +87,12 @@ import geodesy.scalar : isGeodesyScalar;
  */
 
 
+/**
+ * Working precision used by the Transverse Mercator kernel.
+ *
+ * Public `float` operations use `double`; wider public scalar types retain
+ * their precision.
+ */
 private template WorkingScalar(T)
 if (isGeodesyScalar!T)
 {
@@ -97,6 +103,11 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Select the fixed Krueger-series order from the public scalar precision.
+ *
+ * The order is a compile-time property of the scalar type.
+ */
 private template seriesOrderFor(T)
 if (isGeodesyScalar!T)
 {
@@ -175,6 +186,10 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Compute a stable two-dimensional norm without avoidable intermediate
+ * overflow from squaring large components.
+ */
 private T hypot2(T)(const T x, const T y)
     pure nothrow @safe @nogc
 {
@@ -191,6 +206,11 @@ private T hypot2(T)(const T x, const T y)
 }
 
 
+/**
+ * Compute an error-free sum decomposition.
+ *
+ * `sum` receives the rounded sum and `residual` its rounding error.
+ */
 private void twoSum(T)(
     const T a,
     const T b,
@@ -204,6 +224,9 @@ private void twoSum(T)(
 }
 
 
+/**
+ * Normalize a finite angular difference to the principal interval [-pi,+pi).
+ */
 private T normalizeRadians(T)(const T radians)
     pure nothrow @safe @nogc
 {
@@ -230,6 +253,12 @@ private T normalizeRadians(T)(const T radians)
 }
 
 
+/**
+ * Compute a compensated, wrapped longitude difference from the natural origin.
+ *
+ * The two-sum residual determines the correct side of the antimeridian when
+ * the rounded main difference lies exactly at +/-pi.
+ */
 private T longitudeDifference(T)(
     const T longitude,
     const T longitudeOfNaturalOrigin)
@@ -251,6 +280,10 @@ private T longitudeDifference(T)(
 }
 
 
+/**
+ * Add a longitude offset to the natural origin with compensated summation and
+ * canonicalize the result to [-pi,+pi).
+ */
 private T addLongitude(T)(
     const T longitudeOfNaturalOrigin,
     const T deltaLongitude)
@@ -263,6 +296,10 @@ private T addLongitude(T)(
 }
 
 
+/**
+ * Evaluate the eccentricity-dependent hyperbolic term used by the conformal
+ * latitude transform.
+ */
 private T eccentricityTerm(T)(const T x, const T eccentricity)
     pure nothrow @safe @nogc
 {
@@ -272,6 +309,11 @@ private T eccentricityTerm(T)(const T x, const T eccentricity)
 }
 
 
+/**
+ * Convert geodetic tau = tan(phi) to conformal-sphere tau-prime.
+ *
+ * The stable norm form avoids unnecessary overflow for large finite tau.
+ */
 private T conformalTau(T)(
     const T tau,
     const T eccentricity)
@@ -287,6 +329,12 @@ private T conformalTau(T)(
 }
 
 
+/**
+ * Recover geodetic tau from conformal tau-prime by bounded Newton iteration.
+ *
+ * `tau` receives the solution. The function returns `false` when the
+ * ellipsoid state or iteration becomes non-finite or fails to converge.
+ */
 private bool geodeticTau(T)(
     const T tauPrime,
     const T eccentricity,
@@ -361,6 +409,12 @@ version (GeodesyTmNewtonValidation)
         bool newtonApplicable;
     }
 
+    /**
+     * Instrument the inverse conformal-latitude Newton solve for validation.
+     *
+     * `tau` receives the recovered geodetic tau and `trace` records
+     * iteration count, convergence residual, and maximum correction.
+     */
     private bool geodeticTauInstrumented(T)(
         const T tauPrime,
         const T eccentricity,
@@ -450,6 +504,10 @@ version (GeodesyTmNewtonValidation)
 }
 
 
+/**
+ * Real/imaginary pair used to evaluate complex Krueger series without a
+ * general complex-number dependency.
+ */
 private struct ComplexPair(T)
 {
     T re = 0;
@@ -457,6 +515,7 @@ private struct ComplexPair(T)
 }
 
 
+/** Subtract two internal complex pairs component-wise. */
 private ComplexPair!T pairSub(T)(
     const ComplexPair!T a,
     const ComplexPair!T b)
@@ -466,6 +525,7 @@ private ComplexPair!T pairSub(T)(
 }
 
 
+/** Multiply two internal complex pairs. */
 private ComplexPair!T pairMul(T)(
     const ComplexPair!T a,
     const ComplexPair!T b)
@@ -477,6 +537,7 @@ private ComplexPair!T pairMul(T)(
 }
 
 
+/** Add a real scalar to the real component of an internal complex pair. */
 private ComplexPair!T pairWithRealAdded(T)(
     const ComplexPair!T value,
     const T realPart)
@@ -942,6 +1003,12 @@ private:
     version (GeodesyTmNewtonValidation)
     {
     package:
+        /**
+         * Run normal reverse acceptance while collecting Newton diagnostics.
+         *
+         * `result` receives the accepted geographic point; `trace` records
+         * whether Newton was applicable and its convergence behavior.
+         */
         bool tryReverseNewtonTrace(
             const ProjectedCoordinate!T source,
             out GeographicCoordinate!T result,
@@ -988,6 +1055,10 @@ private:
         }
 
     private:
+        /**
+         * Instrument the reverse kernel after projected-domain policy has been
+         * applied. `latitude` and `deltaLongitude` receive working values.
+         */
         bool reverseKernelNewtonTrace(
             const W xi,
             const W eta,
@@ -1625,7 +1696,14 @@ public:
      * the represented point. No public-scalar narrowing is performed
      * here.
      */
-    private bool tryFactorsAtWorkingPoint(
+    /**
+ * Evaluate meridian convergence and point scale at an accepted
+ * working-precision geographic point.
+ *
+ * Inputs already satisfy projection-domain policy. `result` receives the
+ * public factor pair on success.
+ */
+private bool tryFactorsAtWorkingPoint(
         const W latitude,
         const W deltaLongitude,
         out W convergenceRadians,
@@ -1820,7 +1898,11 @@ public:
      * This member is absent from normal builds and is package-protected
      * even when ProjectionFactorResearch is enabled.
      */
-    private bool tryForwardFactorScalars(
+    /**
+ * Research-only forward factor kernel exposing raw convergence and scale
+ * scalars without changing the normal public API.
+ */
+private bool tryForwardFactorScalars(
         const GeographicCoordinate!T source,
         out T convergenceRadians,
         out T pointScale) const
@@ -1919,7 +2001,11 @@ public:
      * Geographic poles use the canonical PF-A convention:
      * convergence = 0 and point scale = k0.
      */
-    private bool tryReverseFactorScalars(
+    /**
+ * Research-only reverse factor kernel exposing raw convergence and scale
+ * scalars after the normal reverse-domain policy has accepted the point.
+ */
+private bool tryReverseFactorScalars(
         const ProjectedCoordinate!T source,
         out T convergenceRadians,
         out T pointScale) const
@@ -2252,7 +2338,10 @@ public:
              * These deliberately delegate to the production scalar paths so
              * research and public factor evaluation cannot diverge.
              */
-            package bool researchTryForwardFactors(
+            /**
+ * Package-visible research entry point for forward projection-factor probes.
+ */
+package bool researchTryForwardFactors(
                 const GeographicCoordinate!T source,
                 out T convergenceRadians,
                 out T pointScale) const
@@ -2265,7 +2354,10 @@ public:
             }
 
 
-            package bool researchTryReverseFactors(
+            /**
+ * Package-visible research entry point for reverse projection-factor probes.
+ */
+package bool researchTryReverseFactors(
                 const ProjectedCoordinate!T source,
                 out T convergenceRadians,
                 out T pointScale) const
