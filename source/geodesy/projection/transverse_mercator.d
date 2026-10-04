@@ -121,6 +121,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return whether a scalar is neither NaN nor infinity. */
 private bool isFiniteScalar(T)(const T value)
     pure nothrow @safe @nogc
 {
@@ -130,24 +131,31 @@ private bool isFiniteScalar(T)(const T value)
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)() pure nothrow @safe @nogc
 {
     return cast(T) PI;
 }
 
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)() pure nothrow @safe @nogc
 {
     return pi!T / cast(T) 2;
 }
 
 
+/** Return the documented maximum absolute longitude difference of 60 degrees. */
 private T maxLongitudeDifference(T)() pure nothrow @safe @nogc
 {
     return pi!T / cast(T) 3;
 }
 
 
+/**
+ * Return the inclusive lower scale-factor bound for the ordinary terrestrial
+ * reverse-validation profile in scalar type T.
+ */
 private T ordinaryScaleLowerBound(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -167,6 +175,10 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Return the inclusive upper scale-factor bound for the ordinary terrestrial
+ * reverse-validation profile in scalar type T.
+ */
 private T ordinaryScaleUpperBound(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -583,7 +595,11 @@ private:
     W[9] _alpha;
     W[9] _beta;
 
-    static W evaluateB1(const W n)
+    /**
+     * Evaluate the Krueger B1 scale coefficient from third flattening `n`
+     * using the fixed series order selected for T.
+     */
+static W evaluateB1(const W n)
         pure nothrow @safe @nogc
     {
         const W n2 = n * n;
@@ -605,7 +621,13 @@ private:
     }
 
 
-    static void fillCoefficients(
+    /**
+     * Fill the prepared alpha and beta Krueger-series coefficient arrays for
+     * third flattening `n`.
+     *
+     * Both output arrays are overwritten for the selected fixed series order.
+     */
+static void fillCoefficients(
         const W n,
         ref W[9] alpha,
         ref W[9] beta)
@@ -810,7 +832,13 @@ private:
     }
 
 
-    bool applyForwardSeries(
+    /**
+     * Apply the prepared forward Krueger complex series.
+     *
+     * `xi` and `eta` receive the projected conformal-sphere coordinates.
+     * Returns false if evaluation produces a non-finite intermediate.
+     */
+bool applyForwardSeries(
         const W xiPrime,
         const W etaPrime,
         out W xi,
@@ -854,7 +882,13 @@ private:
     }
 
 
-    bool applyReverseSeries(
+    /**
+     * Apply the prepared reverse Krueger complex series.
+     *
+     * `xiPrime` and `etaPrime` receive conformal-sphere coordinates used by
+     * the inverse geographic kernel.
+     */
+bool applyReverseSeries(
         const W xi,
         const W eta,
         out W xiPrime,
@@ -898,7 +932,14 @@ private:
     }
 
 
-    bool forwardKernel(
+    /**
+     * Project a working-precision latitude and longitude difference through
+     * the bounded Transverse Mercator numerical kernel.
+     *
+     * `easting` and `northing` receive linear results before public-scalar
+     * construction.
+     */
+bool forwardKernel(
         const W latitude,
         const W deltaLongitude,
         out W xi,
@@ -943,7 +984,13 @@ private:
     }
 
 
-    bool reverseKernel(
+    /**
+     * Invert projected working coordinates to latitude and longitude
+     * difference before public policy/canonicalization.
+     *
+     * `latitude` and `deltaLongitude` receive working-precision radians.
+     */
+bool reverseKernel(
         const W xi,
         const W eta,
         out W latitude,
@@ -1126,7 +1173,11 @@ private:
     }
 
 
-    W workingLatitudeRadians(const Latitude!T latitude) const
+    /**
+     * Lift a public latitude into working precision while preserving exact zero
+     * and pole representations.
+     */
+W workingLatitudeRadians(const Latitude!T latitude) const
         pure nothrow @safe @nogc
     {
         /*
@@ -1147,7 +1198,13 @@ private:
     }
 
 
-    int representedPoleSign(
+    /**
+     * Classify a projected coordinate that is numerically identical to the
+     * represented north or south pole.
+     *
+     * Returns +1 for north, -1 for south, and 0 otherwise.
+     */
+int representedPoleSign(
         const ProjectedCoordinate!T source,
         const W scale) const
         pure nothrow @safe @nogc
@@ -1191,7 +1248,13 @@ private:
     }
 
 
-    bool ordinaryTerrestrialProfile() const
+    /**
+     * Return whether the prepared projection falls inside the v1 terrestrial
+     * profile for which the published linear reverse budget applies.
+     *
+     * The test is invariant under a consistent rescaling of linear units.
+     */
+bool ordinaryTerrestrialProfile() const
         pure nothrow @safe @nogc
     {
         /*
@@ -1213,7 +1276,11 @@ private:
     }
 
 
-    W ordinaryLinearBudget() const
+    /**
+     * Return the unit-scaled reverse validation budget for the ordinary
+     * terrestrial profile.
+     */
+W ordinaryLinearBudget() const
         pure nothrow @safe @nogc
     {
         /*
@@ -1241,7 +1308,11 @@ private:
     }
 
 
-    W longitudeDomainSlack() const
+    /**
+     * Return the working angular slack used only to classify represented
+     * reverse-boundary points near the +/-60-degree longitude limit.
+     */
+W longitudeDomainSlack() const
         pure nothrow @safe @nogc
     {
         const W maxDelta = maxLongitudeDifference!W;
@@ -1286,7 +1357,12 @@ private:
         return slack;
     }
 
-    bool reverseBoundaryExcursionWithinBudget(
+    /**
+     * Test whether a reverse solution just outside the longitude limit still
+     * represents the supplied projected coordinate within the accepted linear
+     * error budget.
+     */
+bool reverseBoundaryExcursionWithinBudget(
         const ProjectedCoordinate!T source,
         const W latitude,
         const W signedBoundaryDelta) const
@@ -1352,7 +1428,13 @@ private:
     }
 
 
-    bool reverseBoundaryExcursionAccepted(
+    /**
+     * Apply the representation-aware reverse-boundary acceptance policy.
+     *
+     * The function accepts only excursions attributable to public
+     * floating-point representation, never a materially out-of-domain point.
+     */
+bool reverseBoundaryExcursionAccepted(
         const ProjectedCoordinate!T source,
         const W latitude,
         const W deltaLongitude) const
