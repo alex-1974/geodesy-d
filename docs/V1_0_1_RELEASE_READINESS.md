@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 release readiness
 
-Status: **PRE-RELEASE — DOCUMENTATION GATE COMPLETE; FINAL VALIDATION OPEN**
+Status: **PRE-TAG — RELEASE CANDIDATE QUALIFIED; TAG/PUBLISH AUTHORIZATION OPEN**
 
 This checklist is specific to v1.0.1. It does not replace the historical
 v1.0.0 release-readiness record.
@@ -125,10 +125,11 @@ After documentation sign-off:
 
 - [x] synchronize the release branch with current `main`;
 - [x] confirm the complete required hosted CI/platform/numerical evidence for
-  the final candidate: the full PROJ/TM/UTM/geodesic/topocentric matrix passed
-  on `5714fe7772dc409de489b3eb7ac9e4f8d484f5e1`, and no production source has
-  changed since that commit; current PR #32 CI and API documentation are also
-  green;
+  the final candidate: after the verified research split, PR #32 head
+  `ea00bb012eec82ae875cea7594c843090b185f71` passed CI, API documentation,
+  PROJ differential validation, Transverse Mercator platform matrix, and
+  Topocentric platform matrix; previously accepted UTM/geodesic numerical
+  implementation code is unchanged by the repository split;
 - [x] run the controlled six-compiler matrix required by repository/workspace
   policy (DMD 2.111.0/2.112.1/2.113.0 and LDC 1.41.0/1.42.0/1.43.0): all six
   passed 24-module unit tests and release builds on candidate
@@ -141,9 +142,9 @@ After documentation sign-off:
   production research split: 116/116 paths and 1,280,863/1,280,863 bytes match
   the pinned source commit with zero mode/size/blob mismatches; research CI is
   green on `0bcc5cbfb7ef07684b38c238eb2f679f39ecd88a`;
-- [ ] confirm clean repository/release metadata;
-- [ ] convert the changelog `Unreleased` section into `1.0.1` with the actual
-  release date;
+- [x] confirm clean tracked release metadata on the release branch; local untracked workspace files are not part of the release tree;
+- [x] convert the changelog `Unreleased` section into `1.0.1` with release date
+  `2026-10-04`;
 - [x] create v1.0.1 release notes;
 - [ ] tag `v1.0.1`;
 - [ ] publish/release;
@@ -158,10 +159,12 @@ complete. Issue #52 is closed after automated verification and maintainer visual
 review of the generated DDox site.
 
 Issue #18 is resolved. Issue #17 is explicitly deferred from the patch-release
-scope. The hosted numerical/platform evidence, controlled six-compiler matrix, and
-clean external consumer gate are complete. The production source is identical
-to the fully green `5714fe7...` candidate, and the current documentation-only
-PR head passes CI and API documentation. The remaining pre-tag work is final
-release metadata/repository confirmation, including converting the changelog
-section to v1.0.1 with the release date. Tagging and publication remain
-separate explicit actions.
+scope. The hosted numerical/platform evidence, controlled six-compiler matrix,
+external consumer gate, verified research split, and final release metadata are
+complete. The post-split PR #32 candidate has passed the relevant hosted gates;
+the split changes repository/package layout and validation-file placement but
+does not change the public API or accepted numerical implementation.
+
+The remaining actions are intentionally explicit release actions: tag
+`v1.0.1`, publish the release, and verify the published DUB package from a
+fresh external consumer.
