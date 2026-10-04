@@ -4,7 +4,7 @@ All notable changes to `geodesy-d` will be documented here.
 
 The project follows Semantic Versioning from the first tagged public release.
 
-## [Unreleased]
+## [1.0.1] - 2026-10-04
 
 ### Fixed
 
@@ -36,8 +36,8 @@ The project follows Semantic Versioning from the first tagged public release.
   `geodesy-d-research` companion repository so normal DUB consumers do not
   download those development artefacts.
 - Kept active regression/validation gates in the production repository; the
-  two topocentric probes required by hosted release validation now live under
-  `validation/topocentric/`.
+  four topocentric driver/oracle/probe files required by hosted release validation
+  now live under `validation/topocentric/`.
 - No public API or runtime dependency changed as part of the repository split.
 
 ### Compatibility
