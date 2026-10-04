@@ -142,7 +142,7 @@ public:
      *
      * Returns:
      *     `true` for a valid zone number; otherwise `false`. On failure
-     *     `result` remains unchanged.
+     *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromNumber(
         const uint number,
@@ -255,7 +255,7 @@ public:
      *
      * Returns:
      *     `true` for structurally valid input; otherwise `false`. On
-     *     failure `result` remains unchanged.
+     *     failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromComponents(
         const UtmZone zone,
@@ -639,7 +639,7 @@ public:
      *
      * Returns:
      *     `true` when policy parameters and delegated TM preparation
-     *     succeed; otherwise `false`. On failure `result` remains unchanged.
+     *     succeed; otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     static bool tryFromZone(
         const Ellipsoid!T ellipsoid,
@@ -802,7 +802,7 @@ public:
      *
      * Returns:
      *     `true` when this projection is valid and delegated TM projection
-     *     succeeds; otherwise `false`. On failure `result` remains unchanged.
+     *     succeeds; otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
