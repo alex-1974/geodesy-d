@@ -52,15 +52,15 @@ void main()
     const earth = wgs84!double();
 
     const vienna =
-        GeographicCoordinate!double.fromDegrees(
-            48.20849,
-            16.37208
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208)
         );
 
     const graz =
-        GeographicCoordinate!double.fromDegrees(
-            47.07071,
-            15.43950
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950)
         );
 
     const ecef =
@@ -78,8 +78,11 @@ void main()
     const geodesic = Geodesic!double.fromEllipsoid(earth);
     const route = geodesic.inverse(vienna, graz);
 
-    writeln("ECEF: ", ecef);
-    writeln("UTM:  ", utm);
+    writeln("ECEF: ", ecef.x, ", ", ecef.y, ", ", ecef.z);
+    writeln(
+        "UTM zone ", utm.zone.number,
+        ": ", utm.easting, ", ", utm.northing
+    );
     writeln("Vienna–Graz distance: ", route.distance, " m");
 }
 ~~~
