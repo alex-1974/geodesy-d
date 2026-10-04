@@ -17,9 +17,10 @@ module geodesy.internal.geodesic_lambda12;
 import std.math :
     atan2,
     fabs,
-    hypot,
+
     sqrt;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_lengths :
     geodesicLengths;
 
@@ -45,7 +46,7 @@ private void normalizePair(W)(
     pure nothrow @safe @nogc
 {
     const W magnitude =
-        hypot(
+        stableHypot2(
             sine,
             cosine);
 
@@ -167,7 +168,7 @@ GeodesicLambda12Result!W geodesicLambda12(
         * cosBeta1;
 
     const W cosAlpha0 =
-        hypot(
+        stableHypot2(
             cosAlpha1,
             sinAlpha1 * sinBeta1);
 
