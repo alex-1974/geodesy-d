@@ -52,13 +52,15 @@ The production repository retains:
 The complete `research/` and `benchmarks/` trees move to
 `alex-1974/geodesy-d-research`.
 
-Two topocentric probes are both historical research evidence and active release
-gates. The original copies remain in the companion snapshot, while production
-copies are promoted to:
+Four topocentric files are both historical research evidence and part of the
+active hosted release gate. The original copies remain in the companion
+snapshot, while production copies are promoted to:
 
 ~~~text
 validation/topocentric/topo_e_contract_probe.d
 validation/topocentric/validate_geodesy_vs_proj.py
+validation/topocentric/validate_proj_oracle.py
+validation/topocentric/geodesy_topocentric_probe.d
 ~~~
 
 The hosted topocentric workflow uses only those production validation paths.
