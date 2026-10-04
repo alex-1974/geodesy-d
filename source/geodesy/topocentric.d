@@ -134,6 +134,16 @@ public:
         return true;
     }
 
+    /// Example checking local ENU components without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        TopocentricCoordinate!double local;
+        assert(TopocentricCoordinate!double.tryFromComponents(
+            12.5, -3.0, 1.25, local));
+        assert(local.east == 12.5);
+    }
+
         /**
      * Construct finite East/North/Up components.
      *
@@ -169,11 +179,29 @@ public:
         return result;
     }
 
+    /// Example constructing a local ENU coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const local = TopocentricCoordinate!double.fromComponents(
+            12.5, -3.0, 1.25);
+        assert(local.up == 1.25);
+    }
+
     /** East component in the frame linear unit. */
     @property T east() const
         pure nothrow @safe @nogc
     {
         return _east;
+    }
+
+    /// Example reading the east component.
+    @safe unittest
+    {
+        import geodesy;
+        const local = TopocentricCoordinate!double.fromComponents(
+            12.5, -3.0, 1.25);
+        assert(local.east == 12.5);
     }
 
     /** North component in the frame linear unit. */
@@ -183,11 +211,29 @@ public:
         return _north;
     }
 
+    /// Example reading the north component.
+    @safe unittest
+    {
+        import geodesy;
+        const local = TopocentricCoordinate!double.fromComponents(
+            12.5, -3.0, 1.25);
+        assert(local.north == -3.0);
+    }
+
     /** Up component in the frame linear unit. */
     @property T up() const
         pure nothrow @safe @nogc
     {
         return _up;
+    }
+
+    /// Example reading the up component.
+    @safe unittest
+    {
+        import geodesy;
+        const local = TopocentricCoordinate!double.fromComponents(
+            12.5, -3.0, 1.25);
+        assert(local.up == 1.25);
     }
 }
 
@@ -350,6 +396,20 @@ public:
             && _ellipsoid.isValid;
     }
 
+    /// Example checking whether a topocentric frame is prepared.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        assert(frame.isValid);
+        assert(!TopocentricFrame!double.init.isValid);
+    }
+
     /**
      * Ellipsoid associated with the frame.
      *
@@ -359,6 +419,19 @@ public:
         pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the ellipsoid bound to a local frame.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        assert(frame.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
         /**
@@ -430,6 +503,20 @@ public:
         return true;
     }
 
+    /// Example preparing an ENU frame from a geodetic origin without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        TopocentricFrame!double frame;
+        assert(TopocentricFrame!double.tryFromGeodeticOrigin(
+            wgs84!double(), origin, frame));
+        assert(frame.isValid);
+    }
+
         /**
      * Prepare a frame from a geodetic origin.
      *
@@ -461,6 +548,19 @@ public:
         }
 
         return result;
+    }
+
+    /// Example preparing an ENU frame from a geodetic origin.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        assert(frame.isValid);
     }
 
         /**
@@ -544,6 +644,21 @@ public:
         return true;
     }
 
+    /// Example preparing an ENU frame from an ECEF origin without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const xyz = geodeticToGeocentric(origin, wgs84!double());
+        TopocentricFrame!double frame;
+        assert(TopocentricFrame!double.tryFromGeocentricOrigin(
+            wgs84!double(), xyz, frame));
+        assert(frame.isValid);
+    }
+
         /**
      * Prepare a frame from a geocentric origin.
      *
@@ -575,6 +690,20 @@ public:
         }
 
         return result;
+    }
+
+    /// Example preparing an ENU frame from an ECEF origin.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const xyz = geodeticToGeocentric(origin, wgs84!double());
+        const frame = TopocentricFrame!double.fromGeocentricOrigin(
+            wgs84!double(), xyz);
+        assert(frame.isValid);
     }
 
     /**
@@ -617,6 +746,26 @@ public:
             result);
     }
 
+    /// Example converting ECEF to local ENU without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        const nearby = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20850),
+            Longitude!double.fromDegrees(16.37210),
+            175.0);
+        const xyz = geodeticToGeocentric(nearby, wgs84!double());
+        TopocentricCoordinate!double local;
+        assert(frame.tryGeocentricToTopocentric(xyz, local));
+        assert(local.up == local.up);
+    }
+
     /**
      * Convert geocentric Cartesian coordinates to local East/North/Up.
      *
@@ -646,6 +795,25 @@ public:
         }
 
         return result;
+    }
+
+    /// Example converting ECEF to local ENU.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        const nearby = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20850),
+            Longitude!double.fromDegrees(16.37210),
+            175.0);
+        const xyz = geodeticToGeocentric(nearby, wgs84!double());
+        const local = frame.geocentricToTopocentric(xyz);
+        assert(local.east == local.east);
     }
 
     /**
@@ -687,6 +855,22 @@ public:
             result);
     }
 
+    /// Example converting local ENU to ECEF without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        GeocentricCoordinate!double xyz;
+        assert(frame.tryTopocentricToGeocentric(
+            TopocentricCoordinate!double.init, xyz));
+        assert(xyz.x == xyz.x);
+    }
+
     /**
      * Convert local East/North/Up to geocentric Cartesian coordinates.
      *
@@ -716,6 +900,21 @@ public:
         }
 
         return result;
+    }
+
+    /// Example converting the local origin to ECEF.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        const xyz = frame.topocentricToGeocentric(
+            TopocentricCoordinate!double.init);
+        assert(xyz.x == xyz.x);
     }
 
     /**
@@ -779,6 +978,25 @@ public:
             result);
     }
 
+    /// Example converting a geodetic position to ENU without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        const nearby = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20850),
+            Longitude!double.fromDegrees(16.37210),
+            175.0);
+        TopocentricCoordinate!double local;
+        assert(frame.tryGeodeticToTopocentric(nearby, local));
+        assert(local.east == local.east);
+    }
+
     /**
      * Convert a geodetic coordinate directly to local East/North/Up.
      *
@@ -809,6 +1027,24 @@ public:
         }
 
         return result;
+    }
+
+    /// Example converting a geodetic position to ENU.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        const nearby = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20850),
+            Longitude!double.fromDegrees(16.37210),
+            175.0);
+        const local = frame.geodeticToTopocentric(nearby);
+        assert(local.north == local.north);
     }
 
     /**
@@ -899,6 +1135,22 @@ public:
             result);
     }
 
+    /// Example converting ENU to a geodetic position without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        GeodeticCoordinate!double result;
+        assert(frame.tryTopocentricToGeodetic(
+            TopocentricCoordinate!double.init, result));
+        assert(result.latitude.degrees > 48.0);
+    }
+
     /**
      * Convert local East/North/Up directly to a geodetic coordinate.
      *
@@ -929,6 +1181,21 @@ public:
         }
 
         return result;
+    }
+
+    /// Example converting the local origin back to geodetic coordinates.
+    @safe unittest
+    {
+        import geodesy;
+        const origin = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208),
+            171.0);
+        const frame = TopocentricFrame!double.fromGeodeticOrigin(
+            wgs84!double(), origin);
+        const result = frame.topocentricToGeodetic(
+            TopocentricCoordinate!double.init);
+        assert(result.longitude.degrees > 16.0);
     }
 }
 
