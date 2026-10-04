@@ -401,7 +401,13 @@ if (isGeodesyScalar!T)
 }
 
 
-/* Convert an accepted homogeneous Halley state to latitude and height. */
+/**
+ * Convert an accepted homogeneous Halley state to geodetic latitude and
+ * ellipsoidal height.
+ *
+ * `latitude` and `height` receive the working-precision solution. Returns
+ * false if the state cannot produce finite values.
+ */
 private bool finishHalley(T)(
     const T horizontal,
     const T z,
@@ -960,12 +966,15 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Package-private raw EPSG 9602 reverse kernel boundary.
  *
- * The robust numerical implementation remains tryReverseWorking above.  This
- * wrapper exposes only scalar working values to other geodesy modules and
- * keeps ReverseSolution and all algorithm-specific helpers private.
+ * The robust numerical implementation remains tryReverseWorking above. This
+ * wrapper exposes scalar working values to composed geodesy operations while
+ * keeping ReverseSolution and algorithm-specific helpers private.
+ *
+ * `latitude`, `longitude`, and `height` receive the working-precision
+ * geodetic solution on success.
  */
 package(geodesy) bool tryEpsg9602ReverseWorking(W)(
     const W x,
