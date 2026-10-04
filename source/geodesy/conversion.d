@@ -728,6 +728,13 @@ if (isGeodesyScalar!T)
 /*
  * Core inverse kernel in its selected working scalar.
  */
+/**
+ * Solve the reverse EPSG 9602 problem in working precision.
+ *
+ * `solution` receives the selected canonical latitude, longitude, and height.
+ * The function dispatches ordinary and robust interior paths and rejects the
+ * undefined geocentre.
+ */
 private bool tryReverseWorking(T)(
     const T x,
     const T y,
