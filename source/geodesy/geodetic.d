@@ -99,6 +99,19 @@ public:
         return true;
     }
 
+    /// Example checking a geodetic coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        GeodeticCoordinate!double point;
+        assert(GeodeticCoordinate!double.tryFromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0),
+            171.0,
+            point));
+        assert(point.ellipsoidalHeight == 171.0);
+    }
+
     /**
      * Construct a geodetic coordinate.
      *
@@ -125,10 +138,31 @@ public:
         return result;
     }
 
+    /// Example constructing a geodetic coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0),
+            171.0);
+        assert(point.ellipsoidalHeight == 171.0);
+    }
+
     /** Geodetic latitude. */
     @property Latitude!T latitude() const pure nothrow @safe @nogc
     {
         return _latitude;
+    }
+
+    /// Example reading geodetic latitude.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0));
+        assert(point.latitude.degrees == 48.0);
     }
 
     /** Geodetic longitude. */
@@ -137,10 +171,31 @@ public:
         return _longitude;
     }
 
+    /// Example reading geodetic longitude.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0));
+        assert(point.longitude.degrees == 16.0);
+    }
+
     /** Ellipsoidal height in the operation's linear unit. */
     @property T ellipsoidalHeight() const pure nothrow @safe @nogc
     {
         return _ellipsoidalHeight;
+    }
+
+    /// Example reading ellipsoidal height.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeodeticCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0),
+            171.0);
+        assert(point.ellipsoidalHeight == 171.0);
     }
 }
 
