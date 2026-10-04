@@ -86,6 +86,12 @@ import geodesy.scalar :
  */
 
 
+/**
+ * Working precision used by Pseudo-Mercator arithmetic.
+ *
+ * Public `float` operations use `double`; `double` and `real` retain
+ * their public scalar precision.
+ */
 private template WorkingScalar(T)
 if (isGeodesyScalar!T)
 {
@@ -96,6 +102,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return whether a scalar is neither NaN nor infinity. */
 private bool isFiniteScalar(T)(const T value)
     pure nothrow @safe @nogc
 {
@@ -105,6 +112,7 @@ private bool isFiniteScalar(T)(const T value)
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)()
     pure nothrow @safe @nogc
 {
