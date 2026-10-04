@@ -6,6 +6,24 @@ The project follows Semantic Versioning from the first tagged public release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Made Transverse Mercator reverse-boundary acceptance invariant under a
+  consistent rescaling of ellipsoid/projected linear units, including the
+  published metre/kilometre boundary regression.
+- Preserved the accepted v1 terrestrial boundary tolerance envelope while
+  correcting the initial unit-invariant normalization so valid public
+  `float` boundary cases remain accepted.
+
+### Documentation
+
+- Corrected 34 public Ddoc statements for checked APIs using `out` result
+  parameters. D `out` parameters are initialized to `.init` on entry; a
+  failed call does not preserve an arbitrary previous caller value.
+- No frozen v1 public signature or runtime behavior changed as part of the
+  documentation correction.
+
+
 ## [1.0.0] - 2026-09-26
 
 ### Added
