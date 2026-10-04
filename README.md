@@ -109,6 +109,16 @@ void main()
 - [Changelog](CHANGELOG.md)
 - [Detailed documentation](docs/README.md)
 
+## Research and validation evidence
+
+Detailed experiments, benchmark fixtures, exploratory probes, raw acceptance
+evidence, and historical research are kept in the companion repository
+`alex-1974/geodesy-d-research`.
+
+The production package keeps the source, active regression/validation gates,
+user and maintainer documentation, and small tools needed to qualify releases.
+Normal DUB consumers therefore do not need to download the research corpus.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
