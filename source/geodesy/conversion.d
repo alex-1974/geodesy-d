@@ -261,6 +261,18 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/// Example converting a geodetic position to ECEF.
+@safe unittest
+{
+    import geodesy;
+    const source = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208),
+        171.0);
+    const xyz = geodeticToGeocentric(source, wgs84!double());
+    assert(xyz.x > 0.0);
+}
+
 
 /*
  * Working precision for the inverse transformation.
@@ -1127,6 +1139,16 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Geocentric to geodetic conversion requires a valid ellipsoid and a defined finite representable result.");
     return result;
+}
+
+/// Example converting ECEF coordinates to a geodetic position.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(
+        4_085_000.0, 1_260_000.0, 4_717_000.0);
+    const geo = geocentricToGeodetic(source, wgs84!double());
+    assert(geo.latitude.degrees > 0.0);
 }
 
 
