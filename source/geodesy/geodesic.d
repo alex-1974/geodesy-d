@@ -345,7 +345,8 @@ private:
     GeographicCoordinate!T _position;
     Angle!T _finalAzimuth;
 
-    static GeodesicDirectResult fromComponents(
+    /** Construct an internal direct result from already accepted public values. */
+static GeodesicDirectResult fromComponents(
         const GeographicCoordinate!T position,
         const Angle!T finalAzimuth)
         pure nothrow @safe @nogc
@@ -406,7 +407,8 @@ private:
     Angle!T _initialAzimuth;
     Angle!T _finalAzimuth;
 
-    static GeodesicInverseResult fromComponents(
+    /** Construct an internal inverse result from already accepted public values. */
+static GeodesicInverseResult fromComponents(
         const T distance,
         const Angle!T initialAzimuth,
         const Angle!T finalAzimuth)
@@ -545,7 +547,14 @@ private:
     W[28] _c3x;
 
 
-    bool tryDirectEllipsoid(
+    /**
+     * Solve the direct problem on a non-spherical supported ellipsoid.
+     *
+     * Inputs are canonical working-precision start latitude/longitude,
+     * azimuth, and signed distance. `result` receives the public endpoint and
+     * final forward azimuth on success.
+     */
+bool tryDirectEllipsoid(
         const W latitude1,
         const W longitude1,
         const W azimuth1,
