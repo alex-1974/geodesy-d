@@ -110,6 +110,15 @@ public:
         return true;
     }
 
+    /// Example checking radian input without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Angle!double angle;
+        assert(Angle!double.tryFromRadians(0.5, angle));
+        assert(angle.radians == 0.5);
+    }
+
     /**
      * Construct from degrees without throwing.
      *
@@ -128,6 +137,15 @@ public:
         if (!isFiniteGeodesyScalar(degrees))
             return false;
         return tryFromRadians(degreesToRadians(degrees), result);
+    }
+
+    /// Example checking degree input without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Angle!double angle;
+        assert(Angle!double.tryFromDegrees(90.0, angle));
+        assert(angle.degrees == 90.0);
     }
 
     /**
@@ -149,6 +167,14 @@ public:
         if (!tryFromRadians(radians, result))
             throw new GeodesyValueException("Angle must be finite.");
         return result;
+    }
+
+    /// Example constructing an angle from radians.
+    @safe unittest
+    {
+        import geodesy;
+        const angle = Angle!double.fromRadians(0.5);
+        assert(angle.radians == 0.5);
     }
 
     /**
@@ -173,16 +199,40 @@ public:
         return result;
     }
 
+    /// Example constructing an angle from degrees.
+    @safe unittest
+    {
+        import geodesy;
+        const angle = Angle!double.fromDegrees(45.0);
+        assert(angle.degrees == 45.0);
+    }
+
     /** Angle value in canonical radians. */
     @property T radians() const pure nothrow @safe @nogc
     {
         return _radians;
     }
 
+    /// Example reading the canonical radian value.
+    @safe unittest
+    {
+        import geodesy;
+        const angle = Angle!double.fromRadians(0.25);
+        assert(angle.radians == 0.25);
+    }
+
     /** Angle value converted to degrees. */
     @property T degrees() const pure nothrow @safe @nogc
     {
         return radiansToDegrees(_radians);
+    }
+
+    /// Example reading an angle in degrees.
+    @safe unittest
+    {
+        import geodesy;
+        const angle = Angle!double.fromDegrees(30.0);
+        assert(angle.degrees == 30.0);
     }
 }
 
