@@ -180,6 +180,27 @@ def filter_members(node, parent: str | None, internal: set[str]) -> int:
     return removed
 
 
+
+def debug_symbol_paths(node, needle: str, path: tuple[str, ...] = ()) -> None:
+    if isinstance(node, dict):
+        name = node.get("name")
+        if isinstance(name, str) and needle in name:
+            print(
+                "DEBUG DDox JSON:",
+                needle,
+                "path=" + "/".join(path),
+                "name=" + name,
+                "keys=" + ",".join(sorted(node.keys())),
+            )
+        for key, value in node.items():
+            if isinstance(value, (dict, list)):
+                debug_symbol_paths(value, needle, path + (str(key),))
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            if isinstance(value, (dict, list)):
+                debug_symbol_paths(value, needle, path + (str(index),))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Remove source-private/package aggregate members from DMD JSON before DDox."
@@ -190,6 +211,14 @@ def main() -> None:
 
     internal = internal_symbols(args.source_root)
     data = json.loads(args.json_file.read_text())
+
+    for needle in (
+        "fromRadiansUnchecked",
+        "forwardKernel",
+        "researchTryForwardFactors",
+    ):
+        debug_symbol_paths(data, needle)
+
     removed = filter_members(data, None, internal)
 
     args.json_file.write_text(json.dumps(data, separators=(",", ":")))
