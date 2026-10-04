@@ -77,10 +77,15 @@ def audit_file(path: Path) -> list[str]:
 
             visibility = explicit
             if visibility is None:
-                active_depths = [d for d in section_visibility if d <= depth]
-                if active_depths:
-                    visibility = section_visibility[max(active_depths)]
-                elif module_package:
+                # A D protection section applies to declarations at the same
+                # aggregate depth, not to statements/local declarations nested
+                # inside member functions.
+                visibility = section_visibility.get(depth)
+
+                # A module-level package: section owns unqualified module
+                # declarations only. Do not let it classify function-body
+                # calls or unittest-local helpers as API declarations.
+                if visibility is None and module_package and depth == 0:
                     visibility = "package"
 
             internal = visibility is not None and (
