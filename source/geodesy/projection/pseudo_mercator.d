@@ -112,6 +112,12 @@ private T pi(T)()
 }
 
 
+/**
+ * Compute an error-free sum decomposition.
+ *
+ * `sum` receives the rounded sum of `a + b`; `residual` receives the
+ * rounding error so their exact mathematical sum equals the input sum.
+ */
 private void twoSum(T)(
     const T a,
     const T b,
@@ -130,6 +136,12 @@ private void twoSum(T)(
 }
 
 
+/**
+ * Canonicalize a finite public longitude to the half-open interval [-pi,+pi).
+ *
+ * Positive pi is represented as negative pi. Signed zero is preserved only
+ * where it carries representation meaning.
+ */
 private T canonicalPublicRadians(T)(
     const T radians)
     pure nothrow @safe @nogc
@@ -159,6 +171,10 @@ private T canonicalPublicRadians(T)(
 }
 
 
+/**
+ * Lift a public longitude into working precision without changing its public
+ * canonical representation at zero or the antimeridian.
+ */
 private WorkingScalar!T workingCanonicalLongitude(T)(
     const T radians)
     pure nothrow @safe @nogc
@@ -194,6 +210,12 @@ private WorkingScalar!T workingCanonicalLongitude(T)(
 }
 
 
+/**
+ * Split 2*pi into high and low working-precision parts.
+ *
+ * The decomposition lets longitude-period corrections retain low-order bits
+ * that a single rounded 2*pi value would discard.
+ */
 private void twoPiSplit(T)(
     out WorkingScalar!T high,
     out WorkingScalar!T low)
@@ -239,6 +261,12 @@ private void twoPiSplit(T)(
 }
 
 
+/**
+ * Renormalize a two-part floating-point expansion.
+ *
+ * On return, `high + low` represents the same value with the dominant part
+ * in `high` and the residual in `low`.
+ */
 private void normalizeExpansion(T)(
     const WorkingScalar!T highInput,
     const WorkingScalar!T lowInput,
@@ -254,6 +282,12 @@ private void normalizeExpansion(T)(
 }
 
 
+/**
+ * Add or subtract one split 2*pi period from a longitude expansion.
+ *
+ * `high` and `low` are updated in place while retaining the correction
+ * needed at representation boundaries.
+ */
 private void addSplitPeriodParts(T)(
     const WorkingScalar!T sum,
     const WorkingScalar!T residual,
@@ -348,6 +382,13 @@ private void addSplitPeriodParts(T)(
 }
 
 
+/**
+ * Compute source longitude minus natural-origin longitude as a compensated
+ * two-part value on the principal wrapped sheet.
+ *
+ * `high` receives the main difference and `low` the residual. Together they
+ * preserve side-of-boundary information near +/-pi.
+ */
 private void longitudeDifferenceParts(T)(
     const T longitude,
     const T longitude0,
@@ -413,6 +454,10 @@ private void longitudeDifferenceParts(T)(
 }
 
 
+/**
+ * Split a floating-point value into high and low parts for compensated
+ * multiplication.
+ */
 private void splitProductOperand(T)(
     const WorkingScalar!T value,
     out WorkingScalar!T high,
@@ -452,6 +497,12 @@ private void splitProductOperand(T)(
 }
 
 
+/**
+ * Compute a compensated product.
+ *
+ * `product` receives the rounded product and `residual` the recoverable
+ * multiplication error.
+ */
 private void twoProduct(T)(
     const WorkingScalar!T a,
     const WorkingScalar!T b,
@@ -492,6 +543,12 @@ private void twoProduct(T)(
 }
 
 
+/**
+ * Evaluate `offset + scale * value` with compensated product/sum arithmetic.
+ *
+ * This is used where projected boundary representation depends on retaining
+ * low-order bits of a large affine result.
+ */
 private WorkingScalar!T affineProductSum(T)(
     const WorkingScalar!T scale,
     const WorkingScalar!T value,
@@ -544,6 +601,13 @@ private WorkingScalar!T affineProductSum(T)(
 }
 
 
+/**
+ * Convert a compensated longitude difference into projected easting.
+ *
+ * `deltaHigh + deltaLow` is the wrapped longitude offset from the natural
+ * origin. The result includes false easting in the same linear unit as the
+ * ellipsoid semi-major axis.
+ */
 private WorkingScalar!T eastingFromLongitudeDifference(T)(
     const WorkingScalar!T semiMajorAxis,
     const WorkingScalar!T falseEasting,
@@ -629,6 +693,12 @@ private WorkingScalar!T eastingFromLongitudeDifference(T)(
 }
 
 
+/**
+ * Recover a two-part quotient for a represented projected offset.
+ *
+ * The main quotient and residual preserve enough information to reconstruct
+ * longitude near the represented sheet boundary.
+ */
 private void quotientExpansion(T)(
     const WorkingScalar!T numerator,
     const WorkingScalar!T denominator,
@@ -668,6 +738,10 @@ private void quotientExpansion(T)(
 }
 
 
+/**
+ * Add a compensated longitude offset to the natural-origin longitude and
+ * return the canonical working-precision longitude.
+ */
 private WorkingScalar!T addLongitudeParts(T)(
     const T longitude0,
     const WorkingScalar!T deltaHigh,
@@ -758,6 +832,10 @@ private WorkingScalar!T addLongitudeParts(T)(
 }
 
 
+/**
+ * Add an ordinary longitude offset to the natural-origin longitude and return
+ * the canonical working-precision longitude.
+ */
 private WorkingScalar!T addLongitude(T)(
     const T longitude0,
     const WorkingScalar!T delta)
@@ -821,6 +899,10 @@ private WorkingScalar!T addLongitude(T)(
 }
 
 
+/**
+ * Return whether a scalar is a finite longitude representable by the public
+ * `Longitude!T` contract.
+ */
 private bool validPublicLongitude(T)(
     const T radians)
     pure nothrow @safe @nogc
@@ -832,6 +914,10 @@ private bool validPublicLongitude(T)(
 }
 
 
+/**
+ * Return whether a compensated longitude difference lies on the legal
+ * positive side of the principal Pseudo-Mercator sheet.
+ */
 private bool legalPositiveLongitudeDifference(T)(
     const WorkingScalar!T high,
     const WorkingScalar!T low)
@@ -849,6 +935,13 @@ private bool legalPositiveLongitudeDifference(T)(
 }
 
 
+/**
+ * Find the greatest public easting that still represents a legal longitude on
+ * the east edge of the principal wrapped sheet.
+ *
+ * Returns the represented easting, its working-precision longitude difference,
+ * and the public longitude that reproduces that boundary point.
+ */
 private bool findRepresentedEastMaximum(T)(
     const T longitude0,
     const T semiMajorAxis,
