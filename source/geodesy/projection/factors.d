@@ -63,7 +63,8 @@ private:
     T _pointScale = 0;
 
 package(geodesy):
-    static ConformalProjectionFactors fromComponents(
+    /** Construct a factor result from an accepted convergence angle and positive point scale. */
+static ConformalProjectionFactors fromComponents(
         const Angle!T meridianConvergence,
         const T pointScale)
         pure nothrow @safe @nogc
