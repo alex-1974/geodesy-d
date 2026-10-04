@@ -2089,7 +2089,7 @@ public:
      *
      * Returns:
      *     `true` for a valid projection and supported, representable source;
-     *     otherwise `false`. On failure `result` remains unchanged.
+     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -2196,7 +2196,7 @@ public:
      *
      * Returns:
      *     `true` for a valid projection and supported represented coordinate;
-     *     otherwise `false`. On failure `result` remains unchanged.
+     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
