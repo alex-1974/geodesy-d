@@ -101,9 +101,9 @@ def child_qualified(parent: str | None, name: str) -> str:
 
 def canonical_symbol_name(name: str) -> str:
     """Normalize DMD/DDox symbol spellings for source-visibility matching."""
-    name = re.sub(r"!([^)]*)", "", name)
-    name = re.sub(r"(?<=[A-Za-z0-9_])([^)]*)", "", name)
-    name = re.sub(r"s+", "", name)
+    name = re.sub(r"!\\([^)]*\\)", "", name)
+    name = re.sub(r"(?<=[A-Za-z0-9_])\\([^)]*\\)", "", name)
+    name = re.sub(r"\\s+", "", name)
     return name.strip(".")
 
 
