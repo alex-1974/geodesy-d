@@ -80,7 +80,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Package-private raw EPSG 9602 forward kernel.
  *
  * The caller selects the arithmetic scalar explicitly.  In particular, the
@@ -274,14 +274,14 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Working precision for the inverse transformation.
  *
  * Single precision is insufficient for the numerically sensitive interior
  * branches at Earth scale. Preserve the public float API while performing
  * the inverse kernel in double precision.
  */
-/*
+/**
  * Working scalar for internal EPSG 9602 composition.
  *
  * A public float value remains float at the API boundary, but composed
@@ -298,6 +298,7 @@ package(geodesy) template Epsg9602WorkingScalar(T)
 }
 
 
+/** Working-precision geodetic result used by the reverse EPSG 9602 kernels. */
 private struct ReverseSolution(T)
 {
     T latitude;
@@ -306,6 +307,13 @@ private struct ReverseSolution(T)
 }
 
 
+/**
+ * Homogeneous reduced-latitude state for the Fukushima/Halley iteration.
+ *
+ * `sn` and `cn` are unnormalized homogeneous coordinates. `an` is their
+ * norm and `an2` its square; keeping them together avoids repeated
+ * normalization and preserves the scale-free iteration.
+ */
 private struct HalleyState(T)
 {
     T sn;
@@ -315,7 +323,7 @@ private struct HalleyState(T)
 }
 
 
-/*
+/**
  * One Fukushima/Halley update in homogeneous reduced-latitude coordinates.
  *
  * sn/cn are homogeneous coordinates; avoiding their normalization keeps the
@@ -369,7 +377,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Algebraic residual of the homogeneous Fukushima equation.
  *
  * Division by an² makes the residual have the ellipsoid linear unit while
@@ -433,7 +441,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Real cube root usable from pure geodetic kernels.
  *
  * Phobos cbrt is not pure in the supported compiler toolchain.  Decompose the
@@ -524,7 +532,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Robust oblate reverse solution.
  *
  * This is the oblate specialization of the extended Vermeille formulation
