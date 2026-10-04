@@ -86,7 +86,8 @@ private:
     T _north = 0;
     T _up = 0;
 
-    static TopocentricCoordinate fromComponentsUnchecked(
+    /** Construct an ENU coordinate from components already validated as finite. */
+static TopocentricCoordinate fromComponentsUnchecked(
         const T east,
         const T north,
         const T up)
@@ -303,7 +304,13 @@ private:
      * may reach this helper with double-precision ECEF values without first
      * materializing GeocentricCoordinate!float.
      */
-    bool tryWorkingGeocentricToTopocentric(
+    /**
+     * Convert working-precision ECEF coordinates to ENU using the prepared
+     * origin and rotation.
+     *
+     * `east`, `north`, and `up` receive working-precision components.
+     */
+bool tryWorkingGeocentricToTopocentric(
         const W x,
         const W y,
         const W z,
@@ -349,7 +356,13 @@ private:
      * The transpose of the orthonormal forward rotation is applied before
      * restoring the prepared working-precision ECEF origin.
      */
-    bool tryWorkingTopocentricToGeocentric(
+    /**
+     * Convert working-precision ENU coordinates back to ECEF.
+     *
+     * `x`, `y`, and `z` receive the reconstructed working-precision
+     * geocentric components.
+     */
+bool tryWorkingTopocentricToGeocentric(
         const W east,
         const W north,
         const W up,
