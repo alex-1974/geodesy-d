@@ -54,7 +54,7 @@ The factor program covers:
 The dedicated research material is retained under:
 
 ~~~text
-research/projection-factors/
+../geodesy-d-research/research/projection-factors/
 ~~~
 
 ADR-0011 records the accepted public semantics. The research tolerances are

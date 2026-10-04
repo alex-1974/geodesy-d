@@ -621,7 +621,7 @@ invariants — is complete and PASS as of 2026-09-20.
 
 The TOPO-B evidence is recorded in
 `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the independent probes under
-`research/topocentric/`.
+`../geodesy-d-research/research/topocentric/`.
 
 TOPO-C — PROJ differential/interoperability validation — is complete and
 PASS as of 2026-09-20. The public implementation passed deterministic
@@ -636,7 +636,7 @@ cases under both DMD and LDC.
 
 Detailed environments, seeds, maxima, attribution checks, and acceptance
 limits are recorded in `docs/TOPOCENTRIC_VALIDATION_PLAN.md` and the committed
-research harnesses under `research/topocentric/`.
+research harnesses under `../geodesy-d-research/research/topocentric/`.
 
 TOPO-E — adversarial and failure validation — is complete and PASS as of
 2026-09-20. The frozen adversarial contract passed 889 checks under both DMD

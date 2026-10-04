@@ -345,7 +345,7 @@ projection factors, one-shot free forward/reverse helpers, CRS/EPSG lookup, or
 web-map tile/zoom/XYZ/TMS policy.
 
 The PM-A through PM-G5 research and acceptance evidence is retained under
-`research/pseudo-mercator/`.
+`../geodesy-d-research/research/pseudo-mercator/`.
 
 ## UTM — frozen v1 surface
 

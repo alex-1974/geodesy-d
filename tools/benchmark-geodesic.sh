@@ -6,7 +6,14 @@ repo="$(
     pwd
 )"
 
-bench="$repo/benchmarks/geodesic-reference"
+research_repo="${GEODESY_D_RESEARCH:-$(cd "$repo/.." && pwd)/geodesy-d-research}"
+bench="$research_repo/benchmarks/geodesic-reference"
+
+[[ -d "$research_repo" ]] || {
+    echo "error: geodesy-d-research not found at $research_repo" >&2
+    echo "       set GEODESY_D_RESEARCH to the companion research checkout" >&2
+    exit 2
+}
 
 dc="${DC:-ldc2}"
 cxx="${CXX:-g++}"
