@@ -37,7 +37,7 @@ REPO = Path(__file__).resolve().parents[2]
 
 PROBE_SOURCE = (
     REPO
-    / "research"
+    / "validation"
     / "topocentric"
     / "geodesy_topocentric_probe.d"
 )
