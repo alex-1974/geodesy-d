@@ -100,6 +100,16 @@ public:
         return true;
     }
 
+    /// Example checking finite geocentric components without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        GeocentricCoordinate!double point;
+        assert(GeocentricCoordinate!double.tryFromComponents(
+            4_085_000.0, 1_260_000.0, 4_717_000.0, point));
+        assert(point.x == 4_085_000.0);
+    }
+
     /**
      * Construct from finite X/Y/Z components.
      *
@@ -123,12 +133,45 @@ public:
         return result;
     }
 
+    /// Example constructing an ECEF coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeocentricCoordinate!double.fromComponents(
+            4_085_000.0, 1_260_000.0, 4_717_000.0);
+        assert(point.z == 4_717_000.0);
+    }
+
     /** Geocentric X component. */
     @property T x() const pure nothrow @safe @nogc { return _x; }
+
+    /// Example reading the geocentric X component.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+        assert(point.x == 1.0);
+    }
     /** Geocentric Y component. */
     @property T y() const pure nothrow @safe @nogc { return _y; }
+
+    /// Example reading the geocentric Y component.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+        assert(point.y == 2.0);
+    }
     /** Geocentric Z component. */
     @property T z() const pure nothrow @safe @nogc { return _z; }
+
+    /// Example reading the geocentric Z component.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+        assert(point.z == 3.0);
+    }
 }
 
 /// Example constructing a geocentric coordinate.
