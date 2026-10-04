@@ -33,6 +33,7 @@ import geodesy.internal.geodesic_series :
 package(geodesy):
 
 
+/** Return the square of a working-scalar value. */
 private W square(W)(const W value)
     pure nothrow @safe @nogc
 {
@@ -40,6 +41,7 @@ private W square(W)(const W value)
 }
 
 
+/** Normalize a sine/cosine-style pair to unit Euclidean magnitude. */
 private void normalizePair(W)(
     ref W sine,
     ref W cosine)
