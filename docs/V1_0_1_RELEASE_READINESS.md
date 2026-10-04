@@ -137,6 +137,8 @@ After documentation sign-off:
   representative aggregate-import/UTM/geodesic consumer built, linked, and ran
   successfully in both debug and release mode with all six controlled
   compilers;
+- [ ] confirm the verified `geodesy-d-research` snapshot before merging the
+  production research split;
 - [ ] confirm clean repository/release metadata;
 - [ ] convert the changelog `Unreleased` section into `1.0.1` with the actual
   release date;
