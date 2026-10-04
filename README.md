@@ -1,11 +1,26 @@
 # geodesy-d
 
-`geodesy-d` is a pure-D library for geodetic mathematics.
+`geodesy-d` is a lightweight pure-D library for geodetic mathematics.
 
 It provides reusable types and operations for working with positions on and
 around a reference ellipsoid, including coordinate conversion, map
 projections, reference-frame transformations, geodesics, UTM, and local
 topocentric coordinates.
+
+The library is designed around a small, explicit numerical core:
+
+- **pure D and dependency-light** — no PROJ or GeographicLib runtime dependency
+  for the provided operations;
+- **strongly typed** — latitude, longitude, angles, coordinates, ellipsoids,
+  projections, frames, and transformations keep different domains explicit;
+- **safety-oriented** — checked APIs use `@safe`, `nothrow`, `pure`, and
+  `@nogc` where the operation permits it, with deliberate valid/invalid
+  default-state semantics;
+- **performance-conscious** — reusable prepared projections, frames, and
+  geodesic solvers avoid repeated setup, and documented numerical hot paths
+  avoid hidden allocation;
+- **numerically validated** — non-trivial operations are checked against
+  authoritative reference material and independent implementations.
 
 ## What it provides
 
