@@ -1,12 +1,12 @@
 # geodesy-d v1.0.1 release readiness
 
-Status: **PRE-TAG — RELEASE CANDIDATE QUALIFIED; TAG/PUBLISH AUTHORIZATION OPEN**
+Status: **RELEASED — POST-PUBLISH VERIFICATION COMPLETE**
 
 This checklist is specific to v1.0.1. It does not replace the historical
 v1.0.0 release-readiness record.
 
-No v1.0.1 tag or release is authorized until every mandatory item below is
-complete and the release-facing documentation has been reviewed explicitly.
+The v1.0.1 release and post-publish verification are complete. This document
+records the final release evidence and preserves the release decision trail.
 
 ## R1 — scope
 
@@ -146,25 +146,31 @@ After documentation sign-off:
 - [x] convert the changelog `Unreleased` section into `1.0.1` with release date
   `2026-10-04`;
 - [x] create v1.0.1 release notes;
-- [ ] tag `v1.0.1`;
-- [ ] publish/release;
-- [ ] verify the published DUB package from a fresh external consumer.
+- [x] tag `v1.0.1`;
+- [x] publish/release;
+- [x] verify the published DUB package from a fresh external consumer: DUB
+  resolved `geodesy-d` exactly to `1.0.1` with no path override; a clean
+  aggregate-import consumer and a representative public-API consumer using
+  `wgs84`, `GeographicCoordinate`, strong latitude/longitude values, and
+  `Geodesic.inverse` built, linked, and ran successfully with DMD and LDC in
+  both debug and release modes.
 
 ## Release decision
 
-Current decision: **DO NOT TAG YET**.
+Final decision: **RELEASED — POST-PUBLISH VERIFICATION COMPLETE**.
 
-The release-facing document structure and full documentation-quality gate are
-complete. Issue #52 is closed after automated verification and maintainer visual
-review of the generated DDox site.
+Release `v1.0.1` was tagged and published from commit
+`5d8163de776118d3e51210662eacfe26ee26a876` on 2026-10-04. The release
+commit and tag-triggered platform workflows passed their required hosted gates.
 
-Issue #18 is resolved. Issue #17 is explicitly deferred from the patch-release
-scope. The hosted numerical/platform evidence, controlled six-compiler matrix,
-external consumer gate, verified research split, and final release metadata are
-complete. The post-split PR #32 candidate has passed the relevant hosted gates;
-the split changes repository/package layout and validation-file placement but
-does not change the public API or accepted numerical implementation.
+The published DUB package was then verified from a fresh external consumer.
+`dub.selections.json` resolved `geodesy-d` exactly to `1.0.1` with no local
+path override. Both the aggregate import and a representative public-API
+consumer built, linked, and ran successfully with DMD and LDC in debug and
+release modes.
 
-The remaining actions are intentionally explicit release actions: tag
-`v1.0.1`, publish the release, and verify the published DUB package from a
-fresh external consumer.
+Issue #18 is resolved. Issue #17 remains explicitly deferred from this patch
+release as broader workspace/M1 toolchain standardization; the v1.0.1 release
+itself passed its required controlled compiler matrix before publication.
+
+There are no remaining v1.0.1 release actions in this checklist.
