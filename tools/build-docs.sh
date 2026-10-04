@@ -36,6 +36,10 @@ echo "Generating ddox input for ${#public_sources[@]} public modules from $sourc
 
 if [[ "$verify_contracts" == "1" ]]; then
     python3 "$tool_root/tools/verify-public-module-ddoc.py" "$source_root"
+    (
+        cd "$source_root"
+        python3 "$tool_root/tools/verify-internal-ddoc.py"
+    )
 fi
 
 (
