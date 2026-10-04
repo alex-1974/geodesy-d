@@ -17,13 +17,14 @@ module geodesy.internal.geodesic_inverse_dispatch;
 import geodesy.internal.geodesic_inverse_start :
     GeodesicInverseStartKind;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import std.math :
     PI,
     atan2,
     copysign,
     cos,
     fabs,
-    hypot,
+
     signbit,
     sin,
     sqrt;
@@ -449,7 +450,7 @@ private void normalizePair(W)(
     pure nothrow @safe @nogc
 {
     const W magnitude =
-        hypot(
+        stableHypot2(
             sine,
             cosine);
 

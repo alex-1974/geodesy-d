@@ -55,7 +55,7 @@ import std.math :
     asin,
     atan2,
     cos,
-    hypot,
+
     sin,
     sqrt;
 
@@ -67,6 +67,7 @@ import geodesy.angle :
 import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_inverse_dispatch :
     geodesicInverseDispatch;
 import geodesy.internal.geodesic_series :
@@ -490,7 +491,7 @@ private:
         W cosBeta1 = cosPhi1;
 
         const W betaNorm =
-            hypot(sinBeta1, cosBeta1);
+            stableHypot2(sinBeta1, cosBeta1);
 
         if (!isFiniteGeodesyScalar(betaNorm)
             || betaNorm == cast(W) 0)
@@ -513,7 +514,7 @@ private:
             sinAlpha1 * cosBeta1;
 
         const W cosAlpha0 =
-            hypot(
+            stableHypot2(
                 cosAlpha1,
                 sinAlpha1 * sinBeta1);
 
@@ -525,7 +526,7 @@ private:
                 : cast(W) 1;
 
         const W sigmaNorm =
-            hypot(sinSigma1, cosSigma1);
+            stableHypot2(sinSigma1, cosSigma1);
 
         if (!isFiniteGeodesyScalar(sigmaNorm)
             || sigmaNorm == cast(W) 0)
@@ -648,7 +649,7 @@ private:
             cosAlpha0 * sinSigma2;
 
         W cosBeta2 =
-            hypot(
+            stableHypot2(
                 sinAlpha0,
                 cosAlpha0 * cosSigma2);
 

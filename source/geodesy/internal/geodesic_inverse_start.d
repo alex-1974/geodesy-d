@@ -19,10 +19,11 @@ import std.math :
     exp,
     fabs,
     log,
-    hypot,
+
     sin,
     sqrt;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
     geodesicA3;
@@ -69,7 +70,7 @@ private void normalizePair(W)(
     ref W cosine)
     pure nothrow @safe @nogc
 {
-    const W magnitude = hypot(sine, cosine);
+    const W magnitude = stableHypot2(sine, cosine);
 
     sine /= magnitude;
     cosine /= magnitude;
@@ -334,7 +335,7 @@ GeodesicInverseStartResult!W geodesicInverseStart(
     }
 
     const W sinSigma12 =
-        hypot(
+        stableHypot2(
             sinAlpha1,
             cosAlpha1);
 
