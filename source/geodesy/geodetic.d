@@ -57,7 +57,8 @@ private:
     Longitude!T _longitude;
     T _ellipsoidalHeight = 0;
 
-    static GeodeticCoordinate fromComponentsUnchecked(
+    /** Construct a geodetic coordinate from already validated strong angles and finite height. */
+static GeodeticCoordinate fromComponentsUnchecked(
         const Latitude!T latitude,
         const Longitude!T longitude,
         const T ellipsoidalHeight)
