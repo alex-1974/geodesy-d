@@ -80,6 +80,7 @@ unittest
 }
 
 
+/** Return whether a hemisphere value is one of the two public UTM conventions. */
 private bool isValidHemisphere(const UtmHemisphere hemisphere)
     pure nothrow @safe @nogc
 {
@@ -88,6 +89,7 @@ private bool isValidHemisphere(const UtmHemisphere hemisphere)
 }
 
 
+/** Return whether a scalar is neither NaN nor infinity. */
 private bool isFiniteScalar(T)(const T value)
     pure nothrow @safe @nogc
 {
@@ -125,7 +127,8 @@ struct UtmZone
 private:
     ubyte _number = 0;
 
-    static UtmZone fromNumberUnchecked(const uint number)
+    /** Construct a UTM zone from a number already validated to lie in [1,60]. */
+static UtmZone fromNumberUnchecked(const uint number)
         pure nothrow @safe @nogc
     {
         UtmZone result;
@@ -511,6 +514,12 @@ public:
  * - converting stored radians back to decimal degrees and then depending on
  *   a potentially rounded division/floor operation at exact zone boundaries.
  */
+/**
+ * Return the ordinary six-degree UTM zone for a canonical longitude.
+ *
+ * Binary search uses exact integral-degree boundaries and deliberately avoids
+ * converting radians back to decimal degrees.
+ */
 private UtmZone ordinaryUtmZone(T)(const T longitudeRadians)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -661,6 +670,7 @@ if (isGeodesyScalar!T)
 
 
 
+/** Return the fixed UTM central scale factor 0.9996 in scalar type T. */
 private T utmScaleFactor(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -673,6 +683,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return the fixed UTM false easting of 500000 metres in scalar type T. */
 private T utmFalseEasting(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -681,6 +692,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return the UTM false northing for the requested hemisphere in scalar type T. */
 private T utmFalseNorthing(T)(
     const UtmHemisphere hemisphere)
     pure nothrow @safe @nogc
@@ -692,6 +704,10 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Return whether an ellipsoid satisfies the metre-valued terrestrial profile
+ * required by the public UTM policy layer.
+ */
 private bool isSupportedUtmEllipsoid(T)(
     const Ellipsoid!T ellipsoid)
     pure nothrow @safe @nogc
