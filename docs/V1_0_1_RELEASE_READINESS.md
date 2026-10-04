@@ -124,10 +124,13 @@ platform gates. Issue #18 is no longer a blocker.
 After documentation sign-off:
 
 - [x] synchronize the release branch with current `main`;
-- [ ] run the complete required hosted CI/platform/numerical gates on the final
-  release candidate;
-- [ ] run the controlled compiler matrix required by repository/workspace
-  policy, or record an explicit justified exception;
+- [x] confirm the complete required hosted CI/platform/numerical evidence for
+  the final candidate: the full PROJ/TM/UTM/geodesic/topocentric matrix passed
+  on `5714fe7772dc409de489b3eb7ac9e4f8d484f5e1`, and no production source has
+  changed since that commit; current PR #32 CI and API documentation are also
+  green;
+- [ ] run the controlled six-compiler matrix required by repository/workspace
+  policy (DMD 2.111.0/2.112.1/2.113.0 and LDC 1.41.0/1.42.0/1.43.0);
 - [ ] run a clean external DUB consumer against the release candidate;
 - [ ] confirm clean repository/release metadata;
 - [ ] convert the changelog `Unreleased` section into `1.0.1` with the actual
@@ -146,6 +149,9 @@ complete. Issue #52 is closed after automated verification and maintainer visual
 review of the generated DDox site.
 
 Issue #18 is resolved. Issue #17 is explicitly deferred from the patch-release
-scope. The remaining work is the final release-candidate
-validation/consumer/metadata sequence. Tagging and publication remain separate
-explicit actions.
+scope. The remaining work is the controlled six-compiler check, a clean external DUB
+consumer against the final candidate, and final release metadata. The hosted
+numerical/platform evidence is complete because the production source is
+identical to the fully green `5714fe7...` candidate, while the current
+documentation-only PR head also passes CI and API documentation. Tagging and
+publication remain separate explicit actions.
