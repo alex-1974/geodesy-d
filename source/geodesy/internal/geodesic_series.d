@@ -140,6 +140,12 @@ private immutable long[98] c3Order8 = [
 ];
 
 
+/**
+ * Evaluate an integer-coefficient polynomial at `x` with Horner's method.
+ *
+ * Coefficients are supplied highest degree first and converted to the working
+ * scalar during evaluation.
+ */
 private W polynomialFromIntegers(W, size_t N)(
     const ref long[N] coefficients,
     const size_t offset,
@@ -158,6 +164,10 @@ private W polynomialFromIntegers(W, size_t N)(
 }
 
 
+/**
+ * Evaluate a rational polynomial encoded as numerator coefficients followed by
+ * a denominator coefficient.
+ */
 private W rationalPolynomial(W, size_t N)(
     const ref long[N] coefficients,
     const size_t offset,
@@ -174,6 +184,7 @@ private W rationalPolynomial(W, size_t N)(
 }
 
 
+/** Evaluate a working-scalar polynomial with Horner's method. */
 private W polynomialFromScalars(W, size_t N)(
     const ref W[N] coefficients,
     const size_t offset,
@@ -202,6 +213,10 @@ private W polynomialFromScalars(W, size_t N)(
  *
  * Arithmetic order is intentionally unchanged.
  */
+/**
+ * Compile-time-size specialization of the integer polynomial evaluator used by
+ * fixed geodesic series orders.
+ */
 private W polynomialFromIntegersStatic(
     W,
     size_t offset,
@@ -229,6 +244,10 @@ private W polynomialFromIntegersStatic(
 }
 
 
+/**
+ * Compile-time-size specialization of the rational polynomial evaluator used
+ * by fixed geodesic series orders.
+ */
 private W rationalPolynomialStatic(
     W,
     size_t offset,
@@ -278,6 +297,7 @@ template cSeriesOffset(
 }
 
 
+/** Evaluate A1-1 from the coefficient table for the selected series order. */
 private W a1FromCoefficients(W, size_t N)(
     const W eps,
     const int order,
@@ -297,6 +317,9 @@ private W a1FromCoefficients(W, size_t N)(
 }
 
 
+/**
+ * Evaluate Karney's A1-1 coefficient for auxiliary-sphere parameter `eps`.
+ */
 W geodesicA1m1(W, int order)(const W eps)
     pure nothrow @safe @nogc
 {
@@ -320,6 +343,7 @@ W geodesicA1m1(W, int order)(const W eps)
 }
 
 
+/** Evaluate A2-1 from the coefficient table for the selected series order. */
 private W a2FromCoefficients(W, size_t N)(
     const W eps,
     const int order,
@@ -339,6 +363,9 @@ private W a2FromCoefficients(W, size_t N)(
 }
 
 
+/**
+ * Evaluate Karney's A2-1 coefficient for auxiliary-sphere parameter `eps`.
+ */
 W geodesicA2m1(W, int order)(const W eps)
     pure nothrow @safe @nogc
 {
@@ -362,6 +389,11 @@ W geodesicA2m1(W, int order)(const W eps)
 }
 
 
+/**
+ * Fill a C-series coefficient array from the packed order-specific table.
+ *
+ * `output` is overwritten with coefficients for the supplied `eps`.
+ */
 private void fillCSeriesLike(
     W,
     int order,
@@ -402,6 +434,9 @@ private void fillCSeriesLike(
 }
 
 
+/**
+ * Fill the C1 Fourier coefficients for the selected geodesic series order.
+ */
 void fillGeodesicC1(W, int order)(
     const W eps,
     ref W[9] result)
@@ -433,6 +468,9 @@ void fillGeodesicC1(W, int order)(
 }
 
 
+/**
+ * Fill the inverse C1-prime Fourier coefficients for the selected series order.
+ */
 void fillGeodesicC1p(W, int order)(
     const W eps,
     ref W[9] result)
@@ -464,6 +502,9 @@ void fillGeodesicC1p(W, int order)(
 }
 
 
+/**
+ * Fill the C2 Fourier coefficients for the selected geodesic series order.
+ */
 void fillGeodesicC2(W, int order)(
     const W eps,
     ref W[9] result)
@@ -495,6 +536,10 @@ void fillGeodesicC2(W, int order)(
 }
 
 
+/**
+ * Fill the polynomial coefficients used to evaluate A3 as a function of
+ * ellipsoid third flattening `n`.
+ */
 private void fillA3FromCoefficients(W, size_t N)(
     const W n,
     const int order,
@@ -524,6 +569,9 @@ private void fillA3FromCoefficients(W, size_t N)(
 }
 
 
+/**
+ * Fill the prepared A3 polynomial coefficients for one ellipsoid.
+ */
 void fillGeodesicA3x(W, int order)(
     const W n,
     ref W[8] result)
@@ -552,6 +600,9 @@ void fillGeodesicA3x(W, int order)(
 }
 
 
+/**
+ * Fill the packed prepared C3 polynomial coefficients for one ellipsoid.
+ */
 private void fillC3xFromCoefficients(W, size_t N)(
     const W n,
     const int order,
@@ -584,6 +635,9 @@ private void fillC3xFromCoefficients(W, size_t N)(
 }
 
 
+/**
+ * Fill the prepared C3 coefficient table for one ellipsoid and series order.
+ */
 void fillGeodesicC3x(W, int order)(
     const W n,
     ref W[28] result)
@@ -612,6 +666,9 @@ void fillGeodesicC3x(W, int order)(
 }
 
 
+/**
+ * Evaluate A3 from prepared coefficients at auxiliary-sphere parameter `eps`.
+ */
 W geodesicA3(W, int order)(
     const W eps,
     const ref W[8] a3x)
@@ -627,6 +684,9 @@ W geodesicA3(W, int order)(
 }
 
 
+/**
+ * Evaluate the C3 Fourier coefficients from the prepared C3 polynomial table.
+ */
 void fillGeodesicC3(W, int order)(
     const W eps,
     const ref W[28] c3x,
@@ -659,6 +719,12 @@ void fillGeodesicC3(W, int order)(
 }
 
 
+/**
+ * Evaluate a sine/cosine Fourier series with Clenshaw summation.
+ *
+ * `sinx` and `cosx` describe the series argument; `coefficients` contains
+ * the one-based coefficient array used by the geodesic kernels.
+ */
 W geodesicSinCosSeries(W)(
     const bool sineSeries,
     const W sinX,
