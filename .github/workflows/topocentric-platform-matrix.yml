@@ -8,7 +8,7 @@ on:
       - "source/geodesy/**"
       - "validation/api/**"
       - "validation/platform_fingerprint.d"
-      - "research/topocentric/**"
+      - "validation/topocentric/**"
       - "tools/validate-api.sh"
       - "dub.sdl"
       - ".github/workflows/topocentric-platform-matrix.yml"
@@ -18,7 +18,7 @@ on:
       - "source/geodesy/**"
       - "validation/api/**"
       - "validation/platform_fingerprint.d"
-      - "research/topocentric/**"
+      - "validation/topocentric/**"
       - "tools/validate-api.sh"
       - "dub.sdl"
       - ".github/workflows/topocentric-platform-matrix.yml"
@@ -166,7 +166,7 @@ jobs:
           "${{ matrix.dc }}" \
             -i \
             -Isource \
-            -run research/topocentric/topo_e_contract_probe.d
+            -run validation/topocentric/topo_e_contract_probe.d
 
       - name: Install PROJ on Linux
         if: matrix.real_differential && runner.os == 'Linux'
@@ -199,4 +199,4 @@ jobs:
           set -euxo pipefail
 
           python3 \
-            research/topocentric/validate_geodesy_vs_proj.py
+            validation/topocentric/validate_geodesy_vs_proj.py
