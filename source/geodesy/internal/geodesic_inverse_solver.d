@@ -14,10 +14,11 @@ import std.math :
     PI,
     cos,
     fabs,
-    hypot,
+
     sin,
     sqrt;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_inverse_start :
     GeodesicInverseStartKind,
     geodesicInverseStart;
@@ -39,7 +40,7 @@ private void normalizePair(W)(
     pure nothrow @safe @nogc
 {
     const W magnitude =
-        hypot(
+        stableHypot2(
             sine,
             cosine);
 
