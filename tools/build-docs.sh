@@ -69,7 +69,8 @@ if [[ "$verify_contracts" == "1" ]]; then
         "$site_dir" \
         "$tool_root/docs/public-api-example-audit.md" \
         --source-root "$source_root" \
-        --require-complete
+        --require-complete \
+        --require-own-example
 fi
 
 echo "PASS: public-only ddox documentation"
