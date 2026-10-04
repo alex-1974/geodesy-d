@@ -74,16 +74,40 @@ public:
         return _deltaX;
     }
 
+    /// Example reading the X translation.
+    @safe unittest
+    {
+        import geodesy;
+        const shift = GeocentricTranslation!double.fromComponents(1.0, 2.0, 3.0);
+        assert(shift.deltaX == 1.0);
+    }
+
     /** Y-axis translation in the coordinate linear unit. */
     @property T deltaY() const pure nothrow @safe @nogc
     {
         return _deltaY;
     }
 
+    /// Example reading the Y translation.
+    @safe unittest
+    {
+        import geodesy;
+        const shift = GeocentricTranslation!double.fromComponents(1.0, 2.0, 3.0);
+        assert(shift.deltaY == 2.0);
+    }
+
     /** Z-axis translation in the coordinate linear unit. */
     @property T deltaZ() const pure nothrow @safe @nogc
     {
         return _deltaZ;
+    }
+
+    /// Example reading the Z translation.
+    @safe unittest
+    {
+        import geodesy;
+        const shift = GeocentricTranslation!double.fromComponents(1.0, 2.0, 3.0);
+        assert(shift.deltaZ == 3.0);
     }
 
         /**
@@ -117,6 +141,16 @@ public:
         return true;
     }
 
+    /// Example checking translation parameters without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        GeocentricTranslation!double shift;
+        assert(GeocentricTranslation!double.tryFromComponents(
+            84.87, 96.49, 116.95, shift));
+        assert(shift.deltaX == 84.87);
+    }
+
         /**
      * Construct source-to-target translation parameters.
      *
@@ -144,6 +178,15 @@ public:
         return result;
     }
 
+    /// Example constructing source-to-target translation parameters.
+    @safe unittest
+    {
+        import geodesy;
+        const shift = GeocentricTranslation!double.fromComponents(
+            84.87, 96.49, 116.95);
+        assert(shift.deltaZ == 116.95);
+    }
+
     /**
      * Return the exact inverse parameterization.
      *
@@ -157,6 +200,14 @@ public:
         result._deltaY = -_deltaY;
         result._deltaZ = -_deltaZ;
         return result;
+    }
+
+    /// Example reversing a geocentric translation.
+    @safe unittest
+    {
+        import geodesy;
+        const shift = GeocentricTranslation!double.fromComponents(1.0, 2.0, 3.0);
+        assert(shift.inverse.deltaX == -1.0);
     }
 }
 
@@ -209,6 +260,17 @@ if (isGeodesyScalar!T)
         result);
 }
 
+/// Example applying a checked geocentric translation.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+    const shift = GeocentricTranslation!double.fromComponents(4.0, 5.0, 6.0);
+    GeocentricCoordinate!double target;
+    assert(tryApplyGeocentricTranslation(source, shift, target));
+    assert(target.x == 5.0);
+}
+
 
 /**
  * Apply EPSG method 1031 in the source-to-target direction.
@@ -236,6 +298,16 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Geocentric translation produced a non-finite result.");
     return result;
+}
+
+/// Example applying a geocentric translation.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+    const shift = GeocentricTranslation!double.fromComponents(4.0, 5.0, 6.0);
+    const target = applyGeocentricTranslation(source, shift);
+    assert(target == GeocentricCoordinate!double.fromComponents(5.0, 7.0, 9.0));
 }
 
 
