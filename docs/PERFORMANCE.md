@@ -326,7 +326,7 @@ validation gates.
 The benchmark implementation is in:
 
 ~~~text
-benchmarks/tm-reference/
+../geodesy-d-research/benchmarks/tm-reference/
 tools/benchmark-tm.sh
 ~~~
 
@@ -533,7 +533,7 @@ of the direct/inverse numerical and API validation work.
 The benchmark implementation is in:
 
 ~~~text
-benchmarks/geodesic-reference/
+../geodesy-d-research/benchmarks/geodesic-reference/
 tools/benchmark-geodesic.sh
 ~~~
 
@@ -911,7 +911,7 @@ additional transcendental evaluation.
 The benchmark kernel is part of the Pseudo-Mercator research probe:
 
 ~~~text
-research/pseudo-mercator/pm_e1_kernel_probe.d
+../geodesy-d-research/research/pseudo-mercator/pm_e1_kernel_probe.d
 ~~~
 
 and is enabled only with:
@@ -923,13 +923,13 @@ PseudoMercatorReverseBenchmark
 The controlled compiler-matrix runner is:
 
 ~~~text
-research/pseudo-mercator/benchmark_pm_e1c1_reverse.py
+../geodesy-d-research/research/pseudo-mercator/benchmark_pm_e1c1_reverse.py
 ~~~
 
 Typical invocation:
 
 ~~~sh
-python3 research/pseudo-mercator/benchmark_pm_e1c1_reverse.py
+python3 ../geodesy-d-research/research/pseudo-mercator/benchmark_pm_e1c1_reverse.py
 ~~~
 
 The runner:
@@ -1070,7 +1070,7 @@ The complete numerical rationale, exact-corpus distribution and candidate
 selection are documented in:
 
 ~~~text
-research/pseudo-mercator/PM_E1C1_REVERSE_RESULTS.md
+../geodesy-d-research/research/pseudo-mercator/PM_E1C1_REVERSE_RESULTS.md
 ~~~
 
 ## CI
