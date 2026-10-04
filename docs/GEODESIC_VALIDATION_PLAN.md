@@ -407,7 +407,7 @@ The authoritative-reference gate is backed by three permanent validator
 families, all passing under both DMD and LDC on the validated Linux x86-64
 environment:
 
-1. `research/geodesics/validate_reference_vectors.py`
+1. `../geodesy-d-research/research/geodesics/validate_reference_vectors.py`
    - 33 deterministic WGS84 rows selected from GeographicLib's official
      500,000-row `GeodTest.dat` high-precision corpus;
    - ordinary short/regional/intercontinental, near-antipodal, very-short,
@@ -416,7 +416,7 @@ environment:
    - analytical sphere cases and published GeographicLib examples;
    - decimal reference strings are parsed directly into D `real`.
 
-2. `research/geodesics/validate_f001_reference_vectors.py`
+2. `../geodesy-d-research/research/geodesics/validate_f001_reference_vectors.py`
    - 26 high-precision boundary-ellipsoid cases: 12 direct and 14 inverse;
    - `a = 7000000`, `f = 0.01`;
    - generated with GeographicLib 2.7 `GeodesicExact`,
@@ -424,7 +424,7 @@ environment:
    - GeographicLib source pinned to commit
      `475cbde5b8528a6294dfeb054bc177d90be9f7bb`.
 
-3. `research/geodesics/validate_regression_vectors.py`
+3. `../geodesy-d-research/research/geodesics/validate_regression_vectors.py`
    - 11 explicit historical GeographicLib geodesic regressions;
    - includes short-line, endpoint-at-pole, backwards-from-pole negative
      distance, near-antipodal roundoff/symmetry, signed-zero, antimeridian,
@@ -577,7 +577,7 @@ remain independently validated.
 
 The exact toolchain, validator/oracle hashes, corpus sizes, observed maxima,
 and acceptance-log hash are recorded in
-`research/geodesics/data/GEO_C_PROVENANCE.md`.
+`../geodesy-d-research/research/geodesics/data/GEO_C_PROVENANCE.md`.
 
 ## GEO-D — PROJ interoperability
 
@@ -656,8 +656,8 @@ PROJ equality requirements.
 The accepted execution and provenance are committed as:
 
 ~~~text
-research/geodesics/data/geod_acceptance_20260919T084049Z.log
-research/geodesics/data/GEO_D_PROVENANCE.md
+../geodesy-d-research/research/geodesics/data/geod_acceptance_20260919T084049Z.log
+../geodesy-d-research/research/geodesics/data/GEO_D_PROVENANCE.md
 ~~~
 
 Acceptance log SHA-256:
@@ -790,15 +790,15 @@ for safeguarded fallback.
 Accepted evidence:
 
 ~~~text
-research/geodesics/data/geoe_acceptance_20260919T092706Z.log
+../geodesy-d-research/research/geodesics/data/geoe_acceptance_20260919T092706Z.log
 SHA-256:
 9c2c714bf613f301201d5c74302699e26718a6e7a12c48a1287af7133c261aad
 
-research/geodesics/data/geoe_exact_acceptance_20260919T094714Z.log
+../geodesy-d-research/research/geodesics/data/geoe_exact_acceptance_20260919T094714Z.log
 SHA-256:
 f67ca368e02b9afc73c1ff88bb24b0a21d4f84b3683792cd243db71231454883
 
-research/geodesics/data/GEO_E_PROVENANCE.md
+../geodesy-d-research/research/geodesics/data/GEO_E_PROVENANCE.md
 ~~~
 
 The exact-oracle acceptance timestamp is `20260919T094714Z`.
@@ -902,11 +902,11 @@ the geodesic types and checked/throwing surfaces.
 Accepted evidence:
 
 ~~~text
-research/geodesics/data/geof_acceptance_20260919T105217Z.log
+../geodesy-d-research/research/geodesics/data/geof_acceptance_20260919T105217Z.log
 SHA-256:
 4b8f4e975af69bb6009a5c3f7895d3589b5ee05113724e04906b631ffeb404a6
 
-research/geodesics/data/GEO_F_PROVENANCE.md
+../geodesy-d-research/research/geodesics/data/GEO_F_PROVENANCE.md
 ~~~
 
 Acceptance timestamp: `20260919T105217Z`.
@@ -988,8 +988,8 @@ the mandatory matrix.
 The complete run extract and provenance are committed in:
 
 ~~~text
-research/geodesics/data/geog_acceptance_20260919T121600Z.log
-research/geodesics/data/GEO_G_PROVENANCE.md
+../geodesy-d-research/research/geodesics/data/geog_acceptance_20260919T121600Z.log
+../geodesy-d-research/research/geodesics/data/GEO_G_PROVENANCE.md
 ~~~
 
 ## Property tests

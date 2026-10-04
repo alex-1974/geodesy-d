@@ -4,7 +4,47 @@ All notable changes to `geodesy-d` will be documented here.
 
 The project follows Semantic Versioning from the first tagged public release.
 
-## [Unreleased]
+## [1.0.1] - 2026-10-04
+
+### Fixed
+
+- Made Transverse Mercator reverse-boundary acceptance invariant under a
+  consistent rescaling of ellipsoid and projected linear units, including the
+  metre/kilometre regression case.
+- Preserved the accepted v1 terrestrial boundary tolerance envelope while
+  correcting the scale-aware normalization so valid public `float` boundary
+  cases remain accepted.
+- Avoided the Phobos/DMD 2.111 two-argument `hypot` defect in the geodesic
+  core by using an internal scale-first norm that preserves subnormal inputs.
+
+### Documentation
+
+- Corrected 34 public Ddoc statements across 11 public source modules for
+  checked APIs using `out` result parameters. D `out` parameters are
+  initialized to `.init` on entry; the caller's previous value is not
+  preserved when the call returns `false`.
+- No public signature, failure channel, implementation logic, or runtime
+  behavior changed as part of the `out`-semantics documentation correction.
+- Completed the v1.0.1 documentation-quality gate: reader-first Ddoc, a
+  compiler-checked Example on all 211 public DDox symbol pages, documented
+  private/package functions, decision-comment review, and strict public-only
+  DDox verification.
+
+### Packaging
+
+- Moved detailed research and benchmark corpora to the separate
+  `geodesy-d-research` companion repository so normal DUB consumers do not
+  download those development artefacts.
+- Kept active regression/validation gates in the production repository; the
+  four topocentric driver/oracle/probe files required by hosted release validation
+  now live under `validation/topocentric/`.
+- No public API or runtime dependency changed as part of the repository split.
+
+### Compatibility
+
+- Preserves the frozen v1 public source contract; existing v1.0.0 consumers
+  should not require source changes for v1.0.1.
+
 
 ## [1.0.0] - 2026-09-26
 

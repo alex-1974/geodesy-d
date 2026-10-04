@@ -7,7 +7,14 @@ cxx="${CXX:-g++}"
 build_dir="$(mktemp -d)"
 trap 'rm -rf "$build_dir"' EXIT
 
-src="$repo/research/geodesics/semantic_probe.cpp"
+research_repo="${GEODESY_D_RESEARCH:-$(cd "$repo/.." && pwd)/geodesy-d-research}"
+src="$research_repo/research/geodesics/semantic_probe.cpp"
+
+[[ -r "$src" ]] || {
+    echo "error: missing $src" >&2
+    echo "       set GEODESY_D_RESEARCH to the companion research checkout" >&2
+    exit 2
+}
 exe="$build_dir/geodesic-semantic-probe"
 
 common=(

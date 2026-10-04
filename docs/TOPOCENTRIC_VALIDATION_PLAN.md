@@ -44,7 +44,7 @@ TOPO-A was completed on 2026-09-20. Its accepted candidate public surface is
 recorded in:
 
 ~~~text
-research/topocentric/api_surface.md
+../geodesy-d-research/research/topocentric/api_surface.md
 docs/adr/0009-topocentric-enu.md
 ~~~
 
@@ -196,8 +196,8 @@ TOPO-B completed successfully on 2026-09-20.
 Committed research probes:
 
 ~~~text
-research/topocentric/epsg_reference_probe.d
-research/topocentric/analytical_rotation_probe.d
+../geodesy-d-research/research/topocentric/epsg_reference_probe.d
+../geodesy-d-research/research/topocentric/analytical_rotation_probe.d
 ~~~
 
 Both probes are deliberately independent of the production `geodesy-d`
@@ -332,7 +332,7 @@ cct: Rel. 9.7.1, December 1st, 2025
 The committed qualification harness is:
 
 ~~~text
-research/topocentric/validate_proj_oracle.py
+../geodesy-d-research/research/topocentric/validate_proj_oracle.py
 ~~~
 
 Deterministic PRNG seed:
@@ -495,8 +495,8 @@ topocentric operation itself.
 The production differential harness is:
 
 ~~~text
-research/topocentric/geodesy_topocentric_probe.d
-research/topocentric/validate_geodesy_vs_proj.py
+../geodesy-d-research/research/topocentric/geodesy_topocentric_probe.d
+validation/topocentric/validate_geodesy_vs_proj.py
 ~~~
 
 The D probe imports only public `geodesy` modules and exercises the public
@@ -670,8 +670,8 @@ remain separate acceptance layers.
 Committed research programs:
 
 ~~~text
-research/topocentric/geographiclib_localcartesian_probe.cpp
-research/topocentric/validate_geodesy_vs_geographiclib.py
+../geodesy-d-research/research/topocentric/geographiclib_localcartesian_probe.cpp
+../geodesy-d-research/research/topocentric/validate_geodesy_vs_geographiclib.py
 ~~~
 
 The C++ probe constructs a GeographicLib `Geocentric` object explicitly for
@@ -829,12 +829,12 @@ TOPO-E completed successfully on 2026-09-20.
 
 This gate executes the adversarial and failure semantics frozen before
 implementation in
-`research/topocentric/preimplementation_contract.md`.
+`../geodesy-d-research/research/topocentric/preimplementation_contract.md`.
 
 The dedicated research probe is:
 
 ~~~text
-research/topocentric/topo_e_contract_probe.d
+validation/topocentric/topo_e_contract_probe.d
 ~~~
 
 The probe intentionally exercises the public `geodesy-d` topocentric API.

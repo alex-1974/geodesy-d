@@ -723,8 +723,8 @@ The accepted GEO-G hosted matrix is GitHub Actions run `35442370160` on commit
 provenance are stored in:
 
 ~~~text
-research/geodesics/data/geog_acceptance_20260919T121600Z.log
-research/geodesics/data/GEO_G_PROVENANCE.md
+../geodesy-d-research/research/geodesics/data/geog_acceptance_20260919T121600Z.log
+../geodesy-d-research/research/geodesics/data/GEO_G_PROVENANCE.md
 ~~~
 
 Acceptance applies only to the direct/inverse surface and semantics specified
