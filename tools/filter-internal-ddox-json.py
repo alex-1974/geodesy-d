@@ -103,8 +103,22 @@ def filter_members(node, parent: str | None, internal: set[str]) -> int:
     removed = 0
 
     if isinstance(node, list):
+        kept = []
         for item in node:
+            item_name = item.get("name") if isinstance(item, dict) else None
+            fq = (
+                child_qualified(parent, item_name)
+                if parent and isinstance(item_name, str)
+                else None
+            )
+            if fq is not None and fq in internal:
+                removed += 1
+                continue
+
             removed += filter_members(item, parent, internal)
+            kept.append(item)
+
+        node[:] = kept
         return removed
 
     if not isinstance(node, dict):
@@ -115,22 +129,7 @@ def filter_members(node, parent: str | None, internal: set[str]) -> int:
     if isinstance(name, str) and name:
         current = child_qualified(parent, name)
 
-    members = node.get("members")
-    if isinstance(members, list):
-        kept = []
-        for member in members:
-            member_name = member.get("name") if isinstance(member, dict) else None
-            fq = child_qualified(current, member_name) if current and isinstance(member_name, str) else None
-            if fq is not None and fq in internal:
-                removed += 1
-                continue
-            removed += filter_members(member, current, internal)
-            kept.append(member)
-        node["members"] = kept
-
-    for key, value in node.items():
-        if key == "members":
-            continue
+    for value in node.values():
         if isinstance(value, (dict, list)):
             removed += filter_members(value, current, internal)
 
