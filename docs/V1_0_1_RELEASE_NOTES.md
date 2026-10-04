@@ -52,6 +52,28 @@ private/package functions are Ddoc-audited, important numerical decisions are
 reviewed for rationale comments, and generated DDox is filtered and verified
 as public-only documentation.
 
+## Packaging
+
+Detailed research and benchmark corpora have moved to the separate
+`geodesy-d-research` companion repository. This keeps the production package
+focused on consumer and release needs while preserving the complete research
+record with verified provenance.
+
+The initial companion snapshot was verified against the pinned production tree:
+
+~~~text
+116 / 116 files
+1,280,863 / 1,280,863 bytes
+0 path/mode/size/blob mismatches
+~~~
+
+Active regression and release validation remains in `geodesy-d`. Four
+topocentric driver/oracle/probe files needed by hosted validation were promoted
+to `validation/topocentric/`.
+
+This repository split does not change the public API or add a runtime
+dependency.
+
 ## Compatibility
 
 v1.0.1 preserves the frozen v1 public source contract.
