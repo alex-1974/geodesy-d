@@ -48,6 +48,10 @@ fi
 )
 rm -f "$dummy_file"
 
+python3 "$tool_root/tools/filter-internal-ddox-json.py" \
+    "$json_file" \
+    "$source_root"
+
 dub run "ddox@$ddox_version" -- filter --min-protection=Public --only-documented "$json_file"
 dub run "ddox@$ddox_version" -- generate-html --navigation-type=ModuleTree "$json_file" "$site_dir"
 
