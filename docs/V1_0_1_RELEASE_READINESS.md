@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 release readiness
 
-Status: **PRE-RELEASE — DOCUMENTATION CONTENT SIGNED OFF; FINAL CHECKS REQUIRED**
+Status: **PRE-RELEASE — RELEASE CONTENT AGREED; DOCUMENTATION QUALITY GATE OPEN**
 
 This checklist is specific to v1.0.1. It does not replace the historical
 v1.0.0 release-readiness record.
@@ -90,7 +90,11 @@ Mandatory before tagging:
   release record;
 - [x] keep `docs/V1_RELEASE_NOTES.md` as the historical v1.0.0 release notes;
 - [x] prepare `docs/V1_0_1_RELEASE_NOTES.md`;
-- [ ] run Markdown/Ddoc documentation checks after the approved edits.
+- [ ] complete issue #52 and
+  `docs/V1_0_1_DOCUMENTATION_QUALITY_AUDIT.md`: public Ddoc, per-symbol DDox
+  examples, internal-function documentation, decision comments, and generated
+  DDox human review;
+- [ ] run the final Markdown/Ddoc/DDox documentation checks after remediation.
 
 The documentation review is a release blocker by policy for v1.0.1.
 
@@ -131,8 +135,13 @@ After documentation sign-off:
 
 Current decision: **DO NOT TAG YET**.
 
-The two intended v1.0.1 fixes are merged and validated, and the release-facing
-documentation content has been reviewed and agreed. Remaining blockers are the
-final documentation checks, resolution/classification of outstanding
-release-relevant repository state (especially #18), and the final release
+The release-facing document structure and wording decisions have been agreed,
+but source documentation quality is not yet signed off. Issue #52 is a release
+blocker and requires a reader-first review of public Ddoc, a rendered
+compiler-checked example for every public DDox symbol page, internal-function
+documentation, rationale comments for important implementation decisions, and
+human review of the generated DDox site.
+
+Remaining blockers also include resolution/classification of outstanding
+release-relevant repository state (especially #18) and the final
 validation/tag/publish sequence.
