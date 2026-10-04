@@ -1,6 +1,6 @@
 # geodesy-d research repository split
 
-Status: **PRODUCTION SPLIT PREPARED — COMPANION SNAPSHOT VERIFICATION REQUIRED**
+Status: **COMPANION SNAPSHOT VERIFIED — PRODUCTION SPLIT READY FOR CI**
 
 The purpose of this split is to keep the production DUB package focused on
 consumer and release needs while preserving detailed research evidence in a
@@ -70,19 +70,26 @@ maintainer tools. They read benchmark fixtures from a sibling
 `geodesy-d-research` checkout by default or from the path in
 `GEODESY_D_RESEARCH`.
 
-## Merge gate
+## Snapshot verification
 
-Do not merge the production deletion until the companion repository has been
-verified against the pinned source commit.
+The companion repository `alex-1974/geodesy-d-research` was populated from
+the pinned source commit and verified before the production deletion is merged.
 
-Required companion verification:
+Verified result:
 
-- same 116 selected relative paths;
-- same file modes;
-- same byte sizes;
-- same Git blob identities or independent SHA-256 hashes;
-- provenance file recording the pinned source commit;
-- no production API source introduced into the research repository.
+~~~text
+paths:       116 / 116
+bytes:       1,280,863 / 1,280,863
+missing:     0
+extra:       0
+mode mismatch: 0
+size mismatch: 0
+blob mismatch: 0
+~~~
 
-After that verification passes, the production split may merge without
-rewriting historical commits.
+The research repository records this in `PROVENANCE.md` and
+`SNAPSHOT_MANIFEST.tsv`; its CI verifier is green on research head
+`0bcc5cbfb7ef07684b38c238eb2f679f39ecd88a`.
+
+The production split may merge once its own required CI/platform gates are
+green. Git history is not rewritten.
