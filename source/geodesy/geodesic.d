@@ -85,6 +85,12 @@ import geodesy.scalar :
     isGeodesyScalar;
 
 
+/**
+ * Working scalar used by geodesic kernels.
+ *
+ * Public `float` calculations use `double`; wider public scalar types retain
+ * their precision.
+ */
 private template WorkingScalar(T)
 if (isGeodesyScalar!T)
 {
@@ -95,6 +101,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -103,6 +110,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -111,6 +119,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return 2*pi in scalar type T. */
 private T twoPi(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -119,6 +128,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Replace either signed floating zero with canonical positive zero. */
 private T canonicalZero(T)(const T value)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -258,6 +268,12 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Clamp a computed latitude to the exact public pole bounds and canonicalize
+ * signed zero.
+ *
+ * The clamp absorbs tiny trigonometric overshoot beyond +/-pi/2.
+ */
 private T canonicalLatitudeRadians(T)(const T radians)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -278,6 +294,12 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Build a public geographic coordinate from finite working results.
+ *
+ * Latitude is clamped to its legal pole bounds and longitude is canonicalized.
+ * `result` receives the strong public coordinate on success.
+ */
 private bool makeGeographicCoordinate(T)(
     const T latitudeRadians,
     const T longitudeRadians,
