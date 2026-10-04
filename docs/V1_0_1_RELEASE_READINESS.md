@@ -129,9 +129,14 @@ After documentation sign-off:
   on `5714fe7772dc409de489b3eb7ac9e4f8d484f5e1`, and no production source has
   changed since that commit; current PR #32 CI and API documentation are also
   green;
-- [ ] run the controlled six-compiler matrix required by repository/workspace
-  policy (DMD 2.111.0/2.112.1/2.113.0 and LDC 1.41.0/1.42.0/1.43.0);
-- [ ] run a clean external DUB consumer against the release candidate;
+- [x] run the controlled six-compiler matrix required by repository/workspace
+  policy (DMD 2.111.0/2.112.1/2.113.0 and LDC 1.41.0/1.42.0/1.43.0): all six
+  passed 24-module unit tests and release builds on candidate
+  `d919125f6858f46bfed1f57d926e1cb1ca84a4a1`;
+- [x] run a clean external DUB consumer against the release candidate: the
+  representative aggregate-import/UTM/geodesic consumer built, linked, and ran
+  successfully in both debug and release mode with all six controlled
+  compilers;
 - [ ] confirm clean repository/release metadata;
 - [ ] convert the changelog `Unreleased` section into `1.0.1` with the actual
   release date;
@@ -149,9 +154,10 @@ complete. Issue #52 is closed after automated verification and maintainer visual
 review of the generated DDox site.
 
 Issue #18 is resolved. Issue #17 is explicitly deferred from the patch-release
-scope. The remaining work is the controlled six-compiler check, a clean external DUB
-consumer against the final candidate, and final release metadata. The hosted
-numerical/platform evidence is complete because the production source is
-identical to the fully green `5714fe7...` candidate, while the current
-documentation-only PR head also passes CI and API documentation. Tagging and
-publication remain separate explicit actions.
+scope. The hosted numerical/platform evidence, controlled six-compiler matrix, and
+clean external consumer gate are complete. The production source is identical
+to the fully green `5714fe7...` candidate, and the current documentation-only
+PR head passes CI and API documentation. The remaining pre-tag work is final
+release metadata/repository confirmation, including converting the changelog
+section to v1.0.1 with the release date. Tagging and publication remain
+separate explicit actions.
