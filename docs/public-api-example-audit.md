@@ -1,17 +1,19 @@
 # Public API Example Audit
 
-**Status:** complete  
+**Status:** strict per-symbol coverage  
 **Baseline:** post-v1 development branch `audit/v1-public-api`
 
 ## Purpose
 
 This audit tracks executable Ddoc example coverage for the public `geodesy-d` API.
 
-Each public DDox symbol page should be classified as one of:
+Every public DDox symbol page is classified as **existing** only when a
+documented, compiler-checked `unittest` renders as an `Example` on that exact
+page.
 
-- **existing** — a documented `unittest` renders as an `Example`;
-- **add** — the declaration should receive its own executable example;
-- **family** — a dedicated example would add little value and the declaration is deliberately covered by a named type or API-family example.
+The older `family` classification is no longer accepted. Even small public
+properties and convenience peers have their own concise example so generated
+documentation never requires the reader to hunt for another symbol's example.
 
 Examples should normally compile through:
 
@@ -83,8 +85,8 @@ The audit is complete when:
 
 1. every public DDox symbol page is classified;
 2. no declaration remains classified as **add**;
-3. every **existing** declaration renders an `Example`;
-4. every **family** declaration names the owning example family;
+3. every declaration is classified **existing** and renders an `Example`;
+4. no `family` or `add` classification remains;
 5. examples compile through the public package surface where practical;
 6. every **existing** example is implemented as a documented `unittest`, so the same example is compiler-checked and rendered by DDox;
 7. legacy inline `Example:` code blocks are rejected in public source modules;
@@ -96,214 +98,214 @@ The audit is complete when:
 
 | DDox page | Status | Owning family |
 | --- | --- | --- |
-| `geodesy.angle.Angle.degrees` | family | angles |
-| `geodesy.angle.Angle.fromDegrees` | family | angles |
-| `geodesy.angle.Angle.fromRadians` | family | angles |
+| `geodesy.angle.Angle.degrees` | existing | angles |
+| `geodesy.angle.Angle.fromDegrees` | existing | angles |
+| `geodesy.angle.Angle.fromRadians` | existing | angles |
 | `geodesy.angle.Angle` | existing | angles |
-| `geodesy.angle.Angle.radians` | family | angles |
-| `geodesy.angle.Angle.tryFromDegrees` | family | angles |
-| `geodesy.angle.Angle.tryFromRadians` | family | angles |
-| `geodesy.angle.Latitude.asAngle` | family | angles |
-| `geodesy.angle.Latitude.degrees` | family | angles |
-| `geodesy.angle.Latitude.fromDegrees` | family | angles |
-| `geodesy.angle.Latitude.fromRadians` | family | angles |
+| `geodesy.angle.Angle.radians` | existing | angles |
+| `geodesy.angle.Angle.tryFromDegrees` | existing | angles |
+| `geodesy.angle.Angle.tryFromRadians` | existing | angles |
+| `geodesy.angle.Latitude.asAngle` | existing | angles |
+| `geodesy.angle.Latitude.degrees` | existing | angles |
+| `geodesy.angle.Latitude.fromDegrees` | existing | angles |
+| `geodesy.angle.Latitude.fromRadians` | existing | angles |
 | `geodesy.angle.Latitude` | existing | angles |
-| `geodesy.angle.Latitude.radians` | family | angles |
-| `geodesy.angle.Latitude.tryFromDegrees` | family | angles |
-| `geodesy.angle.Latitude.tryFromRadians` | family | angles |
-| `geodesy.angle.Longitude.asAngle` | family | angles |
-| `geodesy.angle.Longitude.degrees` | family | angles |
-| `geodesy.angle.Longitude.fromDegrees` | family | angles |
-| `geodesy.angle.Longitude.fromRadians` | family | angles |
+| `geodesy.angle.Latitude.radians` | existing | angles |
+| `geodesy.angle.Latitude.tryFromDegrees` | existing | angles |
+| `geodesy.angle.Latitude.tryFromRadians` | existing | angles |
+| `geodesy.angle.Longitude.asAngle` | existing | angles |
+| `geodesy.angle.Longitude.degrees` | existing | angles |
+| `geodesy.angle.Longitude.fromDegrees` | existing | angles |
+| `geodesy.angle.Longitude.fromRadians` | existing | angles |
 | `geodesy.angle.Longitude` | existing | angles |
-| `geodesy.angle.Longitude.normalized` | family | angles |
-| `geodesy.angle.Longitude.radians` | family | angles |
-| `geodesy.angle.Longitude.tryFromDegrees` | family | angles |
-| `geodesy.angle.Longitude.tryFromRadians` | family | angles |
-| `geodesy.conversion.geocentricToGeodetic` | family | conversion |
-| `geodesy.conversion.geodeticToGeocentric` | family | conversion |
+| `geodesy.angle.Longitude.normalized` | existing | angles |
+| `geodesy.angle.Longitude.radians` | existing | angles |
+| `geodesy.angle.Longitude.tryFromDegrees` | existing | angles |
+| `geodesy.angle.Longitude.tryFromRadians` | existing | angles |
+| `geodesy.conversion.geocentricToGeodetic` | existing | conversion |
+| `geodesy.conversion.geodeticToGeocentric` | existing | conversion |
 | `geodesy.conversion.tryGeocentricToGeodetic` | existing | conversion |
 | `geodesy.conversion.tryGeodeticToGeocentric` | existing | conversion |
-| `geodesy.ellipsoid.Ellipsoid.firstEccentricitySquared` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.flattening` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.fromAxes` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.fromFlattening` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.fromInverseFlattening` | family | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.firstEccentricitySquared` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.flattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.fromAxes` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.fromFlattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.fromInverseFlattening` | existing | ellipsoid |
 | `geodesy.ellipsoid.Ellipsoid` | existing | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.inverseFlattening` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.isValid` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.secondEccentricitySquared` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.semiMajorAxis` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.semiMinorAxis` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.sphere` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.thirdFlattening` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.tryFromAxes` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.tryFromFlattening` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.tryFromInverseFlattening` | family | ellipsoid |
-| `geodesy.ellipsoid.Ellipsoid.trySphere` | family | ellipsoid |
-| `geodesy.ellipsoid.wgs84` | family | ellipsoid |
-| `geodesy.errors.GeodesyValueException` | family | errors |
-| `geodesy.errors.GeodesyValueException.this` | family | errors |
-| `geodesy.geocentric.GeocentricCoordinate.fromComponents` | family | Cartesian values |
+| `geodesy.ellipsoid.Ellipsoid.inverseFlattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.isValid` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.secondEccentricitySquared` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.semiMajorAxis` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.semiMinorAxis` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.sphere` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.thirdFlattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.tryFromAxes` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.tryFromFlattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.tryFromInverseFlattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.trySphere` | existing | ellipsoid |
+| `geodesy.ellipsoid.wgs84` | existing | ellipsoid |
+| `geodesy.errors.GeodesyValueException` | existing | errors |
+| `geodesy.errors.GeodesyValueException.this` | existing | errors |
+| `geodesy.geocentric.GeocentricCoordinate.fromComponents` | existing | Cartesian values |
 | `geodesy.geocentric.GeocentricCoordinate` | existing | Cartesian values |
-| `geodesy.geocentric.GeocentricCoordinate.tryFromComponents` | family | Cartesian values |
-| `geodesy.geocentric.GeocentricCoordinate.x` | family | Cartesian values |
-| `geodesy.geocentric.GeocentricCoordinate.y` | family | Cartesian values |
-| `geodesy.geocentric.GeocentricCoordinate.z` | family | Cartesian values |
-| `geodesy.geodesic.Geodesic.direct` | family | geodesics |
-| `geodesy.geodesic.Geodesic.ellipsoid` | family | geodesics |
-| `geodesy.geodesic.Geodesic.fromEllipsoid` | family | geodesics |
+| `geodesy.geocentric.GeocentricCoordinate.tryFromComponents` | existing | Cartesian values |
+| `geodesy.geocentric.GeocentricCoordinate.x` | existing | Cartesian values |
+| `geodesy.geocentric.GeocentricCoordinate.y` | existing | Cartesian values |
+| `geodesy.geocentric.GeocentricCoordinate.z` | existing | Cartesian values |
+| `geodesy.geodesic.Geodesic.direct` | existing | geodesics |
+| `geodesy.geodesic.Geodesic.ellipsoid` | existing | geodesics |
+| `geodesy.geodesic.Geodesic.fromEllipsoid` | existing | geodesics |
 | `geodesy.geodesic.Geodesic` | existing | geodesics |
-| `geodesy.geodesic.Geodesic.inverse` | family | geodesics |
-| `geodesy.geodesic.Geodesic.isSphere` | family | geodesics |
-| `geodesy.geodesic.Geodesic.isValid` | family | geodesics |
+| `geodesy.geodesic.Geodesic.inverse` | existing | geodesics |
+| `geodesy.geodesic.Geodesic.isSphere` | existing | geodesics |
+| `geodesy.geodesic.Geodesic.isValid` | existing | geodesics |
 | `geodesy.geodesic.Geodesic.tryDirect` | existing | geodesics |
-| `geodesy.geodesic.Geodesic.tryFromEllipsoid` | family | geodesics |
+| `geodesy.geodesic.Geodesic.tryFromEllipsoid` | existing | geodesics |
 | `geodesy.geodesic.Geodesic.tryInverse` | existing | geodesics |
-| `geodesy.geodesic.GeodesicDirectResult` | family | geodesics |
-| `geodesy.geodesic.GeodesicInverseResult.distance` | family | geodesics |
-| `geodesy.geodesic.GeodesicInverseResult.finalAzimuth` | family | geodesics |
-| `geodesy.geodesic.GeodesicInverseResult` | family | geodesics |
-| `geodesy.geodesic.GeodesicInverseResult.initialAzimuth` | family | geodesics |
-| `geodesy.geodetic.GeodeticCoordinate.ellipsoidalHeight` | family | geographic/geodetic values |
-| `geodesy.geodetic.GeodeticCoordinate.fromComponents` | family | geographic/geodetic values |
+| `geodesy.geodesic.GeodesicDirectResult` | existing | geodesics |
+| `geodesy.geodesic.GeodesicInverseResult.distance` | existing | geodesics |
+| `geodesy.geodesic.GeodesicInverseResult.finalAzimuth` | existing | geodesics |
+| `geodesy.geodesic.GeodesicInverseResult` | existing | geodesics |
+| `geodesy.geodesic.GeodesicInverseResult.initialAzimuth` | existing | geodesics |
+| `geodesy.geodetic.GeodeticCoordinate.ellipsoidalHeight` | existing | geographic/geodetic values |
+| `geodesy.geodetic.GeodeticCoordinate.fromComponents` | existing | geographic/geodetic values |
 | `geodesy.geodetic.GeodeticCoordinate` | existing | geographic/geodetic values |
-| `geodesy.geodetic.GeodeticCoordinate.latitude` | family | geographic/geodetic values |
-| `geodesy.geodetic.GeodeticCoordinate.longitude` | family | geographic/geodetic values |
-| `geodesy.geodetic.GeodeticCoordinate.tryFromComponents` | family | geographic/geodetic values |
-| `geodesy.geographic.GeographicCoordinate.fromComponents` | family | geographic/geodetic values |
+| `geodesy.geodetic.GeodeticCoordinate.latitude` | existing | geographic/geodetic values |
+| `geodesy.geodetic.GeodeticCoordinate.longitude` | existing | geographic/geodetic values |
+| `geodesy.geodetic.GeodeticCoordinate.tryFromComponents` | existing | geographic/geodetic values |
+| `geodesy.geographic.GeographicCoordinate.fromComponents` | existing | geographic/geodetic values |
 | `geodesy.geographic.GeographicCoordinate` | existing | geographic/geodetic values |
-| `geodesy.geographic.GeographicCoordinate.latitude` | family | geographic/geodetic values |
-| `geodesy.geographic.GeographicCoordinate.longitude` | family | geographic/geodetic values |
-| `geodesy.projected.ProjectedCoordinate.easting` | family | Cartesian values |
-| `geodesy.projected.ProjectedCoordinate.fromComponents` | family | Cartesian values |
+| `geodesy.geographic.GeographicCoordinate.latitude` | existing | geographic/geodetic values |
+| `geodesy.geographic.GeographicCoordinate.longitude` | existing | geographic/geodetic values |
+| `geodesy.projected.ProjectedCoordinate.easting` | existing | Cartesian values |
+| `geodesy.projected.ProjectedCoordinate.fromComponents` | existing | Cartesian values |
 | `geodesy.projected.ProjectedCoordinate` | existing | Cartesian values |
-| `geodesy.projected.ProjectedCoordinate.northing` | family | Cartesian values |
-| `geodesy.projected.ProjectedCoordinate.tryFromComponents` | family | Cartesian values |
-| `geodesy.projection.factors.ConformalProjectionFactors` | family | Transverse Mercator |
-| `geodesy.projection.factors.ConformalProjectionFactors.meridianConvergence` | family | Transverse Mercator |
-| `geodesy.projection.factors.ConformalProjectionFactors.pointScale` | family | Transverse Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.ellipsoid` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.falseEasting` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.falseNorthing` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.forward` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.fromParameters` | family | Pseudo-Mercator |
+| `geodesy.projected.ProjectedCoordinate.northing` | existing | Cartesian values |
+| `geodesy.projected.ProjectedCoordinate.tryFromComponents` | existing | Cartesian values |
+| `geodesy.projection.factors.ConformalProjectionFactors` | existing | Transverse Mercator |
+| `geodesy.projection.factors.ConformalProjectionFactors.meridianConvergence` | existing | Transverse Mercator |
+| `geodesy.projection.factors.ConformalProjectionFactors.pointScale` | existing | Transverse Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.ellipsoid` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.falseEasting` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.falseNorthing` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.forward` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.fromParameters` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator` | existing | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.isValid` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.longitudeOfNaturalOrigin` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.reverse` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | family | Pseudo-Mercator |
-| `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | family | Pseudo-Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.ellipsoid` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.falseEasting` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.falseNorthing` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.forward` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.forwardFactors` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.fromParameters` | family | Transverse Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.isValid` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.longitudeOfNaturalOrigin` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.reverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | existing | Pseudo-Mercator |
+| `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.ellipsoid` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.falseEasting` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.falseNorthing` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.forward` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.forwardFactors` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.fromParameters` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator` | existing | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.isValid` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.latitudeOfNaturalOrigin` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.longitudeOfNaturalOrigin` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.reverse` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.reverseFactors` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.scaleFactorAtNaturalOrigin` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.tryForward` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.tryForwardFactors` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.tryFromParameters` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.tryReverse` | family | Transverse Mercator |
-| `geodesy.projection.transverse_mercator.TransverseMercator.tryReverseFactors` | family | Transverse Mercator |
-| `geodesy.projection.utm.UtmCoordinate.easting` | family | UTM |
-| `geodesy.projection.utm.UtmCoordinate.fromComponents` | family | UTM |
-| `geodesy.projection.utm.UtmCoordinate.hemisphere` | family | UTM |
+| `geodesy.projection.transverse_mercator.TransverseMercator.isValid` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.latitudeOfNaturalOrigin` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.longitudeOfNaturalOrigin` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.reverse` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.reverseFactors` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.scaleFactorAtNaturalOrigin` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.tryForward` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.tryForwardFactors` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.tryFromParameters` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.tryReverse` | existing | Transverse Mercator |
+| `geodesy.projection.transverse_mercator.TransverseMercator.tryReverseFactors` | existing | Transverse Mercator |
+| `geodesy.projection.utm.UtmCoordinate.easting` | existing | UTM |
+| `geodesy.projection.utm.UtmCoordinate.fromComponents` | existing | UTM |
+| `geodesy.projection.utm.UtmCoordinate.hemisphere` | existing | UTM |
 | `geodesy.projection.utm.UtmCoordinate` | existing | UTM |
-| `geodesy.projection.utm.UtmCoordinate.isValid` | family | UTM |
-| `geodesy.projection.utm.UtmCoordinate.northing` | family | UTM |
-| `geodesy.projection.utm.UtmCoordinate.projected` | family | UTM |
-| `geodesy.projection.utm.UtmCoordinate.tryFromComponents` | family | UTM |
-| `geodesy.projection.utm.UtmCoordinate.zone` | family | UTM |
-| `geodesy.projection.utm.UtmHemisphere` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.ellipsoid` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.falseEasting` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.falseNorthing` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.forward` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.forwardFactors` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.fromZone` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.hemisphere` | family | UTM |
+| `geodesy.projection.utm.UtmCoordinate.isValid` | existing | UTM |
+| `geodesy.projection.utm.UtmCoordinate.northing` | existing | UTM |
+| `geodesy.projection.utm.UtmCoordinate.projected` | existing | UTM |
+| `geodesy.projection.utm.UtmCoordinate.tryFromComponents` | existing | UTM |
+| `geodesy.projection.utm.UtmCoordinate.zone` | existing | UTM |
+| `geodesy.projection.utm.UtmHemisphere` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.ellipsoid` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.falseEasting` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.falseNorthing` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.forward` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.forwardFactors` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.fromZone` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.hemisphere` | existing | UTM |
 | `geodesy.projection.utm.UtmProjection` | existing | UTM |
-| `geodesy.projection.utm.UtmProjection.isValid` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.latitudeOfNaturalOrigin` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.longitudeOfNaturalOrigin` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.reverse` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.reverseFactors` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.scaleFactorAtNaturalOrigin` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.tryForward` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.tryForwardFactors` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.tryFromZone` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.tryReverse` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.tryReverseFactors` | family | UTM |
-| `geodesy.projection.utm.UtmProjection.zone` | family | UTM |
-| `geodesy.projection.utm.UtmZone.centralMeridianDegrees` | family | UTM |
-| `geodesy.projection.utm.UtmZone.fromNumber` | family | UTM |
+| `geodesy.projection.utm.UtmProjection.isValid` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.latitudeOfNaturalOrigin` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.longitudeOfNaturalOrigin` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.reverse` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.reverseFactors` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.scaleFactorAtNaturalOrigin` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.tryForward` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.tryForwardFactors` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.tryFromZone` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.tryReverse` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.tryReverseFactors` | existing | UTM |
+| `geodesy.projection.utm.UtmProjection.zone` | existing | UTM |
+| `geodesy.projection.utm.UtmZone.centralMeridianDegrees` | existing | UTM |
+| `geodesy.projection.utm.UtmZone.fromNumber` | existing | UTM |
 | `geodesy.projection.utm.UtmZone` | existing | UTM |
-| `geodesy.projection.utm.UtmZone.isValid` | family | UTM |
-| `geodesy.projection.utm.UtmZone.number` | family | UTM |
-| `geodesy.projection.utm.UtmZone.tryFromNumber` | family | UTM |
-| `geodesy.projection.utm.forwardUtm` | family | UTM |
-| `geodesy.projection.utm.reverseUtm` | family | UTM |
+| `geodesy.projection.utm.UtmZone.isValid` | existing | UTM |
+| `geodesy.projection.utm.UtmZone.number` | existing | UTM |
+| `geodesy.projection.utm.UtmZone.tryFromNumber` | existing | UTM |
+| `geodesy.projection.utm.forwardUtm` | existing | UTM |
+| `geodesy.projection.utm.reverseUtm` | existing | UTM |
 | `geodesy.projection.utm.tryForwardUtm` | existing | UTM |
-| `geodesy.projection.utm.tryReverseUtm` | family | UTM |
+| `geodesy.projection.utm.tryReverseUtm` | existing | UTM |
 | `geodesy.projection.utm.tryStandardUtmZone` | existing | UTM |
-| `geodesy.scalar.isGeodesyScalar` | family | scalar policy |
-| `geodesy.topocentric.TopocentricCoordinate.east` | family | topocentric |
-| `geodesy.topocentric.TopocentricCoordinate.fromComponents` | family | topocentric |
+| `geodesy.scalar.isGeodesyScalar` | existing | scalar policy |
+| `geodesy.topocentric.TopocentricCoordinate.east` | existing | topocentric |
+| `geodesy.topocentric.TopocentricCoordinate.fromComponents` | existing | topocentric |
 | `geodesy.topocentric.TopocentricCoordinate` | existing | topocentric |
-| `geodesy.topocentric.TopocentricCoordinate.north` | family | topocentric |
-| `geodesy.topocentric.TopocentricCoordinate.tryFromComponents` | family | topocentric |
-| `geodesy.topocentric.TopocentricCoordinate.up` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.ellipsoid` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.fromGeocentricOrigin` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.fromGeodeticOrigin` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.geocentricToTopocentric` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.geodeticToTopocentric` | family | topocentric |
+| `geodesy.topocentric.TopocentricCoordinate.north` | existing | topocentric |
+| `geodesy.topocentric.TopocentricCoordinate.tryFromComponents` | existing | topocentric |
+| `geodesy.topocentric.TopocentricCoordinate.up` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.ellipsoid` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.fromGeocentricOrigin` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.fromGeodeticOrigin` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.geocentricToTopocentric` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.geodeticToTopocentric` | existing | topocentric |
 | `geodesy.topocentric.TopocentricFrame` | existing | topocentric |
-| `geodesy.topocentric.TopocentricFrame.isValid` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.topocentricToGeocentric` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.topocentricToGeodetic` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.tryFromGeocentricOrigin` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.tryFromGeodeticOrigin` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.tryGeocentricToTopocentric` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.tryGeodeticToTopocentric` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.tryTopocentricToGeocentric` | family | topocentric |
-| `geodesy.topocentric.TopocentricFrame.tryTopocentricToGeodetic` | family | topocentric |
-| `geodesy.transform.geocentric_translation.GeocentricTranslation.deltaX` | family | geocentric translation |
-| `geodesy.transform.geocentric_translation.GeocentricTranslation.deltaY` | family | geocentric translation |
-| `geodesy.transform.geocentric_translation.GeocentricTranslation.deltaZ` | family | geocentric translation |
-| `geodesy.transform.geocentric_translation.GeocentricTranslation.fromComponents` | family | geocentric translation |
+| `geodesy.topocentric.TopocentricFrame.isValid` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.topocentricToGeocentric` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.topocentricToGeodetic` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.tryFromGeocentricOrigin` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.tryFromGeodeticOrigin` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.tryGeocentricToTopocentric` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.tryGeodeticToTopocentric` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.tryTopocentricToGeocentric` | existing | topocentric |
+| `geodesy.topocentric.TopocentricFrame.tryTopocentricToGeodetic` | existing | topocentric |
+| `geodesy.transform.geocentric_translation.GeocentricTranslation.deltaX` | existing | geocentric translation |
+| `geodesy.transform.geocentric_translation.GeocentricTranslation.deltaY` | existing | geocentric translation |
+| `geodesy.transform.geocentric_translation.GeocentricTranslation.deltaZ` | existing | geocentric translation |
+| `geodesy.transform.geocentric_translation.GeocentricTranslation.fromComponents` | existing | geocentric translation |
 | `geodesy.transform.geocentric_translation.GeocentricTranslation` | existing | geocentric translation |
-| `geodesy.transform.geocentric_translation.GeocentricTranslation.inverse` | family | geocentric translation |
-| `geodesy.transform.geocentric_translation.GeocentricTranslation.tryFromComponents` | family | geocentric translation |
-| `geodesy.transform.geocentric_translation.applyGeocentricTranslation` | family | geocentric translation |
-| `geodesy.transform.geocentric_translation.tryApplyGeocentricTranslation` | family | geocentric translation |
-| `geodesy.transform.helmert.CoordinateFrameHelmert` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.fromArcSecondsAndPpm` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.fromCanonical` | family | Helmert |
+| `geodesy.transform.geocentric_translation.GeocentricTranslation.inverse` | existing | geocentric translation |
+| `geodesy.transform.geocentric_translation.GeocentricTranslation.tryFromComponents` | existing | geocentric translation |
+| `geodesy.transform.geocentric_translation.applyGeocentricTranslation` | existing | geocentric translation |
+| `geodesy.transform.geocentric_translation.tryApplyGeocentricTranslation` | existing | geocentric translation |
+| `geodesy.transform.helmert.CoordinateFrameHelmert` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.fromArcSecondsAndPpm` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.fromCanonical` | existing | Helmert |
 | `geodesy.transform.helmert.Helmert7` | existing | Helmert |
-| `geodesy.transform.helmert.Helmert7.rotationX` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.rotationY` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.rotationZ` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.scaleDifference` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.scaleFactor` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.translationX` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.translationY` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.translationZ` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.tryFromArcSecondsAndPpm` | family | Helmert |
-| `geodesy.transform.helmert.Helmert7.tryFromCanonical` | family | Helmert |
-| `geodesy.transform.helmert.HelmertConvention` | family | Helmert |
-| `geodesy.transform.helmert.PositionVectorHelmert` | family | Helmert |
-| `geodesy.transform.helmert.applyCoordinateFrameHelmert` | family | Helmert |
-| `geodesy.transform.helmert.applyPositionVectorHelmert` | family | Helmert |
-| `geodesy.transform.helmert.toCoordinateFrame` | family | Helmert |
-| `geodesy.transform.helmert.toPositionVector` | family | Helmert |
-| `geodesy.transform.helmert.tryApplyCoordinateFrameHelmert` | family | Helmert |
-| `geodesy.transform.helmert.tryApplyPositionVectorHelmert` | family | Helmert |
+| `geodesy.transform.helmert.Helmert7.rotationX` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.rotationY` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.rotationZ` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.scaleDifference` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.scaleFactor` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.translationX` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.translationY` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.translationZ` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.tryFromArcSecondsAndPpm` | existing | Helmert |
+| `geodesy.transform.helmert.Helmert7.tryFromCanonical` | existing | Helmert |
+| `geodesy.transform.helmert.HelmertConvention` | existing | Helmert |
+| `geodesy.transform.helmert.PositionVectorHelmert` | existing | Helmert |
+| `geodesy.transform.helmert.applyCoordinateFrameHelmert` | existing | Helmert |
+| `geodesy.transform.helmert.applyPositionVectorHelmert` | existing | Helmert |
+| `geodesy.transform.helmert.toCoordinateFrame` | existing | Helmert |
+| `geodesy.transform.helmert.toPositionVector` | existing | Helmert |
+| `geodesy.transform.helmert.tryApplyCoordinateFrameHelmert` | existing | Helmert |
+| `geodesy.transform.helmert.tryApplyPositionVectorHelmert` | existing | Helmert |
