@@ -74,7 +74,8 @@ private:
     T _semiMajorAxis = T.nan;
     T _flattening = T.nan;
 
-    static Ellipsoid fromCanonicalUnchecked(const T semiMajorAxis, const T flattening)
+    /** Construct an ellipsoid from already validated canonical axis/flattening values. */
+static Ellipsoid fromCanonicalUnchecked(const T semiMajorAxis, const T flattening)
         pure nothrow @safe @nogc
     {
         Ellipsoid result;
