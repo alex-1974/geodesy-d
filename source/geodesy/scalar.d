@@ -40,6 +40,16 @@ module geodesy.scalar;
 enum bool isGeodesyScalar(T) =
     is(T == float) || is(T == double) || is(T == real);
 
+/// Example checking the public scalar policy.
+unittest
+{
+    import geodesy;
+    static assert(isGeodesyScalar!float);
+    static assert(isGeodesyScalar!double);
+    static assert(isGeodesyScalar!real);
+    static assert(!isGeodesyScalar!int);
+}
+
 unittest
 {
     static assert(isGeodesyScalar!float);

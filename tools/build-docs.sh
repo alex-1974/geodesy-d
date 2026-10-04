@@ -36,6 +36,10 @@ echo "Generating ddox input for ${#public_sources[@]} public modules from $sourc
 
 if [[ "$verify_contracts" == "1" ]]; then
     python3 "$tool_root/tools/verify-public-module-ddoc.py" "$source_root"
+    (
+        cd "$source_root"
+        python3 "$tool_root/tools/verify-internal-ddoc.py"
+    )
 fi
 
 (
@@ -43,6 +47,10 @@ fi
     "$compiler" -o- -wi -Xf"$json_file" -Df"$dummy_file" -Isource "${public_sources[@]}"
 )
 rm -f "$dummy_file"
+
+python3 "$tool_root/tools/filter-internal-ddox-json.py" \
+    "$json_file" \
+    "$source_root"
 
 dub run "ddox@$ddox_version" -- filter --min-protection=Public --only-documented "$json_file"
 dub run "ddox@$ddox_version" -- generate-html --navigation-type=ModuleTree "$json_file" "$site_dir"
@@ -69,7 +77,8 @@ if [[ "$verify_contracts" == "1" ]]; then
         "$site_dir" \
         "$tool_root/docs/public-api-example-audit.md" \
         --source-root "$source_root" \
-        --require-complete
+        --require-complete \
+        --require-own-example
 fi
 
 echo "PASS: public-only ddox documentation"

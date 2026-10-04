@@ -66,16 +66,46 @@ public:
         return result;
     }
 
+    /// Example constructing a geographic coordinate from strong angles.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        assert(point.latitude.degrees > 48.0);
+    }
+
     /** Geodetic latitude. */
     @property Latitude!T latitude() const pure nothrow @safe @nogc
     {
         return _latitude;
     }
 
+    /// Example reading the geographic latitude.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0));
+        assert(point.latitude.degrees == 48.0);
+    }
+
     /** Geodetic longitude. */
     @property Longitude!T longitude() const pure nothrow @safe @nogc
     {
         return _longitude;
+    }
+
+    /// Example reading the geographic longitude.
+    @safe unittest
+    {
+        import geodesy;
+        const point = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0));
+        assert(point.longitude.degrees == 16.0);
     }
 }
 

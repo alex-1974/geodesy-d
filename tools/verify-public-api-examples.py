@@ -37,6 +37,14 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="fail while any public page remains classified as add",
     )
+    parser.add_argument(
+        "--require-own-example",
+        action="store_true",
+        help=(
+            "fail unless every public DDox symbol page is classified as "
+            "existing and renders its own documented unittest Example"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -166,6 +174,15 @@ def main() -> None:
         fail(
             f"{counts['add']} public pages still require dedicated examples"
         )
+
+    if args.require_own_example:
+        incomplete = counts["add"] + counts["family"]
+        if incomplete:
+            fail(
+                f"{incomplete} public pages do not yet have their own "
+                "rendered documented-unittest Example "
+                f"(add={counts['add']}, family={counts['family']})"
+            )
 
     print(
         "PASS: public API example audit covers "

@@ -1,338 +1,360 @@
-# geodesy-d Ddoc Style Guide
+# geodesy-d Documentation Style Guide
 
-**Status:** Draft  
-**Scope:** Public API documentation for `geodesy-d`
+**Status:** Release standard  
+**Scope:** Public Ddoc, internal code documentation, examples, and explanatory comments
 
 ## 1. Purpose
 
-Public Ddoc is part of the `geodesy-d` API contract.
+Documentation is part of the product.
 
-A caller should be able to understand a public declaration without reading its implementation. Documentation must describe, where applicable:
+A consumer should be able to use a public API without reading its implementation.
+A maintainer should be able to change an internal algorithm without first
+reverse-engineering why the current code is written that way.
 
-- semantic meaning;
-- accepted scalar and geometric/geodetic domain;
-- units and unit relationships;
-- construction and `.init` semantics;
-- checked versus throwing failure semantics;
-- supported ellipsoid or projection domain;
-- boundary and singular cases;
-- non-finite input behaviour;
-- allocation behaviour;
-- asymptotic complexity where meaningful;
-- numerical guarantees and convergence limits;
-- and realistic package-level usage.
+The standard has four goals:
 
-## 2. Scope
+1. explain the public contract to the consumer;
+2. show realistic use through compiler-checked DDox examples;
+3. explain non-obvious internal functions and invariants to maintainers;
+4. preserve the reasons behind important implementation decisions.
 
-This guide applies to every public symbol reachable through:
+## 2. Writing standard
 
-```d
+All documentation is written in English and follows the nonfiction principles
+associated with William Zinsser's *On Writing Well*: **clarity, simplicity,
+brevity, and humanity**.
+
+For this repository that means:
+
+- write for the reader, not for the implementation author;
+- state the useful result before the mechanism;
+- prefer short, concrete words and strong verbs;
+- remove words that do not add meaning;
+- prefer active constructions when they make responsibility clearer;
+- use project jargon only when it is itself part of the public contract;
+- explain one idea at a time;
+- do not hide a simple rule behind abstract or ceremonial language;
+- assume the reader does not know the repository's history;
+- never assume the reader is unintelligent.
+
+Good consumer documentation answers:
+
+> What does this let me do, what do I pass in, what do I get back, and what can
+> go wrong?
+
+It should not begin with:
+
+> How did the implementation team arrive here?
+
+Historical reasoning belongs in ADRs, validation plans, git history, and
+decision comments when that reasoning is necessary to maintain the code.
+
+### 2.1 Preferred wording
+
+Prefer:
+
+~~~text
+Returns the UTM coordinate for this geographic position.
+~~~
+
+over:
+
+~~~text
+Provides functionality for performing a UTM forward projection operation.
+~~~
+
+Prefer:
+
+~~~text
+Rejects the geocentre because it has no unique geodetic inverse.
+~~~
+
+over:
+
+~~~text
+The geocentre case is subject to rejection due to non-uniqueness.
+~~~
+
+Technical terms are welcome when they are the precise terms a geodesy consumer
+needs. Complexity is not removed by replacing exact terminology with vague
+language.
+
+## 2.2 Research basis
+
+This style is informed by William Zinsser's nonfiction-writing principles, not
+by a mechanical attempt to imitate literary prose.
+
+Primary essays by Zinsser reinforce the rules used here:
+
+- *Visions and Revisions* emphasizes cutting every word, phrase, sentence, or
+  paragraph that does not do necessary work and connects simpler language with
+  a more human voice:
+  <https://theamericanscholar.org/visions-and-revisions/>
+- *Looking for a Model* describes the plain, direct, warm style he valued and
+  the importance of speaking directly to readers:
+  <https://theamericanscholar.org/looking-for-a-model/>
+- *Simple Geometry* argues for removing unnecessary parts:
+  <https://theamericanscholar.org/simple-geometry/>
+- *No Proverbs, Please* emphasizes short concrete language and active verbs for
+  clear English, including technical or complex subjects:
+  <https://theamericanscholar.org/no-proverbs-please/>
+
+For `geodesy-d`, these principles become engineering rules: remove clutter,
+prefer precise verbs, lead with caller-visible meaning, keep exact technical
+terms where they carry necessary information, and never make a consumer learn
+the repository's internal history to understand an API.
+
+## 3. Public Ddoc contract
+
+Every public symbol reachable through:
+
+~~~d
 import geodesy;
-```
+~~~
 
-It also applies to public members of exported types.
+must have Ddoc that is useful from the generated DDox page without requiring
+the implementation source.
 
-Package-private and internal implementation symbols do not require the complete public-API format, although non-obvious internal invariants should still be documented.
+Where applicable, the documentation must state:
 
-## 3. General style
-
-Documentation is written in English.
-
-The first paragraph should state what the symbol means to a caller. Prefer observable semantics over implementation narrative.
-
-For geodetic operations, state units and domains explicitly. Callers must not need to infer whether a value is in radians, degrees, metres, arc-seconds, parts per million, ellipsoid units, or another linear unit.
-
-## 4. Module metadata
-
-Every public module included in generated API documentation must have module-level Ddoc immediately preceding its `module` declaration.
-
-Required sections:
-
-```text
-Authors:
-Copyright:
-License:
-Date:
-```
-
-Standard form:
-
-```d
-Authors:
-    Alexander Bernardi
-
-Copyright:
-    Copyright © 2026 Alexander Bernardi
-
-License:
-    MIT
-
-Date:
-    September 26, 2026
-```
-
-`Date:` records the current revision date of the module documentation and should change when the public contract documentation is materially revised.
-
-## 6. Ddoc sections
-
-Ddoc defines the first paragraph as the Summary and subsequent unnamed
-paragraphs as the Description. Every public module must provide both: a short
-summary and a substantive description that explains the module's role to a
-caller. Metadata alone does not make a module documentation-complete.
-
-Use Ddoc's standard named sections where applicable:
-
-```text
-Params:
-Returns:
-Throws:
-Standards:
-See_Also:
-Authors:
-Copyright:
-License:
-Date:
-```
-
-`Standards:` names standards with which the documented declaration complies.
-Do not use it as a general bibliography. State the relationship precisely,
-for example whether an operation implements an EPSG method or merely follows
-its parameter semantics.
-
-`See_Also:` points callers to closely related public types or operations.
-
-geodesy-d additionally standardizes these user-defined sections:
-
-```text
-Domain:
-Units:
-Numerics:
-Performance:
-Validation:
-```
-
-`Domain:` records important mathematical, geographic, ellipsoid, projection,
-or representation limits.
-
-`Units:` records unit contracts and relationships when they are not already
-obvious from strong public types.
-
-`Numerics:` records caller-relevant numerical design: algorithm family,
-working-precision promotion, stability measures, convergence behaviour, or
-bounded approximation. It must not make a precision claim broader than the
-available numerical evidence.
-
-`Performance:` records meaningful cost properties such as asymptotic time and
-space complexity, allocation behaviour, reusable prepared state, or another
-measured/design property relevant to callers. Do not add ceremonial `O(1)`
-sections to trivial constructors, accessors, or value operations.
-
-`Validation:` records the independent reference, implementation, test corpus,
-or acceptance method actually used to validate the numerical contract. It
-must not claim validation that is only planned.
-
-Not every declaration needs every section. Sections are selected for semantic
-value, not uniform appearance.
-
-For substantial numerical operations, the preferred order is:
-
-```text
-Summary
-Description
-
-Params:
-Returns:
-Throws:
-Standards:
-Domain:
-Units:
-Numerics:
-Performance:
-Validation:
-See_Also:
-```
-
-Module documentation should normally explain purpose and scope first, then the
-module's important standards, domains, numerical/performance properties, and
-validation basis without duplicating every symbol-level contract.
-
-## 6. Public types
-
-Public types should document, where relevant:
-
-- represented geodetic or mathematical concept;
-- supported scalar types;
-- units;
-- validity invariants;
-- `.init` state;
+- what the symbol represents or does;
+- parameter meaning;
+- input domain;
+- output meaning;
+- units and unit relationships;
+- `.init` semantics;
 - canonicalization;
-- equality semantics where non-obvious;
-- valid degenerate states;
-- non-finite-value policy;
-- ownership or allocation behaviour.
+- checked versus throwing failure semantics;
+- non-finite input behavior;
+- boundary and singular cases;
+- allocation behavior when meaningful;
+- numerical guarantees and limits;
+- relevant standards.
 
-Coordinates must state whether datum, CRS, or ellipsoid identity is embedded. In `geodesy-d`, coordinate value types generally do not embed CRS or datum metadata.
+Do not copy the declaration into prose. Explain information the declaration
+cannot express.
 
-## 7. Units
+## 4. Public examples
 
-Unit contracts are part of the API.
+Every public API declaration must have a compiler-checked documented
+`unittest` that DDox renders as an **Example**.
 
-Examples include:
+Examples must:
 
-- `Angle`, `Latitude`, and `Longitude` store radians canonically;
-- ellipsoid semi-major/minor axes use one caller-selected linear unit;
-- geodetic height and geocentric coordinates must use the same linear unit as the associated ellipsoid;
-- WGS 84 supplied by the library is metre-valued;
-- Helmert EPSG-style constructors use arc-seconds and parts per million where documented;
-- UTM fixed offsets are metre-valued.
+- normally use only `import geodesy;`;
+- show realistic consumer code;
+- be short enough to understand at a glance;
+- demonstrate the declaration being documented;
+- use meaningful geodetic values rather than arbitrary test noise;
+- avoid regression-corpus logic and implementation probes;
+- compile as part of the documentation gate.
 
-When an operation is unit-agnostic, state the relationship explicitly rather than merely saying "same unit".
+A tiny property accessor may have a tiny example. Avoid duplicating paragraphs
+of setup by using the smallest valid construction that still reads clearly.
 
-## 8. Domains and canonicalization
+Regression tests are not documentation examples.
 
-Document accepted domains explicitly.
+The generated DDox site is the authority for whether an example actually
+renders. A source `unittest` alone is not enough.
+
+## 5. Module documentation
+
+Every public module included in generated API documentation must have module
+Ddoc immediately before its `module` declaration.
+
+The opening sentence tells a consumer what the module provides.
+
+Required metadata:
+
+~~~text
+Authors:
+Copyright:
+License:
+Date:
+~~~
+
+Use additional sections only when they help the reader:
+
+~~~text
+Standards:
+Domain:
+Units:
+Numerics:
+Performance:
+Validation:
+See_Also:
+~~~
+
+Do not add sections merely for visual symmetry.
+
+## 6. Parameters, results, and failure
+
+For non-trivial public operations use Ddoc sections when they improve clarity:
+
+~~~text
+Params:
+Returns:
+Throws:
+~~~
+
+`Params:` describes semantic meaning, units, domain, and mutation where those
+are not obvious.
+
+`Returns:` describes the successful result and, for checked APIs, every
+supported reason for returning `false`.
+
+`Throws:` names `GeodesyValueException` and the conditions that cause it.
+
+For D `out` parameters, remember that the value is initialized to `.init` on
+entry. Never claim that a caller's previous value is preserved.
+
+## 7. Units, domains, and defaults
+
+Units and domains are part of the API contract.
+
+Document them explicitly instead of relying on implementation checks.
 
 Important examples include:
 
-- latitude;
-- longitude and its canonical half-open representation;
-- ellipsoid flattening;
-- Transverse Mercator longitude-distance bounds;
-- Pseudo-Mercator latitude bounds;
-- standard automatic UTM latitude band;
-- explicit UTM zone/hemisphere semantics;
-- geodesic supported flattening domain.
+- radians versus degrees;
+- caller-selected ellipsoid linear units;
+- metre-valued WGS 84 and UTM policy;
+- arc-seconds and ppm for EPSG-style Helmert construction;
+- latitude and longitude domains;
+- projection bounds;
+- geodesic flattening bounds;
+- valid and invalid `.init` states.
 
-Do not rely only on template constraints or implementation checks.
+## 8. Numerical documentation
 
-## 9. Parameters, returns, and exceptions
-
-Use Ddoc sections where they add semantic value:
-
-```text
-Params:
-Returns:
-Throws:
-```
-
-`Params:` should describe parameter meaning, units, or domain when not obvious.
-
-`Returns:` should describe success values and checked-operation failure semantics.
-
-`Throws:` should name `GeodesyValueException` and the conditions that cause it.
-
-Avoid ceremonial duplication for trivial field accessors where the declaration and summary are already sufficient.
-
-## 10. Checked and throwing APIs
-
-Checked `try...` APIs must document every supported reason for returning `false`.
-
-Where an `out` parameter has a defined failure state, document it.
-
-Throwing convenience peers must document that they represent the same semantic operation and use `GeodesyValueException` on failure.
-
-If an API intentionally has only a checked form or only a throwing form, document that choice where it matters.
-
-## 11. Non-finite values and singular cases
+State only numerical guarantees supported by evidence.
 
 Distinguish among:
 
-- NaN;
-- positive and negative infinity;
-- finite values;
-- mathematically singular but representable states.
-
-Relevant singular cases include the geocentre, poles, antimeridian representations, coincident geodesic endpoints, invalid/default prepared projections, and projection-domain boundaries.
-
-Tests verify these contracts; Ddoc must state user-visible behaviour.
-
-## 12. Numerical guarantees
-
-Numerical documentation should distinguish among:
-
-- exact algebraic transformations;
-- floating-point approximations;
-- iterative convergence;
+- exact algebraic behavior;
+- floating-point approximation;
 - promoted working precision;
-- bounded-domain approximations;
+- iterative convergence;
+- bounded-domain approximation;
 - externally validated accuracy.
-
-Do not claim generic "precision" without naming the operation, scalar type, domain, and validation basis.
 
 There is no library-wide epsilon.
 
-## 13. Allocation and complexity
+A public document should explain the numerical behavior a consumer must know.
+Detailed derivations and acceptance evidence belong in ADRs and validation
+documents.
 
-State allocation behaviour for computationally meaningful APIs where it matters.
+## 9. Internal functions
 
-Preferred wording:
+Internal code is not exempt from documentation.
 
-```text
-No allocation is performed.
-```
+Every non-trivial `private` or `package` function must have a concise Ddoc
+comment that lets a maintainer understand it without reconstructing the
+algorithm from its body.
 
-or:
+Document, where applicable:
 
-```text
-This operation may allocate temporary storage.
-```
+- what the function computes;
+- what each input means and its expected domain;
+- what it returns;
+- what `ref` or `out` parameters receive or how they are mutated;
+- required preconditions;
+- invariants preserved by the function;
+- important numerical assumptions;
+- failure meaning.
 
-Document asymptotic complexity for non-trivial algorithms when it is informative to callers.
+A trivial local helper such as `square(x)` does not need ceremonial
+documentation if its meaning is completely obvious. The burden is on the code
+review to justify such exceptions.
 
-## 14. Examples
+Internal Ddoc is written for the next maintainer, not for DDox consumers.
 
-Examples should be executable documented unittests and should normally use:
+## 10. Decision comments
 
-```d
-import geodesy;
-```
+Comments inside an implementation explain **why**, not what the next statement
+already says.
 
-Examples should demonstrate realistic public usage, not exhaustive regression cases.
+Required decision comments include non-obvious choices involving:
 
-A public declaration may either:
+- numerical stability;
+- branch ordering;
+- special handling of poles, antimeridians, singularities, and canonical zero;
+- working-precision promotion;
+- boundary tolerances;
+- compiler or standard-library compatibility workarounds;
+- performance trade-offs;
+- deliberately rejected simpler formulas;
+- behavior that differs from an obvious textbook implementation.
 
-- have its own rendered `Example`; or
-- be deliberately covered by a type or API-family example.
+Good:
 
-This classification is tracked in `docs/public-api-example-audit.md`.
+~~~d
+// Preserve an exact pole representation. libm cos(pi/2) need not return
+// mathematical zero, which would send the meridional case down the wrong path.
+~~~
 
-## 15. Tests are not documentation
+Bad:
 
-Behaviour intended as part of the public contract must not exist only in tests.
+~~~d
+// Calculate cosine.
+const c = cos(phi);
+~~~
 
-In particular, document:
+If removing a comment would make a future maintainer reasonably ask
+“why is this written this way?”, the rationale belongs in the code or in a
+nearby ADR referenced by the code.
 
-- `.init` semantics;
-- units;
-- scalar domains;
-- accepted coordinate and ellipsoid domains;
-- canonicalization;
-- checked failure conditions;
-- exception conditions;
-- singular and boundary cases;
-- numerical guarantees.
+## 11. ADRs, validation plans, and Ddoc
 
-## 16. ADRs and validation plans
+Use each layer for one job:
 
-ADRs explain persistent design decisions.
+- **Ddoc:** what the consumer can rely on;
+- **example:** how the consumer uses it;
+- **internal Ddoc:** what an internal function does and assumes;
+- **decision comment:** why a non-obvious implementation choice exists;
+- **ADR:** persistent architectural or numerical design decision;
+- **validation plan:** evidence that the numerical contract is met.
 
-Validation plans document numerical evidence and acceptance gates.
+Do not make the consumer read an ADR to discover ordinary API behavior.
 
-Ddoc states the resulting caller-visible contract. It should link conceptually to those documents without duplicating their full rationale.
+## 12. Review method
 
-## 17. Definition of done
+Documentation quality is reviewed in two layers.
 
-A public API family is documentation-complete when a caller can determine, where applicable:
+### Automated
 
-- what it means;
-- what units it uses;
-- what domain it accepts;
-- what `.init` means;
-- how checked and throwing forms fail;
-- what happens at boundaries and singularities;
-- whether non-finite values are accepted;
-- whether it allocates;
-- what numerical guarantee applies;
-- and how to use it through `import geodesy;`.
+The build must verify:
 
-Completeness is judged by semantic coverage, not comment length.
+- Ddoc/DDox generation succeeds;
+- every public DDox symbol page is inventoried;
+- every public symbol page renders an Example;
+- every rendered Example comes from a documented, compiler-checked `unittest`;
+- public modules have module Ddoc;
+- legacy inline `Example:` blocks are rejected.
+
+### Human review
+
+A reviewer must verify:
+
+- public text is written for the consumer;
+- internal non-trivial functions explain inputs, outputs, and invariants;
+- important implementation decisions explain why;
+- examples are useful rather than ceremonial;
+- prose follows the clarity/simplicity/brevity/humanity standard.
+
+These judgments must not be replaced by word-count or comment-count heuristics.
+
+## 13. Definition of done
+
+A release is documentation-complete when:
+
+- every public API is understandable from its DDox page;
+- every public API has a rendered, compiler-checked example;
+- every non-trivial internal function is documented well enough to maintain;
+- important code decisions retain their rationale next to the code;
+- the generated DDox site has been inspected as documentation, not merely
+  generated successfully;
+- the automated documentation gate passes;
+- the human documentation-quality review is signed off.
+
+Completeness is measured by reader understanding, not by comment volume.

@@ -85,6 +85,12 @@ import geodesy.scalar :
     isGeodesyScalar;
 
 
+/**
+ * Working scalar used by geodesic kernels.
+ *
+ * Public `float` calculations use `double`; wider public scalar types retain
+ * their precision.
+ */
 private template WorkingScalar(T)
 if (isGeodesyScalar!T)
 {
@@ -95,6 +101,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -103,6 +110,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -111,6 +119,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return 2*pi in scalar type T. */
 private T twoPi(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -119,6 +128,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Replace either signed floating zero with canonical positive zero. */
 private T canonicalZero(T)(const T value)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -258,6 +268,12 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Clamp a computed latitude to the exact public pole bounds and canonicalize
+ * signed zero.
+ *
+ * The clamp absorbs tiny trigonometric overshoot beyond +/-pi/2.
+ */
 private T canonicalLatitudeRadians(T)(const T radians)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -278,6 +294,12 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Build a public geographic coordinate from finite working results.
+ *
+ * Latitude is clamped to its legal pole bounds and longitude is canonicalized.
+ * `result` receives the strong public coordinate on success.
+ */
 private bool makeGeographicCoordinate(T)(
     const T latitudeRadians,
     const T longitudeRadians,
@@ -323,7 +345,8 @@ private:
     GeographicCoordinate!T _position;
     Angle!T _finalAzimuth;
 
-    static GeodesicDirectResult fromComponents(
+    /** Construct an internal direct result from already accepted public values. */
+static GeodesicDirectResult fromComponents(
         const GeographicCoordinate!T position,
         const Angle!T finalAzimuth)
         pure nothrow @safe @nogc
@@ -348,6 +371,21 @@ public:
     }
 }
 
+/// Example reading a direct-result endpoint and final azimuth.
+@safe unittest
+{
+    import geodesy;
+    const solver = Geodesic!double.fromEllipsoid(
+        Ellipsoid!double.sphere(6_371_000.0));
+    const start = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(0.0));
+    const result = solver.direct(
+        start, Angle!double.fromDegrees(90.0), 1_000.0);
+    assert(result.position.longitude.degrees > 0.0);
+    assert(result.finalAzimuth.degrees == 90.0);
+}
+
 
 /**
  * Result of an inverse geodesic operation.
@@ -369,7 +407,8 @@ private:
     Angle!T _initialAzimuth;
     Angle!T _finalAzimuth;
 
-    static GeodesicInverseResult fromComponents(
+    /** Construct an internal inverse result from already accepted public values. */
+static GeodesicInverseResult fromComponents(
         const T distance,
         const Angle!T initialAzimuth,
         const Angle!T finalAzimuth)
@@ -393,11 +432,41 @@ public:
         return _distance;
     }
 
+    /// Example reading the inverse geodesic distance.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const end = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+        const result = solver.inverse(start, end);
+        assert(result.distance > 0.0);
+    }
+
     /** Forward azimuth at the start point, canonicalized from -pi inclusive to +pi exclusive. */
     @property Angle!T initialAzimuth() const
         pure nothrow @safe @nogc
     {
         return _initialAzimuth;
+    }
+
+    /// Example reading the initial forward azimuth.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const end = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+        const result = solver.inverse(start, end);
+        assert(result.initialAzimuth.radians == result.initialAzimuth.radians);
     }
 
     /**
@@ -410,6 +479,36 @@ public:
     {
         return _finalAzimuth;
     }
+
+    /// Example reading the final forward azimuth.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const end = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+        const result = solver.inverse(start, end);
+        assert(result.finalAzimuth.radians == result.finalAzimuth.radians);
+    }
+}
+
+/// Example using an inverse geodesic result.
+@safe unittest
+{
+    import geodesy;
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+    const vienna = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    const graz = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(47.07071),
+        Longitude!double.fromDegrees(15.43950));
+    const result = solver.inverse(vienna, graz);
+    assert(result.distance > 0.0);
 }
 
 
@@ -448,7 +547,14 @@ private:
     W[28] _c3x;
 
 
-    bool tryDirectEllipsoid(
+    /**
+     * Solve the direct problem on a non-spherical supported ellipsoid.
+     *
+     * Inputs are canonical working-precision start latitude/longitude,
+     * azimuth, and signed distance. `result` receives the public endpoint and
+     * final forward azimuth on success.
+     */
+bool tryDirectEllipsoid(
         const W latitude1,
         const W longitude1,
         const W azimuth1,
@@ -782,6 +888,14 @@ public:
             && _n >= cast(W) 0;
     }
 
+    /// Example checking whether a geodesic solver is prepared.
+    @safe unittest
+    {
+        import geodesy;
+        assert(Geodesic!double.fromEllipsoid(wgs84!double()).isValid);
+        assert(!Geodesic!double.init.isValid);
+    }
+
 
     /** True when the prepared ellipsoid is exactly spherical. */
     @property bool isSphere() const
@@ -791,12 +905,29 @@ public:
             && _ellipsoid.flattening == cast(T) 0;
     }
 
+    /// Example identifying a solver prepared for a sphere.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.sphere(6_371_000.0));
+        assert(solver.isSphere);
+    }
+
 
     /** The ellipsoid used by this solver. */
     @property Ellipsoid!T ellipsoid() const
         pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the ellipsoid bound to a prepared solver.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        assert(solver.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
 
@@ -860,6 +991,15 @@ public:
         return true;
     }
 
+    /// Example preparing a geodesic solver without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Geodesic!double solver;
+        assert(Geodesic!double.tryFromEllipsoid(wgs84!double(), solver));
+        assert(solver.isValid);
+    }
+
 
         /**
      * Prepare a reusable direct/inverse solver.
@@ -885,6 +1025,14 @@ public:
                 "Geodesic requires a valid ellipsoid with 0 <= f <= 0.01.");
 
         return result;
+    }
+
+    /// Example preparing a reusable WGS 84 geodesic solver.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        assert(solver.isValid);
     }
 
 
@@ -1142,6 +1290,19 @@ public:
         return result;
     }
 
+    /// Example solving the direct geodesic problem.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const result = solver.direct(
+            start, Angle!double.fromDegrees(90.0), 1_000.0);
+        assert(result.position.longitude.degrees > start.longitude.degrees);
+    }
+
 
         /**
      * Solve the shortest inverse geodesic problem without throwing.
@@ -1303,6 +1464,21 @@ public:
         }
 
         return result;
+    }
+
+    /// Example solving the inverse geodesic problem.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const graz = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+        const result = solver.inverse(vienna, graz);
+        assert(result.distance > 100_000.0);
     }
 }
 

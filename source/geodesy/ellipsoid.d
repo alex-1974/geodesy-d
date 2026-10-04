@@ -74,7 +74,8 @@ private:
     T _semiMajorAxis = T.nan;
     T _flattening = T.nan;
 
-    static Ellipsoid fromCanonicalUnchecked(const T semiMajorAxis, const T flattening)
+    /** Construct an ellipsoid from already validated canonical axis/flattening values. */
+static Ellipsoid fromCanonicalUnchecked(const T semiMajorAxis, const T flattening)
         pure nothrow @safe @nogc
     {
         Ellipsoid result;
@@ -97,6 +98,14 @@ public:
             && isFiniteGeodesyScalar(_flattening)
             && _flattening >= cast(T) 0
             && _flattening < cast(T) 1;
+    }
+
+    /// Example checking whether an ellipsoid was explicitly constructed.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().isValid);
+        assert(!Ellipsoid!double.init.isValid);
     }
 
     /**
@@ -126,6 +135,16 @@ public:
         return true;
     }
 
+    /// Example checking ellipsoid construction from flattening.
+    @safe unittest
+    {
+        import geodesy;
+        Ellipsoid!double ellipsoid;
+        assert(Ellipsoid!double.tryFromFlattening(
+            6_378_137.0, 1.0 / 298.257223563, ellipsoid));
+        assert(ellipsoid.isValid);
+    }
+
     /**
      * Construct from semi-major axis and flattening or throw on invalid parameters.
      *
@@ -147,6 +166,15 @@ public:
             throw new GeodesyValueException(
                 "Ellipsoid requires finite a > 0 and finite flattening 0 <= f < 1.");
         return result;
+    }
+
+    /// Example constructing an ellipsoid from flattening.
+    @safe unittest
+    {
+        import geodesy;
+        const ellipsoid = Ellipsoid!double.fromFlattening(
+            6_378_137.0, 1.0 / 298.257223563);
+        assert(ellipsoid.isValid);
     }
 
     /**
@@ -176,6 +204,16 @@ public:
             result);
     }
 
+    /// Example checking construction from inverse flattening.
+    @safe unittest
+    {
+        import geodesy;
+        Ellipsoid!double ellipsoid;
+        assert(Ellipsoid!double.tryFromInverseFlattening(
+            6_378_137.0, 298.257223563, ellipsoid));
+        assert(ellipsoid.inverseFlattening > 298.0);
+    }
+
     /**
      * Construct from semi-major axis and inverse flattening or throw on invalid parameters.
      *
@@ -199,6 +237,15 @@ public:
             throw new GeodesyValueException(
                 "Inverse flattening must be finite and greater than 1; use sphere(radius) for a sphere.");
         return result;
+    }
+
+    /// Example constructing WGS 84 from inverse flattening.
+    @safe unittest
+    {
+        import geodesy;
+        const ellipsoid = Ellipsoid!double.fromInverseFlattening(
+            6_378_137.0, 298.257223563);
+        assert(ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
     /**
@@ -229,6 +276,16 @@ public:
         return tryFromFlattening(semiMajorAxis, flattening, result);
     }
 
+    /// Example checking construction from semi-major and semi-minor axes.
+    @safe unittest
+    {
+        import geodesy;
+        Ellipsoid!double ellipsoid;
+        assert(Ellipsoid!double.tryFromAxes(
+            6_378_137.0, 6_356_752.314245, ellipsoid));
+        assert(ellipsoid.semiMinorAxis < ellipsoid.semiMajorAxis);
+    }
+
     /**
      * Construct from semi-major and semi-minor axes or throw on invalid parameters.
      *
@@ -253,6 +310,15 @@ public:
         return result;
     }
 
+    /// Example constructing an ellipsoid from its axes.
+    @safe unittest
+    {
+        import geodesy;
+        const ellipsoid = Ellipsoid!double.fromAxes(
+            6_378_137.0, 6_356_752.314245);
+        assert(ellipsoid.isValid);
+    }
+
     /**
      * Construct a sphere without throwing; radius must be finite and positive.
      *
@@ -268,6 +334,15 @@ public:
         pure nothrow @safe @nogc
     {
         return tryFromFlattening(radius, cast(T) 0, result);
+    }
+
+    /// Example checking spherical construction without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Ellipsoid!double sphere;
+        assert(Ellipsoid!double.trySphere(6_371_000.0, sphere));
+        assert(sphere.flattening == 0.0);
     }
 
     /**
@@ -291,10 +366,25 @@ public:
         return result;
     }
 
+    /// Example constructing a spherical Earth model.
+    @safe unittest
+    {
+        import geodesy;
+        const sphere = Ellipsoid!double.sphere(6_371_000.0);
+        assert(sphere.semiMajorAxis == sphere.semiMinorAxis);
+    }
+
     /** Semi-major axis `a` in the ellipsoid linear unit. */
     @property T semiMajorAxis() const pure nothrow @safe @nogc
     {
         return _semiMajorAxis;
+    }
+
+    /// Example reading the semi-major axis.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().semiMajorAxis == 6_378_137.0);
     }
 
     /** Flattening `f`. */
@@ -303,10 +393,25 @@ public:
         return _flattening;
     }
 
+    /// Example reading flattening.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().flattening > 0.0);
+    }
+
     /** Derived semi-minor axis `b = a(1-f)`. */
     @property T semiMinorAxis() const pure nothrow @safe @nogc
     {
         return _semiMajorAxis * (cast(T) 1 - _flattening);
+    }
+
+    /// Example reading the derived semi-minor axis.
+    @safe unittest
+    {
+        import geodesy;
+        const earth = wgs84!double();
+        assert(earth.semiMinorAxis < earth.semiMajorAxis);
     }
 
     /** Derived inverse flattening `1/f`; infinity for a sphere. */
@@ -315,10 +420,24 @@ public:
         return _flattening == 0 ? T.infinity : cast(T) 1 / _flattening;
     }
 
+    /// Example reading inverse flattening.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().inverseFlattening > 298.0);
+    }
+
     /** First eccentricity squared `e²`. */
     @property T firstEccentricitySquared() const pure nothrow @safe @nogc
     {
         return _flattening * (cast(T) 2 - _flattening);
+    }
+
+    /// Example reading first eccentricity squared.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().firstEccentricitySquared > 0.0);
     }
 
     /** Second eccentricity squared (e′²). */
@@ -328,10 +447,24 @@ public:
         return e2 / (cast(T) 1 - e2);
     }
 
+    /// Example reading second eccentricity squared.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().secondEccentricitySquared > 0.0);
+    }
+
     /** Third flattening `n = f/(2-f)`. */
     @property T thirdFlattening() const pure nothrow @safe @nogc
     {
         return _flattening / (cast(T) 2 - _flattening);
+    }
+
+    /// Example reading the third flattening.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().thirdFlattening > 0.0);
     }
 }
 
@@ -371,6 +504,14 @@ if (isGeodesyScalar!T)
     return Ellipsoid!T.fromCanonicalUnchecked(
         cast(T) 6_378_137.0,
         cast(T) (1.0L / 298.257223563L));
+}
+
+/// Example obtaining the supplied WGS 84 ellipsoid.
+@safe unittest
+{
+    import geodesy;
+    const earth = wgs84!double();
+    assert(earth.semiMajorAxis == 6_378_137.0);
 }
 
 unittest
