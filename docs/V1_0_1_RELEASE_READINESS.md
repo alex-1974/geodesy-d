@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 release readiness
 
-Status: **PRE-RELEASE — DOCUMENTATION SIGN-OFF REQUIRED**
+Status: **PRE-RELEASE — DOCUMENTATION CONTENT SIGNED OFF; FINAL CHECKS REQUIRED**
 
 This checklist is specific to v1.0.1. It does not replace the historical
 v1.0.0 release-readiness record.
@@ -80,15 +80,16 @@ Evidence:
 
 Mandatory before tagging:
 
-- [ ] review and approve the v1.0.1 changelog wording;
-- [ ] review README release/status wording;
-- [ ] review `docs/API.md` introductory status/version wording;
-- [ ] replace or reframe stale `ROADMAP.md` pre-v1 planning;
-- [ ] decide how `docs/V1_RELEASE_READINESS.md` should be retained as a
-  historical v1.0.0 record;
-- [ ] decide whether `docs/V1_RELEASE_NOTES.md` remains an immutable historical
-  v1.0.0 note or gains a pointer to later patch releases;
-- [ ] prepare concise v1.0.1 release notes;
+- [x] review and approve the v1.0.1 changelog wording;
+- [x] simplify README as the repository entry page and review its public
+  positioning;
+- [x] frame `docs/API.md` as the stable v1 API baseline;
+- [x] replace stale pre-v1 `ROADMAP.md` planning with the agreed post-v1
+  milestone structure;
+- [x] retain `docs/V1_RELEASE_READINESS.md` as a completed historical v1.0.0
+  release record;
+- [x] keep `docs/V1_RELEASE_NOTES.md` as the historical v1.0.0 release notes;
+- [x] prepare `docs/V1_0_1_RELEASE_NOTES.md`;
 - [ ] run Markdown/Ddoc documentation checks after the approved edits.
 
 The documentation review is a release blocker by policy for v1.0.1.
@@ -98,12 +99,15 @@ The documentation review is a release blocker by policy for v1.0.1.
 Current non-v1.0.1 work must be classified before release:
 
 - issue #17 — controlled DMD/LDC toolchain matrix;
-- issue #18 — Phobos 2.111 two-argument `hypot` correctness audit;
-- PR #25 — historical v1.0.0 post-publish verification update;
-- PR #26 — post-v1 roadmap rewrite.
+- issue #18 — Phobos 2.111 two-argument `hypot` correctness audit.
 
-These are not automatically v1.0.1 blockers. Each must either be integrated,
-explicitly deferred, or documented as unrelated to the patch release.
+Documentation PR #25 and roadmap PR #26 have been superseded by PR #32 and
+closed.
+
+Issue #17 may be resolved by the final controlled compiler-matrix release gate
+or explicitly deferred with justification. Issue #18 requires a correctness
+classification because v1 supports frontend 2.111.0 and the geodesic
+implementation uses the affected `hypot` family.
 
 ## R7 — final release gate
 
@@ -118,14 +122,17 @@ After documentation sign-off:
 - [ ] confirm clean repository/release metadata;
 - [ ] convert the changelog `Unreleased` section into `1.0.1` with the actual
   release date;
-- [ ] create v1.0.1 release notes;
+- [x] create v1.0.1 release notes;
 - [ ] tag `v1.0.1`;
 - [ ] publish/release;
 - [ ] verify the published DUB package from a fresh external consumer.
 
 ## Release decision
 
-Current decision: **DO NOT TAG**.
+Current decision: **DO NOT TAG YET**.
 
-The two intended v1.0.1 fixes are merged and validated. Release-facing
-documentation remains intentionally under review.
+The two intended v1.0.1 fixes are merged and validated, and the release-facing
+documentation content has been reviewed and agreed. Remaining blockers are the
+final documentation checks, resolution/classification of outstanding
+release-relevant repository state (especially #18), and the final release
+validation/tag/publish sequence.
