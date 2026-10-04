@@ -17,9 +17,10 @@ module geodesy.internal.geodesic_lambda12;
 import std.math :
     atan2,
     fabs,
-    hypot,
+
     sqrt;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_lengths :
     geodesicLengths;
 
@@ -32,6 +33,7 @@ import geodesy.internal.geodesic_series :
 package(geodesy):
 
 
+/** Return the square of a working-scalar value. */
 private W square(W)(const W value)
     pure nothrow @safe @nogc
 {
@@ -39,13 +41,14 @@ private W square(W)(const W value)
 }
 
 
+/** Normalize a sine/cosine-style pair to unit Euclidean magnitude. */
 private void normalizePair(W)(
     ref W sine,
     ref W cosine)
     pure nothrow @safe @nogc
 {
     const W magnitude =
-        hypot(
+        stableHypot2(
             sine,
             cosine);
 
@@ -167,7 +170,7 @@ GeodesicLambda12Result!W geodesicLambda12(
         * cosBeta1;
 
     const W cosAlpha0 =
-        hypot(
+        stableHypot2(
             cosAlpha1,
             sinAlpha1 * sinBeta1);
 

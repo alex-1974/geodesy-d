@@ -65,6 +65,14 @@ enum HelmertConvention
     coordinateFrame
 }
 
+/// Example selecting an EPSG Helmert convention explicitly.
+unittest
+{
+    import geodesy;
+    enum convention = HelmertConvention.positionVector;
+    static assert(convention != HelmertConvention.coordinateFrame);
+}
+
 
 /**
  * Seven source-to-target Helmert parameters with rotation convention encoded
@@ -104,10 +112,28 @@ public:
         return _translationX;
     }
 
+    /// Example reading the X translation.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.translationX == 1.0);
+    }
+
     /** Y-axis translation. */
     @property T translationY() const pure nothrow @safe @nogc
     {
         return _translationY;
+    }
+
+    /// Example reading the Y translation.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.translationY == 2.0);
     }
 
     /** Z-axis translation. */
@@ -116,10 +142,28 @@ public:
         return _translationZ;
     }
 
+    /// Example reading the Z translation.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.translationZ == 3.0);
+    }
+
     /** X-axis rotation, canonically stored in radians. */
     @property Angle!T rotationX() const pure nothrow @safe @nogc
     {
         return _rotationX;
+    }
+
+    /// Example reading the X rotation.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.rotationX.radians != 0.0);
     }
 
     /** Y-axis rotation, canonically stored in radians. */
@@ -128,10 +172,28 @@ public:
         return _rotationY;
     }
 
+    /// Example reading the Y rotation.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.rotationY.radians != 0.0);
+    }
+
     /** Z-axis rotation, canonically stored in radians. */
     @property Angle!T rotationZ() const pure nothrow @safe @nogc
     {
         return _rotationZ;
+    }
+
+    /// Example reading the Z rotation.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.rotationZ.radians != 0.0);
     }
 
     /** Dimensionless scale difference dS. */
@@ -140,10 +202,28 @@ public:
         return _scaleDifference;
     }
 
+    /// Example reading the dimensionless scale difference.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.scaleDifference > 0.0);
+    }
+
     /** Multiplication factor M = 1 + dS. */
     @property T scaleFactor() const pure nothrow @safe @nogc
     {
         return cast(T) 1 + _scaleDifference;
+    }
+
+    /// Example reading the Helmert scale factor.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.4);
+        assert(transform.scaleFactor > 1.0);
     }
 
         /**
@@ -191,6 +271,22 @@ public:
         return true;
     }
 
+    /// Example checking canonical Helmert parameters without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Helmert7!(double, HelmertConvention.positionVector) transform;
+        assert(Helmert7!(double, HelmertConvention.positionVector)
+            .tryFromCanonical(
+                1.0, 2.0, 3.0,
+                Angle!double.init,
+                Angle!double.init,
+                Angle!double.init,
+                0.0,
+                transform));
+        assert(transform.translationZ == 3.0);
+    }
+
         /**
      * Construct Helmert parameters from canonical units.
      *
@@ -233,6 +329,20 @@ public:
             throw new GeodesyValueException(
                 "Helmert translations and scale difference must be finite.");
         return result;
+    }
+
+    /// Example constructing Helmert parameters in canonical units.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(
+            double, HelmertConvention.positionVector).fromCanonical(
+                1.0, 2.0, 3.0,
+                Angle!double.init,
+                Angle!double.init,
+                Angle!double.init,
+                0.0);
+        assert(transform.translationX == 1.0);
     }
 
         /**
@@ -306,6 +416,20 @@ public:
             result);
     }
 
+    /// Example checking EPSG arc-second/ppm parameters without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Helmert7!(double, HelmertConvention.positionVector) transform;
+        assert(Helmert7!(double, HelmertConvention.positionVector)
+            .tryFromArcSecondsAndPpm(
+                0.0, 0.0, 4.5,
+                0.0, 0.0, 0.554,
+                0.219,
+                transform));
+        assert(transform.scaleDifference > 0.0);
+    }
+
         /**
      * Construct from the common EPSG arc-second/ppm representation.
      *
@@ -349,6 +473,19 @@ public:
                 "Helmert parameters must be finite and representable.");
         return result;
     }
+
+    /// Example constructing an EPSG-style Position Vector transform.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = Helmert7!(
+            double, HelmertConvention.positionVector)
+            .fromArcSecondsAndPpm(
+                0.0, 0.0, 4.5,
+                0.0, 0.0, 0.554,
+                0.219);
+        assert(transform.rotationZ.radians > 0.0);
+    }
 }
 
 /// Example using struct Helmert7(T, HelmertConvention convention) if (isGeodesyScalar!T).
@@ -378,10 +515,26 @@ public:
 alias PositionVectorHelmert(T) =
     Helmert7!(T, HelmertConvention.positionVector);
 
+/// Example using the EPSG 1033 Position Vector alias.
+@safe unittest
+{
+    import geodesy;
+    const transform = PositionVectorHelmert!double.init;
+    assert(transform.scaleFactor == 1.0);
+}
+
 
 /** EPSG 1032 Coordinate Frame parameter type. */
 alias CoordinateFrameHelmert(T) =
     Helmert7!(T, HelmertConvention.coordinateFrame);
+
+/// Example using the EPSG 1032 Coordinate Frame alias.
+@safe unittest
+{
+    import geodesy;
+    const transform = CoordinateFrameHelmert!double.init;
+    assert(transform.scaleFactor == 1.0);
+}
 
 
 /**
@@ -450,6 +603,17 @@ if (isGeodesyScalar!T)
     return tryApplyPositionVectorKernel(source, transform, result);
 }
 
+/// Example applying a Position Vector transform without throwing.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+    GeocentricCoordinate!double target;
+    assert(tryApplyPositionVectorHelmert(
+        source, PositionVectorHelmert!double.init, target));
+    assert(target == source);
+}
+
 
 /**
  * Apply EPSG method 1033 Position Vector in the source-to-target direction.
@@ -477,6 +641,16 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Position Vector Helmert transformation produced a non-finite result.");
     return result;
+}
+
+/// Example applying an EPSG 1033 Position Vector transform.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+    const target = applyPositionVectorHelmert(
+        source, PositionVectorHelmert!double.init);
+    assert(target == source);
 }
 
 
@@ -670,6 +844,16 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/// Example converting Position Vector parameters to Coordinate Frame.
+@safe unittest
+{
+    import geodesy;
+    const pv = PositionVectorHelmert!double.fromArcSecondsAndPpm(
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0);
+    const cf = toCoordinateFrame(pv);
+    assert(cf.rotationZ.radians == -pv.rotationZ.radians);
+}
+
 
 /**
  * Convert an EPSG 1032 Coordinate Frame parameter set into the equivalent
@@ -692,6 +876,16 @@ if (isGeodesyScalar!T)
     result._rotationZ = angleFromRadiansUnchecked!T(-source._rotationZ.radians);
     result._scaleDifference = source._scaleDifference;
     return result;
+}
+
+/// Example converting Coordinate Frame parameters to Position Vector.
+@safe unittest
+{
+    import geodesy;
+    const cf = CoordinateFrameHelmert!double.fromArcSecondsAndPpm(
+        0.0, 0.0, 0.0, 0.0, 0.0, -0.5, 0.0);
+    const pv = toPositionVector(cf);
+    assert(pv.rotationZ.radians == -cf.rotationZ.radians);
 }
 
 
@@ -761,6 +955,17 @@ if (isGeodesyScalar!T)
     return tryApplyCoordinateFrameKernel(source, transform, result);
 }
 
+/// Example applying a Coordinate Frame transform without throwing.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+    GeocentricCoordinate!double target;
+    assert(tryApplyCoordinateFrameHelmert(
+        source, CoordinateFrameHelmert!double.init, target));
+    assert(target == source);
+}
+
 
 /**
  * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
@@ -788,6 +993,16 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Coordinate Frame Helmert transformation produced a non-finite result.");
     return result;
+}
+
+/// Example applying an EPSG 1032 Coordinate Frame transform.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+    const target = applyCoordinateFrameHelmert(
+        source, CoordinateFrameHelmert!double.init);
+    assert(target == source);
 }
 
 

@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 release readiness
 
-Status: **PRE-RELEASE — RELEASE CONTENT AGREED; DOCUMENTATION QUALITY GATE OPEN**
+Status: **PRE-RELEASE — AUTOMATED GATES COMPLETE; HUMAN DDox REVIEW OPEN**
 
 This checklist is specific to v1.0.1. It does not replace the historical
 v1.0.0 release-readiness record.
@@ -17,7 +17,11 @@ Included:
 - Transverse Mercator reverse-boundary unit invariance, tracked by #27 and
   merged through PR #29;
 - correction of public Ddoc for D `out` failure semantics, tracked by #28 and
-  merged through PR #31.
+  merged through PR #31;
+- Phobos/DMD 2.111 two-argument `hypot` correctness fix, tracked by #18 and
+  merged through PR #51;
+- documentation-quality hardening through PR #53 and DDox visibility fix
+  through PR #54.
 
 Excluded:
 
@@ -90,34 +94,36 @@ Mandatory before tagging:
   release record;
 - [x] keep `docs/V1_RELEASE_NOTES.md` as the historical v1.0.0 release notes;
 - [x] prepare `docs/V1_0_1_RELEASE_NOTES.md`;
-- [ ] complete issue #52 and
-  `docs/V1_0_1_DOCUMENTATION_QUALITY_AUDIT.md`: public Ddoc, per-symbol DDox
-  examples, internal-function documentation, decision comments, and generated
-  DDox human review;
-- [ ] run the final Markdown/Ddoc/DDox documentation checks after remediation.
+- [ ] complete the one remaining issue #52 acceptance item: human visual review
+  of the generated DDox site;
+- [x] public Ddoc, 211/211 own DDox examples, internal-function Ddoc,
+  decision-comment review, source-aware public-only filtering, and strict
+  documentation tooling complete;
+- [x] final Ddoc/DDox documentation workflow green on `main` after PR #54.
 
 The documentation review is a release blocker by policy for v1.0.1.
 
 ## R6 — remaining repository state
 
-Current non-v1.0.1 work must be classified before release:
+Release-relevant repository state is classified:
 
-- issue #17 — controlled DMD/LDC toolchain matrix;
-- issue #18 — Phobos 2.111 two-argument `hypot` correctness audit.
+- issue #17 — controlled DMD/LDC toolchain matrix: deferred as broader
+  workspace/M1 standardization; not a v1.0.1 patch-release blocker;
+- issue #18 — Phobos 2.111 two-argument `hypot` correctness audit: resolved
+  by PR #51.
 
 Documentation PR #25 and roadmap PR #26 have been superseded by PR #32 and
 closed.
 
-Issue #17 may be resolved by the final controlled compiler-matrix release gate
-or explicitly deferred with justification. Issue #18 requires a correctness
-classification because v1 supports frontend 2.111.0 and the geodesic
-implementation uses the affected `hypot` family.
+Issue #17 remains open for the broader controlled-toolchain acceptance work.
+The v1.0.1 candidate still must pass the repository's required compiler and
+platform gates. Issue #18 is no longer a blocker.
 
 ## R7 — final release gate
 
 After documentation sign-off:
 
-- [ ] synchronize the release branch with current `main`;
+- [x] synchronize the release branch with current `main`;
 - [ ] run the complete required hosted CI/platform/numerical gates on the final
   release candidate;
 - [ ] run the controlled compiler matrix required by repository/workspace
@@ -135,13 +141,11 @@ After documentation sign-off:
 
 Current decision: **DO NOT TAG YET**.
 
-The release-facing document structure and wording decisions have been agreed,
-but source documentation quality is not yet signed off. Issue #52 is a release
-blocker and requires a reader-first review of public Ddoc, a rendered
-compiler-checked example for every public DDox symbol page, internal-function
-documentation, rationale comments for important implementation decisions, and
-human review of the generated DDox site.
+The release-facing document structure is agreed and the automated/source
+documentation-quality gate is complete. Issue #52 remains a release blocker
+only for the explicit human visual inspection of the generated DDox site.
 
-Remaining blockers also include resolution/classification of outstanding
-release-relevant repository state (especially #18) and the final
-validation/tag/publish sequence.
+Issue #18 is resolved. Issue #17 is explicitly deferred from the patch-release
+scope. After the DDox visual sign-off, the remaining work is the final
+release-candidate validation/consumer/metadata sequence. Tagging and
+publication remain separate explicit actions.

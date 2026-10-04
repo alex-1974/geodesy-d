@@ -45,4 +45,20 @@ final class GeodesyValueException : Exception
     {
         super(message, file, line);
     }
+
+    /// Example constructing the exception used by throwing geodesy APIs.
+    @safe unittest
+    {
+        import geodesy;
+        const error = new GeodesyValueException("invalid geodetic value");
+        assert(error.msg == "invalid geodetic value");
+    }
+}
+
+/// Example identifying the library's throwing failure type.
+@safe unittest
+{
+    import geodesy;
+    Exception error = new GeodesyValueException("invalid value");
+    assert(cast(GeodesyValueException) error !is null);
 }

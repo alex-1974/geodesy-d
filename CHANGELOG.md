@@ -14,6 +14,8 @@ The project follows Semantic Versioning from the first tagged public release.
 - Preserved the accepted v1 terrestrial boundary tolerance envelope while
   correcting the scale-aware normalization so valid public `float` boundary
   cases remain accepted.
+- Avoided the Phobos/DMD 2.111 two-argument `hypot` defect in the geodesic
+  core by using an internal scale-first norm that preserves subnormal inputs.
 
 ### Documentation
 
@@ -22,7 +24,11 @@ The project follows Semantic Versioning from the first tagged public release.
   initialized to `.init` on entry; the caller's previous value is not
   preserved when the call returns `false`.
 - No public signature, failure channel, implementation logic, or runtime
-  behavior changed as part of the documentation correction.
+  behavior changed as part of the `out`-semantics documentation correction.
+- Completed the v1.0.1 documentation-quality gate: reader-first Ddoc, a
+  compiler-checked Example on all 211 public DDox symbol pages, documented
+  private/package functions, decision-comment review, and strict public-only
+  DDox verification.
 
 ### Compatibility
 

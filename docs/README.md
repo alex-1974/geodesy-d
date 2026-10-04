@@ -6,17 +6,14 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**v1.0 release candidate — public API frozen.**
+**Stable v1 line — v1.0.0 released; v1.0.1 patch preparation in progress.**
 
-`geodesy-d v0.1.0` was tagged on September 9, 2026. The release contains strong
-angular/coordinate value types, reference ellipsoids, EPSG 9602 bidirectional
-geographic/geocentric conversion, EPSG 1031 geocentric translation, and EPSG
-1032/1033 static 7-parameter Helmert transformations.
+`geodesy-d v1.0.0` was released on September 26, 2026. The frozen v1 public
+API includes the accepted coordinate, transformation, projection, geodesic,
+and topocentric families documented below.
 
-The v1 public API has completed its explicit A–J audit and is frozen for the
-v1.0 release candidate. Release-readiness validation remains in progress;
-`v1.0.0` has not yet been tagged. Semantic Versioning applies from the first
-public release onward.
+A narrow v1.0.1 patch is in preparation for correctness and documentation
+quality fixes while preserving the frozen v1 source-compatibility baseline.
 
 ## Responsibility boundary
 
@@ -196,8 +193,8 @@ The workspace-wide coordination roadmap is available locally as
 
 ## Release readiness
 
-The completed v0.1 release gate remains recorded in `docs/V0_1_READINESS.md`.
-The active v1 release-candidate gate is `docs/V1_RELEASE_READINESS.md`.
+The completed v1.0.0 release record is `docs/V1_RELEASE_READINESS.md`.
+The active v1.0.1 patch gate is `docs/V1_0_1_RELEASE_READINESS.md`.
 
 
 ## Compiler compatibility

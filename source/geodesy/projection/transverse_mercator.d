@@ -87,6 +87,12 @@ import geodesy.scalar : isGeodesyScalar;
  */
 
 
+/**
+ * Working precision used by the Transverse Mercator kernel.
+ *
+ * Public `float` operations use `double`; wider public scalar types retain
+ * their precision.
+ */
 private template WorkingScalar(T)
 if (isGeodesyScalar!T)
 {
@@ -97,6 +103,11 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Select the fixed Krueger-series order from the public scalar precision.
+ *
+ * The order is a compile-time property of the scalar type.
+ */
 private template seriesOrderFor(T)
 if (isGeodesyScalar!T)
 {
@@ -110,6 +121,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return whether a scalar is neither NaN nor infinity. */
 private bool isFiniteScalar(T)(const T value)
     pure nothrow @safe @nogc
 {
@@ -119,24 +131,31 @@ private bool isFiniteScalar(T)(const T value)
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)() pure nothrow @safe @nogc
 {
     return cast(T) PI;
 }
 
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)() pure nothrow @safe @nogc
 {
     return pi!T / cast(T) 2;
 }
 
 
+/** Return the documented maximum absolute longitude difference of 60 degrees. */
 private T maxLongitudeDifference(T)() pure nothrow @safe @nogc
 {
     return pi!T / cast(T) 3;
 }
 
 
+/**
+ * Return the inclusive lower scale-factor bound for the ordinary terrestrial
+ * reverse-validation profile in scalar type T.
+ */
 private T ordinaryScaleLowerBound(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -156,6 +175,10 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Return the inclusive upper scale-factor bound for the ordinary terrestrial
+ * reverse-validation profile in scalar type T.
+ */
 private T ordinaryScaleUpperBound(T)()
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -175,6 +198,10 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Compute a stable two-dimensional norm without avoidable intermediate
+ * overflow from squaring large components.
+ */
 private T hypot2(T)(const T x, const T y)
     pure nothrow @safe @nogc
 {
@@ -191,6 +218,11 @@ private T hypot2(T)(const T x, const T y)
 }
 
 
+/**
+ * Compute an error-free sum decomposition.
+ *
+ * `sum` receives the rounded sum and `residual` its rounding error.
+ */
 private void twoSum(T)(
     const T a,
     const T b,
@@ -204,6 +236,9 @@ private void twoSum(T)(
 }
 
 
+/**
+ * Normalize a finite angular difference to the principal interval [-pi,+pi).
+ */
 private T normalizeRadians(T)(const T radians)
     pure nothrow @safe @nogc
 {
@@ -230,6 +265,12 @@ private T normalizeRadians(T)(const T radians)
 }
 
 
+/**
+ * Compute a compensated, wrapped longitude difference from the natural origin.
+ *
+ * The two-sum residual determines the correct side of the antimeridian when
+ * the rounded main difference lies exactly at +/-pi.
+ */
 private T longitudeDifference(T)(
     const T longitude,
     const T longitudeOfNaturalOrigin)
@@ -251,6 +292,10 @@ private T longitudeDifference(T)(
 }
 
 
+/**
+ * Add a longitude offset to the natural origin with compensated summation and
+ * canonicalize the result to [-pi,+pi).
+ */
 private T addLongitude(T)(
     const T longitudeOfNaturalOrigin,
     const T deltaLongitude)
@@ -263,6 +308,10 @@ private T addLongitude(T)(
 }
 
 
+/**
+ * Evaluate the eccentricity-dependent hyperbolic term used by the conformal
+ * latitude transform.
+ */
 private T eccentricityTerm(T)(const T x, const T eccentricity)
     pure nothrow @safe @nogc
 {
@@ -272,6 +321,11 @@ private T eccentricityTerm(T)(const T x, const T eccentricity)
 }
 
 
+/**
+ * Convert geodetic tau = tan(phi) to conformal-sphere tau-prime.
+ *
+ * The stable norm form avoids unnecessary overflow for large finite tau.
+ */
 private T conformalTau(T)(
     const T tau,
     const T eccentricity)
@@ -287,6 +341,12 @@ private T conformalTau(T)(
 }
 
 
+/**
+ * Recover geodetic tau from conformal tau-prime by bounded Newton iteration.
+ *
+ * `tau` receives the solution. The function returns `false` when the
+ * ellipsoid state or iteration becomes non-finite or fails to converge.
+ */
 private bool geodeticTau(T)(
     const T tauPrime,
     const T eccentricity,
@@ -361,6 +421,12 @@ version (GeodesyTmNewtonValidation)
         bool newtonApplicable;
     }
 
+    /**
+     * Instrument the inverse conformal-latitude Newton solve for validation.
+     *
+     * `tau` receives the recovered geodetic tau and `trace` records
+     * iteration count, convergence residual, and maximum correction.
+     */
     private bool geodeticTauInstrumented(T)(
         const T tauPrime,
         const T eccentricity,
@@ -450,6 +516,10 @@ version (GeodesyTmNewtonValidation)
 }
 
 
+/**
+ * Real/imaginary pair used to evaluate complex Krueger series without a
+ * general complex-number dependency.
+ */
 private struct ComplexPair(T)
 {
     T re = 0;
@@ -457,6 +527,7 @@ private struct ComplexPair(T)
 }
 
 
+/** Subtract two internal complex pairs component-wise. */
 private ComplexPair!T pairSub(T)(
     const ComplexPair!T a,
     const ComplexPair!T b)
@@ -466,6 +537,7 @@ private ComplexPair!T pairSub(T)(
 }
 
 
+/** Multiply two internal complex pairs. */
 private ComplexPair!T pairMul(T)(
     const ComplexPair!T a,
     const ComplexPair!T b)
@@ -477,6 +549,7 @@ private ComplexPair!T pairMul(T)(
 }
 
 
+/** Add a real scalar to the real component of an internal complex pair. */
 private ComplexPair!T pairWithRealAdded(T)(
     const ComplexPair!T value,
     const T realPart)
@@ -522,7 +595,11 @@ private:
     W[9] _alpha;
     W[9] _beta;
 
-    static W evaluateB1(const W n)
+    /**
+     * Evaluate the Krueger B1 scale coefficient from third flattening `n`
+     * using the fixed series order selected for T.
+     */
+static W evaluateB1(const W n)
         pure nothrow @safe @nogc
     {
         const W n2 = n * n;
@@ -544,7 +621,13 @@ private:
     }
 
 
-    static void fillCoefficients(
+    /**
+     * Fill the prepared alpha and beta Krueger-series coefficient arrays for
+     * third flattening `n`.
+     *
+     * Both output arrays are overwritten for the selected fixed series order.
+     */
+static void fillCoefficients(
         const W n,
         ref W[9] alpha,
         ref W[9] beta)
@@ -749,7 +832,13 @@ private:
     }
 
 
-    bool applyForwardSeries(
+    /**
+     * Apply the prepared forward Krueger complex series.
+     *
+     * `xi` and `eta` receive the projected conformal-sphere coordinates.
+     * Returns false if evaluation produces a non-finite intermediate.
+     */
+bool applyForwardSeries(
         const W xiPrime,
         const W etaPrime,
         out W xi,
@@ -793,7 +882,13 @@ private:
     }
 
 
-    bool applyReverseSeries(
+    /**
+     * Apply the prepared reverse Krueger complex series.
+     *
+     * `xiPrime` and `etaPrime` receive conformal-sphere coordinates used by
+     * the inverse geographic kernel.
+     */
+bool applyReverseSeries(
         const W xi,
         const W eta,
         out W xiPrime,
@@ -837,7 +932,14 @@ private:
     }
 
 
-    bool forwardKernel(
+    /**
+     * Project a working-precision latitude and longitude difference through
+     * the bounded Transverse Mercator numerical kernel.
+     *
+     * `easting` and `northing` receive linear results before public-scalar
+     * construction.
+     */
+bool forwardKernel(
         const W latitude,
         const W deltaLongitude,
         out W xi,
@@ -882,7 +984,13 @@ private:
     }
 
 
-    bool reverseKernel(
+    /**
+     * Invert projected working coordinates to latitude and longitude
+     * difference before public policy/canonicalization.
+     *
+     * `latitude` and `deltaLongitude` receive working-precision radians.
+     */
+bool reverseKernel(
         const W xi,
         const W eta,
         out W latitude,
@@ -942,6 +1050,12 @@ private:
     version (GeodesyTmNewtonValidation)
     {
     package:
+        /**
+         * Run normal reverse acceptance while collecting Newton diagnostics.
+         *
+         * `result` receives the accepted geographic point; `trace` records
+         * whether Newton was applicable and its convergence behavior.
+         */
         bool tryReverseNewtonTrace(
             const ProjectedCoordinate!T source,
             out GeographicCoordinate!T result,
@@ -988,6 +1102,10 @@ private:
         }
 
     private:
+        /**
+         * Instrument the reverse kernel after projected-domain policy has been
+         * applied. `latitude` and `deltaLongitude` receive working values.
+         */
         bool reverseKernelNewtonTrace(
             const W xi,
             const W eta,
@@ -1055,7 +1173,11 @@ private:
     }
 
 
-    W workingLatitudeRadians(const Latitude!T latitude) const
+    /**
+     * Lift a public latitude into working precision while preserving exact zero
+     * and pole representations.
+     */
+W workingLatitudeRadians(const Latitude!T latitude) const
         pure nothrow @safe @nogc
     {
         /*
@@ -1076,7 +1198,13 @@ private:
     }
 
 
-    int representedPoleSign(
+    /**
+     * Classify a projected coordinate that is numerically identical to the
+     * represented north or south pole.
+     *
+     * Returns +1 for north, -1 for south, and 0 otherwise.
+     */
+int representedPoleSign(
         const ProjectedCoordinate!T source,
         const W scale) const
         pure nothrow @safe @nogc
@@ -1120,7 +1248,13 @@ private:
     }
 
 
-    bool ordinaryTerrestrialProfile() const
+    /**
+     * Return whether the prepared projection falls inside the v1 terrestrial
+     * profile for which the published linear reverse budget applies.
+     *
+     * The test is invariant under a consistent rescaling of linear units.
+     */
+bool ordinaryTerrestrialProfile() const
         pure nothrow @safe @nogc
     {
         /*
@@ -1142,7 +1276,11 @@ private:
     }
 
 
-    W ordinaryLinearBudget() const
+    /**
+     * Return the unit-scaled reverse validation budget for the ordinary
+     * terrestrial profile.
+     */
+W ordinaryLinearBudget() const
         pure nothrow @safe @nogc
     {
         /*
@@ -1170,7 +1308,11 @@ private:
     }
 
 
-    W longitudeDomainSlack() const
+    /**
+     * Return the working angular slack used only to classify represented
+     * reverse-boundary points near the +/-60-degree longitude limit.
+     */
+W longitudeDomainSlack() const
         pure nothrow @safe @nogc
     {
         const W maxDelta = maxLongitudeDifference!W;
@@ -1215,7 +1357,12 @@ private:
         return slack;
     }
 
-    bool reverseBoundaryExcursionWithinBudget(
+    /**
+     * Test whether a reverse solution just outside the longitude limit still
+     * represents the supplied projected coordinate within the accepted linear
+     * error budget.
+     */
+bool reverseBoundaryExcursionWithinBudget(
         const ProjectedCoordinate!T source,
         const W latitude,
         const W signedBoundaryDelta) const
@@ -1281,7 +1428,13 @@ private:
     }
 
 
-    bool reverseBoundaryExcursionAccepted(
+    /**
+     * Apply the representation-aware reverse-boundary acceptance policy.
+     *
+     * The function accepts only excursions attributable to public
+     * floating-point representation, never a materially out-of-domain point.
+     */
+bool reverseBoundaryExcursionAccepted(
         const ProjectedCoordinate!T source,
         const W latitude,
         const W deltaLongitude) const
@@ -1320,6 +1473,20 @@ public:
             && isFiniteScalar(_a1)
             && _a1 > cast(W) 0
             && isFiniteScalar(_originXi);
+    }
+
+    /// Example checking whether a Transverse Mercator projection is prepared.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.isValid);
     }
 
 
@@ -1399,6 +1566,22 @@ public:
         return true;
     }
 
+    /// Example preparing Transverse Mercator without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        TransverseMercator!double projection;
+        assert(TransverseMercator!double.tryFromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0,
+            projection));
+        assert(projection.isValid);
+    }
+
 
         /**
      * Prepare a bounded Transverse Mercator operation.
@@ -1444,11 +1627,39 @@ public:
         return result;
     }
 
+    /// Example preparing a reusable Transverse Mercator projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.scaleFactorAtNaturalOrigin == 0.9996);
+    }
+
 
     /** Projection ellipsoid. */
     @property Ellipsoid!T ellipsoid() const pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the source ellipsoid.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
 
@@ -1459,12 +1670,40 @@ public:
         return _latitudeOfNaturalOrigin;
     }
 
+    /// Example reading the latitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.latitudeOfNaturalOrigin.degrees == 0.0);
+    }
+
 
     /** EPSG 8802 longitude of natural origin. */
     @property Longitude!T longitudeOfNaturalOrigin() const
         pure nothrow @safe @nogc
     {
         return _longitudeOfNaturalOrigin;
+    }
+
+    /// Example reading the longitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.longitudeOfNaturalOrigin.degrees == 15.0);
     }
 
 
@@ -1475,6 +1714,20 @@ public:
         return _scaleFactorAtNaturalOrigin;
     }
 
+    /// Example reading the scale factor at the natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.scaleFactorAtNaturalOrigin == 0.9996);
+    }
+
 
     /** EPSG 8806 false easting. */
     @property T falseEasting() const pure nothrow @safe @nogc
@@ -1482,11 +1735,39 @@ public:
         return _falseEasting;
     }
 
+    /// Example reading the false easting.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.falseEasting == 500_000.0);
+    }
+
 
     /** EPSG 8807 false northing. */
     @property T falseNorthing() const pure nothrow @safe @nogc
     {
         return _falseNorthing;
+    }
+
+    /// Example reading the false northing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.falseNorthing == 0.0);
     }
 
 
@@ -1497,7 +1778,14 @@ public:
      * the represented point. No public-scalar narrowing is performed
      * here.
      */
-    private bool tryFactorsAtWorkingPoint(
+    /**
+ * Evaluate meridian convergence and point scale at an accepted
+ * working-precision geographic point.
+ *
+ * Inputs already satisfy projection-domain policy. `result` receives the
+ * public factor pair on success.
+ */
+private bool tryFactorsAtWorkingPoint(
         const W latitude,
         const W deltaLongitude,
         out W convergenceRadians,
@@ -1692,7 +1980,11 @@ public:
      * This member is absent from normal builds and is package-protected
      * even when ProjectionFactorResearch is enabled.
      */
-    private bool tryForwardFactorScalars(
+    /**
+ * Research-only forward factor kernel exposing raw convergence and scale
+ * scalars without changing the normal public API.
+ */
+private bool tryForwardFactorScalars(
         const GeographicCoordinate!T source,
         out T convergenceRadians,
         out T pointScale) const
@@ -1791,7 +2083,11 @@ public:
      * Geographic poles use the canonical PF-A convention:
      * convergence = 0 and point scale = k0.
      */
-    private bool tryReverseFactorScalars(
+    /**
+ * Research-only reverse factor kernel exposing raw convergence and scale
+ * scalars after the normal reverse-domain policy has accepted the point.
+ */
+private bool tryReverseFactorScalars(
         const ProjectedCoordinate!T source,
         out T convergenceRadians,
         out T pointScale) const
@@ -1957,6 +2253,25 @@ public:
             return true;
         }
 
+        /// Example computing conformal factors without throwing.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            ConformalProjectionFactors!double factors;
+            assert(projection.tryForwardFactors(source, factors));
+            assert(factors.pointScale > 0.0);
+        }
+
 
         /**
          * Compute conformal factors at a geographic source coordinate or
@@ -1977,6 +2292,24 @@ public:
             }
 
             return result;
+        }
+
+        /// Example computing conformal factors at a geographic point.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            const factors = projection.forwardFactors(source);
+            assert(factors.pointScale > 0.0);
         }
 
 
@@ -2018,6 +2351,26 @@ public:
             return true;
         }
 
+        /// Example computing factors from a projected coordinate without throwing.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            const projected = projection.forward(source);
+            ConformalProjectionFactors!double factors;
+            assert(projection.tryReverseFactors(projected, factors));
+            assert(factors.pointScale > 0.0);
+        }
+
 
         /**
          * Compute conformal factors for a represented projected coordinate or
@@ -2040,6 +2393,24 @@ public:
             return result;
         }
 
+        /// Example computing factors from a projected coordinate.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            const factors = projection.reverseFactors(projection.forward(source));
+            assert(factors.pointScale > 0.0);
+        }
+
 
         version (ProjectionFactorResearch)
         {
@@ -2049,7 +2420,10 @@ public:
              * These deliberately delegate to the production scalar paths so
              * research and public factor evaluation cannot diverge.
              */
-            package bool researchTryForwardFactors(
+            /**
+ * Package-visible research entry point for forward projection-factor probes.
+ */
+package bool researchTryForwardFactors(
                 const GeographicCoordinate!T source,
                 out T convergenceRadians,
                 out T pointScale) const
@@ -2062,7 +2436,10 @@ public:
             }
 
 
-            package bool researchTryReverseFactors(
+            /**
+ * Package-visible research entry point for reverse projection-factor probes.
+ */
+package bool researchTryReverseFactors(
                 const ProjectedCoordinate!T source,
                 out T convergenceRadians,
                 out T pointScale) const
@@ -2156,6 +2533,25 @@ public:
             result);
     }
 
+    /// Example projecting a geographic coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        ProjectedCoordinate!double projected;
+        assert(projection.tryForward(source, projected));
+        assert(projected.easting > 500_000.0);
+    }
+
 
         /**
      * Project a geographic coordinate.
@@ -2180,6 +2576,24 @@ public:
                 "Transverse Mercator forward projection failed or the point "
                 ~ "lies outside the supported +/-60 degree longitude domain.");
         return result;
+    }
+
+    /// Example projecting a geographic coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const projected = projection.forward(source);
+        assert(projected.northing > 0.0);
     }
 
 
@@ -2282,6 +2696,25 @@ public:
         return true;
     }
 
+    /// Example reversing a projected coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        GeographicCoordinate!double recovered;
+        assert(projection.tryReverse(projection.forward(source), recovered));
+        assert(recovered.latitude.degrees > 48.0);
+    }
+
 
         /**
      * Reverse a projected coordinate.
@@ -2306,6 +2739,24 @@ public:
                 "Transverse Mercator reverse projection failed or the point "
                 ~ "lies outside the supported standard sheet/domain.");
         return result;
+    }
+
+    /// Example reversing a Transverse Mercator coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const recovered = projection.reverse(projection.forward(source));
+        assert(recovered.longitude.degrees > 16.0);
     }
 }
 

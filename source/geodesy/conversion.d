@@ -80,7 +80,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Package-private raw EPSG 9602 forward kernel.
  *
  * The caller selects the arithmetic scalar explicitly.  In particular, the
@@ -261,15 +261,27 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/// Example converting a geodetic position to ECEF.
+@safe unittest
+{
+    import geodesy;
+    const source = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208),
+        171.0);
+    const xyz = geodeticToGeocentric(source, wgs84!double());
+    assert(xyz.x > 0.0);
+}
 
-/*
+
+/**
  * Working precision for the inverse transformation.
  *
  * Single precision is insufficient for the numerically sensitive interior
  * branches at Earth scale. Preserve the public float API while performing
  * the inverse kernel in double precision.
  */
-/*
+/**
  * Working scalar for internal EPSG 9602 composition.
  *
  * A public float value remains float at the API boundary, but composed
@@ -286,6 +298,7 @@ package(geodesy) template Epsg9602WorkingScalar(T)
 }
 
 
+/** Working-precision geodetic result used by the reverse EPSG 9602 kernels. */
 private struct ReverseSolution(T)
 {
     T latitude;
@@ -294,6 +307,13 @@ private struct ReverseSolution(T)
 }
 
 
+/**
+ * Homogeneous reduced-latitude state for the Fukushima/Halley iteration.
+ *
+ * `sn` and `cn` are unnormalized homogeneous coordinates. `an` is their
+ * norm and `an2` its square; keeping them together avoids repeated
+ * normalization and preserves the scale-free iteration.
+ */
 private struct HalleyState(T)
 {
     T sn;
@@ -303,7 +323,7 @@ private struct HalleyState(T)
 }
 
 
-/*
+/**
  * One Fukushima/Halley update in homogeneous reduced-latitude coordinates.
  *
  * sn/cn are homogeneous coordinates; avoiding their normalization keeps the
@@ -357,7 +377,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Algebraic residual of the homogeneous Fukushima equation.
  *
  * Division by an² makes the residual have the ellipsoid linear unit while
@@ -381,7 +401,13 @@ if (isGeodesyScalar!T)
 }
 
 
-/* Convert an accepted homogeneous Halley state to latitude and height. */
+/**
+ * Convert an accepted homogeneous Halley state to geodetic latitude and
+ * ellipsoidal height.
+ *
+ * `latitude` and `height` receive the working-precision solution. Returns
+ * false if the state cannot produce finite values.
+ */
 private bool finishHalley(T)(
     const T horizontal,
     const T z,
@@ -421,7 +447,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Real cube root usable from pure geodetic kernels.
  *
  * Phobos cbrt is not pure in the supported compiler toolchain.  Decompose the
@@ -512,7 +538,7 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Robust oblate reverse solution.
  *
  * This is the oblate specialization of the extended Vermeille formulation
@@ -707,6 +733,13 @@ if (isGeodesyScalar!T)
 
 /*
  * Core inverse kernel in its selected working scalar.
+ */
+/**
+ * Solve the reverse EPSG 9602 problem in working precision.
+ *
+ * `solution` receives the selected canonical latitude, longitude, and height.
+ * The function dispatches ordinary and robust interior paths and rejects the
+ * undefined geocentre.
  */
 private bool tryReverseWorking(T)(
     const T x,
@@ -933,12 +966,15 @@ if (isGeodesyScalar!T)
 }
 
 
-/*
+/**
  * Package-private raw EPSG 9602 reverse kernel boundary.
  *
- * The robust numerical implementation remains tryReverseWorking above.  This
- * wrapper exposes only scalar working values to other geodesy modules and
- * keeps ReverseSolution and all algorithm-specific helpers private.
+ * The robust numerical implementation remains tryReverseWorking above. This
+ * wrapper exposes scalar working values to composed geodesy operations while
+ * keeping ReverseSolution and algorithm-specific helpers private.
+ *
+ * `latitude`, `longitude`, and `height` receive the working-precision
+ * geodetic solution on success.
  */
 package(geodesy) bool tryEpsg9602ReverseWorking(W)(
     const W x,
@@ -1127,6 +1163,16 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Geocentric to geodetic conversion requires a valid ellipsoid and a defined finite representable result.");
     return result;
+}
+
+/// Example converting ECEF coordinates to a geodetic position.
+@safe unittest
+{
+    import geodesy;
+    const source = GeocentricCoordinate!double.fromComponents(
+        4_085_000.0, 1_260_000.0, 4_717_000.0);
+    const geo = geocentricToGeodetic(source, wgs84!double());
+    assert(geo.latitude.degrees > 0.0);
 }
 
 

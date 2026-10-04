@@ -79,6 +79,31 @@ Technical terms are welcome when they are the precise terms a geodesy consumer
 needs. Complexity is not removed by replacing exact terminology with vague
 language.
 
+## 2.2 Research basis
+
+This style is informed by William Zinsser's nonfiction-writing principles, not
+by a mechanical attempt to imitate literary prose.
+
+Primary essays by Zinsser reinforce the rules used here:
+
+- *Visions and Revisions* emphasizes cutting every word, phrase, sentence, or
+  paragraph that does not do necessary work and connects simpler language with
+  a more human voice:
+  <https://theamericanscholar.org/visions-and-revisions/>
+- *Looking for a Model* describes the plain, direct, warm style he valued and
+  the importance of speaking directly to readers:
+  <https://theamericanscholar.org/looking-for-a-model/>
+- *Simple Geometry* argues for removing unnecessary parts:
+  <https://theamericanscholar.org/simple-geometry/>
+- *No Proverbs, Please* emphasizes short concrete language and active verbs for
+  clear English, including technical or complex subjects:
+  <https://theamericanscholar.org/no-proverbs-please/>
+
+For `geodesy-d`, these principles become engineering rules: remove clutter,
+prefer precise verbs, lead with caller-visible meaning, keep exact technical
+terms where they carry necessary information, and never make a consumer learn
+the repository's internal history to understand an API.
+
 ## 3. Public Ddoc contract
 
 Every public symbol reachable through:

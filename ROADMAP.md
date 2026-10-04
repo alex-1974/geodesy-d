@@ -97,7 +97,10 @@ v1 API.
 Included:
 
 - Transverse Mercator reverse-boundary unit invariance;
-- corrected public `out`-parameter failure semantics.
+- Phobos/DMD 2.111 two-argument `hypot` correctness workaround in the
+  geodesic core;
+- corrected public `out`-parameter failure semantics;
+- v1.0.1 documentation-quality hardening and strict DDox gates.
 
 It introduces no new public capability family.
 

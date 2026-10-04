@@ -17,13 +17,14 @@ module geodesy.internal.geodesic_inverse_dispatch;
 import geodesy.internal.geodesic_inverse_start :
     GeodesicInverseStartKind;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import std.math :
     PI,
     atan2,
     copysign,
     cos,
     fabs,
-    hypot,
+
     signbit,
     sin,
     sqrt;
@@ -69,6 +70,7 @@ struct GeodesicInverseDispatchResult(W)
 }
 
 
+/** Return pi in the working scalar. */
 private W pi(W)()
     pure nothrow @safe @nogc
 {
@@ -76,6 +78,7 @@ private W pi(W)()
 }
 
 
+/** Return pi/2 in the working scalar. */
 private W halfPi(W)()
     pure nothrow @safe @nogc
 {
@@ -83,6 +86,7 @@ private W halfPi(W)()
 }
 
 
+/** Return 2*pi in the working scalar. */
 private W twoPi(W)()
     pure nothrow @safe @nogc
 {
@@ -90,6 +94,7 @@ private W twoPi(W)()
 }
 
 
+/** Replace either signed floating zero with canonical positive zero. */
 private W canonicalZero(W)(
     const W value)
     pure nothrow @safe @nogc
@@ -100,6 +105,7 @@ private W canonicalZero(W)(
 }
 
 
+/** Canonicalize a finite angle to the half-open interval [-pi,+pi). */
 private W canonicalAngle(W)(
     const W value)
     pure nothrow @safe @nogc
@@ -397,6 +403,10 @@ private void sinCosLongitudeDifference(W)(
 }
 
 
+/**
+ * Compute sine and cosine of a canonical latitude with exact cardinal values
+ * at zero and the poles.
+ */
 private void sinCosLatitude(W)(
     const W latitude,
     out W sine,
@@ -443,13 +453,14 @@ private void sinCosLatitude(W)(
 }
 
 
+/** Normalize a sine/cosine-style pair to unit Euclidean magnitude. */
 private void normalizePair(W)(
     ref W sine,
     ref W cosine)
     pure nothrow @safe @nogc
 {
     const W magnitude =
-        hypot(
+        stableHypot2(
             sine,
             cosine);
 
@@ -461,6 +472,7 @@ private void normalizePair(W)(
 }
 
 
+/** Swap two working-scalar values in place. */
 private void swapValues(W)(
     ref W a,
     ref W b)

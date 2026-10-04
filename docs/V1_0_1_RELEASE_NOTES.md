@@ -2,9 +2,8 @@
 
 `geodesy-d` v1.0.1 is a narrow patch release for the frozen v1 API.
 
-It contains one numerical correctness fix in Transverse Mercator boundary
-handling and one public-documentation correction. No public API signature or
-capability family is added or removed.
+It contains two numerical correctness fixes and documentation-quality
+corrections. No public API signature or capability family is added or removed.
 
 ## Fixed
 
@@ -24,6 +23,15 @@ budget while preserving the accepted v1 terrestrial tolerance envelope.
 The fix includes the metre/kilometre regression case and retains valid public
 `float` behavior at the documented boundary.
 
+### Geodesic norm on DMD/Phobos 2.111
+
+The geodesic core no longer relies on the affected two-argument
+`std.math.hypot` behavior from the supported 2.111 frontend/Phobos baseline.
+
+An internal scale-first norm preserves finite subnormal inputs and avoids the
+known zero-result defect without changing the public API or adding a runtime
+dependency.
+
 ## Documentation corrected
 
 Public Ddoc for checked APIs using D `out` result parameters has been
@@ -35,8 +43,14 @@ initialized to `.init` on entry, so the caller's previous value is not
 preserved.
 
 The corrected documentation therefore describes the actual language and API
-semantics. This change does not alter implementation logic, failure channels,
-or runtime behavior.
+semantics. This documentation correction does not alter implementation logic, failure
+channels, or runtime behavior.
+
+The v1.0.1 documentation pass also establishes a stricter quality baseline:
+all 211 public DDox symbol pages own compiler-checked examples, internal
+private/package functions are Ddoc-audited, important numerical decisions are
+reviewed for rationale comments, and generated DDox is filtered and verified
+as public-only documentation.
 
 ## Compatibility
 
@@ -59,8 +73,9 @@ The Transverse Mercator fix passed the repository's normal CI and the dedicated
 Transverse Mercator validation matrix, including the added unit-invariance
 regression.
 
-The documentation correction passed the public API/documentation gates and the
-full hosted validation workflows used for the v1 line.
+The documentation correction and quality hardening pass the strict public API
+and DDox gates. The final PR #54 documentation run reports 211/211 public
+symbol pages with their own compiled Example and no family-only coverage.
 
 ## Upgrade notes
 

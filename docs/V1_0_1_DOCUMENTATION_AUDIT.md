@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 documentation audit
 
-Status: **RELEASE-CONTENT DECISIONS COMPLETE — SOURCE QUALITY AUDIT OPEN**
+Status: **RELEASE-CONTENT DECISIONS COMPLETE — AUTOMATED SOURCE QUALITY GATES COMPLETE**
 
 This document records the documentation decisions made during v1.0.1 release
 preparation. It is not normative public API documentation.
@@ -84,7 +84,9 @@ validation. Broad unqualified claims such as “high-performance” or
 Decision: the v1.0.1 entry contains patch-release material only:
 
 - Transverse Mercator reverse-boundary unit-invariance correctness fix;
+- Phobos/DMD 2.111 two-argument `hypot` correctness fix in the geodesic core;
 - correction of public Ddoc for D `out` failure semantics;
+- documentation-quality hardening and strict DDox verification;
 - explicit statement that the frozen v1 public source contract is preserved.
 
 Before tagging, `Unreleased` must be converted to `1.0.1` with the actual
@@ -109,18 +111,16 @@ The release-facing content decisions are complete:
    project teaser; detailed validation/toolchain material stays in dedicated
    documents.
 
-Release-content decisions are complete, but documentation quality is not yet
-signed off.
+Release-content decisions are complete. The automated/source documentation
+quality work is also complete:
 
-The remaining source-level work is tracked by issue #52 and
-`docs/V1_0_1_DOCUMENTATION_QUALITY_AUDIT.md`. It includes:
+- reader-first public Ddoc review completed;
+- all 211 public DDox symbol pages have their own rendered compiler-checked
+  Example;
+- private/package functions pass the internal Ddoc verifier;
+- the decision-comment audit is complete;
+- strict public-only DDox tooling is enabled and green on `main`.
 
-- reader-first public Ddoc review;
-- a rendered compiler-checked Example for every public DDox symbol page;
-- internal non-trivial function documentation;
-- rationale comments for important implementation decisions;
-- human review of the generated DDox site;
-- final strict documentation tooling.
-
-This work is a v1.0.1 release blocker, not merely a mechanical formatting
-check.
+Issue #52 remains open only for the explicit human visual inspection of the
+generated DDox site. That acceptance item is not inferred from successful HTML
+generation.

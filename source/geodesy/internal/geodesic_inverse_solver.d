@@ -14,10 +14,11 @@ import std.math :
     PI,
     cos,
     fabs,
-    hypot,
+
     sin,
     sqrt;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_inverse_start :
     GeodesicInverseStartKind,
     geodesicInverseStart;
@@ -33,13 +34,14 @@ import geodesy.internal.geodesic_lengths :
 package(geodesy):
 
 
+/** Normalize a sine/cosine-style pair to unit Euclidean magnitude. */
 private void normalizePair(W)(
     ref W sine,
     ref W cosine)
     pure nothrow @safe @nogc
 {
     const W magnitude =
-        hypot(
+        stableHypot2(
             sine,
             cosine);
 

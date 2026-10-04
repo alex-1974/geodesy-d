@@ -19,10 +19,11 @@ import std.math :
     exp,
     fabs,
     log,
-    hypot,
+
     sin,
     sqrt;
 
+import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
     geodesicA3;
@@ -31,6 +32,7 @@ import geodesy.internal.geodesic_series :
 package(geodesy):
 
 
+/** Return the square of a working-scalar value. */
 private W square(W)(const W value)
     pure nothrow @safe @nogc
 {
@@ -38,6 +40,11 @@ private W square(W)(const W value)
 }
 
 
+/**
+ * Compute the real cube root used by the astroid start solver.
+ *
+ * The sign is preserved and one Newton refinement improves the exp/log seed.
+ */
 private W realCubeRoot(W)(const W value)
     pure nothrow @safe @nogc
 {
@@ -64,12 +71,13 @@ private W realCubeRoot(W)(const W value)
 }
 
 
+/** Normalize a sine/cosine-style pair to unit Euclidean magnitude. */
 private void normalizePair(W)(
     ref W sine,
     ref W cosine)
     pure nothrow @safe @nogc
 {
-    const W magnitude = hypot(sine, cosine);
+    const W magnitude = stableHypot2(sine, cosine);
 
     sine /= magnitude;
     cosine /= magnitude;
@@ -334,7 +342,7 @@ GeodesicInverseStartResult!W geodesicInverseStart(
     }
 
     const W sinSigma12 =
-        hypot(
+        stableHypot2(
             sinAlpha1,
             cosAlpha1);
 
