@@ -392,10 +392,10 @@ The production library does not link to or require GeographicLib.
 Committed research validators include:
 
 ```text
-research/geodesics/validate_direct.py
-research/geodesics/validate_inverse_solver.py
-research/geodesics/validate_inverse_dispatch.py
-research/geodesics/validate_public_inverse.py
+../geodesy-d-research/research/geodesics/validate_direct.py
+../geodesy-d-research/research/geodesics/validate_inverse_solver.py
+../geodesy-d-research/research/geodesics/validate_inverse_dispatch.py
+../geodesy-d-research/research/geodesics/validate_public_inverse.py
 ```
 
 The current exact-oracle evidence and remaining acceptance gates are recorded
