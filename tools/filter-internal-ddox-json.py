@@ -34,8 +34,8 @@ def is_internal_visibility(value: str | None) -> bool:
     return value == "private" or (value is not None and value.startswith("package"))
 
 
-def internal_symbols(source_root: Path) -> set[str]:
-    result: set[str] = set()
+def internal_declarations(source_root: Path) -> set[tuple[str, int]]:
+    result: set[tuple[str, int]] = set()
 
     for path in sorted((source_root / "source" / "geodesy").rglob("*.d")):
         if "/internal/" in path.as_posix():
@@ -52,37 +52,26 @@ def internal_symbols(source_root: Path) -> set[str]:
             continue
 
         depth = 0
-        aggregate_stack: list[tuple[int, str]] = []
         visibility_by_depth: dict[int, str] = {}
 
-        for line in lines:
-            stripped = line.strip()
-
+        for index, line in enumerate(lines):
             section = SECTION_RE.match(line)
             if section:
                 visibility_by_depth[depth] = section.group(1)
 
-            aggregate = AGGREGATE_RE.match(line)
-            pending_aggregate = aggregate.group(1) if aggregate else None
-
             declaration = DECL_RE.match(line)
             if declaration:
                 explicit = declaration.group("explicit")
-                visibility = explicit if explicit is not None else visibility_by_depth.get(depth)
+                visibility = (
+                    explicit
+                    if explicit is not None
+                    else visibility_by_depth.get(depth)
+                )
 
                 if is_internal_visibility(visibility):
-                    aggregate_names = [name for _, name in aggregate_stack]
-                    fq = ".".join([module, *aggregate_names, declaration.group("name")])
-                    result.add(fq)
+                    result.add((module, index + 1))
 
-            old_depth = depth
             depth += brace_delta(line)
-
-            if pending_aggregate is not None and depth > old_depth:
-                aggregate_stack.append((depth, pending_aggregate))
-
-            while aggregate_stack and aggregate_stack[-1][0] > depth:
-                aggregate_stack.pop()
 
             for d in list(visibility_by_depth):
                 if d > depth:
@@ -91,60 +80,41 @@ def internal_symbols(source_root: Path) -> set[str]:
     return result
 
 
-def child_qualified(parent: str | None, name: str) -> str:
-    if parent is None:
+def module_name(node) -> str | None:
+    if not isinstance(node, dict):
+        return None
+    name = node.get("name")
+    if isinstance(name, str) and name.startswith("geodesy"):
         return name
-    if name.startswith(parent + "."):
-        return name
-    return parent + "." + name
+    return None
 
 
-def canonical_symbol_name(name: str) -> str:
-    """Normalize DMD/DDox symbol spellings for source-visibility matching."""
-    name = re.sub(r"!\\([^)]*\\)", "", name)
-    name = re.sub(r"(?<=[A-Za-z0-9_])\\([^)]*\\)", "", name)
-    name = re.sub(r"\\s+", "", name)
-    return name.strip(".")
-
-
-def matches_internal(parent: str | None, name: str, internal: set[str]) -> bool:
-    candidates = {canonical_symbol_name(name)}
-    if parent:
-        candidates.add(canonical_symbol_name(child_qualified(parent, name)))
-
-    for candidate in candidates:
-        if candidate in internal:
-            return True
-
-        candidate_parts = candidate.split(".")
-        for symbol in internal:
-            symbol_parts = symbol.split(".")
-            if (
-                len(candidate_parts) >= len(symbol_parts)
-                and candidate_parts[-len(symbol_parts):] == symbol_parts
-            ):
-                return True
-
-    return False
-
-
-def filter_members(node, parent: str | None, internal: set[str]) -> int:
+def filter_internal_declarations(
+    node,
+    module: str | None,
+    internal: set[tuple[str, int]],
+) -> int:
     removed = 0
 
     if isinstance(node, list):
         kept = []
         for item in node:
-            item_name = item.get("name") if isinstance(item, dict) else None
+            item_module = module_name(item) or module
+            item_line = item.get("line") if isinstance(item, dict) else None
 
             if (
-                parent
-                and isinstance(item_name, str)
-                and matches_internal(parent, item_name, internal)
+                item_module is not None
+                and isinstance(item_line, int)
+                and (item_module, item_line) in internal
             ):
                 removed += 1
                 continue
 
-            removed += filter_members(item, parent, internal)
+            removed += filter_internal_declarations(
+                item,
+                item_module,
+                internal,
+            )
             kept.append(item)
 
         node[:] = kept
@@ -153,52 +123,38 @@ def filter_members(node, parent: str | None, internal: set[str]) -> int:
     if not isinstance(node, dict):
         return 0
 
-    name = node.get("name")
-    current = parent
-    if isinstance(name, str) and name:
-        current = canonical_symbol_name(child_qualified(parent, name))
+    current_module = module_name(node) or module
 
     for key in list(node):
         value = node[key]
 
         if isinstance(value, dict):
-            child_name = value.get("name")
+            value_module = module_name(value) or current_module
+            value_line = value.get("line")
+
             if (
-                current
-                and isinstance(child_name, str)
-                and matches_internal(current, child_name, internal)
+                value_module is not None
+                and isinstance(value_line, int)
+                and (value_module, value_line) in internal
             ):
                 del node[key]
                 removed += 1
                 continue
 
-            removed += filter_members(value, current, internal)
+            removed += filter_internal_declarations(
+                value,
+                value_module,
+                internal,
+            )
 
         elif isinstance(value, list):
-            removed += filter_members(value, current, internal)
+            removed += filter_internal_declarations(
+                value,
+                current_module,
+                internal,
+            )
 
     return removed
-
-
-
-def debug_symbol_paths(node, needle: str, path: tuple[str, ...] = ()) -> None:
-    if isinstance(node, dict):
-        name = node.get("name")
-        if isinstance(name, str) and needle in name:
-            print(
-                "DEBUG DDox JSON:",
-                needle,
-                "path=" + "/".join(path),
-                "name=" + name,
-                "keys=" + ",".join(sorted(node.keys())),
-            )
-        for key, value in node.items():
-            if isinstance(value, (dict, list)):
-                debug_symbol_paths(value, needle, path + (str(key),))
-    elif isinstance(node, list):
-        for index, value in enumerate(node):
-            if isinstance(value, (dict, list)):
-                debug_symbol_paths(value, needle, path + (str(index),))
 
 
 def main() -> None:
@@ -209,23 +165,15 @@ def main() -> None:
     parser.add_argument("source_root", type=Path)
     args = parser.parse_args()
 
-    internal = internal_symbols(args.source_root)
+    internal = internal_declarations(args.source_root)
     data = json.loads(args.json_file.read_text())
-
-    for needle in (
-        "fromRadiansUnchecked",
-        "forwardKernel",
-        "researchTryForwardFactors",
-    ):
-        debug_symbol_paths(data, needle)
-
-    removed = filter_members(data, None, internal)
+    removed = filter_internal_declarations(data, None, internal)
 
     args.json_file.write_text(json.dumps(data, separators=(",", ":")))
 
     print(
-        f"PASS: source-aware DDox filter removed {removed} internal aggregate members "
-        f"from {len(internal)} internal declarations"
+        f"PASS: source-aware DDox filter removed {removed} internal declarations "
+        f"from {len(internal)} source-internal declarations"
     )
 
 
