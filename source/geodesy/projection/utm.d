@@ -71,6 +71,14 @@ enum UtmHemisphere : ubyte
     south,
 }
 
+/// Example selecting the UTM false-northing convention.
+unittest
+{
+    import geodesy;
+    enum hemisphere = UtmHemisphere.north;
+    assert(hemisphere != UtmHemisphere.south);
+}
+
 
 private bool isValidHemisphere(const UtmHemisphere hemisphere)
     pure nothrow @safe @nogc
@@ -133,6 +141,14 @@ public:
         return _number >= 1 && _number <= 60;
     }
 
+    /// Example checking a UTM zone.
+    @safe unittest
+    {
+        import geodesy;
+        assert(UtmZone.fromNumber(33).isValid);
+        assert(!UtmZone.init.isValid);
+    }
+
         /**
      * Construct a UTM zone number without throwing.
      *
@@ -154,6 +170,15 @@ public:
 
         result = fromNumberUnchecked(number);
         return true;
+    }
+
+    /// Example checking a UTM zone number without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        UtmZone zone;
+        assert(UtmZone.tryFromNumber(33, zone));
+        assert(zone.number == 33);
     }
 
         /**
@@ -179,11 +204,26 @@ public:
         return result;
     }
 
+    /// Example constructing UTM zone 33.
+    @safe unittest
+    {
+        import geodesy;
+        const zone = UtmZone.fromNumber(33);
+        assert(zone.number == 33);
+    }
+
     /** Zone number in the closed interval [1, 60] for a valid value. */
     @property uint number() const
         pure nothrow @safe @nogc
     {
         return _number;
+    }
+
+    /// Example reading a UTM zone number.
+    @safe unittest
+    {
+        import geodesy;
+        assert(UtmZone.fromNumber(33).number == 33);
     }
 
     /**
@@ -197,6 +237,13 @@ public:
         pure nothrow @safe @nogc
     {
         return 6 * cast(int) _number - 183;
+    }
+
+    /// Example reading the zone central meridian.
+    @safe unittest
+    {
+        import geodesy;
+        assert(UtmZone.fromNumber(33).centralMeridianDegrees == 15);
     }
 }
 
@@ -243,6 +290,15 @@ public:
             && isFiniteScalar(_projected.northing);
     }
 
+    /// Example checking a tagged UTM coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north, 500_000.0, 5_340_000.0);
+        assert(coordinate.isValid);
+    }
+
         /**
      * Construct a tagged UTM coordinate without throwing.
      *
@@ -279,6 +335,17 @@ public:
         result._hemisphere = hemisphere;
         result._projected = projected;
         return true;
+    }
+
+    /// Example checking a tagged UTM coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        UtmCoordinate!double coordinate;
+        assert(UtmCoordinate!double.tryFromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0, coordinate));
+        assert(coordinate.isValid);
     }
 
         /**
@@ -320,11 +387,31 @@ public:
         return result;
     }
 
+    /// Example constructing a tagged UTM coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0);
+        assert(coordinate.easting == 500_000.0);
+    }
+
     /** UTM zone. */
     @property UtmZone zone() const
         pure nothrow @safe @nogc
     {
         return _zone;
+    }
+
+    /// Example reading the zone.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0);
+        assert(coordinate.zone.number == 33);
     }
 
     /** North/south false-northing convention. */
@@ -334,11 +421,31 @@ public:
         return _hemisphere;
     }
 
+    /// Example reading the hemisphere.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0);
+        assert(coordinate.hemisphere == UtmHemisphere.north);
+    }
+
     /** Untagged projected coordinate in metres. */
     @property ProjectedCoordinate!T projected() const
         pure nothrow @safe @nogc
     {
         return _projected;
+    }
+
+    /// Example reading the projected coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0);
+        assert(coordinate.projected.easting == 500_000.0);
     }
 
     /** Easting in metres. */
@@ -348,11 +455,31 @@ public:
         return _projected.easting;
     }
 
+    /// Example reading the easting.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0);
+        assert(coordinate.easting == 500_000.0);
+    }
+
     /** Northing in metres. */
     @property T northing() const
         pure nothrow @safe @nogc
     {
         return _projected.northing;
+    }
+
+    /// Example reading the northing.
+    @safe unittest
+    {
+        import geodesy;
+        const coordinate = UtmCoordinate!double.fromComponents(
+            UtmZone.fromNumber(33), UtmHemisphere.north,
+            500_000.0, 5_340_000.0);
+        assert(coordinate.northing == 5_340_000.0);
     }
 }
 
@@ -624,6 +751,15 @@ public:
             && _transverseMercator.isValid;
     }
 
+    /// Example checking a prepared UTM projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.isValid);
+    }
+
         /**
      * Prepare an explicit UTM zone without throwing.
      *
@@ -689,6 +825,17 @@ public:
         return true;
     }
 
+    /// Example preparing UTM without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        UtmProjection!double projection;
+        assert(UtmProjection!double.tryFromZone(
+            wgs84!double(), UtmZone.fromNumber(33),
+            UtmHemisphere.north, projection));
+        assert(projection.isValid);
+    }
+
         /**
      * Prepare an explicit UTM zone.
      *
@@ -728,11 +875,29 @@ public:
         return result;
     }
 
+    /// Example preparing UTM zone 33 north.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.zone.number == 33);
+    }
+
     /** Projection ellipsoid. */
     @property Ellipsoid!T ellipsoid() const
         pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the ellipsoid.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
     /** Explicit UTM zone. */
@@ -742,11 +907,29 @@ public:
         return _zone;
     }
 
+    /// Example reading the zone.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.zone.number == 33);
+    }
+
     /** Explicit north/south false-northing convention. */
     @property UtmHemisphere hemisphere() const
         pure nothrow @safe @nogc
     {
         return _hemisphere;
+    }
+
+    /// Example reading the hemisphere.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.hemisphere == UtmHemisphere.north);
     }
 
     /** Fixed UTM latitude of natural origin: zero degrees. */
@@ -756,11 +939,29 @@ public:
         return _transverseMercator.latitudeOfNaturalOrigin;
     }
 
+    /// Example reading the latitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.latitudeOfNaturalOrigin.degrees == 0.0);
+    }
+
     /** Zone central meridian. */
     @property Longitude!T longitudeOfNaturalOrigin() const
         pure nothrow @safe @nogc
     {
         return _transverseMercator.longitudeOfNaturalOrigin;
+    }
+
+    /// Example reading the longitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.longitudeOfNaturalOrigin.degrees == 15.0);
     }
 
     /** Fixed UTM natural-origin scale factor: 0.9996. */
@@ -770,11 +971,29 @@ public:
         return _transverseMercator.scaleFactorAtNaturalOrigin;
     }
 
+    /// Example reading the scale factor at natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.scaleFactorAtNaturalOrigin == 0.9996);
+    }
+
     /** Fixed UTM false easting: 500000 metres. */
     @property T falseEasting() const
         pure nothrow @safe @nogc
     {
         return _transverseMercator.falseEasting;
+    }
+
+    /// Example reading the false easting.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.falseEasting == 500_000.0);
     }
 
     /**
@@ -787,6 +1006,15 @@ public:
         pure nothrow @safe @nogc
     {
         return _transverseMercator.falseNorthing;
+    }
+
+    /// Example reading the false northing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        assert(projection.falseNorthing == 0.0);
     }
 
         /**
@@ -815,6 +1043,20 @@ public:
         return _transverseMercator.tryForward(
             source,
             result);
+    }
+
+    /// Example projecting in a prepared UTM zone without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        ProjectedCoordinate!double result;
+        assert(projection.tryForward(vienna, result));
+        assert(result.easting > 0.0);
     }
 
         /**
@@ -847,6 +1089,19 @@ public:
         return result;
     }
 
+    /// Example projecting in a prepared UTM zone.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const result = projection.forward(vienna);
+        assert(result.northing > 0.0);
+    }
+
         /**
      * Evaluate conformal projection factors at a geographic source position.
      *
@@ -870,6 +1125,20 @@ public:
         return _transverseMercator.tryForwardFactors(
             source,
             result);
+    }
+
+    /// Example computing UTM factors without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        ConformalProjectionFactors!double factors;
+        assert(projection.tryForwardFactors(vienna, factors));
+        assert(factors.pointScale > 0.0);
     }
 
         /**
@@ -901,6 +1170,18 @@ public:
         return result;
     }
 
+    /// Example computing UTM factors.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        assert(projection.forwardFactors(vienna).pointScale > 0.0);
+    }
+
         /**
      * Reverse a coordinate in this explicit UTM zone without throwing.
      *
@@ -927,6 +1208,20 @@ public:
         return _transverseMercator.tryReverse(
             source,
             result);
+    }
+
+    /// Example reversing a prepared UTM coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        GeographicCoordinate!double result;
+        assert(projection.tryReverse(projection.forward(vienna), result));
+        assert(result.latitude.degrees > 48.0);
     }
 
         /**
@@ -960,6 +1255,19 @@ public:
         return result;
     }
 
+    /// Example reversing a prepared UTM coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const result = projection.reverse(projection.forward(vienna));
+        assert(result.longitude.degrees > 16.0);
+    }
+
         /**
      * Evaluate conformal factors at a represented projected coordinate.
      *
@@ -983,6 +1291,21 @@ public:
         return _transverseMercator.tryReverseFactors(
             source,
             result);
+    }
+
+    /// Example computing UTM reverse factors without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const projected = projection.forward(vienna);
+        ConformalProjectionFactors!double factors;
+        assert(projection.tryReverseFactors(projected, factors));
+        assert(factors.pointScale > 0.0);
     }
 
         /**
@@ -1012,6 +1335,18 @@ public:
         }
 
         return result;
+    }
+
+    /// Example computing UTM reverse factors.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = UtmProjection!double.fromZone(
+            wgs84!double(), UtmZone.fromNumber(33), UtmHemisphere.north);
+        const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        assert(projection.reverseFactors(projection.forward(vienna)).pointScale > 0.0);
     }
 }
 
@@ -1155,6 +1490,17 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/// Example projecting with automatic UTM zone selection.
+@safe unittest
+{
+    import geodesy;
+    const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+    const utm = forwardUtm(vienna, wgs84!double());
+    assert(utm.zone.number == 33);
+}
+
 
 /**
  * Reverse a tagged UTM coordinate using its explicit zone and hemisphere.
@@ -1201,6 +1547,19 @@ if (isGeodesyScalar!T)
     return true;
 }
 
+/// Example reversing a tagged UTM coordinate without throwing.
+@safe unittest
+{
+    import geodesy;
+    const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+    const utm = forwardUtm(vienna, wgs84!double());
+    GeographicCoordinate!double result;
+    assert(tryReverseUtm(utm, wgs84!double(), result));
+    assert(result.latitude.degrees > 48.0);
+}
+
 
 /**
  * Reverse a tagged UTM coordinate using its explicit zone and hemisphere.
@@ -1236,6 +1595,18 @@ if (isGeodesyScalar!T)
     }
 
     return result;
+}
+
+/// Example reversing a tagged UTM coordinate.
+@safe unittest
+{
+    import geodesy;
+    const vienna = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+    const utm = forwardUtm(vienna, wgs84!double());
+    const result = reverseUtm(utm, wgs84!double());
+    assert(result.longitude.degrees > 16.0);
 }
 
 unittest
