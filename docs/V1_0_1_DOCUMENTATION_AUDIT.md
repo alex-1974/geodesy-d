@@ -1,6 +1,6 @@
 # geodesy-d v1.0.1 documentation audit
 
-Status: **RELEASE-CONTENT DECISIONS COMPLETE — AUTOMATED SOURCE QUALITY GATES COMPLETE**
+Status: **COMPLETE — RELEASE CONTENT AND DOCUMENTATION QUALITY SIGNED OFF**
 
 This document records the documentation decisions made during v1.0.1 release
 preparation. It is not normative public API documentation.
@@ -121,6 +121,6 @@ quality work is also complete:
 - the decision-comment audit is complete;
 - strict public-only DDox tooling is enabled and green on `main`.
 
-Issue #52 remains open only for the explicit human visual inspection of the
-generated DDox site. That acceptance item is not inferred from successful HTML
-generation.
+The generated DDox site was also reviewed visually by the maintainer and
+confirmed to look clean and read well. Issue #52 is therefore complete and the
+v1.0.1 documentation sign-off is finished.
