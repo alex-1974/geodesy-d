@@ -72,6 +72,13 @@ def audit_file(path: Path) -> list[str]:
 
         match = DECL_RE.match(line)
         if match:
+            # Struct/class/template declarations can resemble a return-type +
+            # callable name to a line-oriented scanner, but they are not
+            # functions and are outside this contract.
+            if match.group("return") in {"struct", "class", "union", "enum", "template", "alias"}:
+                match = None
+
+        if match:
             explicit = match.group("explicit")
             name = match.group("name")
 
