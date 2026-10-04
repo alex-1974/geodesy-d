@@ -293,6 +293,15 @@ public:
         return true;
     }
 
+    /// Example checking latitude radians without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Latitude!double latitude;
+        assert(Latitude!double.tryFromRadians(0.5, latitude));
+        assert(latitude.radians == 0.5);
+    }
+
     /**
      * Construct a latitude from degrees without throwing.
      *
@@ -310,6 +319,15 @@ public:
         if (!isFiniteGeodesyScalar(degrees) || degrees < cast(T) -90 || degrees > cast(T) 90)
             return false;
         return tryFromRadians(degreesToRadians(degrees), result);
+    }
+
+    /// Example checking latitude degrees without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Latitude!double latitude;
+        assert(Latitude!double.tryFromDegrees(48.20849, latitude));
+        assert(latitude.degrees > 48.0);
     }
 
     /**
@@ -333,6 +351,14 @@ public:
         return result;
     }
 
+    /// Example constructing a latitude from radians.
+    @safe unittest
+    {
+        import geodesy;
+        const latitude = Latitude!double.fromRadians(0.5);
+        assert(latitude.radians == 0.5);
+    }
+
     /**
      * Construct a latitude from degrees.
      *
@@ -354,10 +380,26 @@ public:
         return result;
     }
 
+    /// Example constructing a latitude from degrees.
+    @safe unittest
+    {
+        import geodesy;
+        const latitude = Latitude!double.fromDegrees(48.20849);
+        assert(latitude.degrees > 48.0);
+    }
+
     /** Latitude in radians. */
     @property T radians() const pure nothrow @safe @nogc
     {
         return _radians;
+    }
+
+    /// Example reading latitude in radians.
+    @safe unittest
+    {
+        import geodesy;
+        const latitude = Latitude!double.fromRadians(0.5);
+        assert(latitude.radians == 0.5);
     }
 
     /** Latitude in degrees. */
@@ -366,10 +408,26 @@ public:
         return radiansToDegrees(_radians);
     }
 
+    /// Example reading latitude in degrees.
+    @safe unittest
+    {
+        import geodesy;
+        const latitude = Latitude!double.fromDegrees(48.20849);
+        assert(latitude.degrees > 48.0);
+    }
+
     /** Return the same angular value as a general `Angle!T`. */
     @property Angle!T asAngle() const pure nothrow @safe @nogc
     {
         return Angle!T.fromRadiansUnchecked(_radians);
+    }
+
+    /// Example using a latitude as a general angle.
+    @safe unittest
+    {
+        import geodesy;
+        const latitude = Latitude!double.fromDegrees(45.0);
+        assert(latitude.asAngle.degrees == 45.0);
     }
 }
 
@@ -434,6 +492,15 @@ public:
         return true;
     }
 
+    /// Example checking longitude radians without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Longitude!double longitude;
+        assert(Longitude!double.tryFromRadians(0.25, longitude));
+        assert(longitude.radians == 0.25);
+    }
+
     /**
      * Construct a longitude from degrees without throwing.
      *
@@ -452,6 +519,15 @@ public:
         if (!isFiniteGeodesyScalar(degrees) || degrees < cast(T) -180 || degrees > cast(T) 180)
             return false;
         return tryFromRadians(degreesToRadians(degrees), result);
+    }
+
+    /// Example checking longitude degrees without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Longitude!double longitude;
+        assert(Longitude!double.tryFromDegrees(16.37208, longitude));
+        assert(longitude.degrees > 16.0);
     }
 
     /**
@@ -475,6 +551,14 @@ public:
         return result;
     }
 
+    /// Example constructing a longitude from radians.
+    @safe unittest
+    {
+        import geodesy;
+        const longitude = Longitude!double.fromRadians(0.25);
+        assert(longitude.radians == 0.25);
+    }
+
     /**
      * Construct a longitude from degrees.
      *
@@ -496,10 +580,26 @@ public:
         return result;
     }
 
+    /// Example constructing a longitude from degrees.
+    @safe unittest
+    {
+        import geodesy;
+        const longitude = Longitude!double.fromDegrees(16.37208);
+        assert(longitude.degrees > 16.0);
+    }
+
     /** Longitude in radians. */
     @property T radians() const pure nothrow @safe @nogc
     {
         return _radians;
+    }
+
+    /// Example reading longitude in radians.
+    @safe unittest
+    {
+        import geodesy;
+        const longitude = Longitude!double.fromRadians(0.25);
+        assert(longitude.radians == 0.25);
     }
 
     /** Longitude in degrees. */
@@ -508,10 +608,26 @@ public:
         return radiansToDegrees(_radians);
     }
 
+    /// Example reading longitude in degrees.
+    @safe unittest
+    {
+        import geodesy;
+        const longitude = Longitude!double.fromDegrees(16.37208);
+        assert(longitude.degrees > 16.0);
+    }
+
     /** Return the same angular value as a general `Angle!T`. */
     @property Angle!T asAngle() const pure nothrow @safe @nogc
     {
         return Angle!T.fromRadiansUnchecked(_radians);
+    }
+
+    /// Example using a longitude as a general angle.
+    @safe unittest
+    {
+        import geodesy;
+        const longitude = Longitude!double.fromDegrees(30.0);
+        assert(longitude.asAngle.degrees == 30.0);
     }
 
     /** Return the unique representation from -pi inclusive to +pi exclusive. */
@@ -520,6 +636,14 @@ public:
         if (_radians >= pi!T)
             return fromRadiansUnchecked(-pi!T);
         return fromRadiansUnchecked(_radians);
+    }
+
+    /// Example normalizing the positive antimeridian.
+    @safe unittest
+    {
+        import geodesy;
+        const longitude = Longitude!double.fromDegrees(180.0);
+        assert(longitude.normalized.degrees == -180.0);
     }
 }
 
