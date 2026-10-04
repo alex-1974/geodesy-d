@@ -41,24 +41,28 @@ import geodesy.errors : GeodesyValueException;
 import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 
+/** Return pi in scalar type T. */
 private T pi(T)() pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
     return cast(T) PI;
 }
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)() pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
     return pi!T / cast(T) 2;
 }
 
+/** Convert finite degrees to radians in scalar type T. */
 private T degreesToRadians(T)(const T degrees) pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
     return (degrees / cast(T) 180) * pi!T;
 }
 
+/** Convert finite radians to degrees in scalar type T. */
 private T radiansToDegrees(T)(const T radians) pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
@@ -82,7 +86,8 @@ if (isGeodesyScalar!T)
 private:
     T _radians = 0;
 
-    static Angle fromRadiansUnchecked(const T radians) pure nothrow @safe @nogc
+    /** Construct an Angle from already validated finite radians. */
+static Angle fromRadiansUnchecked(const T radians) pure nothrow @safe @nogc
     {
         Angle result;
         result._radians = radians;
@@ -265,7 +270,8 @@ if (isGeodesyScalar!T)
 private:
     T _radians = 0;
 
-    static Latitude fromRadiansUnchecked(const T radians) pure nothrow @safe @nogc
+    /** Construct a Latitude from radians already validated against its domain. */
+static Latitude fromRadiansUnchecked(const T radians) pure nothrow @safe @nogc
     {
         Latitude result;
         result._radians = radians;
@@ -463,7 +469,8 @@ if (isGeodesyScalar!T)
 private:
     T _radians = 0;
 
-    static Longitude fromRadiansUnchecked(const T radians) pure nothrow @safe @nogc
+    /** Construct a Longitude from radians already validated against its public domain. */
+static Longitude fromRadiansUnchecked(const T radians) pure nothrow @safe @nogc
     {
         Longitude result;
         result._radians = radians;
