@@ -1322,6 +1322,20 @@ public:
             && isFiniteScalar(_originXi);
     }
 
+    /// Example checking whether a Transverse Mercator projection is prepared.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.isValid);
+    }
+
 
         /**
      * Prepare a bounded Transverse Mercator operation without throwing.
@@ -1399,6 +1413,22 @@ public:
         return true;
     }
 
+    /// Example preparing Transverse Mercator without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        TransverseMercator!double projection;
+        assert(TransverseMercator!double.tryFromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0,
+            projection));
+        assert(projection.isValid);
+    }
+
 
         /**
      * Prepare a bounded Transverse Mercator operation.
@@ -1444,11 +1474,39 @@ public:
         return result;
     }
 
+    /// Example preparing a reusable Transverse Mercator projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.scaleFactorAtNaturalOrigin == 0.9996);
+    }
+
 
     /** Projection ellipsoid. */
     @property Ellipsoid!T ellipsoid() const pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the source ellipsoid.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
 
@@ -1459,12 +1517,40 @@ public:
         return _latitudeOfNaturalOrigin;
     }
 
+    /// Example reading the latitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.latitudeOfNaturalOrigin.degrees == 0.0);
+    }
+
 
     /** EPSG 8802 longitude of natural origin. */
     @property Longitude!T longitudeOfNaturalOrigin() const
         pure nothrow @safe @nogc
     {
         return _longitudeOfNaturalOrigin;
+    }
+
+    /// Example reading the longitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.longitudeOfNaturalOrigin.degrees == 15.0);
     }
 
 
@@ -1475,6 +1561,20 @@ public:
         return _scaleFactorAtNaturalOrigin;
     }
 
+    /// Example reading the scale factor at the natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.scaleFactorAtNaturalOrigin == 0.9996);
+    }
+
 
     /** EPSG 8806 false easting. */
     @property T falseEasting() const pure nothrow @safe @nogc
@@ -1482,11 +1582,39 @@ public:
         return _falseEasting;
     }
 
+    /// Example reading the false easting.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.falseEasting == 500_000.0);
+    }
+
 
     /** EPSG 8807 false northing. */
     @property T falseNorthing() const pure nothrow @safe @nogc
     {
         return _falseNorthing;
+    }
+
+    /// Example reading the false northing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        assert(projection.falseNorthing == 0.0);
     }
 
 
@@ -1957,6 +2085,25 @@ public:
             return true;
         }
 
+        /// Example computing conformal factors without throwing.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            ConformalProjectionFactors!double factors;
+            assert(projection.tryForwardFactors(source, factors));
+            assert(factors.pointScale > 0.0);
+        }
+
 
         /**
          * Compute conformal factors at a geographic source coordinate or
@@ -1977,6 +2124,24 @@ public:
             }
 
             return result;
+        }
+
+        /// Example computing conformal factors at a geographic point.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            const factors = projection.forwardFactors(source);
+            assert(factors.pointScale > 0.0);
         }
 
 
@@ -2018,6 +2183,26 @@ public:
             return true;
         }
 
+        /// Example computing factors from a projected coordinate without throwing.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            const projected = projection.forward(source);
+            ConformalProjectionFactors!double factors;
+            assert(projection.tryReverseFactors(projected, factors));
+            assert(factors.pointScale > 0.0);
+        }
+
 
         /**
          * Compute conformal factors for a represented projected coordinate or
@@ -2038,6 +2223,24 @@ public:
             }
 
             return result;
+        }
+
+        /// Example computing factors from a projected coordinate.
+        @safe unittest
+        {
+            import geodesy;
+            const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+            const factors = projection.reverseFactors(projection.forward(source));
+            assert(factors.pointScale > 0.0);
         }
 
 
@@ -2156,6 +2359,25 @@ public:
             result);
     }
 
+    /// Example projecting a geographic coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        ProjectedCoordinate!double projected;
+        assert(projection.tryForward(source, projected));
+        assert(projected.easting > 500_000.0);
+    }
+
 
         /**
      * Project a geographic coordinate.
@@ -2180,6 +2402,24 @@ public:
                 "Transverse Mercator forward projection failed or the point "
                 ~ "lies outside the supported +/-60 degree longitude domain.");
         return result;
+    }
+
+    /// Example projecting a geographic coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const projected = projection.forward(source);
+        assert(projected.northing > 0.0);
     }
 
 
@@ -2282,6 +2522,25 @@ public:
         return true;
     }
 
+    /// Example reversing a projected coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        GeographicCoordinate!double recovered;
+        assert(projection.tryReverse(projection.forward(source), recovered));
+        assert(recovered.latitude.degrees > 48.0);
+    }
+
 
         /**
      * Reverse a projected coordinate.
@@ -2306,6 +2565,24 @@ public:
                 "Transverse Mercator reverse projection failed or the point "
                 ~ "lies outside the supported standard sheet/domain.");
         return result;
+    }
+
+    /// Example reversing a Transverse Mercator coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = TransverseMercator!double.fromParameters(
+            wgs84!double(),
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(15.0),
+            0.9996,
+            500_000.0,
+            0.0);
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const recovered = projection.reverse(projection.forward(source));
+        assert(recovered.longitude.degrees > 16.0);
     }
 }
 
