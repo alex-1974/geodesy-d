@@ -30,6 +30,16 @@ The project follows Semantic Versioning from the first tagged public release.
   private/package functions, decision-comment review, and strict public-only
   DDox verification.
 
+### Packaging
+
+- Moved detailed research and benchmark corpora to the separate
+  `geodesy-d-research` companion repository so normal DUB consumers do not
+  download those development artefacts.
+- Kept active regression/validation gates in the production repository; the
+  two topocentric probes required by hosted release validation now live under
+  `validation/topocentric/`.
+- No public API or runtime dependency changed as part of the repository split.
+
 ### Compatibility
 
 - Preserves the frozen v1 public source contract; existing v1.0.0 consumers
