@@ -81,6 +81,16 @@ public:
         return true;
     }
 
+    /// Example checking projected coordinates without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        ProjectedCoordinate!double point;
+        assert(ProjectedCoordinate!double.tryFromComponents(
+            500_000.0, 5_340_000.0, point));
+        assert(point.easting == 500_000.0);
+    }
+
     /**
      * Construct from finite easting and northing.
      *
@@ -106,16 +116,41 @@ public:
         return result;
     }
 
+    /// Example constructing a projected coordinate.
+    @safe unittest
+    {
+        import geodesy;
+        const point = ProjectedCoordinate!double.fromComponents(
+            500_000.0, 5_340_000.0);
+        assert(point.northing == 5_340_000.0);
+    }
+
     /** Easting in the operation's linear unit. */
     @property T easting() const pure nothrow @safe @nogc
     {
         return _easting;
     }
 
+    /// Example reading easting.
+    @safe unittest
+    {
+        import geodesy;
+        const point = ProjectedCoordinate!double.fromComponents(500_000.0, 0.0);
+        assert(point.easting == 500_000.0);
+    }
+
     /** Northing in the operation's linear unit. */
     @property T northing() const pure nothrow @safe @nogc
     {
         return _northing;
+    }
+
+    /// Example reading northing.
+    @safe unittest
+    {
+        import geodesy;
+        const point = ProjectedCoordinate!double.fromComponents(0.0, 5_340_000.0);
+        assert(point.northing == 5_340_000.0);
     }
 }
 
