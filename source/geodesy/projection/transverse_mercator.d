@@ -1091,16 +1091,18 @@ private:
         pure nothrow @safe @nogc
     {
         /*
-         * The accepted v1 metre validation budget was 1 mm for double/real
-         * and 2 m for float.  Express that contract as a dimensionless
-         * fraction of the WGS 84 semi-major axis so the same physical
-         * parameterization expressed in another linear unit receives the
-         * same acceptance decision.
+         * The accepted v1 terrestrial validation profile used a fixed
+         * 1 mm budget for double/real and 2 m for float while accepting
+         * semi-major axes from 6_000_000 through 7_000_000 metres.
          *
-         * At a = 6_378_137 in the caller's linear unit this reproduces the
-         * v1 budget exactly.
+         * A unit-invariant replacement must scale with the operation's linear
+         * unit.  Normalize at the lower edge of that already accepted v1
+         * profile rather than at one particular Earth ellipsoid.  This keeps
+         * the replacement from becoming stricter than the v1 acceptance
+         * policy anywhere inside the old terrestrial profile while preserving
+         * the same decision under a consistent rescaling of all linear values.
          */
-        enum W wgs84SemiMajorAxis = cast(W) 6_378_137.0L;
+        enum W referenceSemiMajorAxis = cast(W) 6_000_000.0L;
 
         static if (is(T == float))
             enum W referenceBudget = cast(W) 2.0;
@@ -1109,7 +1111,7 @@ private:
 
         return referenceBudget
             * cast(W) _ellipsoid.semiMajorAxis
-            / wgs84SemiMajorAxis;
+            / referenceSemiMajorAxis;
     }
 
 
