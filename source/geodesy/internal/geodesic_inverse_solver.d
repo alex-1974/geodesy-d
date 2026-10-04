@@ -34,6 +34,7 @@ import geodesy.internal.geodesic_lengths :
 package(geodesy):
 
 
+/** Normalize a sine/cosine-style pair to unit Euclidean magnitude. */
 private void normalizePair(W)(
     ref W sine,
     ref W cosine)
