@@ -99,13 +99,15 @@ private bool isFiniteScalar(T)(const T value)
 }
 
 
-/*
- * Use the same operation ordering as Latitude/Longitude.fromDegrees:
+/**
+ * Convert an integral UTM policy boundary from degrees to radians.
+ *
+ * Uses the same operation ordering as `Latitude/Longitude.fromDegrees`:
  *
  *     (degrees / 180) * PI
  *
- * Integer policy boundaries therefore compare consistently with values
- * constructed from the corresponding exact integral degree value.
+ * Matching operation order keeps exact policy boundaries consistent with
+ * public values constructed from the same integral degree.
  */
 private T integralDegreesToRadians(T)(const int degrees)
     pure nothrow @safe @nogc
