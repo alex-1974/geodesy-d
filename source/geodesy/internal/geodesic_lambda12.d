@@ -22,6 +22,7 @@ import std.math :
 
 import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_lengths :
+    geodesicLengthReducedLength,
     geodesicLengths;
 
 import geodesy.internal.geodesic_series :
@@ -82,7 +83,9 @@ struct GeodesicLambda12Result(W)
     W eps;
 
     /**
-     * Ellipsoidal correction omega12 - lambda12.
+     * Ellipsoidal correction subtracted from lambda12 to recover omega12:
+     *
+     *     omega12 = lambda12 - deltaOmega12
      */
     W deltaOmega12;
 
@@ -380,15 +383,18 @@ GeodesicLambda12Result!W geodesicLambda12(
                 geodesicLengths!(
                     W,
                     order,
-                    false)(
+                    geodesicLengthReducedLength)(
                         eps,
+                        ep2,
                         sigma12,
                         sinSigma1,
                         cosSigma1,
                         dn1,
+                        cosBeta1,
                         sinSigma2,
                         cosSigma2,
-                        dn2);
+                        dn2,
+                        cosBeta2);
 
             derivative =
                 lengths.m12b
