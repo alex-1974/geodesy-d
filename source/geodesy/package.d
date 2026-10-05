@@ -66,6 +66,7 @@ public import geodesy.ellipsoid;
 public import geodesy.errors;
 public import geodesy.geographic;
 public import geodesy.geodesic;
+public import geodesy.geodesic_polygon;
 public import geodesy.geodetic;
 public import geodesy.geocentric;
 public import geodesy.topocentric;

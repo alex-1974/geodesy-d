@@ -178,6 +178,19 @@ The audit is complete when:
 | `geodesy.geodesic.GeodesicQuantities.scale12` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.scale21` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.signedArea` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.addPoint` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.compute` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.fromGeodesic` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.isValid` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.pointCount` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.tryAddPoint` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.tryCompute` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.tryFromGeodesic` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonResult` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonResult.perimeter` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonResult.pointCount` | existing | geodesics |
+| `geodesy.geodesic_polygon.GeodesicPolygonResult.signedArea` | existing | geodesics |
 | `geodesy.geodetic.GeodeticCoordinate.ellipsoidalHeight` | existing | geographic/geodetic values |
 | `geodesy.geodetic.GeodeticCoordinate.fromComponents` | existing | geographic/geodetic values |
 | `geodesy.geodetic.GeodeticCoordinate` | existing | geographic/geodetic values |

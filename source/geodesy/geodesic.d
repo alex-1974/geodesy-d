@@ -1791,6 +1791,96 @@ public:
     }
 
     /**
+     * Internal distance + signed-area inverse specialization for streaming
+     * polygon measurement.
+     *
+     * This deliberately requests only the area capability in addition to the
+     * always-computed distance/azimuth state. Reduced length and geodesic
+     * scales are not instantiated or validated.
+     */
+    package bool tryInverseDistanceArea(
+        const GeographicCoordinate!T start,
+        const GeographicCoordinate!T end,
+        out T distance,
+        out T signedArea) const
+        pure nothrow @safe @nogc
+    {
+        distance = T.init;
+        signedArea = T.init;
+
+        if (!isValid)
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W latitude2 =
+            workingLatitudeRadians!T(
+                end.latitude.radians);
+
+        const W longitude2 =
+            workingCanonicalAngleRadians!T(
+                end.longitude.radians);
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+        )
+            return false;
+
+        enum int order =
+            geodesicSeriesOrderFor!T;
+
+        enum uint outputs =
+            geodesicInverseArea;
+
+        const inverse =
+            geodesicInverseDispatch!(
+                W,
+                order,
+                outputs)(
+                    _a,
+                    _f,
+                    _f1,
+                    _b,
+                    _ep2,
+                    _n,
+                    _a3x,
+                    _c3x,
+                    latitude1,
+                    longitude1,
+                    latitude2,
+                    longitude2);
+
+        const T publicDistance =
+            canonicalZero(
+                cast(T) inverse.distance);
+
+        const T publicArea =
+            canonicalZero(
+                cast(T) inverse.signedArea);
+
+        if (
+            !isFiniteGeodesyScalar(publicDistance)
+            || publicDistance < cast(T) 0
+            || !isFiniteGeodesyScalar(publicArea)
+        )
+            return false;
+
+        distance = publicDistance;
+        signedArea = publicArea;
+        return true;
+    }
+
+
+    /**
      * Solve the shortest inverse geodesic and its advanced segment quantities.
      *
      * This overload is additive to the frozen v1 inverse surface. Requesting
