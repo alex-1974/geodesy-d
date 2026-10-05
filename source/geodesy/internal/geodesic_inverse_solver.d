@@ -28,6 +28,7 @@ import geodesy.internal.geodesic_lambda12 :
     geodesicLambda12;
 
 import geodesy.internal.geodesic_lengths :
+    geodesicLengthDistance,
     geodesicLengths;
 
 
@@ -464,15 +465,18 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
         geodesicLengths!(
             W,
             order,
-            true)(
+            geodesicLengthDistance)(
                 current.eps,
+                ep2,
                 current.sigma12,
                 current.sinSigma1,
                 current.cosSigma1,
                 dn1,
+                cosBeta1,
                 current.sinSigma2,
                 current.cosSigma2,
-                dn2);
+                dn2,
+                cosBeta2);
 
     return GeodesicCanonicalInverseResult!W(
         lengths.s12b,
