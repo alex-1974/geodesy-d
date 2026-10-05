@@ -310,7 +310,8 @@ private:
      *
      * The two directions are one orthonormal transform family: forward uses
      * R * (ECEF - origin), reverse uses origin + transpose(R) * ENU.
-     * Template specialization keeps both public paths branch-free.
+     * Template specialization keeps both public paths branch-free and avoids
+     * maintaining two independent copies of the rotation arithmetic.
      */
     private bool tryWorkingTransform(
         WorkingTopocentricDirection direction)(
