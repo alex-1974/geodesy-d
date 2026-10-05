@@ -524,9 +524,10 @@ public:
  * oriented area contribution between the geodesic and the equator, in the
  * square of the ellipsoid linear unit.
  *
- * Reversing the segment reverses `reducedLength` and `signedArea` while
- * exchanging the two scale directions. Coincident endpoints use the
- * canonical values m12 = 0, M12 = M21 = 1, and S12 = 0.
+ * `signedArea` is orientation-sensitive; reversing the segment reverses its
+ * sign. The two geodesic scale directions exchange roles under endpoint
+ * reversal. Coincident endpoints use the canonical values m12 = 0,
+ * M12 = M21 = 1, and S12 = 0.
  */
 struct GeodesicQuantities(T)
 if (isGeodesyScalar!T)
@@ -561,11 +562,25 @@ public:
         return _reducedLength;
     }
 
+    /// Example reading reduced length from advanced inverse quantities.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.reducedLength == 0.0);
+    }
+
     /** Geodesic scale M12 from point 1 to point 2. */
     @property T scale12() const
         pure nothrow @safe @nogc
     {
         return _scale12;
+    }
+
+    /// Example reading the point-1 to point-2 geodesic scale.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.scale12 == 0.0);
     }
 
     /** Geodesic scale M21 from point 2 to point 1. */
@@ -575,11 +590,25 @@ public:
         return _scale21;
     }
 
+    /// Example reading the point-2 to point-1 geodesic scale.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.scale21 == 0.0);
+    }
+
     /** Signed area contribution S12 in the square of the ellipsoid unit. */
     @property T signedArea() const
         pure nothrow @safe @nogc
     {
         return _signedArea;
+    }
+
+    /// Example reading the signed geodesic area contribution.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.signedArea == 0.0);
     }
 }
 
