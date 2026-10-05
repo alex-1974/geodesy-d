@@ -2732,7 +2732,9 @@ public:
 
     const solver =
         Geodesic!double.fromEllipsoid(
-            wgs84!double());
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
 
     const start =
         GeographicCoordinate!double.fromComponents(
