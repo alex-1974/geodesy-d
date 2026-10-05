@@ -68,11 +68,20 @@ import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.internal.hypot_compat : stableHypot2;
+import geodesy.internal.geodesic_area :
+    geodesicAuthalicRadiusSquared,
+    geodesicSignedArea;
+import geodesy.internal.geodesic_area_series :
+    fillGeodesicC4x;
 import geodesy.internal.geodesic_inverse_dispatch :
     geodesicInverseArea,
     geodesicInverseReducedLength,
     geodesicInverseScales,
     geodesicInverseDispatch;
+import geodesy.internal.geodesic_lengths :
+    geodesicLengthReducedLength,
+    geodesicLengthScales,
+    geodesicLengths;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
     fillGeodesicC1,
@@ -691,14 +700,22 @@ private:
      * azimuth, and signed distance. `result` receives the public endpoint and
      * final forward azimuth on success.
      */
-bool tryDirectEllipsoid(
+bool tryDirectEllipsoidImpl(
+        bool calculateQuantities)(
         const W latitude1,
         const W longitude1,
         const W azimuth1,
         const W s12,
-        out GeodesicDirectResult!T result) const
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
         pure nothrow @safe @nogc
     {
+        static if (calculateQuantities)
+        {
+            quantities =
+                GeodesicQuantities!T.init;
+        }
+
         enum int order = geodesicSeriesOrderFor!T;
 
         W sinPhi1;
@@ -991,6 +1008,108 @@ bool tryDirectEllipsoid(
             canonicalAngleRadians(
                 cast(T) finalAzimuth);
 
+        static if (calculateQuantities)
+        {
+            const W dn1 =
+                sqrt(
+                    cast(W) 1
+                    + _ep2
+                        * sinBeta1
+                        * sinBeta1);
+
+            const W dn2 =
+                sqrt(
+                    cast(W) 1
+                    + _ep2
+                        * sinBeta2
+                        * sinBeta2);
+
+            const lengths =
+                geodesicLengths!(
+                    W,
+                    order,
+                    geodesicLengthReducedLength
+                        | geodesicLengthScales)(
+                            eps,
+                            _ep2,
+                            sigma12,
+                            sinSigma1,
+                            cosSigma1,
+                            dn1,
+                            cosBeta1,
+                            sinSigma2,
+                            cosSigma2,
+                            dn2,
+                            cosBeta2);
+
+            W[36] c4x;
+
+            fillGeodesicC4x!(
+                W,
+                order)(
+                    _n,
+                    c4x);
+
+            const W authalicRadiusSquared =
+                geodesicAuthalicRadiusSquared(
+                    _a,
+                    _b,
+                    _e2);
+
+            const W signedArea =
+                geodesicSignedArea!(
+                    W,
+                    order)(
+                        _a,
+                        _e2,
+                        _ep2,
+                        authalicRadiusSquared,
+                        c4x,
+                        sinBeta1,
+                        cosBeta1,
+                        sinBeta2,
+                        cosBeta2,
+                        sinAlpha1,
+                        cosAlpha1,
+                        sinAlpha2,
+                        cosAlpha2,
+                        sinAlpha0 == cast(W) 0,
+                        sin(omega12),
+                        cos(omega12),
+                        1);
+
+            const T reducedLength =
+                canonicalZero(
+                    cast(T) (
+                        _b
+                        * lengths.m12b));
+
+            const T scale12 =
+                cast(T) lengths.M12;
+
+            const T scale21 =
+                cast(T) lengths.M21;
+
+            const T area =
+                canonicalZero(
+                    cast(T) signedArea);
+
+            if (
+                !isFiniteGeodesyScalar(reducedLength)
+                || !isFiniteGeodesyScalar(scale12)
+                || !isFiniteGeodesyScalar(scale21)
+                || !isFiniteGeodesyScalar(area)
+            )
+                return false;
+
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    reducedLength,
+                    scale12,
+                    scale21,
+                    area);
+        }
+
         result =
             GeodesicDirectResult!T.fromComponents(
                 endpoint,
@@ -998,6 +1117,29 @@ bool tryDirectEllipsoid(
                     canonicalFinalAzimuth));
 
         return true;
+    }
+
+
+    /**
+     * Solve the ordinary direct ellipsoid path without advanced quantities.
+     */
+    bool tryDirectEllipsoid(
+        const W latitude1,
+        const W longitude1,
+        const W azimuth1,
+        const W s12,
+        out GeodesicDirectResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        GeodesicQuantities!T unusedQuantities;
+
+        return tryDirectEllipsoidImpl!false(
+            latitude1,
+            longitude1,
+            azimuth1,
+            s12,
+            result,
+            unusedQuantities);
     }
 
 
