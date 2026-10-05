@@ -14,6 +14,13 @@ static assert(is(Ellipsoid!double));
 static assert(is(GeodeticCoordinate!double));
 static assert(is(GeocentricCoordinate!double));
 
+private enum v1ZeroHeightGeodetic =
+    GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0));
+
+static assert(v1ZeroHeightGeodetic.ellipsoidalHeight == 0.0);
+
 static assert(is(TopocentricCoordinate!float));
 static assert(is(TopocentricCoordinate!double));
 static assert(is(TopocentricCoordinate!real));
