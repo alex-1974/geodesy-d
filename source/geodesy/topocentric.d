@@ -66,6 +66,14 @@ import geodesy.scalar :
     isGeodesyScalar;
 
 
+/** Direction of the internal EPSG 9836 working transform. */
+private enum WorkingTopocentricDirection
+{
+    geocentricToTopocentric,
+    topocentricToGeocentric
+}
+
+
 /**
  * A local topocentric Cartesian coordinate `(east, north, up)`.
  *
@@ -297,20 +305,98 @@ private:
     W _sinLongitude = 0;
     W _cosLongitude = 0;
 
-    /*
-     * Working-precision forward EPSG 9836 rotation.
+    /**
+     * Apply the prepared EPSG 9836 transform in one compile-time-selected
+     * direction.
      *
-     * Inputs and outputs remain in W.  In particular, a composed float path
-     * may reach this helper with double-precision ECEF values without first
-     * materializing GeocentricCoordinate!float.
+     * The two directions are one orthonormal transform family: forward uses
+     * R * (ECEF - origin), reverse uses origin + transpose(R) * ENU.
+     * Template specialization keeps both public paths branch-free and avoids
+     * maintaining two independent copies of the rotation arithmetic.
      */
+    private bool tryWorkingTransform(
+        WorkingTopocentricDirection direction)(
+        const W first,
+        const W second,
+        const W third,
+        out W outFirst,
+        out W outSecond,
+        out W outThird) const
+        pure nothrow @safe @nogc
+    {
+        if (!_valid || !_ellipsoid.isValid)
+            return false;
+
+        static if (
+            direction
+            == WorkingTopocentricDirection.geocentricToTopocentric)
+        {
+            const W dx =
+                first - _originX;
+
+            const W dy =
+                second - _originY;
+
+            const W dz =
+                third - _originZ;
+
+            outFirst =
+                -dx * _sinLongitude
+                + dy * _cosLongitude;
+
+            outSecond =
+                -dx * _sinLatitude * _cosLongitude
+                - dy * _sinLatitude * _sinLongitude
+                + dz * _cosLatitude;
+
+            outThird =
+                dx * _cosLatitude * _cosLongitude
+                + dy * _cosLatitude * _sinLongitude
+                + dz * _sinLatitude;
+        }
+        else
+        {
+            static assert(
+                direction
+                == WorkingTopocentricDirection.topocentricToGeocentric);
+
+            const W east =
+                first;
+
+            const W north =
+                second;
+
+            const W up =
+                third;
+
+            outFirst =
+                _originX
+                - east * _sinLongitude
+                - north * _sinLatitude * _cosLongitude
+                + up * _cosLatitude * _cosLongitude;
+
+            outSecond =
+                _originY
+                + east * _cosLongitude
+                - north * _sinLatitude * _sinLongitude
+                + up * _cosLatitude * _sinLongitude;
+
+            outThird =
+                _originZ
+                + north * _cosLatitude
+                + up * _sinLatitude;
+        }
+
+        return isFiniteGeodesyScalar(outFirst)
+            && isFiniteGeodesyScalar(outSecond)
+            && isFiniteGeodesyScalar(outThird);
+    }
+
     /**
      * Convert working-precision ECEF coordinates to ENU using the prepared
      * origin and rotation.
-     *
-     * `east`, `north`, and `up` receive working-precision components.
      */
-bool tryWorkingGeocentricToTopocentric(
+    bool tryWorkingGeocentricToTopocentric(
         const W x,
         const W y,
         const W z,
@@ -319,50 +405,20 @@ bool tryWorkingGeocentricToTopocentric(
         out W up) const
         pure nothrow @safe @nogc
     {
-        if (!_valid || !_ellipsoid.isValid)
-            return false;
-
-        const W dx =
-            x - _originX;
-
-        const W dy =
-            y - _originY;
-
-        const W dz =
-            z - _originZ;
-
-        east =
-            -dx * _sinLongitude
-            + dy * _cosLongitude;
-
-        north =
-            -dx * _sinLatitude * _cosLongitude
-            - dy * _sinLatitude * _sinLongitude
-            + dz * _cosLatitude;
-
-        up =
-            dx * _cosLatitude * _cosLongitude
-            + dy * _cosLatitude * _sinLongitude
-            + dz * _sinLatitude;
-
-        return isFiniteGeodesyScalar(east)
-            && isFiniteGeodesyScalar(north)
-            && isFiniteGeodesyScalar(up);
+        return tryWorkingTransform!(
+            WorkingTopocentricDirection.geocentricToTopocentric)(
+                x,
+                y,
+                z,
+                east,
+                north,
+                up);
     }
 
-    /*
-     * Working-precision reverse EPSG 9836 rotation.
-     *
-     * The transpose of the orthonormal forward rotation is applied before
-     * restoring the prepared working-precision ECEF origin.
-     */
     /**
      * Convert working-precision ENU coordinates back to ECEF.
-     *
-     * `x`, `y`, and `z` receive the reconstructed working-precision
-     * geocentric components.
      */
-bool tryWorkingTopocentricToGeocentric(
+    bool tryWorkingTopocentricToGeocentric(
         const W east,
         const W north,
         const W up,
@@ -371,29 +427,14 @@ bool tryWorkingTopocentricToGeocentric(
         out W z) const
         pure nothrow @safe @nogc
     {
-        if (!_valid || !_ellipsoid.isValid)
-            return false;
-
-        x =
-            _originX
-            - east * _sinLongitude
-            - north * _sinLatitude * _cosLongitude
-            + up * _cosLatitude * _cosLongitude;
-
-        y =
-            _originY
-            + east * _cosLongitude
-            - north * _sinLatitude * _sinLongitude
-            + up * _cosLatitude * _sinLongitude;
-
-        z =
-            _originZ
-            + north * _cosLatitude
-            + up * _sinLatitude;
-
-        return isFiniteGeodesyScalar(x)
-            && isFiniteGeodesyScalar(y)
-            && isFiniteGeodesyScalar(z);
+        return tryWorkingTransform!(
+            WorkingTopocentricDirection.topocentricToGeocentric)(
+                east,
+                north,
+                up,
+                x,
+                y,
+                z);
     }
 
 public:
