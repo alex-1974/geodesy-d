@@ -33,6 +33,8 @@ import geodesy.internal.geodesic_inverse_solver :
     geodesicCanonicalInverse;
 
 import geodesy.internal.geodesic_lengths :
+    geodesicLengthDistance,
+    geodesicLengthReducedLength,
     geodesicLengths;
 
 
@@ -774,15 +776,19 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             geodesicLengths!(
                 W,
                 order,
-                true)(
+                geodesicLengthDistance
+                    | geodesicLengthReducedLength)(
                     n,
+                    ep2,
                     sigma12,
                     sinSigma1,
                     cosSigma1,
                     dn1,
+                    cosBeta1,
                     sinSigma2,
                     cosSigma2,
-                    dn2);
+                    dn2,
+                    cosBeta2);
 
         W s12b =
             lengths.s12b;
