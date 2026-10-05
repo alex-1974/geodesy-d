@@ -1770,6 +1770,84 @@ unittest
     }
 
     /*
+     * Endpoint reversal restores geodesic-scale direction as well as azimuth
+     * direction.  This protects the canonical point-swap path used by the
+     * inverse dispatcher.
+     */
+    {
+        enum uint outputs =
+            geodesicInverseReducedLength
+            | geodesicInverseScales
+            | geodesicInverseArea;
+
+        const state =
+            prepare(
+                6_378_137.0,
+                1.0 / 298.257223563,
+                6);
+
+        const forward =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                outputs)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.84,
+                    0.28,
+                    0.82,
+                    0.27);
+
+        const reverse =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                outputs)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.82,
+                    0.27,
+                    0.84,
+                    0.28);
+
+        assert(
+            fabs(
+                forward.reducedLength
+                - reverse.reducedLength)
+            < 1e-8);
+
+        assert(
+            fabs(
+                forward.scale12
+                - reverse.scale21)
+            < 1e-14);
+
+        assert(
+            fabs(
+                forward.scale21
+                - reverse.scale12)
+            < 1e-14);
+
+        assert(
+            fabs(
+                forward.signedArea
+                + reverse.signedArea)
+            < 1.0);
+    }
+
+    /*
      * Instantiate all supported series orders through the dispatcher.
      */
     static foreach (
