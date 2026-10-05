@@ -1136,6 +1136,13 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         swapValues(
             cosAlpha1,
             cosAlpha2);
+
+        static if (calculateScales)
+        {
+            swapValues(
+                scale12,
+                scale21);
+        }
     }
 
     sinAlpha1 *=
