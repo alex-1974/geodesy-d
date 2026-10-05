@@ -34,7 +34,7 @@
  *
  * See_Also:
  *     `Geodesic`, `GeodesicDirectResult`, `GeodesicInverseResult`,
- *     `GeographicCoordinate`
+ *     `GeodesicQuantities`, `GeographicCoordinate`
  *
  * Authors:
  *     Alexander Bernardi
@@ -69,6 +69,9 @@ import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_inverse_dispatch :
+    geodesicInverseArea,
+    geodesicInverseReducedLength,
+    geodesicInverseScales,
     geodesicInverseDispatch;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
@@ -509,6 +512,140 @@ public:
         Longitude!double.fromDegrees(15.43950));
     const result = solver.inverse(vienna, graz);
     assert(result.distance > 0.0);
+}
+
+
+/**
+ * Differential and area quantities for one oriented geodesic segment.
+ *
+ * `reducedLength` is Karney's reduced length m12 and uses the same linear
+ * unit as the solver ellipsoid semi-major axis. `scale12` and `scale21`
+ * are dimensionless geodesic scales M12 and M21. `signedArea` is S12, the
+ * oriented area contribution between the geodesic and the equator, in the
+ * square of the ellipsoid linear unit.
+ *
+ * `signedArea` is orientation-sensitive; reversing the segment reverses its
+ * sign. The two geodesic scale directions exchange roles under endpoint
+ * reversal. Coincident endpoints use the canonical values m12 = 0,
+ * M12 = M21 = 1, and S12 = 0.
+ */
+struct GeodesicQuantities(T)
+if (isGeodesyScalar!T)
+{
+private:
+    T _reducedLength = 0;
+    T _scale12 = 0;
+    T _scale21 = 0;
+    T _signedArea = 0;
+
+    /** Construct quantities from already validated scalar values. */
+    static GeodesicQuantities fromComponents(
+        const T reducedLength,
+        const T scale12,
+        const T scale21,
+        const T signedArea)
+        pure nothrow @safe @nogc
+    {
+        GeodesicQuantities result;
+        result._reducedLength = reducedLength;
+        result._scale12 = scale12;
+        result._scale21 = scale21;
+        result._signedArea = signedArea;
+        return result;
+    }
+
+public:
+    /** Reduced length m12 in the ellipsoid linear unit. */
+    @property T reducedLength() const
+        pure nothrow @safe @nogc
+    {
+        return _reducedLength;
+    }
+
+    /// Example reading reduced length from advanced inverse quantities.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.reducedLength == 0.0);
+    }
+
+    /** Geodesic scale M12 from point 1 to point 2. */
+    @property T scale12() const
+        pure nothrow @safe @nogc
+    {
+        return _scale12;
+    }
+
+    /// Example reading the point-1 to point-2 geodesic scale.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.scale12 == 0.0);
+    }
+
+    /** Geodesic scale M21 from point 2 to point 1. */
+    @property T scale21() const
+        pure nothrow @safe @nogc
+    {
+        return _scale21;
+    }
+
+    /// Example reading the point-2 to point-1 geodesic scale.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.scale21 == 0.0);
+    }
+
+    /** Signed area contribution S12 in the square of the ellipsoid unit. */
+    @property T signedArea() const
+        pure nothrow @safe @nogc
+    {
+        return _signedArea;
+    }
+
+    /// Example reading the signed geodesic area contribution.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.signedArea == 0.0);
+    }
+}
+
+/// Example reading advanced inverse geodesic quantities.
+@safe unittest
+{
+    import geodesy;
+
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            wgs84!double());
+
+    const start =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+
+    const end =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+
+    GeodesicInverseResult!double inverse;
+    GeodesicQuantities!double quantities;
+
+    assert(
+        solver.tryInverse(
+            start,
+            end,
+            inverse,
+            quantities));
+
+    assert(inverse.distance > 0.0);
+    assert(quantities.reducedLength != 0.0);
+    assert(quantities.scale12 == quantities.scale12);
+    assert(quantities.scale21 == quantities.scale21);
+    assert(quantities.signedArea != 0.0);
 }
 
 
@@ -1410,6 +1547,147 @@ public:
 
         return true;
     }
+
+    /**
+     * Solve the shortest inverse geodesic and its advanced segment quantities.
+     *
+     * This overload is additive to the frozen v1 inverse surface. Requesting
+     * `quantities` enables reduced length, geodesic scales, and signed area;
+     * the ordinary three-output `tryInverse` remains the lean distance and
+     * azimuth path.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     end = Geographic endpoint.
+     *     result = Receives distance plus initial and final forward azimuths.
+     *     quantities = Receives m12, M12, M21, and S12.
+     *
+     * Returns:
+     *     `true` when all requested values are finite and representable;
+     *     otherwise `false`. Both outputs are reset to `.init` on entry.
+     */
+    bool tryInverse(
+        const GeographicCoordinate!T start,
+        const GeographicCoordinate!T end,
+        out GeodesicInverseResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result =
+            GeodesicInverseResult!T.init;
+
+        quantities =
+            GeodesicQuantities!T.init;
+
+        if (!isValid)
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W latitude2 =
+            workingLatitudeRadians!T(
+                end.latitude.radians);
+
+        const W longitude2 =
+            workingCanonicalAngleRadians!T(
+                end.longitude.radians);
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+        )
+            return false;
+
+        enum int order =
+            geodesicSeriesOrderFor!T;
+
+        enum uint outputs =
+            geodesicInverseReducedLength
+            | geodesicInverseScales
+            | geodesicInverseArea;
+
+        const inverse =
+            geodesicInverseDispatch!(
+                W,
+                order,
+                outputs)(
+                    _a,
+                    _f,
+                    _f1,
+                    _b,
+                    _ep2,
+                    _n,
+                    _a3x,
+                    _c3x,
+                    latitude1,
+                    longitude1,
+                    latitude2,
+                    longitude2);
+
+        const T distance =
+            canonicalZero(
+                cast(T) inverse.distance);
+
+        const T reducedLength =
+            canonicalZero(
+                cast(T) inverse.reducedLength);
+
+        const T scale12 =
+            cast(T) inverse.scale12;
+
+        const T scale21 =
+            cast(T) inverse.scale21;
+
+        const T signedArea =
+            canonicalZero(
+                cast(T) inverse.signedArea);
+
+        const T initialAzimuth =
+            canonicalAngleRadians(
+                cast(T) inverse.initialAzimuth);
+
+        const T finalAzimuth =
+            canonicalAngleRadians(
+                cast(T) inverse.finalAzimuth);
+
+        if (
+            !isFiniteGeodesyScalar(distance)
+            || distance < cast(T) 0
+            || !isFiniteGeodesyScalar(reducedLength)
+            || !isFiniteGeodesyScalar(scale12)
+            || !isFiniteGeodesyScalar(scale21)
+            || !isFiniteGeodesyScalar(signedArea)
+            || !isFiniteGeodesyScalar(initialAzimuth)
+            || !isFiniteGeodesyScalar(finalAzimuth)
+        )
+            return false;
+
+        result =
+            GeodesicInverseResult!T.fromComponents(
+                distance,
+                angleFromRadiansUnchecked(
+                    initialAzimuth),
+                angleFromRadiansUnchecked(
+                    finalAzimuth));
+
+        quantities =
+            GeodesicQuantities!T.fromComponents(
+                reducedLength,
+                scale12,
+                scale21,
+                signedArea);
+
+        return true;
+    }
+
 
     /// Example using bool tryInverse( const GeographicCoordinate!T start, const GeographicCoordinate!T end, out.
     @safe unittest

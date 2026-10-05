@@ -29,14 +29,39 @@ import std.math :
     sin,
     sqrt;
 
+import geodesy.internal.geodesic_area :
+    geodesicAuthalicRadiusSquared,
+    geodesicSignedArea;
+
+import geodesy.internal.geodesic_area_series :
+    fillGeodesicC4x;
+
 import geodesy.internal.geodesic_inverse_solver :
     geodesicCanonicalInverse;
 
 import geodesy.internal.geodesic_lengths :
+    geodesicLengthDistance,
+    geodesicLengthReducedLength,
+    geodesicLengthScales,
     geodesicLengths;
 
 
 package(geodesy):
+
+
+/*
+ * Internal compile-time inverse output capabilities.
+ *
+ * These are deliberately not a public runtime output mask.
+ */
+enum uint geodesicInverseReducedLength =
+    1u << 0;
+
+enum uint geodesicInverseScales =
+    1u << 1;
+
+enum uint geodesicInverseArea =
+    1u << 2;
 
 
 /** Internal path selected by inverse dispatch. */
@@ -54,9 +79,13 @@ enum GeodesicInverseDispatchKind : ubyte
 struct GeodesicInverseDispatchResult(W)
 {
     W distance;
+    W reducedLength;
+    W scale12;
+    W scale21;
     W initialAzimuth;
     W finalAzimuth;
     W sigma12;
+    W signedArea;
 
     uint iterations;
 
@@ -502,7 +531,8 @@ private void swapValues(W)(
  */
 GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     W,
-    int order)(
+    int order,
+    uint outputs = 0)(
     const W a,
     const W f,
     const W f1,
@@ -520,6 +550,39 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     static assert(
         order >= 6 && order <= 8,
         "unsupported geodesic series order");
+
+    static assert(
+        (
+            outputs
+            & ~(
+                geodesicInverseReducedLength
+                | geodesicInverseScales
+                | geodesicInverseArea
+            )
+        ) == 0,
+        "unsupported inverse geodesic output capability");
+
+    enum bool calculateReducedLength =
+        (outputs & geodesicInverseReducedLength) != 0;
+
+    enum bool calculateScales =
+        (outputs & geodesicInverseScales) != 0;
+
+    enum bool calculateArea =
+        (outputs & geodesicInverseArea) != 0;
+
+    enum uint canonicalLengthOutputs =
+        geodesicLengthDistance
+        | (
+            calculateReducedLength
+                ? geodesicLengthReducedLength
+                : 0
+        )
+        | (
+            calculateScales
+                ? geodesicLengthScales
+                : 0
+        );
 
     const W zero =
         cast(W) 0;
@@ -706,6 +769,24 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     W cosAlpha2 =
         one;
 
+    W sinOmega12 =
+        zero;
+
+    W cosOmega12 =
+        one;
+
+    W reducedLength =
+        zero;
+
+    W scale12 =
+        zero;
+
+    W scale21 =
+        zero;
+
+    W signedArea =
+        zero;
+
     uint iterations =
         0;
 
@@ -770,19 +851,31 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
                 cosSigma1 * cosSigma2
                     + sinSigma1 * sinSigma2);
 
+        enum uint meridianLengthOutputs =
+            geodesicLengthDistance
+            | geodesicLengthReducedLength
+            | (
+                calculateScales
+                    ? geodesicLengthScales
+                    : 0
+            );
+
         const lengths =
             geodesicLengths!(
                 W,
                 order,
-                true)(
+                meridianLengthOutputs)(
                     n,
+                    ep2,
                     sigma12,
                     sinSigma1,
                     cosSigma1,
                     dn1,
+                    cosBeta1,
                     sinSigma2,
                     cosSigma2,
-                    dn2);
+                    dn2,
+                    cosBeta2);
 
         W s12b =
             lengths.s12b;
@@ -819,6 +912,21 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
 
             distance =
                 b * s12b;
+
+            static if (calculateReducedLength)
+            {
+                reducedLength =
+                    b * m12b;
+            }
+
+            static if (calculateScales)
+            {
+                scale12 =
+                    lengths.M12;
+
+                scale21 =
+                    lengths.M21;
+            }
 
             kind =
                 GeodesicInverseDispatchKind.meridian;
@@ -861,6 +969,30 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             longitude12
             / f1;
 
+        static if (calculateReducedLength)
+        {
+            reducedLength =
+                b * sin(sigma12);
+        }
+
+        static if (calculateScales)
+        {
+            const W scale =
+                cos(sigma12);
+
+            scale12 =
+                scale;
+
+            scale21 =
+                scale;
+        }
+
+        sinOmega12 =
+            sin(sigma12);
+
+        cosOmega12 =
+            cos(sigma12);
+
         kind =
             GeodesicInverseDispatchKind.equator;
     }
@@ -869,7 +1001,8 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         const general =
             geodesicCanonicalInverse!(
                 W,
-                order)(
+                order,
+                canonicalLengthOutputs)(
                     f,
                     f1,
                     ep2,
@@ -889,6 +1022,21 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         distance =
             b * general.s12b;
 
+        static if (calculateReducedLength)
+        {
+            reducedLength =
+                b * general.m12b;
+        }
+
+        static if (calculateScales)
+        {
+            scale12 =
+                general.M12;
+
+            scale21 =
+                general.M21;
+        }
+
         sigma12 =
             general.sigma12;
 
@@ -903,6 +1051,12 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
 
         cosAlpha2 =
             general.cosAlpha2;
+
+        sinOmega12 =
+            general.sinOmega12;
+
+        cosOmega12 =
+            general.cosOmega12;
 
         iterations =
             general.iterations;
@@ -922,6 +1076,54 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
                 : GeodesicInverseDispatchKind.generalNewton;
     }
 
+    static if (calculateArea)
+    {
+        if (distance != zero)
+        {
+            const W e2 =
+                f
+                * (cast(W) 2 - f);
+
+            W[36] c4x;
+
+            fillGeodesicC4x!(
+                W,
+                order)(
+                    n,
+                    c4x);
+
+            const W authalicRadiusSquared =
+                geodesicAuthalicRadiusSquared(
+                    a,
+                    b,
+                    e2);
+
+            signedArea =
+                geodesicSignedArea!(
+                    W,
+                    order)(
+                        a,
+                        e2,
+                        ep2,
+                        authalicRadiusSquared,
+                        c4x,
+                        sinBeta1,
+                        cosBeta1,
+                        sinBeta2,
+                        cosBeta2,
+                        sinAlpha1,
+                        cosAlpha1,
+                        sinAlpha2,
+                        cosAlpha2,
+                        meridian,
+                        sinOmega12,
+                        cosOmega12,
+                        swapSign
+                            * longitudeSign
+                            * latitudeSign);
+        }
+    }
+
     /*
      * Restore the original endpoint order and signs.
      */
@@ -934,6 +1136,13 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         swapValues(
             cosAlpha1,
             cosAlpha2);
+
+        static if (calculateScales)
+        {
+            swapValues(
+                scale12,
+                scale21);
+        }
     }
 
     sinAlpha1 *=
@@ -972,6 +1181,10 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         return GeodesicInverseDispatchResult!W(
             zero,
             zero,
+            calculateScales ? one : zero,
+            calculateScales ? one : zero,
+            zero,
+            zero,
             zero,
             zero,
             0,
@@ -995,9 +1208,13 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
 
     return GeodesicInverseDispatchResult!W(
         distance,
+        reducedLength,
+        scale12,
+        scale21,
         initialAzimuth,
         finalAzimuth,
         sigma12,
+        signedArea,
         iterations,
         kind,
         startKind,
@@ -1433,6 +1650,201 @@ unittest
                         + cast(double) PI
                     )))
             < 2e-14);
+    }
+
+    /*
+     * Explicit area capability: coincidence and equatorial geodesics have
+     * canonical zero signed area.
+     */
+    {
+        const state =
+            prepare(
+                6_378_137.0,
+                1.0 / 298.257223563,
+                6);
+
+        const coincident =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.4,
+                    1.2,
+                    0.4,
+                    1.2);
+
+        assert(coincident.signedArea == 0.0);
+        assert(!signbit(coincident.signedArea));
+
+        const equator =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0);
+
+        assert(equator.signedArea == 0.0);
+        assert(!signbit(equator.signedArea));
+    }
+
+    /*
+     * Signed area is antisymmetric when the oriented geodesic endpoints are
+     * reversed.
+     */
+    {
+        const state =
+            prepare(
+                6_378_137.0,
+                1.0 / 298.257223563,
+                6);
+
+        const forward =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    -0.55,
+                    -0.3,
+                    0.2,
+                    1.1);
+
+        const reverse =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.2,
+                    1.1,
+                    -0.55,
+                    -0.3);
+
+        assert(forward.signedArea != 0.0);
+
+        const double scale =
+            fabs(forward.signedArea) > 1.0
+                ? fabs(forward.signedArea)
+                : 1.0;
+
+        assert(
+            fabs(
+                forward.signedArea
+                + reverse.signedArea)
+            <= 32.0
+                * double.epsilon
+                * scale);
+    }
+
+    /*
+     * Endpoint reversal restores geodesic-scale direction as well as azimuth
+     * direction.  This protects the canonical point-swap path used by the
+     * inverse dispatcher.
+     */
+    {
+        enum uint outputs =
+            geodesicInverseReducedLength
+            | geodesicInverseScales
+            | geodesicInverseArea;
+
+        const state =
+            prepare(
+                6_378_137.0,
+                1.0 / 298.257223563,
+                6);
+
+        const forward =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                outputs)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.84,
+                    0.28,
+                    0.82,
+                    0.27);
+
+        const reverse =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                outputs)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.82,
+                    0.27,
+                    0.84,
+                    0.28);
+
+        assert(
+            fabs(
+                forward.reducedLength
+                - reverse.reducedLength)
+            < 1e-8);
+
+        assert(
+            fabs(
+                forward.scale12
+                - reverse.scale21)
+            < 1e-14);
+
+        assert(
+            fabs(
+                forward.scale21
+                - reverse.scale12)
+            < 1e-14);
+
+        assert(
+            fabs(
+                forward.signedArea
+                + reverse.signedArea)
+            < 1.0);
     }
 
     /*

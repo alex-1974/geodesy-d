@@ -499,8 +499,60 @@ mantissa width; on the validated Linux x86-64 environment
 
 The frozen v1 geodesic surface does not expose `GeodesicLine`, reduced
 length, geodesic scales, area, longitude unrolling, polygon accumulation, or
-prolate ellipsoids. Compatible post-v1 additions are tracked separately in the
-roadmap and do not alter the v1.0 direct/inverse contract.
+prolate ellipsoids.
+
+### Additive v1.1 geodesic quantities
+
+The v1.1 candidate adds advanced quantities without changing the frozen v1
+result types or ordinary direct/inverse signatures.
+
+The shared quantity value type is:
+
+```d
+GeodesicQuantities!T
+```
+
+with:
+
+```text
+reducedLength  m12   same linear unit as ellipsoid a
+scale12        M12   dimensionless
+scale21        M21   dimensionless
+signedArea     S12   square of the ellipsoid linear unit
+```
+
+The first additive operation is the checked inverse overload:
+
+```d
+bool tryInverse(
+    const GeographicCoordinate!T start,
+    const GeographicCoordinate!T end,
+    out GeodesicInverseResult!T result,
+    out GeodesicQuantities!T quantities) const
+    pure nothrow @safe @nogc;
+```
+
+The existing v1 overload remains unchanged and does not compute advanced
+quantities.
+
+`S12` is an oriented area contribution and changes sign when the segment
+orientation is reversed. `M12` and `M21` describe opposite geodesic-scale
+directions. Coincident endpoints use the canonical advanced values:
+
+```text
+m12 = 0
+M12 = 1
+M21 = 1
+S12 = 0
+```
+
+The public API deliberately does not expose a GeographicLib-style runtime
+output mask. Quantity selection remains an internal compile-time
+specialization concern.
+
+A matching direct overload is deferred until the direct advanced-quantity
+kernel has independent validation. Compatible post-v1 additions do not alter
+the v1.0 direct/inverse contract.
 
 See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
 numerical, canonicalization, and validation contract.
