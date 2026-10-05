@@ -817,7 +817,7 @@ public:
 }
 
 
-/// Regression coverage for antimeridian, pole, and nearly-degenerate polygons.
+// Regression coverage for antimeridian, pole, and nearly-degenerate polygons.
 @safe unittest
 {
     import std.math : fabs;
