@@ -207,8 +207,8 @@ if (isGeodesyScalar!T)
 {
 private:
     size_t _pointCount;
-    T _perimeter;
-    T _signedArea;
+    T _perimeter = 0;
+    T _signedArea = 0;
 
     static GeodesicPolygonResult fromComponents(
         const size_t pointCount,
