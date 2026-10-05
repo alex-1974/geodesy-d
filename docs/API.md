@@ -550,9 +550,31 @@ The public API deliberately does not expose a GeographicLib-style runtime
 output mask. Quantity selection remains an internal compile-time
 specialization concern.
 
-A matching direct overload is deferred until the direct advanced-quantity
-kernel has independent validation. Compatible post-v1 additions do not alter
-the v1.0 direct/inverse contract.
+The matching checked direct overload is:
+
+```d
+bool tryDirect(
+    const GeographicCoordinate!T start,
+    const Angle!T initialAzimuth,
+    const T distance,
+    out GeodesicDirectResult!T result,
+    out GeodesicQuantities!T quantities) const
+    pure nothrow @safe @nogc;
+```
+
+Direct quantities follow the orientation of the signed-distance segment.
+Negative distance therefore evaluates the same prepared oriented line in the
+opposite signed direction. Zero distance preserves the supplied direct-line
+azimuth and returns canonical advanced values:
+
+```text
+m12 = 0
+M12 = 1
+M21 = 1
+S12 = 0
+```
+
+Compatible post-v1 additions do not alter the v1.0 direct/inverse contract.
 
 See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
 numerical, canonicalization, and validation contract.
