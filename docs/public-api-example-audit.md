@@ -167,6 +167,12 @@ The audit is complete when:
 | `geodesy.geodesic.GeodesicInverseResult.finalAzimuth` | existing | geodesics |
 | `geodesy.geodesic.GeodesicInverseResult` | existing | geodesics |
 | `geodesy.geodesic.GeodesicInverseResult.initialAzimuth` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.fromGeodesic` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.isValid` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.position` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.tryFromGeodesic` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.tryPosition` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.reducedLength` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.scale12` | existing | geodesics |
