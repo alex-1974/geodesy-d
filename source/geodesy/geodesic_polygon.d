@@ -312,21 +312,21 @@ private:
         area = cast(W) 0;
         crossing = 0;
 
-        GeodesicInverseResult!T inverse;
-        GeodesicQuantities!T quantities;
+        T publicDistance;
+        T publicArea;
 
-        if (!_solver.tryInverse(
+        if (!_solver.tryInverseDistanceArea(
                 from,
                 to,
-                inverse,
-                quantities))
+                publicDistance,
+                publicArea))
             return false;
 
         distance =
-            cast(W) inverse.distance;
+            cast(W) publicDistance;
 
         area =
-            cast(W) quantities.signedArea;
+            cast(W) publicArea;
 
         crossing =
             primeMeridianTransit!W(
