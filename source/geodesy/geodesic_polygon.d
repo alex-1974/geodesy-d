@@ -30,6 +30,10 @@ module geodesy.geodesic_polygon;
 import std.math :
     PI;
 
+import geodesy.angle :
+    Latitude,
+    Longitude;
+
 import geodesy.ellipsoid :
     Ellipsoid;
 
