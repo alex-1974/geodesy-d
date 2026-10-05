@@ -42,19 +42,26 @@ import geodesy.internal.geodesic_inverse_solver :
 import geodesy.internal.geodesic_lengths :
     geodesicLengthDistance,
     geodesicLengthReducedLength,
+    geodesicLengthScales,
     geodesicLengths;
 
 
 package(geodesy):
 
 
-/**
- * Internal compile-time inverse output capability for signed geodesic area.
+/*
+ * Internal compile-time inverse output capabilities.
  *
- * This is deliberately not a public runtime output mask.
+ * These are deliberately not a public runtime output mask.
  */
-enum uint geodesicInverseArea =
+enum uint geodesicInverseReducedLength =
     1u << 0;
+
+enum uint geodesicInverseScales =
+    1u << 1;
+
+enum uint geodesicInverseArea =
+    1u << 2;
 
 
 /** Internal path selected by inverse dispatch. */
@@ -72,6 +79,9 @@ enum GeodesicInverseDispatchKind : ubyte
 struct GeodesicInverseDispatchResult(W)
 {
     W distance;
+    W reducedLength;
+    W scale12;
+    W scale21;
     W initialAzimuth;
     W finalAzimuth;
     W sigma12;
@@ -542,11 +552,37 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         "unsupported geodesic series order");
 
     static assert(
-        (outputs & ~geodesicInverseArea) == 0,
+        (
+            outputs
+            & ~(
+                geodesicInverseReducedLength
+                | geodesicInverseScales
+                | geodesicInverseArea
+            )
+        ) == 0,
         "unsupported inverse geodesic output capability");
+
+    enum bool calculateReducedLength =
+        (outputs & geodesicInverseReducedLength) != 0;
+
+    enum bool calculateScales =
+        (outputs & geodesicInverseScales) != 0;
 
     enum bool calculateArea =
         (outputs & geodesicInverseArea) != 0;
+
+    enum uint canonicalLengthOutputs =
+        geodesicLengthDistance
+        | (
+            calculateReducedLength
+                ? geodesicLengthReducedLength
+                : 0
+        )
+        | (
+            calculateScales
+                ? geodesicLengthScales
+                : 0
+        );
 
     const W zero =
         cast(W) 0;
@@ -739,6 +775,15 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     W cosOmega12 =
         one;
 
+    W reducedLength =
+        zero;
+
+    W scale12 =
+        zero;
+
+    W scale21 =
+        zero;
+
     W signedArea =
         zero;
 
@@ -806,12 +851,20 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
                 cosSigma1 * cosSigma2
                     + sinSigma1 * sinSigma2);
 
+        enum uint meridianLengthOutputs =
+            geodesicLengthDistance
+            | geodesicLengthReducedLength
+            | (
+                calculateScales
+                    ? geodesicLengthScales
+                    : 0
+            );
+
         const lengths =
             geodesicLengths!(
                 W,
                 order,
-                geodesicLengthDistance
-                    | geodesicLengthReducedLength)(
+                meridianLengthOutputs)(
                     n,
                     ep2,
                     sigma12,
@@ -860,6 +913,21 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             distance =
                 b * s12b;
 
+            static if (calculateReducedLength)
+            {
+                reducedLength =
+                    b * m12b;
+            }
+
+            static if (calculateScales)
+            {
+                scale12 =
+                    lengths.M12;
+
+                scale21 =
+                    lengths.M21;
+            }
+
             kind =
                 GeodesicInverseDispatchKind.meridian;
         }
@@ -901,6 +969,24 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             longitude12
             / f1;
 
+        static if (calculateReducedLength)
+        {
+            reducedLength =
+                b * sin(sigma12);
+        }
+
+        static if (calculateScales)
+        {
+            const W scale =
+                cos(sigma12);
+
+            scale12 =
+                scale;
+
+            scale21 =
+                scale;
+        }
+
         sinOmega12 =
             sin(sigma12);
 
@@ -915,7 +1001,8 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         const general =
             geodesicCanonicalInverse!(
                 W,
-                order)(
+                order,
+                canonicalLengthOutputs)(
                     f,
                     f1,
                     ep2,
@@ -934,6 +1021,21 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
 
         distance =
             b * general.s12b;
+
+        static if (calculateReducedLength)
+        {
+            reducedLength =
+                b * general.m12b;
+        }
+
+        static if (calculateScales)
+        {
+            scale12 =
+                general.M12;
+
+            scale21 =
+                general.M21;
+        }
 
         sigma12 =
             general.sigma12;
@@ -1072,6 +1174,9 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         return GeodesicInverseDispatchResult!W(
             zero,
             zero,
+            calculateScales ? one : zero,
+            calculateScales ? one : zero,
+            zero,
             zero,
             zero,
             zero,
@@ -1096,6 +1201,9 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
 
     return GeodesicInverseDispatchResult!W(
         distance,
+        reducedLength,
+        scale12,
+        scale21,
         initialAzimuth,
         finalAzimuth,
         sigma12,
