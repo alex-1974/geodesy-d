@@ -70,7 +70,7 @@ import geodesy.geographic : GeographicCoordinate;
 import geodesy.internal.hypot_compat : stableHypot2;
 import geodesy.internal.geodesic_area :
     geodesicAuthalicRadiusSquared,
-    geodesicSignedArea;
+    geodesicDirectSignedArea;
 import geodesy.internal.geodesic_area_series :
     fillGeodesicC4x;
 import geodesy.internal.geodesic_inverse_dispatch :
@@ -1057,26 +1057,26 @@ bool tryDirectEllipsoidImpl(
                     _e2);
 
             const W signedArea =
-                geodesicSignedArea!(
+                geodesicDirectSignedArea!(
                     W,
                     order)(
                         _a,
                         _e2,
-                        _ep2,
                         authalicRadiusSquared,
                         c4x,
-                        sinBeta1,
-                        cosBeta1,
-                        sinBeta2,
-                        cosBeta2,
+                        eps,
+                        sinAlpha0,
+                        cosAlpha0,
                         sinAlpha1,
                         cosAlpha1,
                         sinAlpha2,
                         cosAlpha2,
-                        sinAlpha0 == cast(W) 0,
-                        sin(omega12),
-                        cos(omega12),
-                        1);
+                        sinSigma1,
+                        cosSigma1,
+                        sinSigma2,
+                        cosSigma2,
+                        sinSigma12,
+                        cosSigma12);
 
             const T reducedLength =
                 canonicalZero(
