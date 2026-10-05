@@ -29,6 +29,13 @@ import std.math :
     sin,
     sqrt;
 
+import geodesy.internal.geodesic_area :
+    geodesicAuthalicRadiusSquared,
+    geodesicSignedArea;
+
+import geodesy.internal.geodesic_area_series :
+    fillGeodesicC4x;
+
 import geodesy.internal.geodesic_inverse_solver :
     geodesicCanonicalInverse;
 
@@ -39,6 +46,15 @@ import geodesy.internal.geodesic_lengths :
 
 
 package(geodesy):
+
+
+/**
+ * Internal compile-time inverse output capability for signed geodesic area.
+ *
+ * This is deliberately not a public runtime output mask.
+ */
+enum uint geodesicInverseArea =
+    1u << 0;
 
 
 /** Internal path selected by inverse dispatch. */
@@ -59,6 +75,7 @@ struct GeodesicInverseDispatchResult(W)
     W initialAzimuth;
     W finalAzimuth;
     W sigma12;
+    W signedArea;
 
     uint iterations;
 
@@ -504,7 +521,8 @@ private void swapValues(W)(
  */
 GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     W,
-    int order)(
+    int order,
+    uint outputs = 0)(
     const W a,
     const W f,
     const W f1,
@@ -522,6 +540,13 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     static assert(
         order >= 6 && order <= 8,
         "unsupported geodesic series order");
+
+    static assert(
+        (outputs & ~geodesicInverseArea) == 0,
+        "unsupported inverse geodesic output capability");
+
+    enum bool calculateArea =
+        (outputs & geodesicInverseArea) != 0;
 
     const W zero =
         cast(W) 0;
@@ -708,6 +733,15 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
     W cosAlpha2 =
         one;
 
+    W sinOmega12 =
+        zero;
+
+    W cosOmega12 =
+        one;
+
+    W signedArea =
+        zero;
+
     uint iterations =
         0;
 
@@ -867,6 +901,12 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             longitude12
             / f1;
 
+        sinOmega12 =
+            sin(sigma12);
+
+        cosOmega12 =
+            cos(sigma12);
+
         kind =
             GeodesicInverseDispatchKind.equator;
     }
@@ -910,6 +950,12 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         cosAlpha2 =
             general.cosAlpha2;
 
+        sinOmega12 =
+            general.sinOmega12;
+
+        cosOmega12 =
+            general.cosOmega12;
+
         iterations =
             general.iterations;
 
@@ -926,6 +972,54 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             general.shortLine
                 ? GeodesicInverseDispatchKind.generalShort
                 : GeodesicInverseDispatchKind.generalNewton;
+    }
+
+    static if (calculateArea)
+    {
+        if (distance != zero)
+        {
+            const W e2 =
+                f
+                * (cast(W) 2 - f);
+
+            W[36] c4x;
+
+            fillGeodesicC4x!(
+                W,
+                order)(
+                    n,
+                    c4x);
+
+            const W authalicRadiusSquared =
+                geodesicAuthalicRadiusSquared(
+                    a,
+                    b,
+                    e2);
+
+            signedArea =
+                geodesicSignedArea!(
+                    W,
+                    order)(
+                        a,
+                        e2,
+                        ep2,
+                        authalicRadiusSquared,
+                        c4x,
+                        sinBeta1,
+                        cosBeta1,
+                        sinBeta2,
+                        cosBeta2,
+                        sinAlpha1,
+                        cosAlpha1,
+                        sinAlpha2,
+                        cosAlpha2,
+                        meridian,
+                        sinOmega12,
+                        cosOmega12,
+                        swapSign
+                            * longitudeSign
+                            * latitudeSign);
+        }
     }
 
     /*
@@ -980,6 +1074,7 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
             zero,
             zero,
             zero,
+            zero,
             0,
             GeodesicInverseDispatchKind.coincidence,
             GeodesicInverseStartKind.none,
@@ -1004,6 +1099,7 @@ GeodesicInverseDispatchResult!W geodesicInverseDispatch(
         initialAzimuth,
         finalAzimuth,
         sigma12,
+        signedArea,
         iterations,
         kind,
         startKind,
