@@ -34,7 +34,7 @@
  *
  * See_Also:
  *     `Geodesic`, `GeodesicDirectResult`, `GeodesicInverseResult`,
- *     `GeographicCoordinate`
+ *     `GeodesicQuantities`, `GeographicCoordinate`
  *
  * Authors:
  *     Alexander Bernardi
