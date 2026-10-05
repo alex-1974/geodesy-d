@@ -1514,6 +1514,104 @@ public:
         return true;
     }
 
+    /**
+     * Solve the direct geodesic and its advanced segment quantities.
+     *
+     * This additive overload preserves the frozen v1 direct result while
+     * requesting reduced length, geodesic scales, and signed area for the
+     * same oriented signed-distance segment.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     initialAzimuth = Initial forward azimuth.
+     *     distance = Finite signed distance in the ellipsoid linear unit.
+     *     result = Receives endpoint and final forward azimuth.
+     *     quantities = Receives m12, M12, M21, and S12.
+     *
+     * Returns:
+     *     `true` when all requested values are finite and representable;
+     *     otherwise `false`. Both outputs are reset to `.init` on entry.
+     */
+    bool tryDirect(
+        const GeographicCoordinate!T start,
+        const Angle!T initialAzimuth,
+        const T distance,
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result =
+            GeodesicDirectResult!T.init;
+
+        quantities =
+            GeodesicQuantities!T.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(distance))
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W azimuth1 =
+            workingCanonicalAngleRadians!T(
+                initialAzimuth.radians);
+
+        const W s12 =
+            cast(W) distance;
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(azimuth1)
+            || !isFiniteGeodesyScalar(s12)
+        )
+            return false;
+
+        if (s12 == cast(W) 0)
+        {
+            GeographicCoordinate!T endpoint;
+
+            if (!makeGeographicCoordinate(
+                    cast(T) latitude1,
+                    cast(T) longitude1,
+                    endpoint))
+                return false;
+
+            const T finalAzimuthRadians =
+                canonicalAngleRadians(
+                    cast(T) azimuth1);
+
+            result =
+                GeodesicDirectResult!T.fromComponents(
+                    endpoint,
+                    angleFromRadiansUnchecked(
+                        finalAzimuthRadians));
+
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    cast(T) 0,
+                    cast(T) 1,
+                    cast(T) 1,
+                    cast(T) 0);
+
+            return true;
+        }
+
+        return tryDirectEllipsoidImpl!true(
+            latitude1,
+            longitude1,
+            azimuth1,
+            s12,
+            result,
+            quantities);
+    }
+
+
     /// Example using bool tryDirect( const GeographicCoordinate!T start, const Angle!T initialAzimuth, const T .
     @safe unittest
     {
