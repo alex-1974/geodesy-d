@@ -780,5 +780,23 @@ families are selected at compile time so unused reduced-length, scale, and
 area work can be erased by the compiler. This policy is part of the M2 design
 and is intended to carry forward into `GeodesicLine`.
 
-A matching direct quantity overload is admitted only after its direct kernel
-and independent GeographicLib validation are complete.
+The matching checked direct quantity overload is:
+
+~~~d
+bool tryDirect(
+    GeographicCoordinate!T start,
+    Angle!T initialAzimuth,
+    T distance,
+    out GeodesicDirectResult!T result,
+    out GeodesicQuantities!T quantities)
+    const pure nothrow @safe @nogc;
+~~~
+
+It uses the same semantic quantity carrier as inverse. Quantities are evaluated
+for the signed-distance oriented segment, so negative distance is meaningful.
+At zero distance direct-line orientation is preserved while advanced quantities
+use `m12 = 0`, `M12 = M21 = 1`, and `S12 = 0`.
+
+The direct and inverse area kernels share C4 coefficients but intentionally use
+different stable alpha12 formulations, matching the distinct GeographicLib
+GenInverse and GeodesicLine/GenPosition numerical paths.
