@@ -735,3 +735,50 @@ decision.
 
 Acceptance does not itself imply integration into `main`, release publication,
 or expansion of the public API. Those remain separate project decisions.
+
+
+## Post-v1 additive quantities
+
+M2/v1.1 extends the accepted v1 geodesic family additively with principal
+differential and area quantities while preserving the frozen v1 result types.
+
+The semantic quantity carrier is:
+
+~~~d
+struct GeodesicQuantities(T)
+{
+    T reducedLength; // m12
+    T scale12;       // M12
+    T scale21;       // M21
+    T signedArea;    // S12
+}
+~~~
+
+Units and orientation semantics are:
+
+- `m12`: same linear unit as the ellipsoid semi-major axis;
+- `M12`, `M21`: dimensionless;
+- `S12`: square of the ellipsoid linear unit and oriented with the segment;
+- coincidence: `m12 = 0`, `M12 = M21 = 1`, `S12 = 0`.
+
+The initial public extension is an overload of checked inverse:
+
+~~~d
+bool tryInverse(
+    GeographicCoordinate!T start,
+    GeographicCoordinate!T end,
+    out GeodesicInverseResult!T result,
+    out GeodesicQuantities!T quantities)
+    const pure nothrow @safe @nogc;
+~~~
+
+The original v1 overload remains unchanged and retains a lean distance/azimuth
+execution path.
+
+The public surface does not expose runtime output masks. Internal quantity
+families are selected at compile time so unused reduced-length, scale, and
+area work can be erased by the compiler. This policy is part of the M2 design
+and is intended to carry forward into `GeodesicLine`.
+
+A matching direct quantity overload is admitted only after its direct kernel
+and independent GeographicLib validation are complete.
