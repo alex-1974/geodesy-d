@@ -28,6 +28,7 @@ import geodesy.internal.geodesic_lambda12 :
     geodesicLambda12;
 
 import geodesy.internal.geodesic_lengths :
+    geodesicLengthDistance,
     geodesicLengths;
 
 
@@ -66,6 +67,9 @@ struct GeodesicCanonicalInverseResult(W)
 
     W sinAlpha2;
     W cosAlpha2;
+
+    W sinOmega12;
+    W cosOmega12;
 
     W eps;
     W deltaOmega12;
@@ -167,6 +171,10 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
 
     if (!start.needsNewton)
     {
+        const W omega12 =
+            lambda12
+            / (f1 * start.dnm);
+
         return GeodesicCanonicalInverseResult!W(
             start.sigma12
                 * start.dnm,
@@ -175,6 +183,8 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
             cosAlpha1,
             start.sinAlpha2,
             start.cosAlpha2,
+            sin(omega12),
+            cos(omega12),
             zero,
             zero,
             0,
@@ -464,15 +474,22 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
         geodesicLengths!(
             W,
             order,
-            true)(
+            geodesicLengthDistance)(
                 current.eps,
+                ep2,
                 current.sigma12,
                 current.sinSigma1,
                 current.cosSigma1,
                 dn1,
+                cosBeta1,
                 current.sinSigma2,
                 current.cosSigma2,
-                dn2);
+                dn2,
+                cosBeta2);
+
+    const W omega12 =
+        lambda12
+        - current.deltaOmega12;
 
     return GeodesicCanonicalInverseResult!W(
         lengths.s12b,
@@ -481,6 +498,8 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
         cosAlpha1,
         current.sinAlpha2,
         current.cosAlpha2,
+        sin(omega12),
+        cos(omega12),
         current.eps,
         current.deltaOmega12,
         iteration,
