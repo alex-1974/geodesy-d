@@ -75,10 +75,12 @@ private struct CompensatedSum(W)
         const W next =
             _sum + value;
 
+        const W virtualValue =
+            next - _sum;
+
         const W error =
-            _sum >= value
-                ? (_sum - next) + value
-                : (value - next) + _sum;
+            (_sum - (next - virtualValue))
+            + (value - virtualValue);
 
         _sum = next;
         _correction += error;
