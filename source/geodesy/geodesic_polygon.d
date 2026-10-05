@@ -210,6 +210,7 @@ private:
     T _perimeter = 0;
     T _signedArea = 0;
 
+    /** Construct a polygon result from already validated public values. */
     static GeodesicPolygonResult fromComponents(
         const size_t pointCount,
         const T perimeter,
@@ -300,6 +301,12 @@ private:
     long _crossings;
     W _ellipsoidArea = W.nan;
 
+    /**
+     * Evaluate one shortest-geodesic polygon edge.
+     *
+     * Returns distance, signed S12 area contribution, and prime-meridian
+     * crossing parity without mutating accumulator state.
+     */
     bool edge(
         const GeographicCoordinate!T from,
         const GeographicCoordinate!T to,
