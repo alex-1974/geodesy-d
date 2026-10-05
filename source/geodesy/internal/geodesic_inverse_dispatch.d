@@ -1538,6 +1538,123 @@ unittest
     }
 
     /*
+     * Explicit area capability: coincidence and equatorial geodesics have
+     * canonical zero signed area.
+     */
+    {
+        const state =
+            prepare(
+                6_378_137.0,
+                1.0 / 298.257223563,
+                6);
+
+        const coincident =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.4,
+                    1.2,
+                    0.4,
+                    1.2);
+
+        assert(coincident.signedArea == 0.0);
+        assert(!signbit(coincident.signedArea));
+
+        const equator =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0);
+
+        assert(equator.signedArea == 0.0);
+        assert(!signbit(equator.signedArea));
+    }
+
+    /*
+     * Signed area is antisymmetric when the oriented geodesic endpoints are
+     * reversed.
+     */
+    {
+        const state =
+            prepare(
+                6_378_137.0,
+                1.0 / 298.257223563,
+                6);
+
+        const forward =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    -0.55,
+                    -0.3,
+                    0.2,
+                    1.1);
+
+        const reverse =
+            geodesicInverseDispatch!(
+                double,
+                6,
+                geodesicInverseArea)(
+                    state.a,
+                    state.f,
+                    state.f1,
+                    state.b,
+                    state.ep2,
+                    state.n,
+                    state.a3x,
+                    state.c3x,
+                    0.2,
+                    1.1,
+                    -0.55,
+                    -0.3);
+
+        assert(forward.signedArea != 0.0);
+
+        const double scale =
+            fabs(forward.signedArea) > 1.0
+                ? fabs(forward.signedArea)
+                : 1.0;
+
+        assert(
+            fabs(
+                forward.signedArea
+                + reverse.signedArea)
+            <= 32.0
+                * double.epsilon
+                * scale);
+    }
+
+    /*
      * Instantiate all supported series orders through the dispatcher.
      */
     static foreach (
