@@ -9,7 +9,7 @@
  * Polygon edges are shortest geodesics between consecutive geographic
  * vertices. The closing edge from the last vertex back to the first is
  * included when results are computed. Signed area is positive for
- * counterclockwise traversal and canonicalized to (-A/2, A/2], where A is the
+ * counterclockwise traversal and canonicalized to $(LPAREN)-A/2, A/2], where A is the
  * full ellipsoid surface area. Self-intersections are accumulated
  * algebraically.
  *
@@ -257,7 +257,7 @@ public:
      * Canonical signed area in square ellipsoid units.
      *
      * Positive area denotes counterclockwise traversal. The result lies in
-     * (-A/2, A/2], where A is the complete ellipsoid surface area.
+     * $(LPAREN)-A/2, A/2], where A is the complete ellipsoid surface area.
      */
     @property T signedArea() const
         pure nothrow @safe @nogc
@@ -285,6 +285,43 @@ public:
  *
  * `.init` is invalid. Prepare from a valid `Geodesic!T`.
  */
+
+/// Example streaming a closed geodesic triangle.
+@safe unittest
+{
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.sphere(
+                6_371_000.0));
+
+    auto polygon =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    polygon.addPoint(
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(0.0)));
+
+    polygon.addPoint(
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(1.0)));
+
+    polygon.addPoint(
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(1.0),
+            Longitude!double.fromDegrees(0.0)));
+
+    const result =
+        polygon.compute();
+
+    assert(result.pointCount == 3);
+    assert(result.perimeter > 0.0);
+    assert(result.signedArea > 0.0);
+}
+
+
 struct GeodesicPolygonAccumulator(T)
 if (isGeodesyScalar!T)
 {
