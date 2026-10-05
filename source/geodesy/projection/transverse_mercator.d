@@ -1785,62 +1785,20 @@ public:
  * Inputs already satisfy projection-domain policy. `result` receives the
  * public factor pair on success.
  */
-private bool tryFactorsAtWorkingPoint(
-        const W latitude,
-        const W deltaLongitude,
+private bool finishFactorsFromConformalState(
+        const W sinPhi,
+        const W cosPhi,
+        const W sinLambda,
+        const W cosLambda,
+        const W tau,
+        const W tauPrime,
+        const W denominator,
+        const W xiPrime,
+        const W etaPrime,
         out W convergenceRadians,
         out W pointScale) const
         pure nothrow @safe @nogc
     {
-        convergenceRadians = W.nan;
-        pointScale = W.nan;
-
-        const W poleTolerance =
-            cast(W) 8 * W.epsilon
-                * (halfPi!W > cast(W) 1
-                    ? halfPi!W
-                    : cast(W) 1);
-
-        if (fabs(fabs(latitude) - halfPi!W) <= poleTolerance)
-            return false;
-
-        const W sinPhi = sin(latitude);
-        const W cosPhi = cos(latitude);
-        const W sinLambda = sin(deltaLongitude);
-        const W cosLambda = cos(deltaLongitude);
-
-        if (!isFiniteScalar(sinPhi)
-            || !isFiniteScalar(cosPhi)
-            || !isFiniteScalar(sinLambda)
-            || !isFiniteScalar(cosLambda)
-            || cosPhi == cast(W) 0)
-            return false;
-
-        const W tau = sinPhi / cosPhi;
-        const W tauPrime =
-            conformalTau(tau, _eccentricity);
-
-        const W denominator =
-            hypot2(tauPrime, cosLambda);
-
-        if (!(denominator > cast(W) 0)
-            || !isFiniteScalar(denominator))
-            return false;
-
-        const W xiPrime =
-            atan2(tauPrime, cosLambda);
-
-        const W etaPrime =
-            asinh(sinLambda / denominator);
-
-        if (!isFiniteScalar(xiPrime)
-            || !isFiniteScalar(etaPrime))
-            return false;
-
-        /*
-         * Gauss-Schreiber convergence and scale before the
-         * conformal-to-rectifying Krueger series.
-         */
         W gamma =
             atan2(
                 sinLambda * tauPrime,
@@ -1864,16 +1822,6 @@ private bool tryFactorsAtWorkingPoint(
             || !(scale > cast(W) 0))
             return false;
 
-        /*
-         * Evaluate
-         *
-         *   d zeta / d zeta'
-         *     = 1
-         *       + sum(2 k alpha[k] cos(2 k zeta'))
-         *
-         * with the same complex Clenshaw recurrence family used by
-         * applyForwardSeries().
-         */
         const W c0 =
             cos(cast(W) 2 * xiPrime);
         const W ch0 =
@@ -1974,6 +1922,266 @@ private bool tryFactorsAtWorkingPoint(
     }
 
 
+    /**
+     * Evaluate meridian convergence and point scale at an accepted
+     * working-precision geographic point.
+     */
+    private bool tryFactorsAtWorkingPoint(
+        const W latitude,
+        const W deltaLongitude,
+        out W convergenceRadians,
+        out W pointScale) const
+        pure nothrow @safe @nogc
+    {
+        convergenceRadians = W.nan;
+        pointScale = W.nan;
+
+        const W poleTolerance =
+            cast(W) 8 * W.epsilon
+                * (halfPi!W > cast(W) 1
+                    ? halfPi!W
+                    : cast(W) 1);
+
+        if (fabs(fabs(latitude) - halfPi!W) <= poleTolerance)
+            return false;
+
+        const W sinPhi = sin(latitude);
+        const W cosPhi = cos(latitude);
+        const W sinLambda = sin(deltaLongitude);
+        const W cosLambda = cos(deltaLongitude);
+
+        if (!isFiniteScalar(sinPhi)
+            || !isFiniteScalar(cosPhi)
+            || !isFiniteScalar(sinLambda)
+            || !isFiniteScalar(cosLambda)
+            || cosPhi == cast(W) 0)
+            return false;
+
+        const W tau = sinPhi / cosPhi;
+        const W tauPrime =
+            conformalTau(tau, _eccentricity);
+
+        const W denominator =
+            hypot2(tauPrime, cosLambda);
+
+        if (!(denominator > cast(W) 0)
+            || !isFiniteScalar(denominator))
+            return false;
+
+        const W xiPrime =
+            atan2(tauPrime, cosLambda);
+
+        const W etaPrime =
+            asinh(sinLambda / denominator);
+
+        if (!isFiniteScalar(xiPrime)
+            || !isFiniteScalar(etaPrime))
+            return false;
+
+        return finishFactorsFromConformalState(
+            sinPhi,
+            cosPhi,
+            sinLambda,
+            cosLambda,
+            tau,
+            tauPrime,
+            denominator,
+            xiPrime,
+            etaPrime,
+            convergenceRadians,
+            pointScale);
+    }
+
+
+    enum uint tmForwardPosition =
+        1u << 0;
+
+    enum uint tmForwardFactors =
+        1u << 1;
+
+
+    private struct TmForwardWorkingResult
+    {
+        W xi;
+        W eta;
+        W convergenceRadians;
+        W pointScale;
+    }
+
+
+    /**
+     * Execute the bounded forward TM path with compile-time-selected outputs.
+     *
+     * Position and factor requests share domain classification, trigonometry,
+     * conformal latitude, and xi'/eta' preparation. Unrequested output
+     * families are removed with static if.
+     */
+    private bool tryForwardWorking(
+        uint outputs)(
+        const GeographicCoordinate!T source,
+        out TmForwardWorkingResult result) const
+        pure nothrow @safe @nogc
+    {
+        static assert(
+            outputs != 0
+            && (outputs & ~(tmForwardPosition | tmForwardFactors)) == 0,
+            "unsupported TM forward output capability");
+
+        enum bool calculatePosition =
+            (outputs & tmForwardPosition) != 0;
+
+        enum bool calculateFactors =
+            (outputs & tmForwardFactors) != 0;
+
+        result =
+            TmForwardWorkingResult.init;
+
+        if (!isValid)
+            return false;
+
+        const W latitude =
+            workingLatitudeRadians(source.latitude);
+
+        W deltaLongitude =
+            cast(W) 0;
+
+        const W poleTolerance =
+            cast(W) 8 * W.epsilon
+                * (halfPi!W > cast(W) 1
+                    ? halfPi!W
+                    : cast(W) 1);
+
+        const bool isPole =
+            fabs(fabs(latitude) - halfPi!W)
+                <= poleTolerance;
+
+        if (isPole)
+        {
+            static if (calculatePosition)
+            {
+                result.xi =
+                    latitude < cast(W) 0
+                        ? -halfPi!W
+                        : halfPi!W;
+
+                result.eta =
+                    cast(W) 0;
+            }
+
+            static if (calculateFactors)
+            {
+                result.convergenceRadians =
+                    cast(W) 0;
+
+                result.pointScale =
+                    cast(W) _scaleFactorAtNaturalOrigin;
+            }
+
+            return true;
+        }
+
+        deltaLongitude =
+            longitudeDifference(
+                cast(W) source.longitude.radians,
+                cast(W) _longitudeOfNaturalOrigin.radians);
+
+        const W maxDelta =
+            maxLongitudeDifference!W;
+
+        const W domainSlack =
+            longitudeDomainSlack();
+
+        if (fabs(deltaLongitude) > maxDelta + domainSlack)
+            return false;
+
+        if (fabs(deltaLongitude) > maxDelta)
+        {
+            deltaLongitude =
+                deltaLongitude < cast(W) 0
+                    ? -maxDelta
+                    : maxDelta;
+        }
+
+        const W sinPhi =
+            sin(latitude);
+
+        const W cosPhi =
+            cos(latitude);
+
+        const W sinLambda =
+            sin(deltaLongitude);
+
+        const W cosLambda =
+            cos(deltaLongitude);
+
+        if (!isFiniteScalar(sinPhi)
+            || !isFiniteScalar(cosPhi)
+            || !isFiniteScalar(sinLambda)
+            || !isFiniteScalar(cosLambda)
+            || cosPhi == cast(W) 0)
+            return false;
+
+        const W tau =
+            sinPhi / cosPhi;
+
+        const W tauPrime =
+            conformalTau(
+                tau,
+                _eccentricity);
+
+        const W denominator =
+            hypot2(
+                tauPrime,
+                cosLambda);
+
+        if (!(denominator > cast(W) 0)
+            || !isFiniteScalar(denominator))
+            return false;
+
+        const W xiPrime =
+            atan2(
+                tauPrime,
+                cosLambda);
+
+        const W etaPrime =
+            asinh(
+                sinLambda / denominator);
+
+        if (!isFiniteScalar(xiPrime)
+            || !isFiniteScalar(etaPrime))
+            return false;
+
+        static if (calculatePosition)
+        {
+            if (!applyForwardSeries(
+                    xiPrime,
+                    etaPrime,
+                    result.xi,
+                    result.eta))
+                return false;
+        }
+
+        static if (calculateFactors)
+        {
+            if (!finishFactorsFromConformalState(
+                    sinPhi,
+                    cosPhi,
+                    sinLambda,
+                    cosLambda,
+                    tau,
+                    tauPrime,
+                    denominator,
+                    xiPrime,
+                    etaPrime,
+                    result.convergenceRadians,
+                    result.pointScale))
+                return false;
+        }
+
+        return true;
+    }
+
+
     /*
      * Research-only forward factor probe.
      *
@@ -1993,80 +2201,18 @@ private bool tryForwardFactorScalars(
         convergenceRadians = T.nan;
         pointScale = T.nan;
 
-        /*
-         * Preserve the accepted public forward domain exactly.
-         */
-        ProjectedCoordinate!T projected;
-        if (!tryForward(source, projected))
+        TmForwardWorkingResult working;
+
+        if (!tryForwardWorking!tmForwardFactors(
+                source,
+                working))
             return false;
 
-        const W latitude =
-            workingLatitudeRadians(source.latitude);
+        convergenceRadians =
+            cast(T) working.convergenceRadians;
 
-        /*
-         * Canonical pole-factor convention (PF-A).
-         *
-         * Longitude is geometrically degenerate at a geographic pole and
-         * public tryForward() already treats pole E/N as independent of
-         * source longitude.  Factors therefore describe that same
-         * canonical projected pole:
-         *
-         *   convergence = 0
-         *   point scale = k0
-         *
-         * Do this before longitude-domain classification so arbitrary
-         * stored pole longitudes remain valid exactly as in tryForward().
-         */
-        const W poleTolerance =
-            cast(W) 64 * W.epsilon
-                * (halfPi!W > cast(W) 1
-                    ? halfPi!W
-                    : cast(W) 1);
-
-        const bool isPole =
-            fabs(fabs(latitude) - halfPi!W)
-                <= poleTolerance;
-
-        if (isPole)
-        {
-            convergenceRadians = cast(T) 0;
-            pointScale = _scaleFactorAtNaturalOrigin;
-            return true;
-        }
-
-        W deltaLongitude =
-            longitudeDifference(
-                cast(W) source.longitude.radians,
-                cast(W) _longitudeOfNaturalOrigin.radians);
-
-        const W maxDelta =
-            maxLongitudeDifference!W;
-        const W domainSlack =
-            longitudeDomainSlack();
-
-        if (fabs(deltaLongitude) > maxDelta + domainSlack)
-            return false;
-
-        if (fabs(deltaLongitude) > maxDelta)
-        {
-            deltaLongitude =
-                deltaLongitude < cast(W) 0
-                    ? -maxDelta
-                    : maxDelta;
-        }
-
-        W gamma;
-        W scale;
-
-        if (!tryFactorsAtWorkingPoint(
-                latitude,
-                deltaLongitude,
-                gamma,
-                scale))
-            return false;
-
-        convergenceRadians = cast(T) gamma;
-        pointScale = cast(T) scale;
+        pointScale =
+            cast(T) working.pointScale;
 
         return isFiniteScalar(convergenceRadians)
             && isFiniteScalar(pointScale)
@@ -2473,64 +2619,34 @@ package bool researchTryReverseFactors(
         out ProjectedCoordinate!T result) const
         pure nothrow @safe @nogc
     {
-        if (!isValid)
-            return false;
+        TmForwardWorkingResult working;
 
-        const W latitude =
-            workingLatitudeRadians(source.latitude);
-        W deltaLongitude = cast(W) 0;
-
-        const W poleTolerance =
-            cast(W) 8 * W.epsilon
-                * (halfPi!W > cast(W) 1 ? halfPi!W : cast(W) 1);
-        const bool isPole =
-            fabs(fabs(latitude) - halfPi!W) <= poleTolerance;
-
-        if (!isPole)
-        {
-            deltaLongitude = longitudeDifference(
-                cast(W) source.longitude.radians,
-                cast(W) _longitudeOfNaturalOrigin.radians);
-
-            const W maxDelta = maxLongitudeDifference!W;
-            const W domainSlack = longitudeDomainSlack();
-
-            if (fabs(deltaLongitude) > maxDelta + domainSlack)
-                return false;
-
-            /*
-             * Latitude/longitude strong types store radians. A source and
-             * central meridian that were independently converted from exact
-             * degree values can therefore straddle the nominal +/-60 degree
-             * boundary by a few ulps. Treat that representational noise as the
-             * boundary itself, but do not widen the documented domain.
-             */
-            if (fabs(deltaLongitude) > maxDelta)
-                deltaLongitude =
-                    deltaLongitude < cast(W) 0 ? -maxDelta : maxDelta;
-        }
-
-        W xi;
-        W eta;
-        if (!forwardKernel(latitude, deltaLongitude, xi, eta))
+        if (!tryForwardWorking!tmForwardPosition(
+                source,
+                working))
             return false;
 
         const W scale =
-            _a1 * cast(W) _scaleFactorAtNaturalOrigin;
+            _a1
+            * cast(W) _scaleFactorAtNaturalOrigin;
 
         const W easting =
-            cast(W) _falseEasting + scale * eta;
+            cast(W) _falseEasting
+            + scale * working.eta;
+
         const W northing =
             cast(W) _falseNorthing
-                + scale * (xi - _originXi);
+            + scale * (working.xi - _originXi);
 
-        if (!isFiniteScalar(easting) || !isFiniteScalar(northing))
+        if (!isFiniteScalar(easting)
+            || !isFiniteScalar(northing))
             return false;
 
         return ProjectedCoordinate!T.tryFromComponents(
             cast(T) easting,
             cast(T) northing,
             result);
+
     }
 
     /// Example projecting a geographic coordinate without throwing.
