@@ -2344,6 +2344,12 @@ public:
         return _valid;
     }
 
+    /// Example checking whether a prepared line is valid.
+    @safe unittest
+    {
+        assert(!GeodesicLine!double.init.isValid);
+    }
+
     /**
      * Prepare a line from an existing geodesic solver without throwing.
      */
@@ -2536,6 +2542,22 @@ public:
         return true;
     }
 
+    /// Example preparing a line without throwing.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        GeodesicLine!double line;
+        assert(GeodesicLine!double.tryFromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0), line));
+        assert(line.isValid);
+    }
+
     /** Prepare a reusable geodesic line, throwing on invalid input. */
     static GeodesicLine fromGeodesic(
         const Geodesic!T solver,
@@ -2556,6 +2578,21 @@ public:
         }
 
         return result;
+    }
+
+    /// Example preparing a reusable line with throwing failure semantics.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0));
+        assert(line.isValid);
     }
 
     /**
@@ -2708,6 +2745,22 @@ public:
         return true;
     }
 
+    /// Example evaluating a prepared line without throwing.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0));
+        GeodesicDirectResult!double result;
+        assert(line.tryPosition(1_000.0, result));
+    }
+
     /** Evaluate a signed distance along the prepared line. */
     GeodesicDirectResult!T position(
         const T distance) const
@@ -2722,6 +2775,23 @@ public:
         }
 
         return result;
+    }
+
+    /// Example evaluating a prepared line with throwing failure semantics.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0));
+        const result = line.position(1_000.0);
+        assert(result.position.latitude.radians
+            == result.position.latitude.radians);
     }
 }
 
