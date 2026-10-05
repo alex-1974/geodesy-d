@@ -66,6 +66,14 @@ import geodesy.scalar :
     isGeodesyScalar;
 
 
+/** Direction of the internal EPSG 9836 working transform. */
+private enum WorkingTopocentricDirection
+{
+    geocentricToTopocentric,
+    topocentricToGeocentric
+}
+
+
 /**
  * A local topocentric Cartesian coordinate `(east, north, up)`.
  *
@@ -296,13 +304,6 @@ private:
     W _cosLatitude = 0;
     W _sinLongitude = 0;
     W _cosLongitude = 0;
-
-    /** Direction of the internal EPSG 9836 working transform. */
-    private enum WorkingTopocentricDirection
-    {
-        geocentricToTopocentric,
-        topocentricToGeocentric
-    }
 
     /**
      * Apply the prepared EPSG 9836 transform in one compile-time-selected
