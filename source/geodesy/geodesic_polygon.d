@@ -70,8 +70,8 @@ if (isGeodesyScalar!T)
 /** Small compensated streaming sum for perimeter and area terms. */
 private struct CompensatedSum(W)
 {
-    W _sum;
-    W _correction;
+    W _sum = cast(W) 0;
+    W _correction = cast(W) 0;
 
     void add(const W value)
         pure nothrow @safe @nogc
