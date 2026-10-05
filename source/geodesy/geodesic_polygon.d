@@ -760,11 +760,26 @@ public:
     cw.addPoint(p2);
     cw.addPoint(p1);
 
-    const ccwResult =
-        ccw.compute();
+    double closingDistance;
+    double closingArea;
+    int closingCrossing;
 
-    const cwResult =
-        cw.compute();
+    assert(
+        ccw.edge(
+            p2,
+            p0,
+            closingDistance,
+            closingArea,
+            closingCrossing));
+
+    assert(isFiniteGeodesyScalar(closingDistance));
+    assert(isFiniteGeodesyScalar(closingArea));
+
+    GeodesicPolygonResult!double ccwResult;
+    GeodesicPolygonResult!double cwResult;
+
+    assert(ccw.tryCompute(ccwResult));
+    assert(cw.tryCompute(cwResult));
 
     assert(ccwResult.perimeter > 0.0);
     assert(
