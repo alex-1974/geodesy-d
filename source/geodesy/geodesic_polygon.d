@@ -274,6 +274,17 @@ public:
 }
 
 
+/// Example reading an initialized polygon result carrier.
+@safe unittest
+{
+    GeodesicPolygonResult!double result;
+
+    assert(result.pointCount == 0);
+    assert(result.perimeter == 0.0);
+    assert(result.signedArea == 0.0);
+}
+
+
 /**
  * Streaming accumulator for one closed ellipsoidal geodesic polygon.
  *
