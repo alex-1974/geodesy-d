@@ -83,7 +83,9 @@ struct GeodesicLambda12Result(W)
     W eps;
 
     /**
-     * Ellipsoidal correction omega12 - lambda12.
+     * Ellipsoidal correction subtracted from lambda12 to recover omega12:
+     *
+     *     omega12 = lambda12 - deltaOmega12
      */
     W deltaOmega12;
 
