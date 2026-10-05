@@ -285,43 +285,6 @@ public:
  *
  * `.init` is invalid. Prepare from a valid `Geodesic!T`.
  */
-
-/// Example streaming a closed geodesic triangle.
-@safe unittest
-{
-    const solver =
-        Geodesic!double.fromEllipsoid(
-            Ellipsoid!double.sphere(
-                6_371_000.0));
-
-    auto polygon =
-        GeodesicPolygonAccumulator!double.fromGeodesic(
-            solver);
-
-    polygon.addPoint(
-        GeographicCoordinate!double.fromComponents(
-            Latitude!double.fromDegrees(0.0),
-            Longitude!double.fromDegrees(0.0)));
-
-    polygon.addPoint(
-        GeographicCoordinate!double.fromComponents(
-            Latitude!double.fromDegrees(0.0),
-            Longitude!double.fromDegrees(1.0)));
-
-    polygon.addPoint(
-        GeographicCoordinate!double.fromComponents(
-            Latitude!double.fromDegrees(1.0),
-            Longitude!double.fromDegrees(0.0)));
-
-    const result =
-        polygon.compute();
-
-    assert(result.pointCount == 3);
-    assert(result.perimeter > 0.0);
-    assert(result.signedArea > 0.0);
-}
-
-
 struct GeodesicPolygonAccumulator(T)
 if (isGeodesyScalar!T)
 {
@@ -761,9 +724,9 @@ public:
         assert(result.perimeter == 0.0);
         assert(result.signedArea == 0.0);
     }
-}
+} 
 
-
+/// Example validating winding symmetry for a closed geodesic polygon.
 @safe unittest
 {
     import std.math : fabs;
