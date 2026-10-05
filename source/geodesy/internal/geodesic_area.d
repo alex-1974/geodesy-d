@@ -295,6 +295,135 @@ W geodesicSignedArea(
 }
 
 
+/**
+ * Evaluate signed area S12 for a direct geodesic segment.
+ *
+ * This follows GeographicLib GeodesicLine::GenPosition. Unlike the inverse
+ * area path, direct evaluation already has the oriented line state and does
+ * not require canonical endpoint/sign restoration.
+ */
+W geodesicDirectSignedArea(
+    W,
+    int order)(
+    const W a,
+    const W e2,
+    const W authalicRadiusSquared,
+    const ref W[36] c4x,
+    const W eps,
+    const W sinAlpha0,
+    const W cosAlpha0,
+    const W sinAlpha1,
+    const W cosAlpha1,
+    const W sinAlpha2,
+    const W cosAlpha2,
+    const W sinSigma1,
+    const W cosSigma1,
+    const W sinSigma2,
+    const W cosSigma2,
+    const W sinSigma12,
+    const W cosSigma12)
+    pure nothrow @safe @nogc
+{
+    static assert(
+        order >= 6 && order <= 8,
+        "unsupported geodesic series order");
+
+    W[9] c4;
+
+    fillGeodesicC4!(
+        W,
+        order)(
+            eps,
+            c4x,
+            c4);
+
+    const W b41 =
+        geodesicSinCosSeries!W(
+            false,
+            sinSigma1,
+            cosSigma1,
+            c4,
+            order);
+
+    const W b42 =
+        geodesicSinCosSeries!W(
+            false,
+            sinSigma2,
+            cosSigma2,
+            c4,
+            order);
+
+    const W a4 =
+        a * a
+        * cosAlpha0
+        * sinAlpha0
+        * e2;
+
+    W sinAlpha12;
+    W cosAlpha12;
+
+    if (
+        cosAlpha0 == cast(W) 0
+        || sinAlpha0 == cast(W) 0)
+    {
+        sinAlpha12 =
+            sinAlpha2 * cosAlpha1
+            - cosAlpha2 * sinAlpha1;
+
+        cosAlpha12 =
+            cosAlpha2 * cosAlpha1
+            + sinAlpha2 * sinAlpha1;
+    }
+    else
+    {
+        sinAlpha12 =
+            cosAlpha0
+            * sinAlpha0
+            * (
+                cosSigma12 <= cast(W) 0
+                    ? cosSigma1
+                        * (
+                            cast(W) 1
+                            - cosSigma12
+                        )
+                        + sinSigma12 * sinSigma1
+                    : sinSigma12
+                        * (
+                            cosSigma1
+                                * sinSigma12
+                                / (
+                                    cast(W) 1
+                                    + cosSigma12
+                                )
+                            + sinSigma1
+                        )
+            );
+
+        cosAlpha12 =
+            sinAlpha0 * sinAlpha0
+            + cosAlpha0
+                * cosAlpha0
+                * cosSigma1
+                * cosSigma2;
+    }
+
+    const W area =
+        authalicRadiusSquared
+            * atan2(
+                sinAlpha12,
+                cosAlpha12)
+        + a4
+            * (
+                b42
+                - b41
+            );
+
+    return area == cast(W) 0
+        ? cast(W) 0
+        : area;
+}
+
+
 unittest
 {
     import std.math :
