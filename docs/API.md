@@ -36,6 +36,7 @@ Angle<T>
 Latitude<T>
 Longitude<T>
 Ellipsoid<T>
+GeographicCoordinate<T>
 GeodeticCoordinate<T>
 GeocentricCoordinate<T>
 TopocentricCoordinate<T>
@@ -50,6 +51,22 @@ CoordinateFrameHelmert<T>
 
 `GeocentricTranslation` exposes `deltaX/Y/Z` as read-only properties so a
 validated value cannot later be mutated into a NaN/Infinity state.
+
+## Coordinate semantics
+
+`GeographicCoordinate<T>` represents a two-dimensional geographic position
+with latitude and longitude and carries no height semantics.
+
+`GeodeticCoordinate<T>` represents latitude, longitude, and ellipsoidal height.
+Its linear unit is caller-selected and must be consistent with the associated
+ellipsoid where an operation combines them.
+
+The throwing
+`GeodeticCoordinate<T>.fromComponents(latitude, longitude, ellipsoidalHeight)`
+factory retains a v1 convenience default of zero for `ellipsoidalHeight`.
+Omitting that argument denotes an actual ellipsoidal height of zero; it does
+not denote unknown or absent height. Use `GeographicCoordinate<T>` when the
+position has no height semantics.
 
 ## Construction pattern
 
