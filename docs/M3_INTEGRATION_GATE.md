@@ -125,10 +125,10 @@ before the final M3 closure.
 - [x] six-compiler aggregate release/consumer gate defined;
 - [x] fresh external consumer gate defined before the next feature release;
 - [ ] M3 aggregate integration workflow passes on its final head;
-- [ ] controlled local M3 performance baseline recorded;
-- [ ] final #74 evidence summary recorded;
-- [ ] ROADMAP changed from M3 active to M3 completed;
-- [ ] #74 closed.
+- [x] controlled local M3 performance baseline recorded;
+- [x] final #74 evidence summary recorded;
+- [x] ROADMAP changed from M3 active to M3 completed;
+- [x] #74 closed.
 
 ## Release decision
 
@@ -137,3 +137,43 @@ No release version is assigned by this gate.
 After M3 closure, the next decision is whether the coherent M3 feature set
 should enter a new feature-release cycle (for example v1.2.0) or whether
 development should proceed to M4 before release preparation.
+
+
+## Controlled baseline result
+
+Recorded on the controlled development machine against:
+
+`ced06d5c7d04e390de4c8af582c47ce08c590989`
+
+Environment:
+
+- Intel Core i7-9750H;
+- Linux 6.17.0-22-generic x86_64;
+- logical CPU 2;
+- governor `performance`;
+- Intel turbo disabled;
+- LDC 1.41.0;
+- g++ 15.2.0;
+- PROJ 9.7.1;
+- GeographicLib 2.7;
+- 1,000,000 iterations per family.
+
+Measured results:
+
+| Family / operation | geodesy-d | Reference | Ratio D/reference | Interpretation |
+| --- | ---: | ---: | ---: | --- |
+| Rhumb inverse | 493.380 ns/op | GeographicLib 787.373 ns/op | 0.627x | geodesy-d ~37.3% faster |
+| Rhumb line position | 555.932 ns/op | GeographicLib direct 910.429 ns/op | 0.611x | geodesy-d ~38.9% faster |
+| Polar Stereographic forward | 247.239 ns/op | GeographicLib 276.990 ns/op | 0.893x | geodesy-d ~10.7% faster |
+| Polar Stereographic reverse | 486.406 ns/op | GeographicLib 521.538 ns/op | 0.933x | geodesy-d ~6.7% faster |
+| LCC 2SP forward | 269.521 ns/op | PROJ 186.192 ns/op | 1.448x | geodesy-d ~44.8% slower |
+| LAEA forward | 163.193 ns/op | PROJ 180.018 ns/op | 0.907x | geodesy-d ~9.3% faster |
+
+The Polar Stereographic PROJ one-shot timings are intentionally not used as
+the primary comparison because one-shot setup cost dominates and is not
+equivalent to the prepared geodesy-d/GeographicLib path.
+
+The M3 performance requirement is satisfied: all admitted hot paths now have a
+controlled reproducible baseline. LCC 2SP remains the only material
+performance gap and should be treated as a future optimization target rather
+than a blocker for M3 correctness/integration closure.
