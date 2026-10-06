@@ -185,6 +185,10 @@ general distortion tensor/factor API requires separate design evidence.
 Required:
 
 - independent PROJ differential validation;
+- PROJ 9.4 ellipsoidal reverse comparison accounts for its auxiliary-latitude
+  series approximation floor (~1.4e-8 degree observed for EPSG:3035), while
+  geodesy-d's direct Newton inversion and own roundtrip are qualified more
+  strictly;
 - explicit EPSG:3035 GRS80 parameter regression;
 - WGS84, GRS80, sphere, and an additional oblate ellipsoid;
 - oblique, equatorial, north-polar, and south-polar centres;
