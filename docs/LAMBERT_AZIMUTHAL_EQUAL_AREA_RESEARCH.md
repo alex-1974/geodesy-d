@@ -195,7 +195,9 @@ Required:
 - centre and near-centre cases;
 - high latitude;
 - antimeridian;
-- near-antipodal cases;
+- near-antipodal cases, with separately qualified latitude/longitude
+  roundtrip tolerances because directional longitude conditioning degrades
+  faster than latitude as the antipodal singularity is approached;
 - exact antipode rejection;
 - reverse represented-disk boundary rejection;
 - float/double/real;
