@@ -295,6 +295,9 @@ The audit is complete when:
 | `geodesy.projection.utm.UtmZone.isValid` | existing | UTM |
 | `geodesy.projection.utm.UtmZone.number` | existing | UTM |
 | `geodesy.projection.utm.UtmZone.tryFromNumber` | existing | UTM |
+| `geodesy.projection.ups.UpsCoordinate` | existing | UPS |
+| `geodesy.projection.ups.UpsHemisphere` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection` | existing | UPS |
 | `geodesy.projection.ups.UpsCoordinate.easting` | existing | UPS |
 | `geodesy.projection.ups.UpsCoordinate.fromComponents` | existing | UPS |
 | `geodesy.projection.ups.UpsCoordinate.hemisphere` | existing | UPS |
