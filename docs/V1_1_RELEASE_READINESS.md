@@ -1,6 +1,6 @@
 # geodesy-d v1.1.0 release readiness
 
-Status: **RELEASE CANDIDATE PREPARATION**
+Status: **RELEASE METADATA FINALIZATION**
 
 This checklist is specific to v1.1.0. It follows the completed v1.0.0 and
 v1.0.1 release records and preserves the frozen v1 compatibility baseline.
@@ -169,8 +169,8 @@ Before tagging:
 
 After R1 through R8 are complete:
 
-- [ ] convert the changelog Unreleased section to
-  `[1.1.0] - YYYY-MM-DD`;
+- [x] convert the changelog Unreleased section to
+  `[1.1.0] - 2026-10-06`;
 - [ ] finalize release notes;
 - [ ] create tag `v1.1.0` from the accepted release commit;
 - [ ] publish the GitHub release;
@@ -202,7 +202,7 @@ tag/publication, and post-publish verification.
 
 Exact release-candidate head:
 
-`56f25698f8ee8e53fd9afca987f6d81568dbbeb3`
+`83d589c4e357ac7fd60ba6e2b5b9583978fefccd`
 
 All release-relevant hosted gates passed on that exact head:
 
