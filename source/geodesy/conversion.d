@@ -1,11 +1,10 @@
 /**
  * Geographic/geocentric coordinate conversion with a robust inverse.
  *
- * The module implements the EPSG 9602 geographic/geocentric operation family.
- * Forward conversion follows the ellipsoidal Cartesian equations; reverse
- * conversion uses a hybrid kernel designed to retain ordinary terrestrial
- * throughput while providing deterministic, numerically robust behaviour for
- * difficult interior and near-evolute positions.
+ * Convert between geodetic latitude/longitude/height and geocentric X/Y/Z
+ * using EPSG method 9602 semantics. Forward conversion uses the ellipsoidal
+ * Cartesian equations. Reverse conversion remains robust for difficult
+ * interior and near-evolute positions as well as ordinary terrestrial input.
  *
  * Standards:
  *     EPSG method 9602 -- Geographic/geocentric conversions.
