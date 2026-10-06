@@ -225,6 +225,7 @@ jobs:
         env:
           PS_BENCH_CPU: "0"
           PS_BENCH_ITERATIONS: "2048"
+          PS_BENCH_NO_PIN: "1"
         run: |
           set -euxo pipefail
           bash tools/benchmark-polar-stereographic.sh
