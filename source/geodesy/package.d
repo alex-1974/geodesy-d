@@ -71,6 +71,7 @@ public import geodesy.geodetic;
 public import geodesy.geocentric;
 public import geodesy.topocentric;
 public import geodesy.projected;
+public import geodesy.rhumb;
 public import geodesy.scalar;
 
 public import geodesy.conversion;
