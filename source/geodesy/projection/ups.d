@@ -817,7 +817,49 @@ public:
         if (!isLegalUpsLatitude(
                 candidate.latitude,
                 _hemisphere))
-            return false;
+        {
+            /*
+             * The explicit UPS overlap limits are closed public-policy
+             * boundaries.  On a wider public scalar (notably AArch64 real),
+             * reverse projection of an exactly represented legal boundary
+             * point can recover a latitude infinitesimally outside the policy
+             * interval even though forward projection of the legal boundary
+             * collapses to the exact same ProjectedCoordinate!T.
+             *
+             * Do not introduce an angular epsilon.  Accept only when the
+             * represented source is exactly equal to the projection of the
+             * legal boundary at the recovered longitude; then the legal public
+             * boundary representative wins.
+             */
+            const T boundaryDegrees =
+                _hemisphere == UpsHemisphere.north
+                    ? cast(T) 83.5L
+                    : cast(T) -79.5L;
+
+            Latitude!T boundaryLatitude;
+            if (!Latitude!T.tryFromDegrees(
+                    boundaryDegrees,
+                    boundaryLatitude))
+                return false;
+
+            const GeographicCoordinate!T boundaryPoint =
+                GeographicCoordinate!T.fromComponents(
+                    boundaryLatitude,
+                    candidate.longitude);
+
+            ProjectedCoordinate!T boundaryProjected;
+            if (!_polarStereographic.tryForward(
+                    boundaryPoint,
+                    boundaryProjected)
+                || boundaryProjected.easting != source.easting
+                || boundaryProjected.northing != source.northing)
+                return false;
+
+            candidate =
+                GeographicCoordinate!T.fromComponents(
+                    boundaryLatitude,
+                    candidate.longitude);
+        }
 
         result = candidate;
         return true;
