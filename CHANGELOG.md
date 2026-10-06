@@ -2,6 +2,24 @@
 
 All notable changes to `geodesy-d` will be documented here.
 
+## [Unreleased]
+
+### Added
+
+- Added `GeodesicQuantities!T` with reduced length `m12`, geodesic scales `M12`/`M21`, and signed geodesic area contribution `S12` through additive checked direct/inverse overloads.
+- Added prepared `GeodesicLine!T` for efficient repeated distance-based positions on one oriented geodesic.
+- Added streaming `GeodesicPolygonAccumulator!T` / `GeodesicPolygonResult!T` for ellipsoidal perimeter and canonical signed area measurement.
+
+### Validation
+
+- Added independent GeographicLib 2.7 validation for advanced geodesic quantities, prepared distance-mode lines, and polygon-area accumulation.
+- Added durable antimeridian, pole, winding-reversal, and nearly-degenerate polygon regressions.
+- Added the post-M2 geodesic feature matrix and explicit admission/defer/boundary decisions for capabilities not shipped in v1.1.
+
+### Compatibility
+
+- Preserves the frozen v1 source contract; v1.1 geodesic capabilities are additive.
+
 The project follows Semantic Versioning from the first tagged public release.
 
 ## [1.0.1] - 2026-10-04
