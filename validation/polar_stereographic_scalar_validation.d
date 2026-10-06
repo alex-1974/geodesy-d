@@ -34,6 +34,14 @@ private T linearTolerance(T)(T scale)
         return cast(T) 64 * T.epsilon * (scale > 1 ? scale : 1);
 }
 
+private T nearPoleFactorTolerance(T)()
+{
+    static if (is(T == float))
+        return cast(T) 4e-5;
+    else
+        return cast(T) 5e-11;
+}
+
 private void require(bool condition, string message)
 {
     if (!condition)
@@ -201,17 +209,11 @@ private void validateScalar(T)()
     const nearForwardFactors = north.forwardFactors(nearPole);
     const nearReverseFactors = north.reverseFactors(nearProjected);
 
-    const T factorTol =
-        static if (is(T == float))
-            cast(T) 4e-5;
-        else
-            cast(T) 5e-11;
-
     require(
         absT(
             nearForwardFactors.pointScale
                 - nearReverseFactors.pointScale)
-            <= factorTol,
+            <= nearPoleFactorTolerance!T(),
         "near-pole reverse scale failed");
 
     // Variant B must map its standard parallel to scale 1.
