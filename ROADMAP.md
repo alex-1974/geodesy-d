@@ -194,17 +194,23 @@ navigation / projection
 Polar Stereographic, UPS, and Rhumb/RhumbLine form the intended M3 core.
 
 Additional projections are research/admission candidates rather than automatic
-scope. Candidate families include:
+scope. The #40 admission audit is recorded in
+`docs/ADDITIONAL_PROJECTION_ADMISSION_AUDIT.md`.
 
-- Lambert Conformal Conic;
-- Albers Equal Area;
-- Lambert Azimuthal Equal Area;
-- Azimuthal Equidistant;
-- Stereographic;
-- Oblique Mercator.
+Audit outcome:
 
-A projection is admitted only when a real consumer, workspace need,
-interoperability gap, or strong research case exists.
+- #83 — Lambert Conformal Conic 2SP: admitted from concrete Austria and
+  pan-European interoperability evidence;
+- #84 — Lambert Azimuthal Equal Area: admitted from EPSG:3035 pan-European
+  equal-area/statistical interoperability;
+- Albers Equal Area: deferred pending a concrete conic equal-area consumer;
+- Azimuthal Equidistant: deferred pending a projection-plane consumer;
+- generic/Oblique Stereographic: deferred despite national-CRS relevance,
+  pending a concrete consumer;
+- Oblique Mercator: deferred pending a corridor/oblique-region consumer.
+
+Admission remains evidence-driven. A reference library exposing a projection
+is not sufficient reason to implement it.
 
 ---
 
