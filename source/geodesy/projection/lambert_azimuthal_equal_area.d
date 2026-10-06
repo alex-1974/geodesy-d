@@ -987,7 +987,9 @@ public:
                 Latitude!double.fromDegrees(52.0),
                 Longitude!double.fromDegrees(10.0),
                 0.0, 0.0);
-        assert(projection.latitudeOfProjectionCentre.degrees == 52.0);
+        assert(
+            projection.latitudeOfProjectionCentre.radians
+                == Latitude!double.fromDegrees(52.0).radians);
     }
 
 
@@ -1008,7 +1010,9 @@ public:
                 Latitude!double.fromDegrees(52.0),
                 Longitude!double.fromDegrees(10.0),
                 0.0, 0.0);
-        assert(projection.longitudeOfProjectionCentre.degrees == 10.0);
+        assert(
+            projection.longitudeOfProjectionCentre.radians
+                == Longitude!double.fromDegrees(10.0).radians);
     }
 
 
@@ -1327,6 +1331,10 @@ public:
     const northRecovered =
         north.reverse(northProjected);
 
-    assert(northRecovered.latitude.degrees == 90.0);
-    assert(northRecovered.longitude.degrees == 20.0);
+    assert(
+        northRecovered.latitude.radians
+            == Latitude!double.fromDegrees(90.0).radians);
+    assert(
+        northRecovered.longitude.radians
+            == Longitude!double.fromDegrees(20.0).radians);
 }
