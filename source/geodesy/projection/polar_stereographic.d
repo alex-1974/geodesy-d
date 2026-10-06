@@ -454,6 +454,7 @@ public:
     }
 
 
+    /** Reference ellipsoid used by this prepared projection. */
     @property Ellipsoid!T ellipsoid() const
         pure nothrow @safe @nogc
     {
@@ -471,6 +472,7 @@ public:
     }
 
 
+    /** Polar latitude of natural origin selecting the north or south aspect. */
     @property Latitude!T latitudeOfNaturalOrigin() const
         pure nothrow @safe @nogc
     {
@@ -488,6 +490,7 @@ public:
     }
 
 
+    /** Longitude of natural origin defining the projection meridian. */
     @property Longitude!T longitudeOfNaturalOrigin() const
         pure nothrow @safe @nogc
     {
@@ -505,6 +508,7 @@ public:
     }
 
 
+    /** Dimensionless scale factor at the selected natural origin pole. */
     @property T scaleFactorAtNaturalOrigin() const
         pure nothrow @safe @nogc
     {
@@ -522,6 +526,7 @@ public:
     }
 
 
+    /** False easting in the ellipsoid linear unit. */
     @property T falseEasting() const
         pure nothrow @safe @nogc
     {
@@ -539,6 +544,7 @@ public:
     }
 
 
+    /** False northing in the ellipsoid linear unit. */
     @property T falseNorthing() const
         pure nothrow @safe @nogc
     {
