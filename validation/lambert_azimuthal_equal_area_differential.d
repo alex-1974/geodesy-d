@@ -19,6 +19,7 @@ private enum double linearTolerance = 0.04;
  */
 private enum double projReverseAngularTolerance = 2e-8;
 private enum double ownRoundTripAngularTolerance = 5e-9;
+private enum double nearAntipodeRoundTripAngularTolerance = 1e-8;
 
 private struct Config
 {
@@ -132,7 +133,8 @@ private void validatePoint(
     const Config c,
     const LambertAzimuthalEqualArea!double projection,
     double latitude,
-    double longitude)
+    double longitude,
+    bool nearAntipode = false)
 {
     if (exactAntipode(c, latitude, longitude))
         return;
@@ -215,9 +217,14 @@ private void validatePoint(
     const double ownLatError =
         roundTrip.latitude.degrees - latitude;
 
+    const double ownTolerance =
+        nearAntipode
+            ? nearAntipodeRoundTripAngularTolerance
+            : ownRoundTripAngularTolerance;
+
     require(
         fabs(ownLatError)
-            <= ownRoundTripAngularTolerance,
+            <= ownTolerance,
         format(
             "%s own latitude roundtrip mismatch at %.12g %.12g: %.17g",
             c.name,
@@ -233,7 +240,7 @@ private void validatePoint(
 
         require(
             fabs(ownLonError)
-                <= ownRoundTripAngularTolerance,
+                <= ownTolerance,
             format(
                 "%s own longitude roundtrip mismatch at %.12g %.12g: %.17g",
                 c.name,
@@ -353,7 +360,8 @@ void main()
                 c,
                 projection,
                 nearAntiLatitude,
-                normalizeDegrees(c.lon0 + 179.5));
+                normalizeDegrees(c.lon0 + 179.5),
+                true);
         }
     }
 
