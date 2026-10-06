@@ -227,13 +227,36 @@ private bool geodeticTau(T)(
     if (!(e2m > cast(T) 0))
         return false;
 
+    /*
+     * Reverse factors near the selected pole are sensitive to relative error
+     * in tau even when the recovered latitude is already angularly excellent.
+     * Iterate to near working-scalar precision rather than a sqrt(epsilon)
+     * latitude-only stopping threshold.
+     */
     const T tolerance =
-        sqrt(T.epsilon) / cast(T) 10;
+        cast(T) 8 * T.epsilon;
 
-    tau = tauPrime / e2m;
+    /*
+     * Near the pole tau' is asymptotically
+     * exp(-e*atanh(e)) * tau.  Starting Newton from tau'/e2m there loses
+     * significant relative accuracy before the first correction because both
+     * tau and tau' are very large.  Use the asymptotic inverse for the polar
+     * region, matching the stable strategy used by GeographicLib.
+     */
+    tau =
+        fabs(tauPrime) > cast(T) 70
+            ? tauPrime
+                * exp(eccentricityTerm(cast(T) 1, eccentricity))
+            : tauPrime / e2m;
 
     if (!isFiniteScalar(tau))
         return false;
+
+    const T tauMax =
+        cast(T) 2 / sqrt(T.epsilon);
+
+    if (!(fabs(tau) < tauMax))
+        return true;
 
     foreach (_; 0 .. maxIterations)
     {
@@ -273,7 +296,7 @@ private bool geodeticTau(T)(
 
     return fabs(
         tauPrime - conformalTau(tau, eccentricity))
-        < sqrt(T.epsilon)
+        <= cast(T) 16 * T.epsilon
             * (fabs(tauPrime) > cast(T) 1
                 ? fabs(tauPrime)
                 : cast(T) 1);
@@ -352,12 +375,14 @@ private:
         const ProjectedCoordinate!T source,
         out W latitudeRadians,
         out W longitudeRadians,
-        out W rho) const
+        out W rho,
+        out W tauAbs) const
         pure nothrow @safe @nogc
     {
         latitudeRadians = W.nan;
         longitudeRadians = W.nan;
         rho = W.nan;
+        tauAbs = W.nan;
 
         if (!isValid)
             return false;
@@ -382,6 +407,7 @@ private:
                 north ? halfPi!W : -halfPi!W;
             longitudeRadians =
                 cast(W) _longitudeOfNaturalOrigin.radians;
+            tauAbs = W.infinity;
             return true;
         }
 
@@ -404,10 +430,43 @@ private:
             return false;
 
         if (tau < cast(W) 0)
-            return false;
+        {
+            /*
+             * The equator is the closed outer boundary of the admitted
+             * selected-hemisphere domain.  An independently generated
+             * ProjectedCoordinate!T can round a mathematical equator point a
+             * tiny radial distance outside that boundary.  Classify only the
+             * excursion that is indistinguishable at the public scalar's
+             * represented E/N precision as the equator itself.
+             *
+             * The budget scales with the represented linear magnitudes and is
+             * therefore invariant under a consistent change of linear unit.
+             */
+            const W representationScale =
+                fabs(cast(W) source.easting)
+                + fabs(cast(W) source.northing)
+                + fabs(cast(W) _falseEasting)
+                + fabs(cast(W) _falseNorthing)
+                + _radiusFactor
+                + cast(W) _ellipsoid.semiMajorAxis;
+
+            const W equatorSlack =
+                cast(W) 4
+                * cast(W) T.epsilon
+                * (representationScale > cast(W) 1
+                    ? representationScale
+                    : cast(W) 1);
+
+            if (rho <= _radiusFactor + equatorSlack)
+                tau = cast(W) 0;
+            else
+                return false;
+        }
+
+        tauAbs = tau;
 
         const W latitudeAbs =
-            atan(tau);
+            atan(tauAbs);
 
         latitudeRadians =
             north ? latitudeAbs : -latitudeAbs;
@@ -427,17 +486,17 @@ private:
     }
 
 
-    /** Build conformal factors at an accepted working-precision point. */
-    bool factorsAt(
-        const W latitudeRadians,
+    /** Build factors from preserved geodetic tau without angle round-tripping. */
+    bool factorsAtTau(
         const W longitudeRadians,
         const W rho,
+        const W tauAbs,
+        const bool atPole,
         out ConformalProjectionFactors!T result) const
         pure nothrow @safe @nogc
     {
         result = ConformalProjectionFactors!T.init;
 
-        const W latitudeAbs = fabs(latitudeRadians);
         const W deltaLongitude =
             longitudeDifference(
                 longitudeRadians,
@@ -445,16 +504,15 @@ private:
 
         W pointScale;
 
-        if (latitudeAbs == halfPi!W)
+        if (atPole)
         {
             pointScale =
                 cast(W) _scaleFactorAtNaturalOrigin;
         }
         else
         {
-            const W tau = tan(latitudeAbs);
             const W secphi =
-                hypot2(cast(W) 1, tau);
+                hypot2(cast(W) 1, tauAbs);
             const W e2 =
                 _eccentricity * _eccentricity;
             const W scaleTerm =
@@ -474,7 +532,7 @@ private:
             return false;
 
         const W gamma =
-            latitudeAbs == halfPi!W
+            atPole
                 ? cast(W) 0
                 : (northAspect
                     ? deltaLongitude
@@ -493,6 +551,32 @@ private:
 
         return result.pointScale > cast(T) 0
             && isFiniteScalar(result.pointScale);
+    }
+
+
+    /** Build conformal factors at an accepted working-precision point. */
+    bool factorsAt(
+        const W latitudeRadians,
+        const W longitudeRadians,
+        const W rho,
+        out ConformalProjectionFactors!T result) const
+        pure nothrow @safe @nogc
+    {
+        const W latitudeAbs =
+            fabs(latitudeRadians);
+        const bool atPole =
+            latitudeAbs == halfPi!W;
+        const W tauAbs =
+            atPole
+                ? W.infinity
+                : tan(latitudeAbs);
+
+        return factorsAtTau(
+            longitudeRadians,
+            rho,
+            tauAbs,
+            atPole,
+            result);
     }
 
 public:
@@ -1093,12 +1177,14 @@ public:
         W latitudeRadians;
         W longitudeRadians;
         W rho;
+        W tauAbs;
 
         if (!reverseKernel(
                 source,
                 latitudeRadians,
                 longitudeRadians,
-                rho))
+                rho,
+                tauAbs))
             return false;
 
         Latitude!T latitude;
@@ -1179,18 +1265,21 @@ public:
         W latitudeRadians;
         W longitudeRadians;
         W rho;
+        W tauAbs;
 
         if (!reverseKernel(
                 source,
                 latitudeRadians,
                 longitudeRadians,
-                rho))
+                rho,
+                tauAbs))
             return false;
 
-        return factorsAt(
-            latitudeRadians,
+        return factorsAtTau(
             longitudeRadians,
             rho,
+            tauAbs,
+            rho == cast(W) 0,
             result);
     }
 
