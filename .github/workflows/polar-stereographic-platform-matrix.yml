@@ -1,0 +1,231 @@
+name: Polar Stereographic qualification matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/projection/polar_stereographic.d"
+      - "source/geodesy/projection/factors.d"
+      - "validation/polar_stereographic_*"
+      - "validation/platform_fingerprint.d"
+      - "tools/benchmark-polar-stereographic.sh"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/polar-stereographic-platform-matrix.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/projection/polar_stereographic.d"
+      - "source/geodesy/projection/factors.d"
+      - "validation/polar_stereographic_*"
+      - "validation/platform_fingerprint.d"
+      - "tools/benchmark-polar-stereographic.sh"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/polar-stereographic-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  platform:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            experimental: false
+
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            experimental: false
+
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            experimental: false
+
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            experimental: false
+
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            experimental: false
+
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            experimental: false
+
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            experimental: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+          "$DC" --version
+          dub --version
+
+      - name: Platform fingerprint
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$DC" -run validation/platform_fingerprint.d
+
+      - name: Library unit tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dub test --compiler="$DC"
+
+      - name: PS-E scalar and representation qualification
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$DC" -i -Isource             -run validation/polar_stereographic_scalar_validation.d
+
+      - name: PS-G release codegen compile
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p .ci-work
+          if [[ "$DC" == *ldc2* ]]; then
+            opt=(-release -O3 -enable-inlining)
+          else
+            opt=(-release -O -inline)
+          fi
+          "$DC" "${opt[@]}" -i -Isource -c             validation/polar_stereographic_codegen_probe.d             -of=.ci-work/polar-stereographic-codegen.o
+
+  compiler:
+    name: compiler / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - dmd-2.112.1
+          - dmd-2.113.0
+          - ldc-1.41.0
+          - ldc-1.42.0
+          - ldc-1.43.0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Compiler
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$DC" --version
+          dub --version
+
+      - name: Unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: PS-E scalar and representation qualification
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$DC" -i -Isource             -run validation/polar_stereographic_scalar_validation.d
+
+      - name: Release build
+        shell: bash
+        run: dub build --build=release --compiler="$DC"
+
+      - name: PS-G codegen symbols
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p .ci-work
+          if [[ "$DC" == *ldc2* ]]; then
+            opt=(-release -O3 -enable-inlining)
+          else
+            opt=(-release -O -inline)
+          fi
+          "$DC" "${opt[@]}" -i -Isource -c             validation/polar_stereographic_codegen_probe.d             -of=.ci-work/polar-stereographic-codegen.o
+
+          nm -g .ci-work/polar-stereographic-codegen.o             | tee .ci-work/polar-stereographic-symbols.txt
+
+          grep -q 'probe_ps_forward_easting'             .ci-work/polar-stereographic-symbols.txt
+          grep -q 'probe_ps_reverse_latitude'             .ci-work/polar-stereographic-symbols.txt
+          grep -q 'probe_ps_forward_scale'             .ci-work/polar-stereographic-symbols.txt
+
+          objdump -d .ci-work/polar-stereographic-codegen.o             > .ci-work/polar-stereographic-codegen.txt
+
+          echo '=== codegen probe excerpt ==='
+          grep -n -A24 -B2 'probe_ps_'             .ci-work/polar-stereographic-codegen.txt             | head -n 220 || true
+
+  benchmark-smoke:
+    name: PS-G benchmark smoke
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install LDC baseline
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ldc-1.41.0
+
+      - name: Install benchmark references
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes             libproj-dev             libgeographiclib-dev             pkg-config
+
+      - name: Build and execute benchmark smoke
+        shell: bash
+        env:
+          PS_BENCH_CPU: "0"
+          PS_BENCH_ITERATIONS: "2048"
+          PS_BENCH_NO_PIN: "1"
+        run: |
+          set -euxo pipefail
+          bash tools/benchmark-polar-stereographic.sh

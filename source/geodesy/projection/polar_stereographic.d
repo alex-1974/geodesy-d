@@ -999,10 +999,16 @@ public:
 
         alias W = WorkingScalar!T;
 
+        const bool atSelectedPole =
+            publicLatitude
+                == (north ? halfPi!T : -halfPi!T);
+
         const W phi =
-            north
-                ? cast(W) publicLatitude
-                : -cast(W) publicLatitude;
+            atSelectedPole
+                ? halfPi!W
+                : (north
+                    ? cast(W) publicLatitude
+                    : -cast(W) publicLatitude);
 
         W rho;
         if (!radialDistance(phi, rho))
@@ -1099,15 +1105,26 @@ public:
             || (!north && publicLatitude > cast(T) 0))
             return false;
 
+        const bool atSelectedPole =
+            publicLatitude
+                == (north ? halfPi!T : -halfPi!T);
+
         const W latitudeAbs =
-            fabs(cast(W) publicLatitude);
+            atSelectedPole
+                ? halfPi!W
+                : fabs(cast(W) publicLatitude);
 
         W rho;
         if (!radialDistance(latitudeAbs, rho))
             return false;
 
+        const W factorLatitude =
+            atSelectedPole
+                ? (north ? halfPi!W : -halfPi!W)
+                : cast(W) publicLatitude;
+
         return factorsAt(
-            cast(W) publicLatitude,
+            factorLatitude,
             cast(W) source.longitude.normalized.radians,
             rho,
             result);
