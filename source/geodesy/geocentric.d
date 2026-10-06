@@ -1,11 +1,10 @@
 /**
  * Geocentric Cartesian coordinate value type.
  *
- * This module represents finite Earth-centred Cartesian X/Y/Z values without
- * attaching datum, CRS, ellipsoid, or unit metadata. Keeping the coordinate
- * value independent from those identities allows the same strong type to be
- * used by conversion and reference-frame operations while requiring their
- * semantic context to remain explicit.
+ * Represent finite Earth-centred Cartesian X/Y/Z values without attaching a
+ * datum, CRS, ellipsoid, or unit identity. Conversion and reference-frame
+ * operations supply that context explicitly, so the same strong coordinate
+ * type can be reused without hiding geodetic assumptions.
  *
  * Units:
  *     X, Y, and Z share one caller-selected linear unit. When used with an
