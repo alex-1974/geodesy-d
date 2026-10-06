@@ -221,6 +221,20 @@ The audit is complete when:
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.polar_stereographic.PolarStereographic` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.ellipsoid` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.falseEasting` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.falseNorthing` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.forward` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.fromParameters` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.isValid` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.latitudeOfNaturalOrigin` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.longitudeOfNaturalOrigin` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.reverse` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.scaleFactorAtNaturalOrigin` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryForward` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryFromParameters` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryReverse` | existing | Polar Stereographic |
 | `geodesy.projection.transverse_mercator.TransverseMercator.ellipsoid` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator.falseEasting` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator.falseNorthing` | existing | Transverse Mercator |
