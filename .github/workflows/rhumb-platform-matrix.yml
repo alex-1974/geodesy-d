@@ -144,3 +144,29 @@ jobs:
           grep -q probe_rhumb_line_longitude .ci-work/rhumb-symbols.txt
 
           objdump -d .ci-work/rhumb-codegen.o             > .ci-work/rhumb-codegen.txt
+
+
+  benchmark-smoke:
+    name: Rhumb benchmark smoke
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ldc-1.41.0
+
+      - name: Install GeographicLib
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libgeographiclib-dev pkg-config
+
+      - name: Build and execute benchmark smoke
+        shell: bash
+        env:
+          RHUMB_BENCH_ITERATIONS: "2048"
+        run: bash tools/benchmark-rhumb.sh
