@@ -221,6 +221,25 @@ The audit is complete when:
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.isValid` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryFromTwoStandardParallels` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.fromTwoStandardParallels` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.ellipsoid` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.latitudeOfFalseOrigin` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.longitudeOfFalseOrigin` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.firstStandardParallel` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.secondStandardParallel` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.falseEasting` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.falseNorthing` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryForward` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.forward` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryReverse` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.reverse` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryForwardFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.forwardFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryReverseFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.reverseFactors` | existing | Lambert Conformal Conic |
 | `geodesy.projection.polar_stereographic.PolarStereographic` | existing | Polar Stereographic |
 | `geodesy.projection.polar_stereographic.PolarStereographic.ellipsoid` | existing | Polar Stereographic |
 | `geodesy.projection.polar_stereographic.PolarStereographic.falseEasting` | existing | Polar Stereographic |
