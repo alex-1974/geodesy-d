@@ -503,7 +503,7 @@ prolate ellipsoids.
 
 ### Additive v1.1 geodesic quantities
 
-The v1.1 candidate adds advanced quantities without changing the frozen v1
+The released v1.1 line adds advanced quantities without changing the frozen v1
 result types or ordinary direct/inverse signatures.
 
 The shared quantity value type is:
@@ -578,7 +578,7 @@ Compatible post-v1 additions do not alter the v1.0 direct/inverse contract.
 
 ### Complete v1.1 geodesic family
 
-The v1.1 candidate completes the admitted geodesic family with two prepared
+The released v1.1 line completes the admitted geodesic family with two prepared
 measurement abstractions in addition to the advanced direct/inverse quantities:
 
 ~~~text
