@@ -12,10 +12,12 @@ forward as active roadmap text.
 The released stable line is:
 
 ~~~text
-v1.0.0
+v1.0.1
 ~~~
 
-A narrow v1.0.1 correctness/documentation patch is in release preparation.
+The completed M2 geodesic family is now in v1.1.0 release-candidate
+qualification. No further M2 feature expansion is required for the v1.1
+release decision.
 
 The frozen v1 API already provides:
 
