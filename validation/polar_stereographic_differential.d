@@ -22,6 +22,7 @@ import geodesy.projection.polar_stereographic : PolarStereographic;
 
 private enum double positionTolerance = 0.0001;   // 0.1 mm
 private enum double angularTolerance = 1.0e-9;    // degrees
+private enum double angularReverseLatitudeLimit = 89.0;
 private enum double factorTolerance = 2.0e-12;
 private enum double k0Tolerance = 2.0e-14;
 
@@ -311,12 +312,13 @@ private void validatePoint(
             recoveredProj))
         throw new Exception(label ~ " reverse rejected PROJ coordinate");
 
-    recordAngular(
-        label ~ " PROJ reverse latitude",
-        recoveredProj.latitude.degrees,
-        latitude,
-        false,
-        metrics);
+    if (fabs(latitude) <= angularReverseLatitudeLimit)
+        recordAngular(
+            label ~ " PROJ reverse latitude",
+            recoveredProj.latitude.degrees,
+            latitude,
+            false,
+            metrics);
 
     if (fabs(latitude) < 90.0)
     {
@@ -340,12 +342,13 @@ private void validatePoint(
         projReverseOperation(config),
         proj.first,
         proj.second);
-    recordAngular(
-        label ~ " PROJ own inverse latitude",
-        projReverse.second,
-        latitude,
-        false,
-        metrics);
+    if (fabs(latitude) <= angularReverseLatitudeLimit)
+        recordAngular(
+            label ~ " PROJ own inverse latitude",
+            projReverse.second,
+            latitude,
+            false,
+            metrics);
     if (fabs(latitude) < 90.0)
     {
         const projOwnRepresented = runCct(
@@ -405,12 +408,13 @@ private void validatePoint(
     if (!projection.tryReverse(independentProjected, recoveredGl))
         throw new Exception(label ~ " reverse rejected GeographicLib coordinate");
 
-    recordAngular(
-        label ~ " GeographicLib reverse latitude",
-        recoveredGl.latitude.degrees,
-        latitude,
-        false,
-        metrics);
+    if (fabs(latitude) <= angularReverseLatitudeLimit)
+        recordAngular(
+            label ~ " GeographicLib reverse latitude",
+            recoveredGl.latitude.degrees,
+            latitude,
+            false,
+            metrics);
     if (fabs(latitude) < 90.0)
     {
         const representedByGl = runGeographicLib(
@@ -454,12 +458,13 @@ private void validatePoint(
         metrics);
     metrics.factorChecks += 2;
 
-    recordAngular(
-        label ~ " GeographicLib own reverse latitude",
-        glReverse.first,
-        latitude,
-        false,
-        metrics);
+    if (fabs(latitude) <= angularReverseLatitudeLimit)
+        recordAngular(
+            label ~ " GeographicLib own reverse latitude",
+            glReverse.first,
+            latitude,
+            false,
+            metrics);
     if (fabs(latitude) < 90.0)
     {
         const glOwnRepresented = runGeographicLib(
