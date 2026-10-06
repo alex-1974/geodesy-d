@@ -1262,8 +1262,12 @@ public:
     const recoveredCentre =
         projection.reverse(projectedCentre);
 
-    assert(recoveredCentre.latitude.degrees == 52.0);
-    assert(recoveredCentre.longitude.degrees == 10.0);
+    assert(
+        recoveredCentre.latitude.radians
+            == projection.latitudeOfProjectionCentre.radians);
+    assert(
+        recoveredCentre.longitude.radians
+            == projection.longitudeOfProjectionCentre.radians);
 
     const source = GeographicCoordinate!double.fromComponents(
         Latitude!double.fromDegrees(48.20849),
