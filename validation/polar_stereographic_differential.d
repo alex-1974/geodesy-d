@@ -347,12 +347,20 @@ private void validatePoint(
         false,
         metrics);
     if (fabs(latitude) < 90.0)
-        recordAngular(
-            label ~ " PROJ own inverse longitude",
+    {
+        const projOwnRepresented = runCct(
+            projForwardOperation(config),
             projReverse.first,
-            longitude,
-            true,
+            projReverse.second);
+
+        recordPosition(
+            label ~ " PROJ own inverse represented position",
+            projOwnRepresented.first,
+            projOwnRepresented.second,
+            proj.first,
+            proj.second,
             metrics);
+    }
 
     // PS-D: GeographicLib forward positions + factors.
     const gl = runGeographicLib(
@@ -453,12 +461,22 @@ private void validatePoint(
         false,
         metrics);
     if (fabs(latitude) < 90.0)
-        recordAngular(
-            label ~ " GeographicLib own reverse longitude",
-            glReverse.second,
-            longitude,
-            true,
+    {
+        const glOwnRepresented = runGeographicLib(
+            oracle,
+            config,
+            "forward",
+            glReverse.first,
+            glReverse.second);
+
+        recordPosition(
+            label ~ " GeographicLib own reverse represented position",
+            glOwnRepresented.first,
+            glOwnRepresented.second,
+            gl.first,
+            gl.second,
             metrics);
+    }
 }
 
 private void validateConfig(
