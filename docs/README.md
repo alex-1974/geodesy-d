@@ -6,15 +6,15 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Stable v1 line — v1.0.1 released; v1.1.0 release-candidate qualification in progress.**
+**Stable v1 line — v1.1.0 released. M3 Navigation & Polar Geodesy is the active post-v1.1 development milestone.**
 
 `geodesy-d v1.0.0` was released on September 26, 2026. The frozen v1 public
 API includes the accepted coordinate, transformation, projection, geodesic,
 and topocentric families documented below.
 
-v1.0.1 is the current published stable patch release. The completed M2
-geodesic family is now being qualified as the additive v1.1.0 release
-candidate while preserving the frozen v1 source-compatibility baseline.
+v1.1.0 is the current published stable feature release. It completed the M2
+geodesic family while preserving the frozen v1 source-compatibility baseline.
+The active development line now targets M3 Navigation & Polar Geodesy.
 
 ## Responsibility boundary
 
@@ -64,7 +64,7 @@ v0.1 release blockers.
 
 ## Frozen v1 implementation
 
-The frozen v1 release-candidate surface additionally contains:
+The frozen v1 surface additionally contains:
 
 ```text
 bounded generic Transverse Mercator
@@ -196,7 +196,10 @@ The workspace-wide coordination roadmap is available locally as
 ## Release readiness
 
 The completed v1.0.0 release record is `docs/V1_RELEASE_READINESS.md`.
-The active v1.0.1 patch gate is `docs/V1_0_1_RELEASE_READINESS.md`.
+The completed v1.0.1 patch record is `docs/V1_0_1_RELEASE_READINESS.md`.
+The completed v1.1.0 release record is `docs/V1_1_RELEASE_READINESS.md`.
+Post-v1.1 work is tracked through the repository roadmap and M3 integration
+issue #74.
 
 
 ## Compiler compatibility
