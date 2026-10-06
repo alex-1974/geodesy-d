@@ -221,6 +221,19 @@ The audit is complete when:
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.isValid` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryFromParameters` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.fromParameters` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.ellipsoid` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.latitudeOfProjectionCentre` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.longitudeOfProjectionCentre` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.falseEasting` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.falseNorthing` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryForward` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.forward` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryReverse` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.reverse` | existing | Lambert Azimuthal Equal Area |
 | `geodesy.projection.lambert_conformal_conic.LambertConformalConic` | existing | Lambert Conformal Conic |
 | `geodesy.projection.lambert_conformal_conic.LambertConformalConic.isValid` | existing | Lambert Conformal Conic |
 | `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryFromTwoStandardParallels` | existing | Lambert Conformal Conic |
