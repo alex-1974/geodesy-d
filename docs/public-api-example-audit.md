@@ -235,6 +235,12 @@ The audit is complete when:
 | `geodesy.projection.polar_stereographic.PolarStereographic.tryForward` | existing | Polar Stereographic |
 | `geodesy.projection.polar_stereographic.PolarStereographic.tryFromParameters` | existing | Polar Stereographic |
 | `geodesy.projection.polar_stereographic.PolarStereographic.tryReverse` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.forwardFactors` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.fromStandardParallel` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.reverseFactors` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryForwardFactors` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryFromStandardParallel` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryReverseFactors` | existing | Polar Stereographic |
 | `geodesy.projection.transverse_mercator.TransverseMercator.ellipsoid` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator.falseEasting` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator.falseNorthing` | existing | Transverse Mercator |
