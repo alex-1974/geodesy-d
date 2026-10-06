@@ -80,5 +80,10 @@ echo '=== compiling D benchmark ==='
 "$dc"     -release     -enable-inlining     -O3     -mcpu=native     -I"$repo/source"     "$repo/validation/polar_stereographic_benchmark.d"     "${sources[@]}"     "$bridge_o"     -L-lGeographicLib     -L-lproj     -L-lstdc++     -of="$binary"
 
 echo
-echo "=== running on logical CPU $cpu ==="
-taskset -c "$cpu" "$binary" "$iterations"
+if [[ "${PS_BENCH_NO_PIN:-0}" == 1 ]]; then
+    echo "=== running without CPU pinning ==="
+    "$binary" "$iterations"
+else
+    echo "=== running on logical CPU $cpu ==="
+    taskset -c "$cpu" "$binary" "$iterations"
+fi
