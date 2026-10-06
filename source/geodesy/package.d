@@ -79,6 +79,7 @@ public import geodesy.projection.pseudo_mercator;
 public import geodesy.projection.polar_stereographic;
 public import geodesy.projection.transverse_mercator;
 public import geodesy.projection.utm;
+public import geodesy.projection.ups;
 
 public import geodesy.transform.geocentric_translation;
 
