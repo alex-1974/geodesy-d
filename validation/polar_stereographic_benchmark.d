@@ -8,9 +8,8 @@ module polar_stereographic_benchmark;
 
 import core.time : MonoTime;
 import std.conv : to;
-import std.format : writefln;
 import std.math : fabs;
-import std.stdio : writeln;
+import std.stdio : writefln, writeln;
 
 import geodesy;
 
