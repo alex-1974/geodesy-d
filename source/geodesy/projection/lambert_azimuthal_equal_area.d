@@ -533,8 +533,15 @@ private:
                     + _sinBeta0 * sinBeta
                     + _cosBeta0 * cosBeta * cosLon;
 
-                if (!(denominator > cast(W) 0)
-                    || !isFiniteGeodesyScalar(denominator))
+                /*
+                 * At the authalic antipode the denominator is exactly zero.
+                 * Independently converted public angles can leave a tiny
+                 * positive roundoff residue, so classify only the
+                 * machine-roundoff neighbourhood of zero as singular.
+                 */
+                if (!isFiniteGeodesyScalar(denominator)
+                    || denominator
+                        <= cast(W) 64 * W.epsilon)
                     return false;
 
                 const W b =
