@@ -132,7 +132,10 @@ reverse canonicalizes it to the prepared centre longitude.
 
 The exact authalic antipode is a directional singularity of forward LAEA.
 The initial checked API rejects it rather than choosing an arbitrary boundary
-direction.
+direction. The oblique/equatorial kernel classifies only an ulp-scaled
+machine-roundoff neighbourhood of the mathematically zero forward denominator
+as that same singular point. This handles independently converted equivalent
+degree/radian inputs without creating a geographic epsilon band.
 
 Reverse accepts the open represented disk and rejects the exact antipodal
 boundary and points beyond it. This deliberately gives a one-to-one public
