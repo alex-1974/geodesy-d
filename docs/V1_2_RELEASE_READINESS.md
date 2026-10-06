@@ -57,7 +57,27 @@ Required before tagging:
 - [ ] frozen v1 public source contract remains source-compatible;
 - [ ] all v1.2 aggregate exports are deliberate.
 
-## R4 — final numerical/compiler/platform gate
+## R4 — post-freeze documentation polish
+
+Run after the exact feature-freeze basis is declared and before the final RC
+matrix.
+
+- [ ] README release-facing overview polished;
+- [ ] `docs/API.md` reconciled with all v1.2 aggregate exports;
+- [ ] public module/type/function Ddoc reviewed for reader-first wording;
+- [ ] compiler-checked examples reviewed for clarity and representative usage;
+- [ ] terminology across Rhumb, Polar Stereographic, UPS, LCC and LAEA made
+  consistent;
+- [ ] stale pre-M3 status/release wording removed;
+- [ ] README/API/research/validation/release-note cross-links reviewed;
+- [ ] generated GitHub Pages/DDox output inspected;
+- [ ] CHANGELOG and release notes polished for final publication;
+- [ ] documentation-only pass introduces no public API/semantic change.
+
+Any source correction required by this pass must rerun the affected release
+gates.
+
+## R5 — final numerical/compiler/platform gate
 
 Required on the exact final release-candidate head:
 
@@ -81,7 +101,7 @@ Required on the exact final release-candidate head:
 - [ ] controlled DMD 2.111.0 / 2.112.1 / 2.113.0 release/consumer lanes PASS;
 - [ ] controlled LDC 1.41.0 / 1.42.0 / 1.43.0 release/consumer lanes PASS.
 
-## R5 — release metadata
+## R6 — release metadata
 
 - [x] v1.2.0 release notes drafted;
 - [x] v1.2.0 CHANGELOG entry drafted;
@@ -89,7 +109,7 @@ Required on the exact final release-candidate head:
 - [ ] final release candidate commit recorded;
 - [ ] release date finalized.
 
-## R6 — promotion and publication
+## R7 — promotion and publication
 
 After the exact candidate passes:
 
