@@ -56,4 +56,4 @@ jobs:
 
       - name: PS-C / PS-D differential corpus
         shell: bash
-        run: tools/validate-polar-stereographic-differential.sh
+        run: bash tools/validate-polar-stereographic-differential.sh
