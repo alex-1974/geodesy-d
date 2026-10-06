@@ -113,7 +113,7 @@ void main()
     writeln(
         "Vienna–Graz rhumb distance/bearing: ",
         rhumbRoute.distance, " m / ",
-        rhumbRoute.azimuth.degrees, " deg"
+        rhumbRoute.bearing.degrees, " deg"
     );
 }
 ~~~
