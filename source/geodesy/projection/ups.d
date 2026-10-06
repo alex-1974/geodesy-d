@@ -412,6 +412,18 @@ public:
     }
 }
 
+/// Example using a tagged UPS coordinate.
+@safe unittest
+{
+    import geodesy;
+    const coordinate = UpsCoordinate!double.fromComponents(
+        UpsHemisphere.north,
+        2_100_000.0,
+        1_900_000.0);
+    assert(coordinate.isValid);
+    assert(coordinate.hemisphere == UpsHemisphere.north);
+}
+
 
 /**
  * Prepared UPS projection for one explicit polar aspect.
@@ -922,6 +934,19 @@ public:
         assert(projection.reverseFactors(
             projection.forward(point)).pointScale > 0.0);
     }
+}
+
+/// Example using a prepared UPS projection.
+@safe unittest
+{
+    import geodesy;
+    const projection = UpsProjection!double.fromHemisphere(
+        UpsHemisphere.north);
+    const point = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(85.0),
+        Longitude!double.fromDegrees(20.0));
+    const projected = projection.forward(point);
+    assert(projected.easting > 1_200_000.0);
 }
 
 
