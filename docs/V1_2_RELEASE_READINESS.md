@@ -72,15 +72,15 @@ matrix.
 
 - [ ] README release-facing overview polished;
 - [ ] `docs/API.md` reconciled with all v1.2 aggregate exports;
-- [ ] public module/type/function Ddoc reviewed for reader-first wording;
-- [ ] compiler-checked examples reviewed for clarity and representative usage;
-- [ ] terminology across Rhumb, Polar Stereographic, UPS, LCC and LAEA made
+- [x] public module/type/function Ddoc reviewed for reader-first wording;
+- [x] compiler-checked examples reviewed for clarity and representative usage;
+- [x] terminology across Rhumb, Polar Stereographic, UPS, LCC and LAEA made
   consistent;
 - [ ] stale pre-M3 status/release wording removed;
 - [ ] README/API/research/validation/release-note cross-links reviewed;
 - [ ] generated GitHub Pages/DDox output inspected;
 - [ ] CHANGELOG and release notes polished for final publication;
-- [ ] documentation-only pass introduces no public API/semantic change.
+- [x] documentation-only pass introduces no public API/semantic change.
 
 Any source correction required by this pass must rerun the affected release
 gates.
