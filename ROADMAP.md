@@ -154,7 +154,7 @@ or workspace-boundary responsibilities.
 
 # M3 — Navigation & Polar Geodesy
 
-**Status:** active post-v1.1 development milestone.
+**Status:** core and admitted projection work complete; final integration gate active.
 
 **Goal:** complete the principal navigation/polar families after the geodesic
 core is mature, unless concrete consumer evidence justifies advancing an
@@ -192,6 +192,13 @@ navigation / projection
 ~~~
 
 Polar Stereographic, UPS, and Rhumb/RhumbLine form the intended M3 core.
+
+The M3 core issues #37/#38/#39/#40 are complete. The two projection families
+admitted by #40, #83 LCC 2SP and #84 LAEA, are also complete. Final milestone
+closure is now tracked exclusively through #74 and
+`docs/M3_INTEGRATION_GATE.md`: aggregate compiler/release/consumer validation
+plus a controlled local performance baseline remain before M3 is marked
+completed.
 
 Additional projections are research/admission candidates rather than automatic
 scope. The #40 admission audit is recorded in
