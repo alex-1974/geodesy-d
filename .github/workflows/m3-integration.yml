@@ -1,0 +1,86 @@
+name: M3 integration gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - "source/**"
+      - "validation/**"
+      - "tools/validate-api.sh"
+      - "tools/validate-docs.sh"
+      - "tools/validate-release-consumer.sh"
+      - "tools/benchmark-m3.sh"
+      - "docs/M3_INTEGRATION_GATE.md"
+      - "ROADMAP.md"
+      - "dub.sdl"
+      - ".github/workflows/m3-integration.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compiler-consumer:
+    name: compiler-consumer / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - dmd-2.112.1
+          - dmd-2.113.0
+          - ldc-1.41.0
+          - ldc-1.42.0
+          - ldc-1.43.0
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Compiler versions
+        shell: bash
+        run: |
+          echo "DC=$DC"
+          "$DC" --version
+          dub --version
+
+      - name: Unit tests
+        shell: bash
+        run: dub test --force --compiler="$DC"
+
+      - name: Release build
+        shell: bash
+        run: dub build --build=release --force --compiler="$DC"
+
+      - name: Aggregate public API contract
+        shell: bash
+        run: tools/validate-api.sh
+
+      - name: Fresh external DUB consumer
+        shell: bash
+        run: bash tools/validate-release-consumer.sh
+
+  docs:
+    name: aggregate docs / DMD 2.113.0
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-2.113.0
+
+      - name: Documentation contract
+        shell: bash
+        run: tools/validate-docs.sh
