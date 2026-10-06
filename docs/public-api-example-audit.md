@@ -1,7 +1,7 @@
 # Public API Example Audit
 
 **Status:** strict per-symbol coverage  
-**Baseline:** post-v1 development branch `audit/v1-public-api`
+**Baseline:** v1.2 API-freeze contract (`freeze/api-1.2.0`)
 
 ## Purpose
 
@@ -29,19 +29,24 @@ The public surface is organized into these documentation families:
 
 | Family | Representative public surface | Initial state |
 | --- | --- | --- |
-| scalar policy | `isGeodesyScalar`, finite-scalar policy | audit required |
-| angles | `Angle`, `Latitude`, `Longitude` | audit required |
-| ellipsoid | `Ellipsoid`, `wgs84` | audit required |
-| geographic/geodetic values | `GeographicCoordinate`, `GeodeticCoordinate` | audit required |
-| Cartesian values | `GeocentricCoordinate`, `ProjectedCoordinate`, `TopocentricCoordinate` | audit required |
-| conversion | geographic/geocentric checked and throwing operations | audit required |
-| geocentric translation | EPSG 1031 family | audit required |
-| Helmert | EPSG 1032 / 1033 families | audit required |
-| Transverse Mercator | prepared projection, forward/reverse, factors | audit required |
-| Pseudo-Mercator | prepared projection and bounded policy | audit required |
-| UTM | zones, hemispheres, prepared/automatic/tagged operations | audit required |
-| geodesics | prepared solver, direct/inverse results and operations | audit required |
-| topocentric | prepared ENU frame and conversions | audit required |
+| scalar policy | `isGeodesyScalar`, finite-scalar policy | existing |
+| angles | `Angle`, `Latitude`, `Longitude` | existing |
+| ellipsoid | `Ellipsoid`, `wgs84` | existing |
+| geographic/geodetic values | `GeographicCoordinate`, `GeodeticCoordinate` | existing |
+| Cartesian values | `GeocentricCoordinate`, `ProjectedCoordinate`, `TopocentricCoordinate` | existing |
+| conversion | geographic/geocentric checked and throwing operations | existing |
+| geocentric translation | EPSG 1031 family | existing |
+| Helmert | EPSG 1032 / 1033 families | existing |
+| Transverse Mercator | prepared projection, forward/reverse, factors | existing |
+| Pseudo-Mercator | prepared projection and bounded policy | existing |
+| UTM | zones, hemispheres, prepared/automatic/tagged operations | existing |
+| Polar Stereographic | prepared north/south projection and conformal factors | existing |
+| UPS | tagged coordinates, standard selection, prepared/automatic operations | existing |
+| Lambert Conformal Conic | prepared EPSG 9802 2SP projection and factors | existing |
+| Lambert Azimuthal Equal Area | prepared equal-area projection | existing |
+| Rhumb navigation | `Rhumb`, results, and prepared `RhumbLine` | existing |
+| geodesics | prepared solver, direct/inverse results and operations | existing |
+| topocentric | prepared ENU frame and conversions | existing |
 | errors | `GeodesyValueException` | usually family-covered |
 
 ## Coverage policy
@@ -72,7 +77,9 @@ Examples should make important domain semantics visible:
 - invalid `.init` where applicable;
 - checked versus throwing behaviour;
 - geographic domain boundaries;
-- explicit versus automatic UTM policy;
+- explicit versus automatic UTM/UPS policy;
+- rhumb versus geodesic path semantics;
+- projection singularities and bounded-domain behavior;
 - prepared-operation reuse;
 - frame/convention explicitness;
 - singular cases where instructional value is high.
