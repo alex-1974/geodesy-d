@@ -474,9 +474,11 @@ private:
             return false;
 
         const W gamma =
-            northAspect
-                ? deltaLongitude
-                : -deltaLongitude;
+            latitudeAbs == halfPi!W
+                ? cast(W) 0
+                : (northAspect
+                    ? deltaLongitude
+                    : -deltaLongitude);
 
         Angle!T convergence;
         if (!Angle!T.tryFromRadians(
