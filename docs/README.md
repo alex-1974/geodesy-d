@@ -6,14 +6,15 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Stable v1 line — v1.0.0 released; v1.0.1 patch preparation in progress.**
+**Stable v1 line — v1.0.1 released; v1.1.0 release-candidate qualification in progress.**
 
 `geodesy-d v1.0.0` was released on September 26, 2026. The frozen v1 public
 API includes the accepted coordinate, transformation, projection, geodesic,
 and topocentric families documented below.
 
-A narrow v1.0.1 patch is in preparation for correctness and documentation
-quality fixes while preserving the frozen v1 source-compatibility baseline.
+v1.0.1 is the current published stable patch release. The completed M2
+geodesic family is now being qualified as the additive v1.1.0 release
+candidate while preserving the frozen v1 source-compatibility baseline.
 
 ## Responsibility boundary
 
@@ -181,6 +182,7 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` — Transverse Mercator validation.
 - `docs/UTM_VALIDATION_PLAN.md` — UTM validation.
 - `docs/GEODESIC_VALIDATION_PLAN.md` — geodesic acceptance program and evidence.
+- `docs/GEODESIC_FEATURE_MATRIX.md` — post-M2 capability audit against GeographicLib/PROJ and admission decisions.
 - `docs/TOPOCENTRIC_VALIDATION_PLAN.md` — topocentric acceptance program and evidence.
 - `docs/operations/geographic-geocentric.md` — EPSG 9602.
 - `docs/operations/geocentric-translation.md` — EPSG 1031.

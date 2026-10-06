@@ -538,28 +538,42 @@ alias CoordinateFrameHelmert(T) =
 
 
 /**
- * Private EPSG 1033 Position Vector kernel.
+ * Apply one compile-time-selected EPSG Helmert rotation convention.
  *
- * EPSG small-angle matrix:
- *
- *   Xt = tX + M * ( Xs - rZ*Ys + rY*Zs )
- *   Yt = tY + M * ( rZ*Xs + Ys - rX*Zs )
- *   Zt = tZ + M * (-rY*Xs + rX*Ys + Zs )
+ * Position Vector and Coordinate Frame use the same small-angle matrix family
+ * with opposite rotation signs. Encoding the convention as a template
+ * parameter gives each public operation a branch-free specialized kernel.
  */
-private bool tryApplyPositionVectorKernel(T)(
+private bool tryApplyHelmertKernel(
+    T,
+    HelmertConvention convention)(
     const GeocentricCoordinate!T source,
-    const Helmert7!(T, HelmertConvention.positionVector) transform,
+    const Helmert7!(T, convention) transform,
     out GeocentricCoordinate!T result)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
+    static if (convention == HelmertConvention.positionVector)
+        enum T rotationSign = cast(T) 1;
+    else
+    {
+        static assert(convention == HelmertConvention.coordinateFrame);
+        enum T rotationSign = cast(T) -1;
+    }
+
     const T x = source.x;
     const T y = source.y;
     const T z = source.z;
 
-    const T rx = transform.rotationX.radians;
-    const T ry = transform.rotationY.radians;
-    const T rz = transform.rotationZ.radians;
+    const T rx =
+        rotationSign * transform.rotationX.radians;
+
+    const T ry =
+        rotationSign * transform.rotationY.radians;
+
+    const T rz =
+        rotationSign * transform.rotationZ.radians;
+
     const T m = transform.scaleFactor;
 
     if (!isFiniteGeodesyScalar(m))
@@ -600,7 +614,12 @@ bool tryApplyPositionVectorHelmert(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
-    return tryApplyPositionVectorKernel(source, transform, result);
+    return tryApplyHelmertKernel!(
+        T,
+        HelmertConvention.positionVector)(
+            source,
+            transform,
+            result);
 }
 
 /// Example applying a Position Vector transform without throwing.
@@ -889,46 +908,6 @@ if (isGeodesyScalar!T)
 }
 
 
-/**
- * Private EPSG 1032 Coordinate Frame kernel.
- *
- * EPSG small-angle matrix:
- *
- *   Xt = tX + M * ( Xs + rZ*Ys - rY*Zs )
- *   Yt = tY + M * (-rZ*Xs + Ys + rX*Zs )
- *   Zt = tZ + M * ( rY*Xs - rX*Ys + Zs )
- */
-private bool tryApplyCoordinateFrameKernel(T)(
-    const GeocentricCoordinate!T source,
-    const Helmert7!(T, HelmertConvention.coordinateFrame) transform,
-    out GeocentricCoordinate!T result)
-    pure nothrow @safe @nogc
-if (isGeodesyScalar!T)
-{
-    const T x = source.x;
-    const T y = source.y;
-    const T z = source.z;
-
-    const T rx = transform.rotationX.radians;
-    const T ry = transform.rotationY.radians;
-    const T rz = transform.rotationZ.radians;
-    const T m = transform.scaleFactor;
-
-    if (!isFiniteGeodesyScalar(m))
-        return false;
-
-    const T targetX = transform.translationX
-        + m * (x + rz * y - ry * z);
-
-    const T targetY = transform.translationY
-        + m * (-rz * x + y + rx * z);
-
-    const T targetZ = transform.translationZ
-        + m * (ry * x - rx * y + z);
-
-    return GeocentricCoordinate!T.tryFromComponents(
-        targetX, targetY, targetZ, result);
-}
 
 
 /**
@@ -952,7 +931,12 @@ bool tryApplyCoordinateFrameHelmert(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
-    return tryApplyCoordinateFrameKernel(source, transform, result);
+    return tryApplyHelmertKernel!(
+        T,
+        HelmertConvention.coordinateFrame)(
+            source,
+            transform,
+            result);
 }
 
 /// Example applying a Coordinate Frame transform without throwing.

@@ -28,6 +28,9 @@ import geodesy.internal.geodesic_lambda12 :
     geodesicLambda12;
 
 import geodesy.internal.geodesic_lengths :
+    geodesicLengthDistance,
+    geodesicLengthReducedLength,
+    geodesicLengthScales,
     geodesicLengths;
 
 
@@ -58,6 +61,9 @@ private void normalizePair(W)(
 struct GeodesicCanonicalInverseResult(W)
 {
     W s12b;
+    W m12b;
+    W M12;
+    W M21;
 
     W sigma12;
 
@@ -66,6 +72,9 @@ struct GeodesicCanonicalInverseResult(W)
 
     W sinAlpha2;
     W cosAlpha2;
+
+    W sinOmega12;
+    W cosOmega12;
 
     W eps;
     W deltaOmega12;
@@ -96,7 +105,8 @@ struct GeodesicCanonicalInverseResult(W)
  */
 GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
     W,
-    int order)(
+    int order,
+    uint lengthOutputs = geodesicLengthDistance)(
     const W f,
     const W f1,
     const W ep2,
@@ -117,6 +127,27 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
     static assert(
         order >= 6 && order <= 8,
         "unsupported geodesic series order");
+
+    static assert(
+        (lengthOutputs & geodesicLengthDistance) != 0,
+        "canonical inverse always requires distance");
+
+    static assert(
+        (
+            lengthOutputs
+            & ~(
+                geodesicLengthDistance
+                | geodesicLengthReducedLength
+                | geodesicLengthScales
+            )
+        ) == 0,
+        "unsupported canonical inverse length capability");
+
+    enum bool calculateReducedLength =
+        (lengthOutputs & geodesicLengthReducedLength) != 0;
+
+    enum bool calculateScales =
+        (lengthOutputs & geodesicLengthScales) != 0;
 
     enum uint maxNewtonIterations = 20;
     enum uint maxIterations =
@@ -167,14 +198,56 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
 
     if (!start.needsNewton)
     {
+        const W omega12 =
+            lambda12
+            / (f1 * start.dnm);
+
+        W m12b =
+            zero;
+
+        W M12 =
+            zero;
+
+        W M21 =
+            zero;
+
+        static if (calculateReducedLength)
+        {
+            m12b =
+                start.dnm
+                * start.dnm
+                * sin(
+                    start.sigma12
+                    / start.dnm);
+        }
+
+        static if (calculateScales)
+        {
+            const W scale =
+                cos(
+                    start.sigma12
+                    / start.dnm);
+
+            M12 =
+                scale;
+
+            M21 =
+                scale;
+        }
+
         return GeodesicCanonicalInverseResult!W(
             start.sigma12
                 * start.dnm,
+            m12b,
+            M12,
+            M21,
             start.sigma12,
             sinAlpha1,
             cosAlpha1,
             start.sinAlpha2,
             start.cosAlpha2,
+            sin(omega12),
+            cos(omega12),
             zero,
             zero,
             0,
@@ -464,23 +537,35 @@ GeodesicCanonicalInverseResult!W geodesicCanonicalInverse(
         geodesicLengths!(
             W,
             order,
-            true)(
+            lengthOutputs)(
                 current.eps,
+                ep2,
                 current.sigma12,
                 current.sinSigma1,
                 current.cosSigma1,
                 dn1,
+                cosBeta1,
                 current.sinSigma2,
                 current.cosSigma2,
-                dn2);
+                dn2,
+                cosBeta2);
+
+    const W omega12 =
+        lambda12
+        - current.deltaOmega12;
 
     return GeodesicCanonicalInverseResult!W(
         lengths.s12b,
+        lengths.m12b,
+        lengths.M12,
+        lengths.M21,
         current.sigma12,
         sinAlpha1,
         cosAlpha1,
         current.sinAlpha2,
         current.cosAlpha2,
+        sin(omega12),
+        cos(omega12),
         current.eps,
         current.deltaOmega12,
         iteration,

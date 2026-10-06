@@ -34,7 +34,8 @@ import geodesy.errors : GeodesyValueException;
 import geodesy.geodesic :
     Geodesic,
     GeodesicDirectResult,
-    GeodesicInverseResult;
+    GeodesicInverseResult,
+    GeodesicQuantities;
 import geodesy.geographic : GeographicCoordinate;
 
 
@@ -65,7 +66,9 @@ private bool operationalTrySurface(T)(
     const GeographicCoordinate!T inverseStart,
     const GeographicCoordinate!T inverseEnd,
     out GeodesicDirectResult!T directResult,
-    out GeodesicInverseResult!T inverseResult)
+    out GeodesicQuantities!T directQuantities,
+    out GeodesicInverseResult!T inverseResult,
+    out GeodesicQuantities!T inverseQuantities)
     pure nothrow @safe @nogc
 {
     Geodesic!T solver;
@@ -89,7 +92,8 @@ private bool operationalTrySurface(T)(
             directStart,
             initialAzimuth,
             directDistance,
-            directResult))
+            directResult,
+            directQuantities))
         return false;
 
     /*
@@ -112,14 +116,36 @@ private bool operationalTrySurface(T)(
         || directFinalAzimuth.radians != directFinalAzimuth.radians)
         return false;
 
+    const directReducedLength =
+        directQuantities.reducedLength;
+
+    const directScale12 =
+        directQuantities.scale12;
+
+    const directScale21 =
+        directQuantities.scale21;
+
+    const directSignedArea =
+        directQuantities.signedArea;
+
+    if (
+        directReducedLength != directReducedLength
+        || directScale12 != directScale12
+        || directScale21 != directScale21
+        || directSignedArea != directSignedArea
+    )
+        return false;
+
     if (!solver.tryInverse(
             inverseStart,
             inverseEnd,
-            inverseResult))
+            inverseResult,
+            inverseQuantities))
         return false;
 
     /*
-     * Exercise every inverse-result public accessor in the checked caller.
+     * Exercise every inverse-result and advanced-quantity public accessor in
+     * the checked caller.
      */
     const inverseDistance =
         inverseResult.distance;
@@ -130,11 +156,27 @@ private bool operationalTrySurface(T)(
     const inverseFinalAzimuth =
         inverseResult.finalAzimuth;
 
+    const reducedLength =
+        inverseQuantities.reducedLength;
+
+    const scale12 =
+        inverseQuantities.scale12;
+
+    const scale21 =
+        inverseQuantities.scale21;
+
+    const signedArea =
+        inverseQuantities.signedArea;
+
     return inverseDistance > cast(T) 0
         && inverseInitialAzimuth.radians
             == inverseInitialAzimuth.radians
         && inverseFinalAzimuth.radians
-            == inverseFinalAzimuth.radians;
+            == inverseFinalAzimuth.radians
+        && reducedLength == reducedLength
+        && scale12 == scale12
+        && scale21 == scale21
+        && signedArea == signedArea;
 }
 
 
@@ -201,6 +243,16 @@ private void assertInverseInit(T)(
 }
 
 
+private void assertQuantitiesInit(T)(
+    const GeodesicQuantities!T quantities)
+{
+    assert(quantities.reducedLength == cast(T) 0);
+    assert(quantities.scale12 == cast(T) 0);
+    assert(quantities.scale21 == cast(T) 0);
+    assert(quantities.signedArea == cast(T) 0);
+}
+
+
 private void validateScalar(T)()
 {
     const T a =
@@ -258,6 +310,28 @@ private void validateScalar(T)()
         directDistance,
         baselineDirect));
 
+    GeodesicDirectResult!T advancedDirect;
+    GeodesicQuantities!T baselineDirectQuantities;
+
+    assert(solver.tryDirect(
+        directStart,
+        initialAzimuth,
+        directDistance,
+        advancedDirect,
+        baselineDirectQuantities));
+
+    assert(
+        advancedDirect.position.latitude.radians
+        == baselineDirect.position.latitude.radians);
+
+    assert(
+        advancedDirect.position.longitude.radians
+        == baselineDirect.position.longitude.radians);
+
+    assert(
+        advancedDirect.finalAzimuth.radians
+        == baselineDirect.finalAzimuth.radians);
+
     GeodesicInverseResult!T baselineInverse;
 
     assert(solver.tryInverse(
@@ -265,11 +339,30 @@ private void validateScalar(T)()
         inverseEnd,
         baselineInverse));
 
+    GeodesicInverseResult!T advancedInverse;
+    GeodesicQuantities!T baselineQuantities;
+
+    assert(solver.tryInverse(
+        inverseStart,
+        inverseEnd,
+        advancedInverse,
+        baselineQuantities));
+
+    assert(advancedInverse.distance == baselineInverse.distance);
+    assert(
+        advancedInverse.initialAzimuth.radians
+        == baselineInverse.initialAzimuth.radians);
+    assert(
+        advancedInverse.finalAzimuth.radians
+        == baselineInverse.finalAzimuth.radians);
+
     /*
      * Instantiate and execute the complete checked surface probe for T.
      */
     GeodesicDirectResult!T hotDirect;
+    GeodesicQuantities!T hotDirectQuantities;
     GeodesicInverseResult!T hotInverse;
+    GeodesicQuantities!T hotQuantities;
 
     assert(operationalTrySurface!T(
         ellipsoid,
@@ -279,7 +372,9 @@ private void validateScalar(T)()
         inverseStart,
         inverseEnd,
         hotDirect,
-        hotInverse));
+        hotDirectQuantities,
+        hotInverse,
+        hotQuantities));
 
     assert(
         hotDirect.position.latitude.radians
@@ -294,6 +389,22 @@ private void validateScalar(T)()
         == baselineDirect.finalAzimuth.radians);
 
     assert(
+        hotDirectQuantities.reducedLength
+        == baselineDirectQuantities.reducedLength);
+
+    assert(
+        hotDirectQuantities.scale12
+        == baselineDirectQuantities.scale12);
+
+    assert(
+        hotDirectQuantities.scale21
+        == baselineDirectQuantities.scale21);
+
+    assert(
+        hotDirectQuantities.signedArea
+        == baselineDirectQuantities.signedArea);
+
+    assert(
         hotInverse.distance
         == baselineInverse.distance);
 
@@ -304,6 +415,22 @@ private void validateScalar(T)()
     assert(
         hotInverse.finalAzimuth.radians
         == baselineInverse.finalAzimuth.radians);
+
+    assert(
+        hotQuantities.reducedLength
+        == baselineQuantities.reducedLength);
+
+    assert(
+        hotQuantities.scale12
+        == baselineQuantities.scale12);
+
+    assert(
+        hotQuantities.scale21
+        == baselineQuantities.scale21);
+
+    assert(
+        hotQuantities.signedArea
+        == baselineQuantities.signedArea);
 
     /*
      * Successful throwing convenience construction remains @safe.
@@ -385,6 +512,22 @@ private void validateScalar(T)()
 
     assertDirectInit(invalidDirect);
 
+    invalidDirect =
+        baselineDirect;
+
+    GeodesicQuantities!T invalidDirectQuantities =
+        baselineDirectQuantities;
+
+    assert(!invalidSolver.tryDirect(
+        directStart,
+        initialAzimuth,
+        directDistance,
+        invalidDirect,
+        invalidDirectQuantities));
+
+    assertDirectInit(invalidDirect);
+    assertQuantitiesInit(invalidDirectQuantities);
+
     GeodesicInverseResult!T invalidInverse =
         baselineInverse;
 
@@ -394,6 +537,21 @@ private void validateScalar(T)()
         invalidInverse));
 
     assertInverseInit(invalidInverse);
+
+    invalidInverse =
+        baselineInverse;
+
+    GeodesicQuantities!T invalidQuantities =
+        baselineQuantities;
+
+    assert(!invalidSolver.tryInverse(
+        inverseStart,
+        inverseEnd,
+        invalidInverse,
+        invalidQuantities));
+
+    assertInverseInit(invalidInverse);
+    assertQuantitiesInit(invalidQuantities);
 
     /*
      * Checked constructor failure must also clear a previously valid prepared

@@ -35,6 +35,9 @@ The library is designed around a small, explicit numerical core:
 - UTM forward and reverse projection;
 - meridian convergence and point scale for Transverse Mercator and UTM;
 - direct and inverse ellipsoidal geodesics;
+- reduced length, geodesic scales, and signed geodesic area quantities;
+- prepared `GeodesicLine` evaluation for repeated positions;
+- streaming ellipsoidal polygon perimeter and signed-area measurement;
 - local East/North/Up topocentric coordinates.
 
 Public numerical types support `float`, `double`, and platform `real`.
@@ -105,6 +108,7 @@ void main()
 ## Documentation
 
 - [Public API](docs/API.md)
+- [Geodesic feature matrix](docs/GEODESIC_FEATURE_MATRIX.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 - [Detailed documentation](docs/README.md)

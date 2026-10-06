@@ -119,7 +119,13 @@ public:
      * Params:
      *     latitude = Geodetic latitude.
      *     longitude = Geodetic longitude.
-     *     ellipsoidalHeight = Finite height in the caller-selected linear unit.
+     *     ellipsoidalHeight = Finite ellipsoidal height in the caller-selected
+     *         linear unit. When omitted, zero denotes an actual ellipsoidal
+     *         height of zero; it does not mean unknown or absent height.
+     *
+     * Note:
+     *     Use `GeographicCoordinate` for a horizontal geographic position
+     *     without height semantics.
      *
      * Returns:
      *     The constructed coordinate.

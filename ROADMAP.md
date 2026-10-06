@@ -12,10 +12,12 @@ forward as active roadmap text.
 The released stable line is:
 
 ~~~text
-v1.0.0
+v1.0.1
 ~~~
 
-A narrow v1.0.1 correctness/documentation patch is in release preparation.
+The completed M2 geodesic family is now in v1.1.0 release-candidate
+qualification. No further M2 feature expansion is required for the v1.1
+release decision.
 
 The frozen v1 API already provides:
 
@@ -143,6 +145,11 @@ ring validity, holes, containment, overlay, and geometry ownership remain in
 M2 explicitly does **not** include geodesic intersections, nearest-point
 queries, rhumb lines, or prolate ellipsoids.
 
+The post-M2 reference-library comparison and admission decisions are recorded in
+`docs/GEODESIC_FEATURE_MATRIX.md`. Reference parity is not a release goal:
+differences are classified as retained, deferred, planned, rejected convenience,
+or workspace-boundary responsibilities.
+
 ---
 
 # M3 — Navigation & Polar Geodesy
@@ -231,7 +238,10 @@ Issues:
 
 - #46 — robust geodesic intersection;
 - #47 — nearest point, cross-track, and along-track quantities;
-- #48 — evaluate geodesic circles and related locus operations.
+- #48 — evaluate geodesic circles and related locus operations;
+- #68 — evaluate advanced `GeodesicLine` capabilities (arc mode, longitude
+  unrolling, advanced line quantities);
+- #69 — research admission of prolate ellipsoid support.
 
 These are ellipsoidal mathematical operations.
 

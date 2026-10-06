@@ -882,6 +882,46 @@ numerically sensitive trigonometric, normalization or solver arithmetic.
 No additional production optimization is justified before a new profile or a
 concrete consumer demonstrates a material need.
 
+### M2 prepared GeodesicLine qualification
+
+The v1.1 prepared-line slice was measured separately from the original
+direct/inverse benchmark because its purpose is amortization across repeated
+positions on one fixed geodesic.
+
+Accepted production relationship:
+
+~~~text
+ordinary repeated position:
+    Geodesic.tryDirect
+        rebuilds line-dependent state for each distance
+
+prepared repeated position:
+    GeodesicLine.tryPosition
+        reuses line-dependent auxiliary-sphere and series state
+~~~
+
+The controlled XPS measurement accepted with issue #34 used the same repeated
+distance workload for both paths and reported:
+
+~~~text
+repeated Geodesic.tryDirect       357.482910 ns/op
+prepared GeodesicLine.tryPosition 182.426453 ns/op
+
+speedup                            1.960x
+latency reduction                  48.97 %
+~~~
+
+This establishes that preparation performs real amortized work rather than
+serving only as an API wrapper. The benchmark is evidence for that machine,
+toolchain, build configuration, and workload; it is not a universal latency
+claim.
+
+The corresponding GeographicLib 2.7 distance-mode oracle, DMD/LDC gates, API
+documentation gate, and mandatory platform matrices passed before production
+integration. Future changes to line preparation or the repeated-position hot
+path should retain a comparable repeated-position benchmark rather than
+substituting one-shot direct timing.
+
 ## Pseudo-Mercator PM-E1C1 reverse research benchmark
 
 PM-E1C1B includes a research-only performance qualification for the

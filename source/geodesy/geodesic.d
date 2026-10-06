@@ -34,7 +34,7 @@
  *
  * See_Also:
  *     `Geodesic`, `GeodesicDirectResult`, `GeodesicInverseResult`,
- *     `GeographicCoordinate`
+ *     `GeodesicQuantities`, `GeographicCoordinate`
  *
  * Authors:
  *     Alexander Bernardi
@@ -68,8 +68,20 @@ import geodesy.ellipsoid : Ellipsoid;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.internal.hypot_compat : stableHypot2;
+import geodesy.internal.geodesic_area :
+    geodesicAuthalicRadiusSquared,
+    geodesicDirectSignedArea;
+import geodesy.internal.geodesic_area_series :
+    fillGeodesicC4x;
 import geodesy.internal.geodesic_inverse_dispatch :
+    geodesicInverseArea,
+    geodesicInverseReducedLength,
+    geodesicInverseScales,
     geodesicInverseDispatch;
+import geodesy.internal.geodesic_lengths :
+    geodesicLengthReducedLength,
+    geodesicLengthScales,
+    geodesicLengths;
 import geodesy.internal.geodesic_series :
     fillGeodesicA3x,
     fillGeodesicC1,
@@ -513,6 +525,142 @@ public:
 
 
 /**
+ * Differential and area quantities for one oriented geodesic segment.
+ *
+ * `reducedLength` is Karney's reduced length m12 and uses the same linear
+ * unit as the solver ellipsoid semi-major axis. `scale12` and `scale21`
+ * are dimensionless geodesic scales M12 and M21. `signedArea` is S12, the
+ * oriented area contribution between the geodesic and the equator, in the
+ * square of the ellipsoid linear unit.
+ *
+ * `signedArea` is orientation-sensitive; reversing the segment reverses its
+ * sign. The two geodesic scale directions exchange roles under endpoint
+ * reversal. Coincident endpoints use the canonical values m12 = 0,
+ * M12 = M21 = 1, and S12 = 0.
+ */
+struct GeodesicQuantities(T)
+if (isGeodesyScalar!T)
+{
+private:
+    T _reducedLength = 0;
+    T _scale12 = 0;
+    T _scale21 = 0;
+    T _signedArea = 0;
+
+    /** Construct quantities from already validated scalar values. */
+    static GeodesicQuantities fromComponents(
+        const T reducedLength,
+        const T scale12,
+        const T scale21,
+        const T signedArea)
+        pure nothrow @safe @nogc
+    {
+        GeodesicQuantities result;
+        result._reducedLength = reducedLength;
+        result._scale12 = scale12;
+        result._scale21 = scale21;
+        result._signedArea = signedArea;
+        return result;
+    }
+
+public:
+    /** Reduced length m12 in the ellipsoid linear unit. */
+    @property T reducedLength() const
+        pure nothrow @safe @nogc
+    {
+        return _reducedLength;
+    }
+
+    /// Example reading reduced length from advanced inverse quantities.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.reducedLength == 0.0);
+    }
+
+    /** Geodesic scale M12 from point 1 to point 2. */
+    @property T scale12() const
+        pure nothrow @safe @nogc
+    {
+        return _scale12;
+    }
+
+    /// Example reading the point-1 to point-2 geodesic scale.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.scale12 == 0.0);
+    }
+
+    /** Geodesic scale M21 from point 2 to point 1. */
+    @property T scale21() const
+        pure nothrow @safe @nogc
+    {
+        return _scale21;
+    }
+
+    /// Example reading the point-2 to point-1 geodesic scale.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.scale21 == 0.0);
+    }
+
+    /** Signed area contribution S12 in the square of the ellipsoid unit. */
+    @property T signedArea() const
+        pure nothrow @safe @nogc
+    {
+        return _signedArea;
+    }
+
+    /// Example reading the signed geodesic area contribution.
+    @safe unittest
+    {
+        GeodesicQuantities!double value;
+        assert(value.signedArea == 0.0);
+    }
+}
+
+/// Example reading advanced inverse geodesic quantities.
+@safe unittest
+{
+    import geodesy;
+
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+
+    const start =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+
+    const end =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+
+    GeodesicInverseResult!double inverse;
+    GeodesicQuantities!double quantities;
+
+    assert(
+        solver.tryInverse(
+            start,
+            end,
+            inverse,
+            quantities));
+
+    assert(inverse.distance > 0.0);
+    assert(quantities.reducedLength != 0.0);
+    assert(quantities.scale12 == quantities.scale12);
+    assert(quantities.scale21 == quantities.scale21);
+    assert(quantities.signedArea != 0.0);
+}
+
+
+/**
  * Prepared direct/inverse geodesic solver for one reference ellipsoid.
  *
  * Supported ellipsoids satisfy `a > 0` and `0 <= f <= 0.01`; no Earth-size
@@ -554,14 +702,22 @@ private:
      * azimuth, and signed distance. `result` receives the public endpoint and
      * final forward azimuth on success.
      */
-bool tryDirectEllipsoid(
+bool tryDirectEllipsoidImpl(
+        bool calculateQuantities)(
         const W latitude1,
         const W longitude1,
         const W azimuth1,
         const W s12,
-        out GeodesicDirectResult!T result) const
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
         pure nothrow @safe @nogc
     {
+        static if (calculateQuantities)
+        {
+            quantities =
+                GeodesicQuantities!T.init;
+        }
+
         enum int order = geodesicSeriesOrderFor!T;
 
         W sinPhi1;
@@ -854,6 +1010,108 @@ bool tryDirectEllipsoid(
             canonicalAngleRadians(
                 cast(T) finalAzimuth);
 
+        static if (calculateQuantities)
+        {
+            const W dn1 =
+                sqrt(
+                    cast(W) 1
+                    + _ep2
+                        * sinBeta1
+                        * sinBeta1);
+
+            const W dn2 =
+                sqrt(
+                    cast(W) 1
+                    + _ep2
+                        * sinBeta2
+                        * sinBeta2);
+
+            const lengths =
+                geodesicLengths!(
+                    W,
+                    order,
+                    geodesicLengthReducedLength
+                        | geodesicLengthScales)(
+                            eps,
+                            _ep2,
+                            sigma12,
+                            sinSigma1,
+                            cosSigma1,
+                            dn1,
+                            cosBeta1,
+                            sinSigma2,
+                            cosSigma2,
+                            dn2,
+                            cosBeta2);
+
+            W[36] c4x;
+
+            fillGeodesicC4x!(
+                W,
+                order)(
+                    _n,
+                    c4x);
+
+            const W authalicRadiusSquared =
+                geodesicAuthalicRadiusSquared(
+                    _a,
+                    _b,
+                    _e2);
+
+            const W signedArea =
+                geodesicDirectSignedArea!(
+                    W,
+                    order)(
+                        _a,
+                        _e2,
+                        authalicRadiusSquared,
+                        c4x,
+                        eps,
+                        sinAlpha0,
+                        cosAlpha0,
+                        sinAlpha1,
+                        cosAlpha1,
+                        sinAlpha2,
+                        cosAlpha2,
+                        sinSigma1,
+                        cosSigma1,
+                        sinSigma2,
+                        cosSigma2,
+                        sinSigma12,
+                        cosSigma12);
+
+            const T reducedLength =
+                canonicalZero(
+                    cast(T) (
+                        _b
+                        * lengths.m12b));
+
+            const T scale12 =
+                cast(T) lengths.M12;
+
+            const T scale21 =
+                cast(T) lengths.M21;
+
+            const T area =
+                canonicalZero(
+                    cast(T) signedArea);
+
+            if (
+                !isFiniteGeodesyScalar(reducedLength)
+                || !isFiniteGeodesyScalar(scale12)
+                || !isFiniteGeodesyScalar(scale21)
+                || !isFiniteGeodesyScalar(area)
+            )
+                return false;
+
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    reducedLength,
+                    scale12,
+                    scale21,
+                    area);
+        }
+
         result =
             GeodesicDirectResult!T.fromComponents(
                 endpoint,
@@ -861,6 +1119,29 @@ bool tryDirectEllipsoid(
                     canonicalFinalAzimuth));
 
         return true;
+    }
+
+
+    /**
+     * Solve the ordinary direct ellipsoid path without advanced quantities.
+     */
+    bool tryDirectEllipsoid(
+        const W latitude1,
+        const W longitude1,
+        const W azimuth1,
+        const W s12,
+        out GeodesicDirectResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        GeodesicQuantities!T unusedQuantities;
+
+        return tryDirectEllipsoidImpl!false(
+            latitude1,
+            longitude1,
+            azimuth1,
+            s12,
+            result,
+            unusedQuantities);
     }
 
 
@@ -1235,6 +1516,104 @@ public:
         return true;
     }
 
+    /**
+     * Solve the direct geodesic and its advanced segment quantities.
+     *
+     * This additive overload preserves the frozen v1 direct result while
+     * requesting reduced length, geodesic scales, and signed area for the
+     * same oriented signed-distance segment.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     initialAzimuth = Initial forward azimuth.
+     *     distance = Finite signed distance in the ellipsoid linear unit.
+     *     result = Receives endpoint and final forward azimuth.
+     *     quantities = Receives m12, M12, M21, and S12.
+     *
+     * Returns:
+     *     `true` when all requested values are finite and representable;
+     *     otherwise `false`. Both outputs are reset to `.init` on entry.
+     */
+    bool tryDirect(
+        const GeographicCoordinate!T start,
+        const Angle!T initialAzimuth,
+        const T distance,
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result =
+            GeodesicDirectResult!T.init;
+
+        quantities =
+            GeodesicQuantities!T.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(distance))
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W azimuth1 =
+            workingCanonicalAngleRadians!T(
+                initialAzimuth.radians);
+
+        const W s12 =
+            cast(W) distance;
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(azimuth1)
+            || !isFiniteGeodesyScalar(s12)
+        )
+            return false;
+
+        if (s12 == cast(W) 0)
+        {
+            GeographicCoordinate!T endpoint;
+
+            if (!makeGeographicCoordinate(
+                    cast(T) latitude1,
+                    cast(T) longitude1,
+                    endpoint))
+                return false;
+
+            const T finalAzimuthRadians =
+                canonicalAngleRadians(
+                    cast(T) azimuth1);
+
+            result =
+                GeodesicDirectResult!T.fromComponents(
+                    endpoint,
+                    angleFromRadiansUnchecked(
+                        finalAzimuthRadians));
+
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    cast(T) 0,
+                    cast(T) 1,
+                    cast(T) 1,
+                    cast(T) 0);
+
+            return true;
+        }
+
+        return tryDirectEllipsoidImpl!true(
+            latitude1,
+            longitude1,
+            azimuth1,
+            s12,
+            result,
+            quantities);
+    }
+
+
     /// Example using bool tryDirect( const GeographicCoordinate!T start, const Angle!T initialAzimuth, const T .
     @safe unittest
     {
@@ -1410,6 +1789,237 @@ public:
 
         return true;
     }
+
+    /**
+     * Internal distance + signed-area inverse specialization for streaming
+     * polygon measurement.
+     *
+     * This deliberately requests only the area capability in addition to the
+     * always-computed distance/azimuth state. Reduced length and geodesic
+     * scales are not instantiated or validated.
+     */
+    package bool tryInverseDistanceArea(
+        const GeographicCoordinate!T start,
+        const GeographicCoordinate!T end,
+        out T distance,
+        out T signedArea) const
+        pure nothrow @safe @nogc
+    {
+        distance = T.init;
+        signedArea = T.init;
+
+        if (!isValid)
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W latitude2 =
+            workingLatitudeRadians!T(
+                end.latitude.radians);
+
+        const W longitude2 =
+            workingCanonicalAngleRadians!T(
+                end.longitude.radians);
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+        )
+            return false;
+
+        enum int order =
+            geodesicSeriesOrderFor!T;
+
+        enum uint outputs =
+            geodesicInverseArea;
+
+        const inverse =
+            geodesicInverseDispatch!(
+                W,
+                order,
+                outputs)(
+                    _a,
+                    _f,
+                    _f1,
+                    _b,
+                    _ep2,
+                    _n,
+                    _a3x,
+                    _c3x,
+                    latitude1,
+                    longitude1,
+                    latitude2,
+                    longitude2);
+
+        const T publicDistance =
+            canonicalZero(
+                cast(T) inverse.distance);
+
+        const T publicArea =
+            canonicalZero(
+                cast(T) inverse.signedArea);
+
+        if (
+            !isFiniteGeodesyScalar(publicDistance)
+            || publicDistance < cast(T) 0
+            || !isFiniteGeodesyScalar(publicArea)
+        )
+            return false;
+
+        distance = publicDistance;
+        signedArea = publicArea;
+        return true;
+    }
+
+
+    /**
+     * Solve the shortest inverse geodesic and its advanced segment quantities.
+     *
+     * This overload is additive to the frozen v1 inverse surface. Requesting
+     * `quantities` enables reduced length, geodesic scales, and signed area;
+     * the ordinary three-output `tryInverse` remains the lean distance and
+     * azimuth path.
+     *
+     * Params:
+     *     start = Geographic start position.
+     *     end = Geographic endpoint.
+     *     result = Receives distance plus initial and final forward azimuths.
+     *     quantities = Receives m12, M12, M21, and S12.
+     *
+     * Returns:
+     *     `true` when all requested values are finite and representable;
+     *     otherwise `false`. Both outputs are reset to `.init` on entry.
+     */
+    bool tryInverse(
+        const GeographicCoordinate!T start,
+        const GeographicCoordinate!T end,
+        out GeodesicInverseResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result =
+            GeodesicInverseResult!T.init;
+
+        quantities =
+            GeodesicQuantities!T.init;
+
+        if (!isValid)
+            return false;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(
+                start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(
+                start.longitude.radians);
+
+        const W latitude2 =
+            workingLatitudeRadians!T(
+                end.latitude.radians);
+
+        const W longitude2 =
+            workingCanonicalAngleRadians!T(
+                end.longitude.radians);
+
+        if (
+            !isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+        )
+            return false;
+
+        enum int order =
+            geodesicSeriesOrderFor!T;
+
+        enum uint outputs =
+            geodesicInverseReducedLength
+            | geodesicInverseScales
+            | geodesicInverseArea;
+
+        const inverse =
+            geodesicInverseDispatch!(
+                W,
+                order,
+                outputs)(
+                    _a,
+                    _f,
+                    _f1,
+                    _b,
+                    _ep2,
+                    _n,
+                    _a3x,
+                    _c3x,
+                    latitude1,
+                    longitude1,
+                    latitude2,
+                    longitude2);
+
+        const T distance =
+            canonicalZero(
+                cast(T) inverse.distance);
+
+        const T reducedLength =
+            canonicalZero(
+                cast(T) inverse.reducedLength);
+
+        const T scale12 =
+            cast(T) inverse.scale12;
+
+        const T scale21 =
+            cast(T) inverse.scale21;
+
+        const T signedArea =
+            canonicalZero(
+                cast(T) inverse.signedArea);
+
+        const T initialAzimuth =
+            canonicalAngleRadians(
+                cast(T) inverse.initialAzimuth);
+
+        const T finalAzimuth =
+            canonicalAngleRadians(
+                cast(T) inverse.finalAzimuth);
+
+        if (
+            !isFiniteGeodesyScalar(distance)
+            || distance < cast(T) 0
+            || !isFiniteGeodesyScalar(reducedLength)
+            || !isFiniteGeodesyScalar(scale12)
+            || !isFiniteGeodesyScalar(scale21)
+            || !isFiniteGeodesyScalar(signedArea)
+            || !isFiniteGeodesyScalar(initialAzimuth)
+            || !isFiniteGeodesyScalar(finalAzimuth)
+        )
+            return false;
+
+        result =
+            GeodesicInverseResult!T.fromComponents(
+                distance,
+                angleFromRadiansUnchecked(
+                    initialAzimuth),
+                angleFromRadiansUnchecked(
+                    finalAzimuth));
+
+        quantities =
+            GeodesicQuantities!T.fromComponents(
+                reducedLength,
+                scale12,
+                scale21,
+                signedArea);
+
+        return true;
+    }
+
 
     /// Example using bool tryInverse( const GeographicCoordinate!T start, const GeographicCoordinate!T end, out.
     @safe unittest
@@ -1775,6 +2385,574 @@ unittest
         1_000_000.0,
         result));
 }
+
+/**
+ * Prepared oriented geodesic line for repeated distance-based positions.
+ *
+ * A line binds one valid `Geodesic!T`, start coordinate, and initial
+ * azimuth. Line-dependent auxiliary-sphere and series state is computed once
+ * during preparation and reused by `tryPosition` / `position`.
+ *
+ * The initial M2 slice is intentionally distance-mode only. Arc-mode,
+ * longitude unrolling, and advanced quantities are not part of this surface.
+ * Signed distance follows the same oriented geodesic backward when negative.
+ *
+ * `.init` is invalid.
+ */
+struct GeodesicLine(T)
+if (isGeodesyScalar!T)
+{
+private:
+    alias W = WorkingScalar!T;
+
+    bool _valid;
+    W _b = W.nan;
+    W _f1 = W.nan;
+    W _longitude1 = W.nan;
+    W _sinAlpha0 = W.nan;
+    W _cosAlpha0 = W.nan;
+    W _sinSigma1 = W.nan;
+    W _cosSigma1 = W.nan;
+    W _sinOmega1 = W.nan;
+    W _cosOmega1 = W.nan;
+    W _a1m1 = W.nan;
+    W _b11 = W.nan;
+    W _sinTau1 = W.nan;
+    W _cosTau1 = W.nan;
+    W _a3c = W.nan;
+    W _b31 = W.nan;
+    W[9] _c1p;
+    W[9] _c3;
+    GeographicCoordinate!T _start;
+    Angle!T _initialAzimuth;
+
+public:
+    /** True when this line contains fully prepared finite state. */
+    @property bool isValid() const
+        pure nothrow @safe @nogc
+    {
+        return _valid;
+    }
+
+    /// Example checking whether a prepared line is valid.
+    @safe unittest
+    {
+        assert(!GeodesicLine!double.init.isValid);
+    }
+
+    /**
+     * Prepare a line from an existing geodesic solver without throwing.
+     */
+    static bool tryFromGeodesic(
+        const Geodesic!T solver,
+        const GeographicCoordinate!T start,
+        const Angle!T initialAzimuth,
+        out GeodesicLine result)
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicLine.init;
+
+        if (!solver.isValid)
+            return false;
+
+        enum int order = geodesicSeriesOrderFor!T;
+
+        const W latitude1 =
+            workingLatitudeRadians!T(start.latitude.radians);
+
+        const W longitude1 =
+            workingCanonicalAngleRadians!T(start.longitude.radians);
+
+        const W azimuth1 =
+            workingCanonicalAngleRadians!T(initialAzimuth.radians);
+
+        if (!isFiniteGeodesyScalar(latitude1)
+            || !isFiniteGeodesyScalar(longitude1)
+            || !isFiniteGeodesyScalar(azimuth1))
+            return false;
+
+        W sinPhi1;
+        W cosPhi1;
+        W sinAlpha1;
+        W cosAlpha1;
+
+        sinCosCanonicalAngle!W(latitude1, sinPhi1, cosPhi1);
+        sinCosCanonicalAngle!W(azimuth1, sinAlpha1, cosAlpha1);
+
+        W sinBeta1 = solver._f1 * sinPhi1;
+        W cosBeta1 = cosPhi1;
+
+        const W betaNorm =
+            stableHypot2(sinBeta1, cosBeta1);
+
+        if (!isFiniteGeodesyScalar(betaNorm)
+            || betaNorm == cast(W) 0)
+            return false;
+
+        sinBeta1 /= betaNorm;
+        cosBeta1 /= betaNorm;
+
+        const W tiny = sqrt(W.min_normal);
+
+        if (cosBeta1 < tiny)
+            cosBeta1 = tiny;
+
+        const W sinAlpha0 =
+            sinAlpha1 * cosBeta1;
+
+        const W cosAlpha0 =
+            stableHypot2(
+                cosAlpha1,
+                sinAlpha1 * sinBeta1);
+
+        W sinSigma1 = sinBeta1;
+        W cosSigma1 =
+            sinBeta1 != cast(W) 0
+                || cosAlpha1 != cast(W) 0
+                ? cosBeta1 * cosAlpha1
+                : cast(W) 1;
+
+        const W sigmaNorm =
+            stableHypot2(sinSigma1, cosSigma1);
+
+        if (!isFiniteGeodesyScalar(sigmaNorm)
+            || sigmaNorm == cast(W) 0)
+            return false;
+
+        sinSigma1 /= sigmaNorm;
+        cosSigma1 /= sigmaNorm;
+
+        const W sinOmega1 =
+            sinAlpha0 * sinBeta1;
+
+        const W cosOmega1 =
+            sinBeta1 != cast(W) 0
+                || cosAlpha1 != cast(W) 0
+                ? cosBeta1 * cosAlpha1
+                : cast(W) 1;
+
+        const W k2 =
+            cosAlpha0 * cosAlpha0 * solver._ep2;
+
+        const W root =
+            sqrt(cast(W) 1 + k2);
+
+        const W eps =
+            k2
+            / (
+                cast(W) 2
+                * (cast(W) 1 + root)
+                + k2);
+
+        const W a1m1 =
+            geodesicA1m1!(W, order)(eps);
+
+        W[9] c1;
+        W[9] c1p;
+
+        fillGeodesicC1!(W, order)(eps, c1);
+        fillGeodesicC1p!(W, order)(eps, c1p);
+
+        const W b11 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma1,
+                cosSigma1,
+                c1,
+                order);
+
+        const W sinB11 = sin(b11);
+        const W cosB11 = cos(b11);
+
+        const W sinTau1 =
+            sinSigma1 * cosB11
+            + cosSigma1 * sinB11;
+
+        const W cosTau1 =
+            cosSigma1 * cosB11
+            - sinSigma1 * sinB11;
+
+        W[9] c3;
+
+        fillGeodesicC3!(W, order)(
+            eps,
+            solver._c3x,
+            c3);
+
+        const W a3 =
+            geodesicA3!(W, order)(
+                eps,
+                solver._a3x);
+
+        const W a3c =
+            -solver._f * sinAlpha0 * a3;
+
+        const W b31 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma1,
+                cosSigma1,
+                c3,
+                order - 1);
+
+        if (!isFiniteGeodesyScalar(a1m1)
+            || !isFiniteGeodesyScalar(b11)
+            || !isFiniteGeodesyScalar(sinTau1)
+            || !isFiniteGeodesyScalar(cosTau1)
+            || !isFiniteGeodesyScalar(a3c)
+            || !isFiniteGeodesyScalar(b31))
+            return false;
+
+        GeodesicLine candidate;
+
+        candidate._b = solver._b;
+        candidate._f1 = solver._f1;
+        candidate._longitude1 = longitude1;
+        candidate._sinAlpha0 = sinAlpha0;
+        candidate._cosAlpha0 = cosAlpha0;
+        candidate._sinSigma1 = sinSigma1;
+        candidate._cosSigma1 = cosSigma1;
+        candidate._sinOmega1 = sinOmega1;
+        candidate._cosOmega1 = cosOmega1;
+        candidate._a1m1 = a1m1;
+        candidate._b11 = b11;
+        candidate._sinTau1 = sinTau1;
+        candidate._cosTau1 = cosTau1;
+        candidate._a3c = a3c;
+        candidate._b31 = b31;
+        candidate._c1p = c1p;
+        candidate._c3 = c3;
+        candidate._start = start;
+        candidate._initialAzimuth =
+            angleFromRadiansUnchecked(
+                canonicalAngleRadians(cast(T) azimuth1));
+        candidate._valid = true;
+
+        result = candidate;
+        return true;
+    }
+
+    /// Example preparing a line without throwing.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        GeodesicLine!double line;
+        assert(GeodesicLine!double.tryFromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0), line));
+        assert(line.isValid);
+    }
+
+    /** Prepare a reusable geodesic line, throwing on invalid input. */
+    static GeodesicLine fromGeodesic(
+        const Geodesic!T solver,
+        const GeographicCoordinate!T start,
+        const Angle!T initialAzimuth)
+        @safe
+    {
+        GeodesicLine result;
+
+        if (!tryFromGeodesic(
+                solver,
+                start,
+                initialAzimuth,
+                result))
+        {
+            throw new GeodesyValueException(
+                "GeodesicLine requires a valid prepared geodesic and finite line inputs.");
+        }
+
+        return result;
+    }
+
+    /// Example preparing a reusable line with throwing failure semantics.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0));
+        assert(line.isValid);
+    }
+
+    /**
+     * Evaluate a signed distance along the prepared line without throwing.
+     */
+    bool tryPosition(
+        const T distance,
+        out GeodesicDirectResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicDirectResult!T.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(distance))
+            return false;
+
+        const W s12 = cast(W) distance;
+
+        if (s12 == cast(W) 0)
+        {
+            result =
+                GeodesicDirectResult!T.fromComponents(
+                    _start,
+                    _initialAzimuth);
+            return true;
+        }
+
+        enum int order = geodesicSeriesOrderFor!T;
+
+        const W denominator =
+            _b * (cast(W) 1 + _a1m1);
+
+        if (!isFiniteGeodesyScalar(denominator)
+            || denominator == cast(W) 0)
+            return false;
+
+        const W tau12 = s12 / denominator;
+
+        if (!isFiniteGeodesyScalar(tau12))
+            return false;
+
+        const W sinTau12 = sin(tau12);
+        const W cosTau12 = cos(tau12);
+
+        const W b12 =
+            -geodesicSinCosSeries!W(
+                true,
+                _sinTau1 * cosTau12
+                    + _cosTau1 * sinTau12,
+                _cosTau1 * cosTau12
+                    - _sinTau1 * sinTau12,
+                _c1p,
+                order);
+
+        const W sigma12 =
+            tau12 - (b12 - _b11);
+
+        const W sinSigma12 = sin(sigma12);
+        const W cosSigma12 = cos(sigma12);
+
+        W sinSigma2 =
+            _sinSigma1 * cosSigma12
+            + _cosSigma1 * sinSigma12;
+
+        W cosSigma2 =
+            _cosSigma1 * cosSigma12
+            - _sinSigma1 * sinSigma12;
+
+        const W sinBeta2 =
+            _cosAlpha0 * sinSigma2;
+
+        W cosBeta2 =
+            stableHypot2(
+                _sinAlpha0,
+                _cosAlpha0 * cosSigma2);
+
+        const W tiny = sqrt(W.min_normal);
+
+        if (cosBeta2 == cast(W) 0)
+        {
+            cosBeta2 = tiny;
+            cosSigma2 = tiny;
+        }
+
+        const W sinAlpha2 = _sinAlpha0;
+        const W cosAlpha2 =
+            _cosAlpha0 * cosSigma2;
+
+        const W latitude2 =
+            atan2(
+                sinBeta2,
+                _f1 * cosBeta2);
+
+        const W sinOmega2 =
+            _sinAlpha0 * sinSigma2;
+
+        const W cosOmega2 =
+            cosSigma2;
+
+        const W omega12 =
+            atan2(
+                sinOmega2 * _cosOmega1
+                    - cosOmega2 * _sinOmega1,
+                cosOmega2 * _cosOmega1
+                    + sinOmega2 * _sinOmega1);
+
+        const W b32 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma2,
+                cosSigma2,
+                _c3,
+                order - 1);
+
+        const W lambda12 =
+            omega12
+            + _a3c
+                * (
+                    sigma12
+                    + (b32 - _b31));
+
+        const W longitude2 =
+            canonicalAngleRadians(
+                _longitude1 + lambda12);
+
+        const W finalAzimuth =
+            atan2(
+                sinAlpha2,
+                cosAlpha2);
+
+        if (!isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+            || !isFiniteGeodesyScalar(finalAzimuth))
+            return false;
+
+        GeographicCoordinate!T endpoint;
+
+        if (!makeGeographicCoordinate(
+                cast(T) latitude2,
+                cast(T) longitude2,
+                endpoint))
+            return false;
+
+        result =
+            GeodesicDirectResult!T.fromComponents(
+                endpoint,
+                angleFromRadiansUnchecked(
+                    canonicalAngleRadians(
+                        cast(T) finalAzimuth)));
+
+        return true;
+    }
+
+    /// Example evaluating a prepared line without throwing.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0));
+        GeodesicDirectResult!double result;
+        assert(line.tryPosition(1_000.0, result));
+    }
+
+    /** Evaluate a signed distance along the prepared line. */
+    GeodesicDirectResult!T position(
+        const T distance) const
+        @safe
+    {
+        GeodesicDirectResult!T result;
+
+        if (!tryPosition(distance, result))
+        {
+            throw new GeodesyValueException(
+                "GeodesicLine position requires a valid line, finite distance, and finite representable result.");
+        }
+
+        return result;
+    }
+
+    /// Example evaluating a prepared line with throwing failure semantics.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(73.0));
+        const result = line.position(1_000.0);
+        assert(result.position.latitude.radians
+            == result.position.latitude.radians);
+    }
+}
+
+/// Basic public contract for prepared repeated distance positions.
+@safe unittest
+{
+    import std.math : fabs;
+
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+
+    const start =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+
+    const azimuth =
+        Angle!double.fromDegrees(73.0);
+
+    const line =
+        GeodesicLine!double.fromGeodesic(
+            solver,
+            start,
+            azimuth);
+
+    assert(line.isValid);
+
+    foreach (distance; [0.0, 1.0, 1_000.0, 1_000_000.0, -50_000.0])
+    {
+        const expected =
+            solver.direct(
+                start,
+                azimuth,
+                distance);
+
+        const actual =
+            line.position(distance);
+
+        assert(
+            fabs(
+                actual.position.latitude.radians
+                    - expected.position.latitude.radians)
+            < 2e-15);
+
+        assert(
+            fabs(
+                canonicalAngleRadians(
+                    actual.position.longitude.radians
+                        - expected.position.longitude.radians))
+            < 2e-15);
+
+        assert(
+            fabs(
+                canonicalAngleRadians(
+                    actual.finalAzimuth.radians
+                        - expected.finalAzimuth.radians))
+            < 2e-15);
+    }
+
+    GeodesicDirectResult!double invalidResult;
+
+    assert(
+        !GeodesicLine!double.init.tryPosition(
+            1000.0,
+            invalidResult));
+}
+
+
 
 
 unittest
