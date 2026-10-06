@@ -336,6 +336,7 @@ The audit is complete when:
 | `geodesy.rhumb.Rhumb` | existing | Rhumb |
 | `geodesy.rhumb.Rhumb.ellipsoid` | existing | Rhumb |
 | `geodesy.rhumb.Rhumb.fromEllipsoid` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.isValid` | existing | Rhumb |
 | `geodesy.rhumb.Rhumb.inverse` | existing | Rhumb |
 | `geodesy.rhumb.Rhumb.line` | existing | Rhumb |
 | `geodesy.rhumb.Rhumb.tryDirect` | existing | Rhumb |
