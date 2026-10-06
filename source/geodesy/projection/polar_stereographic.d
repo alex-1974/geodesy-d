@@ -1118,8 +1118,13 @@ public:
         if (!radialDistance(latitudeAbs, rho))
             return false;
 
+        const W factorLatitude =
+            atSelectedPole
+                ? (north ? halfPi!W : -halfPi!W)
+                : cast(W) publicLatitude;
+
         return factorsAt(
-            cast(W) publicLatitude,
+            factorLatitude,
             cast(W) source.longitude.normalized.radians,
             rho,
             result);
