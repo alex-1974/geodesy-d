@@ -375,12 +375,14 @@ private:
         const ProjectedCoordinate!T source,
         out W latitudeRadians,
         out W longitudeRadians,
-        out W rho) const
+        out W rho,
+        out W tauAbs) const
         pure nothrow @safe @nogc
     {
         latitudeRadians = W.nan;
         longitudeRadians = W.nan;
         rho = W.nan;
+        tauAbs = W.nan;
 
         if (!isValid)
             return false;
@@ -405,6 +407,7 @@ private:
                 north ? halfPi!W : -halfPi!W;
             longitudeRadians =
                 cast(W) _longitudeOfNaturalOrigin.radians;
+            tauAbs = W.infinity;
             return true;
         }
 
@@ -460,8 +463,10 @@ private:
                 return false;
         }
 
+        tauAbs = tau;
+
         const W latitudeAbs =
-            atan(tau);
+            atan(tauAbs);
 
         latitudeRadians =
             north ? latitudeAbs : -latitudeAbs;
@@ -481,17 +486,17 @@ private:
     }
 
 
-    /** Build conformal factors at an accepted working-precision point. */
-    bool factorsAt(
-        const W latitudeRadians,
+    /** Build factors from preserved geodetic tau without angle round-tripping. */
+    bool factorsAtTau(
         const W longitudeRadians,
         const W rho,
+        const W tauAbs,
+        const bool atPole,
         out ConformalProjectionFactors!T result) const
         pure nothrow @safe @nogc
     {
         result = ConformalProjectionFactors!T.init;
 
-        const W latitudeAbs = fabs(latitudeRadians);
         const W deltaLongitude =
             longitudeDifference(
                 longitudeRadians,
@@ -499,16 +504,15 @@ private:
 
         W pointScale;
 
-        if (latitudeAbs == halfPi!W)
+        if (atPole)
         {
             pointScale =
                 cast(W) _scaleFactorAtNaturalOrigin;
         }
         else
         {
-            const W tau = tan(latitudeAbs);
             const W secphi =
-                hypot2(cast(W) 1, tau);
+                hypot2(cast(W) 1, tauAbs);
             const W e2 =
                 _eccentricity * _eccentricity;
             const W scaleTerm =
@@ -528,7 +532,7 @@ private:
             return false;
 
         const W gamma =
-            latitudeAbs == halfPi!W
+            atPole
                 ? cast(W) 0
                 : (northAspect
                     ? deltaLongitude
@@ -547,6 +551,32 @@ private:
 
         return result.pointScale > cast(T) 0
             && isFiniteScalar(result.pointScale);
+    }
+
+
+    /** Build conformal factors at an accepted working-precision point. */
+    bool factorsAt(
+        const W latitudeRadians,
+        const W longitudeRadians,
+        const W rho,
+        out ConformalProjectionFactors!T result) const
+        pure nothrow @safe @nogc
+    {
+        const W latitudeAbs =
+            fabs(latitudeRadians);
+        const bool atPole =
+            latitudeAbs == halfPi!W;
+        const W tauAbs =
+            atPole
+                ? W.infinity
+                : tan(latitudeAbs);
+
+        return factorsAtTau(
+            longitudeRadians,
+            rho,
+            tauAbs,
+            atPole,
+            result);
     }
 
 public:
@@ -1147,12 +1177,14 @@ public:
         W latitudeRadians;
         W longitudeRadians;
         W rho;
+        W tauAbs;
 
         if (!reverseKernel(
                 source,
                 latitudeRadians,
                 longitudeRadians,
-                rho))
+                rho,
+                tauAbs))
             return false;
 
         Latitude!T latitude;
@@ -1233,18 +1265,21 @@ public:
         W latitudeRadians;
         W longitudeRadians;
         W rho;
+        W tauAbs;
 
         if (!reverseKernel(
                 source,
                 latitudeRadians,
                 longitudeRadians,
-                rho))
+                rho,
+                tauAbs))
             return false;
 
-        return factorsAt(
-            latitudeRadians,
+        return factorsAtTau(
             longitudeRadians,
             rho,
+            tauAbs,
+            rho == cast(W) 0,
             result);
     }
 
