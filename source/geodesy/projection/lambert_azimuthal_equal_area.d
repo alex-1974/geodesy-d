@@ -5,6 +5,31 @@
  * and oblate ellipsoids. The public family deliberately does not embed CRS
  * authority lookup or EPSG presets.
  *
+ * Standards:
+ *     The mathematical family follows ellipsoidal Lambert Azimuthal Equal
+ *     Area semantics. Authority-backed validation includes EPSG:3035
+ *     (ETRS89-extended / LAEA Europe).
+ *
+ * Domain:
+ *     Oblique, equatorial, north-polar, and south-polar projection centres
+ *     are supported. The exact authalic antipode is a directional
+ *     singularity and is excluded; reverse accepts the open represented disk.
+ *
+ * Units:
+ *     False easting, false northing, projected coordinates, and ellipsoid
+ *     axes use the same caller-selected linear unit.
+ *
+ * Numerics:
+ *     Public float uses double working precision. Checked hot paths are pure,
+ *     nothrow, @safe, and @nogc.
+ *
+ * Equal-area semantics:
+ *     LAEA is not conformal and therefore deliberately does not expose
+ *     ConformalProjectionFactors.
+ *
+ * See_Also:
+ *     GeographicCoordinate, ProjectedCoordinate, LambertConformalConic
+ *
  * Authors:
  *     Alexander Bernardi
  *
