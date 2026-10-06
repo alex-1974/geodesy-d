@@ -212,19 +212,34 @@ private void validatePoint(
     const roundTrip =
         projection.reverse(ours);
 
+    const double ownLatError =
+        roundTrip.latitude.degrees - latitude;
+
     require(
-        fabs(roundTrip.latitude.degrees - latitude)
+        fabs(ownLatError)
             <= ownRoundTripAngularTolerance,
-        c.name ~ " own latitude roundtrip mismatch");
+        format(
+            "%s own latitude roundtrip mismatch at %.12g %.12g: %.17g",
+            c.name,
+            latitude,
+            longitude,
+            ownLatError));
 
     if (fabs(latitude) < 90.0)
     {
+        const double ownLonError =
+            normalizeDegrees(
+                roundTrip.longitude.degrees - longitude);
+
         require(
-            fabs(
-                normalizeDegrees(
-                    roundTrip.longitude.degrees - longitude))
+            fabs(ownLonError)
                 <= ownRoundTripAngularTolerance,
-            c.name ~ " own longitude roundtrip mismatch");
+            format(
+                "%s own longitude roundtrip mismatch at %.12g %.12g: %.17g",
+                c.name,
+                latitude,
+                longitude,
+                ownLonError));
     }
 }
 
