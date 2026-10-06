@@ -404,7 +404,38 @@ private:
             return false;
 
         if (tau < cast(W) 0)
-            return false;
+        {
+            /*
+             * The equator is the closed outer boundary of the admitted
+             * selected-hemisphere domain.  An independently generated
+             * ProjectedCoordinate!T can round a mathematical equator point a
+             * tiny radial distance outside that boundary.  Classify only the
+             * excursion that is indistinguishable at the public scalar's
+             * represented E/N precision as the equator itself.
+             *
+             * The budget scales with the represented linear magnitudes and is
+             * therefore invariant under a consistent change of linear unit.
+             */
+            const W representationScale =
+                fabs(cast(W) source.easting)
+                + fabs(cast(W) source.northing)
+                + fabs(cast(W) _falseEasting)
+                + fabs(cast(W) _falseNorthing)
+                + _radiusFactor
+                + cast(W) _ellipsoid.semiMajorAxis;
+
+            const W equatorSlack =
+                cast(W) 4
+                * cast(W) T.epsilon
+                * (representationScale > cast(W) 1
+                    ? representationScale
+                    : cast(W) 1);
+
+            if (rho <= _radiusFactor + equatorSlack)
+                tau = cast(W) 0;
+            else
+                return false;
+        }
 
         const W latitudeAbs =
             atan(tau);
