@@ -494,21 +494,21 @@ public:
     {
         return _position;
     }
-}
 
-/// Example reading a rhumb direct endpoint.
-@safe unittest
-{
-    import geodesy;
-    const solver = Rhumb!double.fromEllipsoid(wgs84!double());
-    const start = GeographicCoordinate!double.fromComponents(
-        Latitude!double.fromDegrees(48.20849),
-        Longitude!double.fromDegrees(16.37208));
-    const result = solver.direct(
-        start,
-        Angle!double.fromDegrees(90.0),
-        1_000.0);
-    assert(result.position.longitude.degrees > 16.37208);
+    /// Example reading a rhumb direct endpoint.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Rhumb!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const result = solver.direct(
+            start,
+            Angle!double.fromDegrees(90.0),
+            1_000.0);
+        assert(result.position.longitude.degrees > 16.37208);
+    }
 }
 
 
@@ -540,27 +540,40 @@ public:
         return _distance;
     }
 
+    /// Example reading inverse rhumb distance.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Rhumb!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.20849),
+            Longitude!double.fromDegrees(16.37208));
+        const end = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(47.07071),
+            Longitude!double.fromDegrees(15.43950));
+        assert(solver.inverse(start, end).distance > 0.0);
+    }
+
     /** Constant rhumb bearing in the canonical half-open interval from -pi inclusive to +pi exclusive. */
     @property Angle!T bearing() const
         pure nothrow @safe @nogc
     {
         return _bearing;
     }
-}
 
-/// Example reading an inverse rhumb result.
-@safe unittest
-{
-    import geodesy;
-    const solver = Rhumb!double.fromEllipsoid(wgs84!double());
-    const start = GeographicCoordinate!double.fromComponents(
-        Latitude!double.fromDegrees(48.20849),
-        Longitude!double.fromDegrees(16.37208));
-    const end = GeographicCoordinate!double.fromComponents(
-        Latitude!double.fromDegrees(47.07071),
-        Longitude!double.fromDegrees(15.43950));
-    const result = solver.inverse(start, end);
-    assert(result.distance > 0.0);
+    /// Example reading inverse rhumb bearing.
+    @safe unittest
+    {
+        import geodesy;
+        const solver = Rhumb!double.fromEllipsoid(wgs84!double());
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(0.0));
+        const end = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(10.0));
+        assert(solver.inverse(start, end).bearing.degrees == 90.0);
+    }
 }
 
 
