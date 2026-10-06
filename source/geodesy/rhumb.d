@@ -50,7 +50,7 @@ import std.math :
     sqrt;
 
 import geodesy.angle : Angle, Latitude, Longitude;
-import geodesy.ellipsoid : Ellipsoid;
+import geodesy.ellipsoid : Ellipsoid, wgs84;
 import geodesy.errors : GeodesyValueException;
 import geodesy.geographic : GeographicCoordinate;
 import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
@@ -540,7 +540,7 @@ public:
         return _distance;
     }
 
-    /** Constant rhumb bearing, canonicalized to [-pi,+pi). */
+    /** Constant rhumb bearing in the canonical half-open interval from -pi inclusive to +pi exclusive. */
     @property Angle!T bearing() const
         pure nothrow @safe @nogc
     {
