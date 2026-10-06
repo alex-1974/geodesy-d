@@ -112,17 +112,25 @@ private void validateScalar(T)()
         "pole easting not exact");
     require(projectedPole.northing == cast(T) 2_000_000,
         "pole northing not exact");
-    require(recoveredPole.latitude.degrees == cast(T) 90,
-        "pole latitude not exact");
-    require(recoveredPole.longitude.degrees == cast(T) 30,
+    require(
+        recoveredPole.latitude.radians
+            == north.latitudeOfNaturalOrigin.radians,
+        "pole latitude not canonical");
+    require(
+        recoveredPole.longitude.radians
+            == north.longitudeOfNaturalOrigin.radians,
         "pole longitude not canonical");
     require(poleFactors.meridianConvergence.degrees == cast(T) 0,
         "forward pole gamma not canonical");
     require(reversePoleFactors.meridianConvergence.degrees == cast(T) 0,
         "reverse pole gamma not canonical");
-    require(poleFactors.pointScale == cast(T) 0.994,
+    require(
+        poleFactors.pointScale
+            == north.scaleFactorAtNaturalOrigin,
         "forward pole scale not exact");
-    require(reversePoleFactors.pointScale == cast(T) 0.994,
+    require(
+        reversePoleFactors.pointScale
+            == north.scaleFactorAtNaturalOrigin,
         "reverse pole scale not exact");
 
     // Closed equator boundary.
