@@ -214,7 +214,7 @@ private void validatePoint(
 
     require(
         fabs(roundTrip.latitude.degrees - latitude)
-            <= projReverseAngularTolerance,
+            <= ownRoundTripAngularTolerance,
         c.name ~ " own latitude roundtrip mismatch");
 
     if (fabs(latitude) < 90.0)
@@ -223,7 +223,7 @@ private void validatePoint(
             fabs(
                 normalizeDegrees(
                     roundTrip.longitude.degrees - longitude))
-                <= projReverseAngularTolerance,
+                <= ownRoundTripAngularTolerance,
             c.name ~ " own longitude roundtrip mismatch");
     }
 }
