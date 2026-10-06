@@ -1,6 +1,6 @@
 # geodesy-d v1.1.0 release readiness
 
-Status: **RELEASE CANDIDATE PREPARATION**
+Status: **RELEASE METADATA FINALIZATION**
 
 This checklist is specific to v1.1.0. It follows the completed v1.0.0 and
 v1.0.1 release records and preserves the frozen v1 compatibility baseline.
@@ -45,9 +45,9 @@ Required before tagging:
 - [x] declare the v1.1 release candidate feature-frozen;
 - [x] confirm no new public capability is added after freeze except an explicit
   release-blocking correction;
-- [ ] run the aggregate public API contract on the final candidate;
-- [ ] confirm the v1.0 frozen public surface remains source compatible;
-- [ ] confirm all v1.1 aggregate exports are deliberate.
+- [x] run the aggregate public API contract on the final candidate;
+- [x] confirm the v1.0 frozen public surface remains source compatible;
+- [x] confirm all v1.1 aggregate exports are deliberate.
 
 The expected additive geodesic family is:
 
@@ -74,12 +74,12 @@ Accepted M2 evidence already includes:
 
 Required on the final release candidate:
 
-- [ ] Geodesic platform matrix PASS;
-- [ ] PROJ differential validation PASS;
-- [ ] Transverse Mercator platform matrix PASS;
-- [ ] UTM platform matrix PASS where release policy requires it;
-- [ ] Topocentric platform matrix PASS;
-- [ ] no new numerical regression introduced by release-only changes.
+- [x] Geodesic platform matrix PASS;
+- [x] PROJ differential validation PASS;
+- [x] Transverse Mercator platform matrix PASS;
+- [x] UTM platform matrix PASS where release policy requires it;
+- [x] Topocentric platform matrix PASS;
+- [x] no new numerical regression introduced by release-only changes.
 
 ## R4 — performance gate
 
@@ -96,9 +96,9 @@ Required before tagging:
 
 - [x] accepted M2 line-performance qualification retained in
   `docs/PERFORMANCE.md`;
-- [ ] confirm no release-prep change touches the qualified numerical hot paths,
+- [x] confirm no release-prep change touches the qualified numerical hot paths,
   or rerun the relevant benchmark if it does;
-- [ ] record any intentional release-candidate performance reruns.
+- [x] record any intentional release-candidate performance reruns — none required; release-prep changes do not touch qualified hot paths.
 
 v1.1 does not require a new benchmark merely because documentation or release
 metadata changes.
@@ -107,14 +107,14 @@ metadata changes.
 
 Required before tagging:
 
-- [ ] `README.md` describes the v1.1 geodesic family accurately;
-- [ ] `docs/API.md` describes the complete additive v1.1 family;
-- [ ] `docs/GEODESIC_FEATURE_MATRIX.md` clearly separates shipped, deferred,
+- [x] `README.md` describes the v1.1 geodesic family accurately;
+- [x] `docs/API.md` describes the complete additive v1.1 family;
+- [x] `docs/GEODESIC_FEATURE_MATRIX.md` clearly separates shipped, deferred,
   planned, and boundary capabilities;
-- [ ] API documentation/DDox workflow PASS on the final candidate;
-- [ ] release-facing Markdown links pass repository validation;
-- [ ] `docs/V1_1_RELEASE_NOTES.md` finalized;
-- [ ] `CHANGELOG.md` finalized for v1.1.0.
+- [x] API documentation/DDox workflow PASS on the final candidate;
+- [x] release-facing Markdown links pass repository validation;
+- [x] `docs/V1_1_RELEASE_NOTES.md` finalized;
+- [x] `CHANGELOG.md` finalized for v1.1.0.
 
 ## R6 — controlled compiler matrix
 
@@ -131,24 +131,24 @@ LDC 1.43.0
 
 Required:
 
-- [ ] unit tests pass under all six controlled compilers;
-- [ ] release build passes under all six controlled compilers;
-- [ ] aggregate public API contract passes where the harness supports it;
-- [ ] candidate commit and toolchain versions are recorded.
+- [x] unit tests pass under all six controlled compilers;
+- [x] release build passes under all six controlled compilers;
+- [x] aggregate public API contract passes where the harness supports it;
+- [x] candidate commit and toolchain versions are recorded.
 
 ## R7 — external consumer
 
 Before tagging, a fresh consumer outside the repository/workspace must:
 
-- [ ] resolve the release candidate without an unintended registry/path mix;
-- [ ] compile using only public imports;
-- [ ] exercise representative v1 baseline functionality;
-- [ ] exercise `GeodesicQuantities!T`;
-- [ ] exercise repeated `GeodesicLine!T` positions;
-- [ ] exercise `GeodesicPolygonAccumulator!T`;
-- [ ] build, link, and run in debug and release configurations;
-- [ ] pass with the minimum DMD baseline and the selected LDC baseline;
-- [ ] preferably pass the complete controlled compiler matrix.
+- [x] resolve the release candidate without an unintended registry/path mix;
+- [x] compile using only public imports;
+- [x] exercise representative v1 baseline functionality;
+- [x] exercise `GeodesicQuantities!T`;
+- [x] exercise repeated `GeodesicLine!T` positions;
+- [x] exercise `GeodesicPolygonAccumulator!T`;
+- [x] build, link, and run in debug and release configurations;
+- [x] pass with the minimum DMD baseline and the selected LDC baseline;
+- [x] pass the complete controlled compiler matrix.
 
 The consumer should not import internal/package modules.
 
@@ -157,20 +157,20 @@ The consumer should not import internal/package modules.
 Before tagging:
 
 - [ ] final release commit is on the intended release branch;
-- [ ] candidate is synchronized with the accepted `develop` feature state;
-- [ ] no release-only generated/build artifacts are tracked;
-- [ ] no accidental research corpus has returned to the production package;
-- [ ] release-facing status wording is internally consistent;
-- [ ] package metadata remains correct;
-- [ ] final candidate SHA is recorded;
-- [ ] required hosted gates are tied to that exact SHA.
+- [x] candidate is synchronized with the accepted `develop` feature state;
+- [x] no release-only generated/build artifacts are tracked;
+- [x] no accidental research corpus has returned to the production package;
+- [x] release-facing status wording is internally consistent;
+- [x] package metadata remains correct;
+- [x] final candidate SHA is recorded;
+- [x] required hosted gates are tied to that exact SHA.
 
 ## R9 — tag and publication
 
 After R1 through R8 are complete:
 
-- [ ] convert the changelog Unreleased section to
-  `[1.1.0] - YYYY-MM-DD`;
+- [x] convert the changelog Unreleased section to
+  `[1.1.0] - 2026-10-06`;
 - [ ] finalize release notes;
 - [ ] create tag `v1.1.0` from the accepted release commit;
 - [ ] publish the GitHub release;
@@ -196,3 +196,48 @@ The M2 feature family is complete and feature-frozen at develop commit
 admitted after this point except an explicit release-blocking correction.
 The remaining work is release qualification, metadata finalization,
 tag/publication, and post-publish verification.
+
+
+## Qualified release candidate evidence
+
+Exact release-candidate head:
+
+`83d589c4e357ac7fd60ba6e2b5b9583978fefccd`
+
+All release-relevant hosted gates passed on that exact head:
+
+~~~text
+CI                                   PASS
+API documentation                    PASS
+PROJ differential validation         PASS
+Geodesic platform matrix             PASS
+UTM platform matrix                  PASS
+Transverse Mercator platform matrix  PASS
+Topocentric platform matrix          PASS
+Release compiler and consumer gate   PASS
+~~~
+
+The controlled release gate passed all six pinned compilers:
+
+~~~text
+DMD 2.111.0
+DMD 2.112.1
+DMD 2.113.0
+LDC 1.41.0
+LDC 1.42.0
+LDC 1.43.0
+~~~
+
+For every compiler the gate completed unit tests, release build, public API
+contract validation, and the external DUB consumer in debug and release mode.
+The consumer exercises v1 baseline use plus `GeodesicQuantities!T`, repeated
+`GeodesicLine!T` positions, and `GeodesicPolygonAccumulator!T`.
+
+The only failed release-gate attempt before this head was infrastructural:
+the consumer script lacked an executable file mode when created through the
+GitHub Contents API. The workflow was corrected to invoke it through `bash`;
+no production source changed.
+
+This candidate is therefore technically qualified for merge to `main`.
+Tagging, publication, and post-publish registry verification remain separate
+release actions.
