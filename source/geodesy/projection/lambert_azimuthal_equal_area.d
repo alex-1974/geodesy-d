@@ -56,6 +56,7 @@ private enum LaeaMode
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)()
     pure nothrow @safe @nogc
 {
@@ -63,6 +64,7 @@ private T pi(T)()
 }
 
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)()
     pure nothrow @safe @nogc
 {
@@ -70,6 +72,7 @@ private T halfPi(T)()
 }
 
 
+/** Return 2*pi in scalar type T. */
 private T twoPi(T)()
     pure nothrow @safe @nogc
 {
@@ -77,6 +80,7 @@ private T twoPi(T)()
 }
 
 
+/** Canonicalize either signed zero to positive zero. */
 private T canonicalZero(T)(const T value)
     pure nothrow @safe @nogc
 {
@@ -84,6 +88,7 @@ private T canonicalZero(T)(const T value)
 }
 
 
+/** Canonicalize finite radians to [-pi,+pi). */
 private T canonicalAngleRadians(T)(const T radians)
     pure nothrow @safe @nogc
 {
@@ -101,6 +106,7 @@ private T canonicalAngleRadians(T)(const T radians)
 }
 
 
+/** Return the canonical shortest longitude difference. */
 private T longitudeDifference(T)(
     const T longitude,
     const T origin)
@@ -110,6 +116,7 @@ private T longitudeDifference(T)(
 }
 
 
+/** Lift public latitude to working precision while preserving cardinal values. */
 private WorkingScalar!T workingLatitudeRadians(T)(
     const T radians)
     pure nothrow @safe @nogc
@@ -128,6 +135,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Lift canonical public longitude to working precision. */
 private WorkingScalar!T workingLongitudeRadians(T)(
     const T radians)
     pure nothrow @safe @nogc
@@ -149,6 +157,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Compute a stable two-argument hypotenuse. */
 private T hypot2(T)(const T x, const T y)
     pure nothrow @safe @nogc
 {
@@ -165,6 +174,7 @@ private T hypot2(T)(const T x, const T y)
 }
 
 
+/** Evaluate sine/cosine with exact public cardinal values. */
 private void sinCosLatitude(T)(
     const T latitude,
     out T sine,
@@ -197,6 +207,7 @@ private void sinCosLatitude(T)(
 }
 
 
+/** Clamp only machine-roundoff excursions beyond the closed unit interval. */
 private bool clampUnitRoundoff(T)(
     const T value,
     out T clamped)
@@ -385,6 +396,7 @@ private:
     W _cosBeta0 = W.nan;
     W _d = W.nan;
 
+    /** Detect a public input that is exactly representable as the prepared antipode. */
     bool sourceIsExactAntipode(
         const GeographicCoordinate!T source) const
         pure nothrow @safe @nogc
@@ -411,6 +423,7 @@ private:
     }
 
 
+    /** Evaluate forward LAEA in working precision. */
     bool forwardWorking(
         const GeographicCoordinate!T source,
         out W easting,
@@ -567,6 +580,7 @@ private:
     }
 
 
+    /** Evaluate reverse LAEA in working precision. */
     bool reverseWorking(
         const ProjectedCoordinate!T source,
         out W latitude,
