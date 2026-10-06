@@ -77,7 +77,7 @@ private void validatePair(
         Longitude!double.fromDegrees(lon2));
 
     const ours = solver.inverse(start, end);
-    const ref = runOracle(
+    const expected = runOracle(
         oracle,
         "inverse",
         ellipsoid.semiMajorAxis,
@@ -85,12 +85,12 @@ private void validatePair(
         lat1, lon1, lat2, lon2);
 
     require(
-        fabs(ours.distance - ref.first) <= distanceTolerance,
+        fabs(ours.distance - expected.first) <= distanceTolerance,
         format("inverse distance mismatch %.12g/%.12g -> %.12g/%.12g: %.17g",
-            lat1, lon1, lat2, lon2, ours.distance - ref.first));
+            lat1, lon1, lat2, lon2, ours.distance - expected.first));
 
     require(
-        fabs(normalizeDegrees(ours.bearing.degrees - ref.second))
+        fabs(normalizeDegrees(ours.bearing.degrees - expected.second))
             <= angularTolerance,
         "inverse bearing mismatch");
 
@@ -112,7 +112,7 @@ private void validatePair(
         "direct",
         ellipsoid.semiMajorAxis,
         ellipsoid.flattening,
-        lat1, lon1, ref.second, ref.first);
+        lat1, lon1, expected.second, expected.first);
 
     require(
         fabs(direct.position.latitude.degrees - refDirect.first)
@@ -130,7 +130,7 @@ private void validatePair(
         "line",
         ellipsoid.semiMajorAxis,
         ellipsoid.flattening,
-        lat1, lon1, ref.second, ref.first);
+        lat1, lon1, expected.second, expected.first);
 
     require(
         fabs(lineResult.position.latitude.degrees - refLine.first)
@@ -175,16 +175,16 @@ void main(string[] args)
         Longitude!double.fromDegrees(10.0));
     const bearing = Angle!double.fromDegrees(33.0);
     const ours = solver.direct(start, bearing, -2_000_000.0);
-    const ref = runOracle(
+    const expected = runOracle(
         oracle, "direct",
         6_378_137.0, 1.0 / 298.257223563,
         50.0, 10.0, 33.0, -2_000_000.0);
 
     require(
-        fabs(ours.position.latitude.degrees - ref.first) <= angularTolerance,
+        fabs(ours.position.latitude.degrees - expected.first) <= angularTolerance,
         "negative-distance direct latitude mismatch");
     require(
-        longitudeError(ours.position.longitude.degrees, ref.second)
+        longitudeError(ours.position.longitude.degrees, expected.second)
             <= angularTolerance,
         "negative-distance direct longitude mismatch");
 
