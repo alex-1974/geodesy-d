@@ -511,6 +511,21 @@ public:
     }
 }
 
+/// Example using a RhumbDirectResult.
+@safe unittest
+{
+    import geodesy;
+    const solver = Rhumb!double.fromEllipsoid(wgs84!double());
+    const start = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    const result = solver.direct(
+        start,
+        Angle!double.fromDegrees(90.0),
+        1_000.0);
+    assert(result.position.longitude.degrees > 16.37208);
+}
+
 
 /** Result of a shortest inverse rhumb operation. */
 struct RhumbInverseResult(T)
@@ -574,6 +589,21 @@ public:
             Longitude!double.fromDegrees(10.0));
         assert(solver.inverse(start, end).bearing.degrees == 90.0);
     }
+}
+
+/// Example using a RhumbInverseResult.
+@safe unittest
+{
+    import geodesy;
+    const solver = Rhumb!double.fromEllipsoid(wgs84!double());
+    const start = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.20849),
+        Longitude!double.fromDegrees(16.37208));
+    const end = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(47.07071),
+        Longitude!double.fromDegrees(15.43950));
+    const result = solver.inverse(start, end);
+    assert(result.distance > 0.0);
 }
 
 
