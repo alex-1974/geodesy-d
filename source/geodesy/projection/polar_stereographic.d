@@ -236,10 +236,27 @@ private bool geodeticTau(T)(
     const T tolerance =
         cast(T) 8 * T.epsilon;
 
-    tau = tauPrime / e2m;
+    /*
+     * Near the pole tau' is asymptotically
+     * exp(-e*atanh(e)) * tau.  Starting Newton from tau'/e2m there loses
+     * significant relative accuracy before the first correction because both
+     * tau and tau' are very large.  Use the asymptotic inverse for the polar
+     * region, matching the stable strategy used by GeographicLib.
+     */
+    tau =
+        fabs(tauPrime) > cast(T) 70
+            ? tauPrime
+                * exp(eccentricityTerm(cast(T) 1, eccentricity))
+            : tauPrime / e2m;
 
     if (!isFiniteScalar(tau))
         return false;
+
+    const T tauMax =
+        cast(T) 2 / sqrt(T.epsilon);
+
+    if (!(fabs(tau) < tauMax))
+        return true;
 
     foreach (_; 0 .. maxIterations)
     {
