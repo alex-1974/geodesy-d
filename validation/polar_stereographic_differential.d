@@ -404,23 +404,30 @@ private void validatePoint(
             metrics);
     ++metrics.geographicLibReverse;
 
+    // Query GeographicLib reverse on the exact same represented E/N before
+    // comparing reverse factors.  Near the pole, E/N rounding can correspond
+    // to a measurably different local scale even when angular recovery is
+    // excellent; forward factors at the pre-rounded source are therefore not
+    // the correct reverse-factor oracle.
+    const glReverse = runGeographicLib(
+        oracle, config, "reverse", gl.first, gl.second);
+
     const reverseFactors = projection.reverseFactors(independentProjected);
+    const expectedReverseGamma =
+        fabs(glReverse.first) == 90.0 ? 0.0 : glReverse.gamma;
     recordAngular(
         label ~ " GeographicLib reverse gamma",
         reverseFactors.meridianConvergence.degrees,
-        expectedGamma,
+        expectedReverseGamma,
         true,
         metrics);
     recordFactor(
         label ~ " GeographicLib reverse scale",
         reverseFactors.pointScale,
-        gl.scale,
+        glReverse.scale,
         metrics);
     metrics.factorChecks += 2;
 
-    // Query GeographicLib reverse explicitly as an additional oracle path.
-    const glReverse = runGeographicLib(
-        oracle, config, "reverse", gl.first, gl.second);
     recordAngular(
         label ~ " GeographicLib own reverse latitude",
         glReverse.first,
