@@ -343,6 +343,7 @@ private:
     Latitude!T _secondStandardParallel;
     T _falseEasting = T.nan;
     T _falseNorthing = T.nan;
+    T _apexNorthing = T.nan;
 
     W _a = W.nan;
     W _e2 = W.nan;
@@ -455,14 +456,22 @@ private:
         const W theta =
             _n * deltaLongitude;
 
-        easting =
-            cast(W) _falseEasting
-            + rho * sin(theta);
+        if (rho == cast(W) 0)
+        {
+            easting = cast(W) _falseEasting;
+            northing = cast(W) _apexNorthing;
+        }
+        else
+        {
+            easting =
+                cast(W) _falseEasting
+                + rho * sin(theta);
 
-        northing =
-            cast(W) _falseNorthing
-            + _rho0
-            - rho * cos(theta);
+            northing =
+                cast(W) _falseNorthing
+                + _rho0
+                - rho * cos(theta);
+        }
 
         return isFiniteGeodesyScalar(easting)
             && isFiniteGeodesyScalar(northing);
@@ -496,6 +505,22 @@ private:
         if (!isFiniteGeodesyScalar(dx)
             || !isFiniteGeodesyScalar(dy))
             return false;
+
+        if (source.easting == _falseEasting
+            && source.northing == _apexNorthing)
+        {
+            rho = cast(W) 0;
+            latitude =
+                _n > cast(W) 0
+                    ? halfPi!W
+                    : -halfPi!W;
+
+            longitude =
+                workingLongitudeRadians!T(
+                    _longitudeOfFalseOrigin.radians);
+
+            return true;
+        }
 
         rho = hypot2(dx, dy);
 
@@ -568,6 +593,7 @@ public:
             && _ellipsoid.flattening <= cast(T) 0.01
             && isFiniteGeodesyScalar(_falseEasting)
             && isFiniteGeodesyScalar(_falseNorthing)
+            && isFiniteGeodesyScalar(_apexNorthing)
             && isFiniteGeodesyScalar(_a)
             && _a > cast(W) 0
             && isFiniteGeodesyScalar(_e2)
@@ -729,6 +755,8 @@ public:
             secondStandardParallel;
         candidate._falseEasting = falseEasting;
         candidate._falseNorthing = falseNorthing;
+        candidate._apexNorthing =
+            cast(T) (cast(W) falseNorthing + rho0);
         candidate._a = a;
         candidate._e2 = e2;
         candidate._e = e;
