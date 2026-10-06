@@ -284,7 +284,14 @@ private void validateScalar(T)()
         static if (real.mant_dig > double.mant_dig)
         {
             // Preserve information that exists only in wide real.
-            const real tiny = 0x1p-60L;
+            /*
+             * At a magnitude near 80 degrees, 2^-48 degrees is retained by
+             * the common x86 64-bit-mantissa real and by IEEE binary128, while
+             * remaining below half a binary64 ULP.  It therefore probes
+             * preservation beyond double without falling below real's own
+             * input resolution.
+             */
+            const real tiny = 0x1p-48L;
             const auto widePoint = GeographicCoordinate!real.fromComponents(
                 Latitude!real.fromDegrees(80.0L + tiny),
                 Longitude!real.fromDegrees(44.0L + tiny));
