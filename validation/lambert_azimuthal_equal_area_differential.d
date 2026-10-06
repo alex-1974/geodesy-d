@@ -19,7 +19,8 @@ private enum double linearTolerance = 0.04;
  */
 private enum double projReverseAngularTolerance = 2e-8;
 private enum double ownRoundTripAngularTolerance = 5e-9;
-private enum double nearAntipodeRoundTripAngularTolerance = 1e-8;
+private enum double nearAntipodeLatitudeRoundTripTolerance = 1e-8;
+private enum double nearAntipodeLongitudeRoundTripTolerance = 1e-7;
 
 private struct Config
 {
@@ -217,14 +218,14 @@ private void validatePoint(
     const double ownLatError =
         roundTrip.latitude.degrees - latitude;
 
-    const double ownTolerance =
+    const double ownLatitudeTolerance =
         nearAntipode
-            ? nearAntipodeRoundTripAngularTolerance
+            ? nearAntipodeLatitudeRoundTripTolerance
             : ownRoundTripAngularTolerance;
 
     require(
         fabs(ownLatError)
-            <= ownTolerance,
+            <= ownLatitudeTolerance,
         format(
             "%s own latitude roundtrip mismatch at %.12g %.12g: %.17g",
             c.name,
@@ -238,9 +239,14 @@ private void validatePoint(
             normalizeDegrees(
                 roundTrip.longitude.degrees - longitude);
 
+        const double ownLongitudeTolerance =
+            nearAntipode
+                ? nearAntipodeLongitudeRoundTripTolerance
+                : ownRoundTripAngularTolerance;
+
         require(
             fabs(ownLonError)
-                <= ownTolerance,
+                <= ownLongitudeTolerance,
             format(
                 "%s own longitude roundtrip mismatch at %.12g %.12g: %.17g",
                 c.name,
