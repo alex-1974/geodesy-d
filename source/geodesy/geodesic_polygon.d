@@ -815,3 +815,196 @@ public:
                 + cwResult.signedArea)
         < 1.0e-3);
 }
+
+
+// Regression coverage for antimeridian, pole, and nearly-degenerate polygons.
+@safe unittest
+{
+    import std.math : fabs;
+
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                1.0 / 298.257223563));
+
+    /*
+     * Antimeridian rectangle: both winding directions must remain finite,
+     * preserve perimeter, and negate canonical signed area.
+     */
+    const a0 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(10.0),
+            Longitude!double.fromDegrees(179.0));
+
+    const a1 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(10.0),
+            Longitude!double.fromDegrees(-179.0));
+
+    const a2 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(20.0),
+            Longitude!double.fromDegrees(-179.0));
+
+    const a3 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(20.0),
+            Longitude!double.fromDegrees(179.0));
+
+    auto antimeridianCcw =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    auto antimeridianCw =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    antimeridianCcw.addPoint(a0);
+    antimeridianCcw.addPoint(a1);
+    antimeridianCcw.addPoint(a2);
+    antimeridianCcw.addPoint(a3);
+
+    antimeridianCw.addPoint(a0);
+    antimeridianCw.addPoint(a3);
+    antimeridianCw.addPoint(a2);
+    antimeridianCw.addPoint(a1);
+
+    const antimeridianCcwResult =
+        antimeridianCcw.compute();
+
+    const antimeridianCwResult =
+        antimeridianCw.compute();
+
+    assert(isFiniteGeodesyScalar(antimeridianCcwResult.perimeter));
+    assert(isFiniteGeodesyScalar(antimeridianCcwResult.signedArea));
+    assert(antimeridianCcwResult.perimeter > 0.0);
+    assert(antimeridianCcwResult.signedArea != 0.0);
+
+    assert(
+        fabs(
+            antimeridianCcwResult.perimeter
+                - antimeridianCwResult.perimeter)
+        < 1.0e-7);
+
+    assert(
+        fabs(
+            antimeridianCcwResult.signedArea
+                + antimeridianCwResult.signedArea)
+        < 1.0);
+
+    /*
+     * North-pole cap: crossing all longitude sectors must stay finite and
+     * winding reversal must negate the canonical signed area.
+     */
+    const p0 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(80.0),
+            Longitude!double.fromDegrees(-120.0));
+
+    const p1 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(80.0),
+            Longitude!double.fromDegrees(0.0));
+
+    const p2 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(80.0),
+            Longitude!double.fromDegrees(120.0));
+
+    auto poleForward =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    auto poleReverse =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    poleForward.addPoint(p0);
+    poleForward.addPoint(p1);
+    poleForward.addPoint(p2);
+
+    poleReverse.addPoint(p0);
+    poleReverse.addPoint(p2);
+    poleReverse.addPoint(p1);
+
+    const poleForwardResult =
+        poleForward.compute();
+
+    const poleReverseResult =
+        poleReverse.compute();
+
+    assert(isFiniteGeodesyScalar(poleForwardResult.perimeter));
+    assert(isFiniteGeodesyScalar(poleForwardResult.signedArea));
+    assert(poleForwardResult.perimeter > 0.0);
+    assert(poleForwardResult.signedArea != 0.0);
+
+    assert(
+        fabs(
+            poleForwardResult.perimeter
+                - poleReverseResult.perimeter)
+        < 1.0e-7);
+
+    assert(
+        fabs(
+            poleForwardResult.signedArea
+                + poleReverseResult.signedArea)
+        < 1.0);
+
+    /*
+     * Nearly-degenerate tiny triangle: results remain finite and orientation
+     * reversal remains stable even when the area is very small.
+     */
+    const d0 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0));
+
+    const d1 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.00000001));
+
+    const d2 =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.00000001),
+            Longitude!double.fromDegrees(16.0));
+
+    auto tinyForward =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    auto tinyReverse =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    tinyForward.addPoint(d0);
+    tinyForward.addPoint(d1);
+    tinyForward.addPoint(d2);
+
+    tinyReverse.addPoint(d0);
+    tinyReverse.addPoint(d2);
+    tinyReverse.addPoint(d1);
+
+    const tinyForwardResult =
+        tinyForward.compute();
+
+    const tinyReverseResult =
+        tinyReverse.compute();
+
+    assert(isFiniteGeodesyScalar(tinyForwardResult.perimeter));
+    assert(isFiniteGeodesyScalar(tinyForwardResult.signedArea));
+    assert(tinyForwardResult.perimeter > 0.0);
+
+    assert(
+        fabs(
+            tinyForwardResult.perimeter
+                - tinyReverseResult.perimeter)
+        < 1.0e-9);
+
+    assert(
+        fabs(
+            tinyForwardResult.signedArea
+                + tinyReverseResult.signedArea)
+        < 1.0e-6);
+}
