@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     {
         std::cout << std::setprecision(17);
 
-        if (argc == 5 && std::string(argv[1]) == "standard")
+        if (argc == 4 && std::string(argv[1]) == "standard")
         {
             const double lat = parseDouble(argv[2]);
             const double lon = parseDouble(argv[3]);
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        if (argc == 5 && std::string(argv[1]) == "forward")
+        if (argc == 4 && std::string(argv[1]) == "forward")
         {
             const double lat = parseDouble(argv[2]);
             const double lon = parseDouble(argv[3]);
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        if (argc == 6 && std::string(argv[1]) == "reverse")
+        if (argc == 5 && std::string(argv[1]) == "reverse")
         {
             const bool northp = std::string(argv[2]) == "1";
             const double x = parseDouble(argv[3]);
@@ -92,8 +92,8 @@ int main(int argc, char** argv)
         }
 
         throw std::runtime_error(
-            "usage: oracle standard LAT LON X | "
-            "forward LAT LON X | reverse NORTHP E N X");
+            "usage: oracle standard LAT LON | "
+            "forward LAT LON | reverse NORTHP E N");
     }
     catch (const std::exception& error)
     {
