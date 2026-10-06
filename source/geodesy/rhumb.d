@@ -67,6 +67,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return pi in scalar type T. */
 private T pi(T)()
     pure nothrow @safe @nogc
 {
@@ -74,6 +75,7 @@ private T pi(T)()
 }
 
 
+/** Return pi/2 in scalar type T. */
 private T halfPi(T)()
     pure nothrow @safe @nogc
 {
@@ -81,6 +83,7 @@ private T halfPi(T)()
 }
 
 
+/** Return 2*pi in scalar type T. */
 private T twoPi(T)()
     pure nothrow @safe @nogc
 {
@@ -88,6 +91,7 @@ private T twoPi(T)()
 }
 
 
+/** Canonicalize either signed zero to positive zero. */
 private T canonicalZero(T)(const T value)
     pure nothrow @safe @nogc
 {
@@ -249,7 +253,7 @@ private T meridianDistance(T)(
     enum int order = 12;
 
     static foreach (k; 1 .. order + 1)
-    {
+    {{
         enum T numerator = cast(T) (2 * k + 1);
         enum T denominator = cast(T) (2 * k);
 
@@ -266,7 +270,7 @@ private T meridianDistance(T)(
 
         sum += coefficient * ePower * integral;
         oddSinPower *= sine * sine;
-    }
+    }}
 
     return a * (cast(T) 1 - e2) * sum;
 }
@@ -473,6 +477,7 @@ if (isGeodesyScalar!T)
 private:
     GeographicCoordinate!T _position;
 
+    /** Construct an internal direct result from an accepted endpoint. */
     static RhumbDirectResult fromPosition(
         const GeographicCoordinate!T position)
         pure nothrow @safe @nogc
@@ -515,6 +520,7 @@ private:
     T _distance = 0;
     Angle!T _bearing;
 
+    /** Construct an internal inverse result from accepted public values. */
     static RhumbInverseResult fromComponents(
         const T distance,
         const Angle!T bearing)
@@ -578,6 +584,7 @@ private:
     W _poleDistance = W.nan;
     W _rectifyingRadius = W.nan;
 
+    /** Evaluate a direct position from already prepared start/bearing state. */
     bool tryDirectPrepared(
         const W latitude1,
         const W longitude1,
