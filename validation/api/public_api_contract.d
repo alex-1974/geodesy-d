@@ -50,6 +50,10 @@ static assert(is(Geodesic!double));
 static assert(is(Geodesic!real));
 static assert(is(GeodesicDirectResult!double));
 static assert(is(GeodesicInverseResult!double));
+static assert(is(GeodesicQuantities!double));
+static assert(is(GeodesicLine!double));
+static assert(is(GeodesicPolygonAccumulator!double));
+static assert(is(GeodesicPolygonResult!double));
 
 static assert(is(PositionVectorHelmert!double ==
     Helmert7!(double, HelmertConvention.positionVector)));
@@ -351,6 +355,133 @@ private void checkedApiContract()
     cast(void) a; cast(void) b; cast(void) f; cast(void) invF;
     cast(void) e2; cast(void) ep2; cast(void) n;
     cast(void) inverseShift; cast(void) pvAgain;
+}
+
+
+private void geodesicM2CheckedApiContract()
+    pure nothrow @safe @nogc
+{
+    Ellipsoid!double ellipsoid;
+    Ellipsoid!double.tryFromInverseFlattening(
+        6_378_137.0,
+        298.257223563,
+        ellipsoid);
+
+    Geodesic!double solver;
+    Geodesic!double.tryFromEllipsoid(
+        ellipsoid,
+        solver);
+
+    Latitude!double latitude48;
+    Latitude!double latitude49;
+    Longitude!double longitude16;
+    Longitude!double longitude17;
+    Latitude!double.tryFromDegrees(48.0, latitude48);
+    Latitude!double.tryFromDegrees(49.0, latitude49);
+    Longitude!double.tryFromDegrees(16.0, longitude16);
+    Longitude!double.tryFromDegrees(17.0, longitude17);
+
+    const start =
+        GeographicCoordinate!double.fromComponents(
+            latitude48,
+            longitude16);
+
+    Angle!double azimuth;
+    Angle!double.tryFromDegrees(
+        60.0,
+        azimuth);
+
+    GeodesicLine!double line;
+    GeodesicLine!double.tryFromGeodesic(
+        solver,
+        start,
+        azimuth,
+        line);
+
+    GeodesicDirectResult!double position10;
+    GeodesicDirectResult!double position25;
+
+    line.tryPosition(
+        10_000.0,
+        position10);
+
+    line.tryPosition(
+        25_000.0,
+        position25);
+
+    GeodesicPolygonAccumulator!double polygon;
+    GeodesicPolygonAccumulator!double.tryFromGeodesic(
+        solver,
+        polygon);
+
+    polygon.tryAddPoint(start);
+    polygon.tryAddPoint(
+        GeographicCoordinate!double.fromComponents(
+            latitude48,
+            longitude17));
+    polygon.tryAddPoint(
+        GeographicCoordinate!double.fromComponents(
+            latitude49,
+            longitude16));
+
+    GeodesicPolygonResult!double measurement;
+    polygon.tryCompute(measurement);
+
+    const perimeter = measurement.perimeter;
+    const signedArea = measurement.signedArea;
+
+    cast(void) position10;
+    cast(void) position25;
+    cast(void) perimeter;
+    cast(void) signedArea;
+}
+
+
+private void geodesicM2ThrowingApiContract()
+    @safe
+{
+    auto ellipsoid =
+        Ellipsoid!double.fromInverseFlattening(
+            6_378_137.0,
+            298.257223563);
+
+    auto solver =
+        Geodesic!double.fromEllipsoid(
+            ellipsoid);
+
+    auto start =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(16.0));
+
+    auto line =
+        GeodesicLine!double.fromGeodesic(
+            solver,
+            start,
+            Angle!double.fromDegrees(60.0));
+
+    auto position =
+        line.position(10_000.0);
+
+    auto polygon =
+        GeodesicPolygonAccumulator!double.fromGeodesic(
+            solver);
+
+    polygon.addPoint(start);
+    polygon.addPoint(
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(48.0),
+            Longitude!double.fromDegrees(17.0)));
+    polygon.addPoint(
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(49.0),
+            Longitude!double.fromDegrees(16.0)));
+
+    auto measurement =
+        polygon.compute();
+
+    cast(void) position;
+    cast(void) measurement;
 }
 
 
