@@ -42,8 +42,8 @@ Required before tagging:
 
 - [x] M2 issues #33, #34, #35, and integration gate #36 complete;
 - [x] post-M2 capability audit merged;
-- [ ] declare the v1.1 release candidate feature-frozen;
-- [ ] confirm no new public capability is added after freeze except an explicit
+- [x] declare the v1.1 release candidate feature-frozen;
+- [x] confirm no new public capability is added after freeze except an explicit
   release-blocking correction;
 - [ ] run the aggregate public API contract on the final candidate;
 - [ ] confirm the v1.0 frozen public surface remains source compatible;
@@ -189,7 +189,10 @@ From a fresh environment:
 
 ## Release decision
 
-Current decision: **NOT YET RELEASED — RELEASE CANDIDATE PREPARATION**.
+Current decision: **FEATURE-FROZEN — RELEASE CANDIDATE QUALIFICATION IN PROGRESS**.
 
-The M2 feature family is complete. The remaining work is release qualification,
-metadata finalization, tag/publication, and post-publish verification.
+The M2 feature family is complete and feature-frozen at develop commit
+`eb96b3c9f7278655e2f7986d6135fccc59a0abef`. No new public capability is
+admitted after this point except an explicit release-blocking correction.
+The remaining work is release qualification, metadata finalization,
+tag/publication, and post-publish verification.
