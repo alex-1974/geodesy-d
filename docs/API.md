@@ -576,6 +576,138 @@ S12 = 0
 
 Compatible post-v1 additions do not alter the v1.0 direct/inverse contract.
 
+### Complete v1.1 geodesic family
+
+The v1.1 candidate completes the admitted geodesic family with two prepared
+measurement abstractions in addition to the advanced direct/inverse quantities:
+
+~~~text
+GeodesicQuantities<T>
+GeodesicLine<T>
+GeodesicPolygonAccumulator<T>
+GeodesicPolygonResult<T>
+~~~
+
+All four are deliberately exported by the aggregate `import geodesy;`.
+They are additive to the frozen v1 direct/inverse surface.
+
+The naming pattern remains consistent with the rest of the library:
+
+~~~text
+checked construction / operation    tryFrom... / try...
+throwing convenience                from... / operation
+~~~
+
+For the prepared line this gives:
+
+~~~text
+GeodesicLine.tryFromGeodesic / fromGeodesic
+GeodesicLine.tryPosition     / position
+~~~
+
+For polygon measurement this gives:
+
+~~~text
+GeodesicPolygonAccumulator.tryFromGeodesic / fromGeodesic
+GeodesicPolygonAccumulator.tryAddPoint      / addPoint
+GeodesicPolygonAccumulator.tryCompute       / compute
+~~~
+
+Checked line and polygon operations are `pure nothrow @safe @nogc`.
+Throwing convenience operations are `@safe` and report invalid input or
+failed numerical operations with `GeodesyValueException`.
+
+`GeodesicLine<T>.init` and `GeodesicPolygonAccumulator<T>.init` are
+intentionally invalid prepared states. `GeodesicPolygonResult<T>.init` is
+the canonical empty result with zero point count, perimeter, and signed area.
+
+Line position results retain the v1 longitude and azimuth canonicalization
+rules. Polygon area is positive for counterclockwise traversal and is
+canonicalized to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
+Polygon measurement stores only the first and current vertex plus compensated
+sums; ring validity, holes, containment, overlay, topology, and geometry
+ownership remain outside `geodesy-d`.
+
+#### Consumer example — repeated positions on one geodesic
+
+Prepare the line once when many distances share the same solver, start point,
+and initial azimuth:
+
+~~~d
+import geodesy;
+
+auto ellipsoid =
+    Ellipsoid!double.fromInverseFlattening(
+        6_378_137.0,
+        298.257223563);
+
+auto solver =
+    Geodesic!double.fromEllipsoid(
+        ellipsoid);
+
+auto start =
+    GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0));
+
+auto line =
+    GeodesicLine!double.fromGeodesic(
+        solver,
+        start,
+        Angle!double.fromDegrees(60.0));
+
+foreach (distance; [10_000.0, 25_000.0, 50_000.0])
+{
+    auto position = line.position(distance);
+    // use position.position / position.finalAzimuth
+}
+~~~
+
+The prepared line caches line-dependent auxiliary-sphere and series state.
+Repeated positions therefore avoid rebuilding that state for every distance.
+
+#### Consumer example — ellipsoidal polygon measurement
+
+The accumulator measures an ordered closed geodesic polygon without becoming a
+general polygon-geometry type:
+
+~~~d
+import geodesy;
+
+auto solver =
+    Geodesic!double.fromEllipsoid(
+        Ellipsoid!double.fromInverseFlattening(
+            6_378_137.0,
+            298.257223563));
+
+auto polygon =
+    GeodesicPolygonAccumulator!double.fromGeodesic(
+        solver);
+
+polygon.addPoint(
+    GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0)));
+
+polygon.addPoint(
+    GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(17.0)));
+
+polygon.addPoint(
+    GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(49.0),
+        Longitude!double.fromDegrees(16.0)));
+
+auto measurement = polygon.compute();
+
+// measurement.perimeter  -> solver linear unit
+// measurement.signedArea -> square solver unit, CCW positive
+~~~
+
+The closing edge is included by `compute()`; callers do not repeat the first
+vertex merely to close the measurement.
+
 See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
 numerical, canonicalization, and validation contract.
 
