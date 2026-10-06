@@ -31,6 +31,9 @@
  *
  * License:
  *     MIT
+ *
+ * Date:
+ *     October 6, 2026
  */
 module geodesy.projection.polar_stereographic;
 
@@ -323,6 +326,17 @@ public:
             && _radiusFactor > cast(W) 0;
     }
 
+    /// Example checking whether a Polar Stereographic projection was prepared.
+    @safe unittest
+    {
+        import geodesy;
+        assert(!PolarStereographic!double.init.isValid);
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994, 0.0, 0.0);
+        assert(projection.isValid);
+    }
+
 
     /**
      * Construct a bounded EPSG 9810 projection without throwing.
@@ -387,6 +401,18 @@ public:
         return true;
     }
 
+    /// Example checking Polar Stereographic construction without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        PolarStereographic!double projection;
+        assert(PolarStereographic!double.tryFromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994,
+            2_000_000.0, 2_000_000.0, projection));
+        assert(projection.isValid);
+    }
+
 
     /** Construct a bounded EPSG 9810 projection or throw. */
     static PolarStereographic fromParameters(
@@ -416,11 +442,32 @@ public:
         return result;
     }
 
+    /// Example constructing a north-polar EPSG 9810 projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994,
+            2_000_000.0, 2_000_000.0);
+        assert(projection.isValid);
+    }
+
 
     @property Ellipsoid!T ellipsoid() const
         pure nothrow @safe @nogc
     {
         return _ellipsoid;
+    }
+
+    /// Example reading the prepared reference ellipsoid.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994, 0.0, 0.0);
+        assert(projection.ellipsoid.semiMajorAxis == 6_378_137.0);
     }
 
 
@@ -430,11 +477,31 @@ public:
         return _latitudeOfNaturalOrigin;
     }
 
+    /// Example reading the selected polar natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(-90.0),
+            Longitude!double.fromDegrees(0.0), 0.994, 0.0, 0.0);
+        assert(projection.latitudeOfNaturalOrigin.degrees == -90.0);
+    }
+
 
     @property Longitude!T longitudeOfNaturalOrigin() const
         pure nothrow @safe @nogc
     {
         return _longitudeOfNaturalOrigin;
+    }
+
+    /// Example reading the longitude of natural origin.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(30.0), 0.994, 0.0, 0.0);
+        assert(projection.longitudeOfNaturalOrigin.degrees == 30.0);
     }
 
 
@@ -444,6 +511,16 @@ public:
         return _scaleFactorAtNaturalOrigin;
     }
 
+    /// Example reading the natural-origin scale factor.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994, 0.0, 0.0);
+        assert(projection.scaleFactorAtNaturalOrigin == 0.994);
+    }
+
 
     @property T falseEasting() const
         pure nothrow @safe @nogc
@@ -451,11 +528,31 @@ public:
         return _falseEasting;
     }
 
+    /// Example reading false easting.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994, 2_000_000.0, 0.0);
+        assert(projection.falseEasting == 2_000_000.0);
+    }
+
 
     @property T falseNorthing() const
         pure nothrow @safe @nogc
     {
         return _falseNorthing;
+    }
+
+    /// Example reading false northing.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994, 0.0, 2_000_000.0);
+        assert(projection.falseNorthing == 2_000_000.0);
     }
 
 
@@ -529,6 +626,22 @@ public:
             result);
     }
 
+    /// Example checking a Polar Stereographic forward projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994,
+            2_000_000.0, 2_000_000.0);
+        ProjectedCoordinate!double result;
+        assert(projection.tryForward(
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(73.0),
+                Longitude!double.fromDegrees(44.0)), result));
+        assert(result.easting > 3_000_000.0);
+    }
+
 
     /** Project a geographic coordinate or throw. */
     ProjectedCoordinate!T forward(
@@ -543,6 +656,21 @@ public:
                 ~ "prepared projection domain.");
 
         return result;
+    }
+
+    /// Example projecting a geographic point with the throwing convenience API.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994,
+            2_000_000.0, 2_000_000.0);
+        const result = projection.forward(
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(73.0),
+                Longitude!double.fromDegrees(44.0)));
+        assert(result.northing < 2_000_000.0);
     }
 
 
@@ -645,6 +773,21 @@ public:
         return true;
     }
 
+    /// Example checking a Polar Stereographic reverse projection.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994,
+            2_000_000.0, 2_000_000.0);
+        GeographicCoordinate!double result;
+        assert(projection.tryReverse(
+            ProjectedCoordinate!double.fromComponents(
+                3_320_416.74736, 632_668.43127), result));
+        assert(result.latitude.degrees > 72.9);
+    }
+
 
     /** Reverse a projected coordinate or throw. */
     GeographicCoordinate!T reverse(
@@ -660,6 +803,35 @@ public:
 
         return result;
     }
+
+    /// Example reversing a projected point with the throwing convenience API.
+    @safe unittest
+    {
+        import geodesy;
+        const projection = PolarStereographic!double.fromParameters(
+            wgs84!double(), Latitude!double.fromDegrees(90.0),
+            Longitude!double.fromDegrees(0.0), 0.994,
+            2_000_000.0, 2_000_000.0);
+        const result = projection.reverse(
+            ProjectedCoordinate!double.fromComponents(
+                3_320_416.74736, 632_668.43127));
+        assert(result.longitude.degrees > 43.9);
+    }
+}
+
+/// Example preparing and using a bounded Polar Stereographic projection.
+@safe unittest
+{
+    import geodesy;
+    const projection = PolarStereographic!double.fromParameters(
+        wgs84!double(), Latitude!double.fromDegrees(90.0),
+        Longitude!double.fromDegrees(0.0), 0.994,
+        2_000_000.0, 2_000_000.0);
+    const projected = projection.forward(
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(73.0),
+            Longitude!double.fromDegrees(44.0)));
+    assert(projected.easting > 3_000_000.0);
 }
 
 
