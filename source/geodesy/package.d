@@ -45,7 +45,9 @@
  *
  * See_Also:
  *     `GeodeticCoordinate`, `GeocentricCoordinate`, `TopocentricFrame`,
- *     `TransverseMercator`, `UtmProjection`, `Geodesic`
+ *     `TransverseMercator`, `UtmProjection`, `PolarStereographic`, `UpsProjection`,
+ *     `LambertConformalConic`, `LambertAzimuthalEqualArea`, `Geodesic`,
+ *     `Rhumb`, `RhumbLine`
  *
  * Authors:
  *     Alexander Bernardi
@@ -57,7 +59,7 @@
  *     MIT
  *
  * Date:
- *     September 26, 2026
+ *     October 6, 2026
  */
 module geodesy;
 
