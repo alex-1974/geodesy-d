@@ -76,6 +76,7 @@ public import geodesy.scalar;
 
 public import geodesy.conversion;
 public import geodesy.projection.factors;
+public import geodesy.projection.lambert_azimuthal_equal_area;
 public import geodesy.projection.lambert_conformal_conic;
 public import geodesy.projection.pseudo_mercator;
 public import geodesy.projection.polar_stereographic;
