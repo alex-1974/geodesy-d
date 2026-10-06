@@ -12,6 +12,14 @@ M3 completion baseline on `develop`:
 
 `8e47b8c4cc0339fbda71a9f19e03ca9fb535de72`
 
+Feature-freeze basis after release-metadata preparation:
+
+`d6f49b500b15616ca396ee612fef95896405b526`
+
+Required immutable checkpoint:
+
+`freeze/feature-1.2.0` -> exact feature-freeze basis
+
 ## R1 — release scope
 
 v1.2.0 is the additive M3 feature release.
