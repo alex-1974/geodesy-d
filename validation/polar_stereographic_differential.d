@@ -319,12 +319,20 @@ private void validatePoint(
         metrics);
 
     if (fabs(latitude) < 90.0)
-        recordAngular(
-            label ~ " PROJ reverse longitude",
+    {
+        const representedByProj = runCct(
+            projForwardOperation(config),
             recoveredProj.longitude.degrees,
-            longitude,
-            true,
+            recoveredProj.latitude.degrees);
+
+        recordPosition(
+            label ~ " PROJ reverse represented position",
+            representedByProj.first,
+            representedByProj.second,
+            proj.first,
+            proj.second,
             metrics);
+    }
     ++metrics.projReverse;
 
     // Also exercise PROJ's independent reverse direction.
@@ -396,12 +404,22 @@ private void validatePoint(
         false,
         metrics);
     if (fabs(latitude) < 90.0)
-        recordAngular(
-            label ~ " GeographicLib reverse longitude",
-            recoveredGl.longitude.degrees,
-            longitude,
-            true,
+    {
+        const representedByGl = runGeographicLib(
+            oracle,
+            config,
+            "forward",
+            recoveredGl.latitude.degrees,
+            recoveredGl.longitude.degrees);
+
+        recordPosition(
+            label ~ " GeographicLib reverse represented position",
+            representedByGl.first,
+            representedByGl.second,
+            gl.first,
+            gl.second,
             metrics);
+    }
     ++metrics.geographicLibReverse;
 
     // Query GeographicLib reverse on the exact same represented E/N before
