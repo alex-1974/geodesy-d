@@ -12,12 +12,12 @@ forward as active roadmap text.
 The released stable line is:
 
 ~~~text
-v1.0.1
+v1.1.0
 ~~~
 
-The completed M2 geodesic family is now in v1.1.0 release-candidate
-qualification. No further M2 feature expansion is required for the v1.1
-release decision.
+v1.1.0 completed M2 — Geodesic Core Completion and was published on
+2026-10-06. The post-v1.1 development line now starts with M3 — Navigation &
+Polar Geodesy.
 
 The frozen v1 API already provides:
 
@@ -110,7 +110,7 @@ It introduces no new public capability family.
 
 # M2 — Geodesic Core Completion
 
-**Release intent:** primary **v1.1 candidate**.
+**Status:** completed and released in **v1.1.0**.
 
 The first post-v1 feature milestone completes the existing Karney-family
 geodesic core instead of starting unrelated new families. "Core completion"
@@ -154,9 +154,26 @@ or workspace-boundary responsibilities.
 
 # M3 — Navigation & Polar Geodesy
 
+**Status:** active post-v1.1 development milestone.
+
 **Goal:** complete the principal navigation/polar families after the geodesic
 core is mature, unless concrete consumer evidence justifies advancing an
 individual item earlier.
+
+Tracking issue:
+
+- #74 — M3 Navigation & Polar Geodesy integration gate.
+
+Preferred order:
+
+1. #38 — establish and accept the bounded Polar Stereographic kernel;
+2. #39 — add UPS as a semantic/policy layer over that accepted kernel;
+3. #37 — research and admit the independent Rhumb/RhumbLine family;
+4. #40 — complete the consumer-driven admission audit for further projections.
+
+Rhumb research may proceed independently of the Polar Stereographic/UPS chain,
+but UPS must not duplicate or precede the accepted Polar Stereographic
+mathematics.
 
 Issues:
 
