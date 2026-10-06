@@ -1,0 +1,59 @@
+name: Polar Stereographic differential validation
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/projection/polar_stereographic.d"
+      - "source/geodesy/projection/factors.d"
+      - "validation/polar_stereographic_*"
+      - "tools/validate-polar-stereographic-differential.sh"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/polar-stereographic-validation.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/projection/polar_stereographic.d"
+      - "source/geodesy/projection/factors.d"
+      - "validation/polar_stereographic_*"
+      - "tools/validate-polar-stereographic-differential.sh"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/polar-stereographic-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: PROJ + GeographicLib
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install DMD
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-latest
+
+      - name: Install independent projection references
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin libgeographiclib-dev
+          cct --version
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --force
+
+      - name: PS-C / PS-D differential corpus
+        shell: bash
+        run: tools/validate-polar-stereographic-differential.sh
