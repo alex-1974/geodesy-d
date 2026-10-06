@@ -181,6 +181,7 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/TRANSVERSE_MERCATOR_VALIDATION_PLAN.md` — Transverse Mercator validation.
 - `docs/UTM_VALIDATION_PLAN.md` — UTM validation.
 - `docs/GEODESIC_VALIDATION_PLAN.md` — geodesic acceptance program and evidence.
+- `docs/GEODESIC_FEATURE_MATRIX.md` — post-M2 capability audit against GeographicLib/PROJ and admission decisions.
 - `docs/TOPOCENTRIC_VALIDATION_PLAN.md` — topocentric acceptance program and evidence.
 - `docs/operations/geographic-geocentric.md` — EPSG 9602.
 - `docs/operations/geocentric-translation.md` — EPSG 1031.
