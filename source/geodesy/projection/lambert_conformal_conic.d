@@ -1006,12 +1006,12 @@ public:
             Latitude!double.fromDegrees(33.0),
             Latitude!double.fromDegrees(45.0),
             0.0, 0.0);
-        ProjectedCoordinate!double out;
+        ProjectedCoordinate!double projected;
         assert(p.tryForward(
             GeographicCoordinate!double.fromComponents(
                 Latitude!double.fromDegrees(35.0),
                 Longitude!double.fromDegrees(-75.0)),
-            out));
+            projected));
     }
 
 
