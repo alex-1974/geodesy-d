@@ -343,14 +343,14 @@ private void validatePoint(
         proj.first,
         proj.second);
     if (fabs(latitude) <= angularReverseLatitudeLimit)
+    {
         recordAngular(
             label ~ " PROJ own inverse latitude",
             projReverse.second,
             latitude,
             false,
             metrics);
-    if (fabs(latitude) < 90.0)
-    {
+
         const projOwnRepresented = runCct(
             projForwardOperation(config),
             projReverse.first,
