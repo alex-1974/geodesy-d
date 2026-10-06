@@ -12,6 +12,14 @@ M3 completion baseline on `develop`:
 
 `8e47b8c4cc0339fbda71a9f19e03ca9fb535de72`
 
+Feature-freeze basis after release-metadata preparation:
+
+`d6f49b500b15616ca396ee612fef95896405b526`
+
+Required immutable checkpoint:
+
+`freeze/feature-1.2.0` -> exact feature-freeze basis
+
 ## R1 — release scope
 
 v1.2.0 is the additive M3 feature release.
@@ -50,7 +58,7 @@ Excluded:
 
 Required before tagging:
 
-- [ ] declare exact v1.2.0 release-candidate head feature-frozen;
+- [x] declare exact v1.2.0 release-candidate head feature-frozen;
 - [ ] no new public feature after freeze except explicit release-blocking fix;
 - [ ] aggregate `import geodesy;` API contract passes on final candidate;
 - [ ] strict public DDox/API-example audit passes on final candidate;
@@ -129,3 +137,11 @@ After the exact candidate passes:
 
 Do not move the v1.2.0 tag after publication. If a post-publication defect is
 found, prepare a patch release rather than rewriting the release.
+
+
+## Feature-freeze checkpoint verification
+
+- tag object: `b66cfdae0a1cd4d786e01dbb548c6627701b9fd9`;
+- tag: `freeze/feature-1.2.0`;
+- peeled commit: `d6f49b500b15616ca396ee612fef95896405b526`;
+- release branch derived from the same feature set.

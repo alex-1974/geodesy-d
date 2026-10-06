@@ -6,6 +6,28 @@
  * parallels. It exposes checked/throwing forward, reverse, and conformal
  * factor operations.
  *
+ * Standards:
+ *     Public parameter semantics follow EPSG method 9802 -- Lambert Conic
+ *     Conformal (2SP). Authority-backed validation includes EPSG:31287
+ *     (MGI / Austria Lambert) and EPSG:3034 (ETRS89-extended / LCC Europe).
+ *
+ * Domain:
+ *     Standard parallels must be finite, distinct, non-polar, and must not
+ *     form the degenerate opposite-parallel case. The public v1.2 family is
+ *     deliberately 2SP; equal parallels are not silently treated as 1SP.
+ *
+ * Units:
+ *     False easting, false northing, projected coordinates, and ellipsoid
+ *     axes use the same caller-selected linear unit. Conformal point scale is
+ *     dimensionless and meridian convergence is an Angle.
+ *
+ * Numerics:
+ *     Public float uses double working precision. Checked hot paths are pure,
+ *     nothrow, @safe, and @nogc.
+ *
+ * See_Also:
+ *     ConformalProjectionFactors, TransverseMercator, PolarStereographic
+ *
  * Authors:
  *     Alexander Bernardi
  *
