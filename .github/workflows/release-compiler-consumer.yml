@@ -65,4 +65,4 @@ jobs:
 
       - name: External DUB consumer
         shell: bash
-        run: tools/validate-release-consumer.sh
+        run: bash tools/validate-release-consumer.sh
