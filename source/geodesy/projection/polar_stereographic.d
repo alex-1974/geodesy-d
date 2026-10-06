@@ -227,8 +227,14 @@ private bool geodeticTau(T)(
     if (!(e2m > cast(T) 0))
         return false;
 
+    /*
+     * Reverse factors near the selected pole are sensitive to relative error
+     * in tau even when the recovered latitude is already angularly excellent.
+     * Iterate to near working-scalar precision rather than a sqrt(epsilon)
+     * latitude-only stopping threshold.
+     */
     const T tolerance =
-        sqrt(T.epsilon) / cast(T) 10;
+        cast(T) 8 * T.epsilon;
 
     tau = tauPrime / e2m;
 
@@ -273,7 +279,7 @@ private bool geodeticTau(T)(
 
     return fabs(
         tauPrime - conformalTau(tau, eccentricity))
-        < sqrt(T.epsilon)
+        <= cast(T) 16 * T.epsilon
             * (fabs(tauPrime) > cast(T) 1
                 ? fabs(tauPrime)
                 : cast(T) 1);
