@@ -396,12 +396,12 @@ It should only be admitted against a specific CRS or consumer test corpus.
 
 ## Implement next
 
-1. **Lambert Conformal Conic 2SP**
+1. **Lambert Conformal Conic 2SP** — implementation issue #83
    - concrete Austria and pan-European conformal interoperability;
    - complements UTM at broader European mapping scales;
    - first follow-up implementation issue.
 
-2. **Lambert Azimuthal Equal Area**
+2. **Lambert Azimuthal Equal Area** — implementation issue #84
    - concrete EPSG:3035 pan-European statistical/equal-area interoperability;
    - first equal-area family in geodesy-d;
    - second follow-up implementation issue.
