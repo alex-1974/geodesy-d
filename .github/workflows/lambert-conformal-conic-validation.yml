@@ -1,0 +1,59 @@
+name: Lambert Conformal Conic differential validation
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/projection/lambert_conformal_conic.d"
+      - "source/geodesy/projection/factors.d"
+      - "validation/lambert_conformal_conic_*"
+      - "tools/validate-lambert-conformal-conic-differential.sh"
+      - "docs/LAMBERT_CONFORMAL_CONIC_RESEARCH.md"
+      - ".github/workflows/lambert-conformal-conic-validation.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/projection/lambert_conformal_conic.d"
+      - "source/geodesy/projection/factors.d"
+      - "validation/lambert_conformal_conic_*"
+      - "tools/validate-lambert-conformal-conic-differential.sh"
+      - "docs/LAMBERT_CONFORMAL_CONIC_RESEARCH.md"
+      - ".github/workflows/lambert-conformal-conic-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: PROJ LCC 2SP
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-2.111.0
+
+      - name: Install PROJ
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin
+          proj 2>&1 | head -n 2 || true
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: LCC differential corpus
+        shell: bash
+        run: bash tools/validate-lambert-conformal-conic-differential.sh
