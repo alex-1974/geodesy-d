@@ -1,0 +1,174 @@
+name: Lambert Conformal Conic platform matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/projection/lambert_conformal_conic.d"
+      - "validation/lambert_conformal_conic_*"
+      - "tools/benchmark-lambert-conformal-conic.sh"
+      - "docs/LAMBERT_CONFORMAL_CONIC_RESEARCH.md"
+      - ".github/workflows/lambert-conformal-conic-platform-matrix.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/projection/lambert_conformal_conic.d"
+      - "validation/lambert_conformal_conic_*"
+      - "tools/benchmark-lambert-conformal-conic.sh"
+      - "docs/LAMBERT_CONFORMAL_CONIC_RESEARCH.md"
+      - ".github/workflows/lambert-conformal-conic-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  platform:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            experimental: false
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            experimental: false
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            experimental: false
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            experimental: false
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            experimental: false
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            experimental: false
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            experimental: true
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: LCC scalar qualification
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$DC" -i -Isource -run validation/lambert_conformal_conic_scalar_validation.d
+
+  compiler:
+    name: compiler / ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - dmd-2.112.1
+          - dmd-2.113.0
+          - ldc-1.41.0
+          - ldc-1.42.0
+          - ldc-1.43.0
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: LCC scalar qualification
+        shell: bash
+        run: |
+          set -euxo pipefail
+          "$DC" -i -Isource -run validation/lambert_conformal_conic_scalar_validation.d
+
+      - name: Release build
+        shell: bash
+        run: dub build --build=release --compiler="$DC"
+
+      - name: Codegen probe
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p .ci-work
+
+          if [[ "$DC" == *ldc2* ]]; then
+            opt=(-release -O3 -enable-inlining)
+          else
+            opt=(-release -O -inline)
+          fi
+
+          "$DC" "${opt[@]}" -i -Isource -c             validation/lambert_conformal_conic_codegen_probe.d             -of=.ci-work/lcc-codegen.o
+
+          nm -g .ci-work/lcc-codegen.o             | tee .ci-work/lcc-symbols.txt
+
+          grep -q probe_lcc_forward_easting .ci-work/lcc-symbols.txt
+          grep -q probe_lcc_reverse_latitude .ci-work/lcc-symbols.txt
+          grep -q probe_lcc_forward_scale .ci-work/lcc-symbols.txt
+
+          objdump -d .ci-work/lcc-codegen.o             > .ci-work/lcc-codegen.txt
+
+  benchmark-smoke:
+    name: LCC benchmark smoke
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ldc-1.41.0
+
+      - name: Install PROJ development package
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libproj-dev pkg-config
+
+      - name: Build and execute benchmark smoke
+        shell: bash
+        env:
+          LCC_BENCH_ITERATIONS: "2048"
+        run: bash tools/benchmark-lambert-conformal-conic.sh
