@@ -89,12 +89,12 @@ void main(string[] args)
     {
         const point = corpus[i % corpusSize];
 
-        const out = projection.forward(
+        const projected = projection.forward(
             GeographicCoordinate!double.fromComponents(
                 Latitude!double.fromDegrees(point.latitude),
                 Longitude!double.fromDegrees(point.longitude)));
 
-        checksum += out.easting * 1e-9 + out.northing * 1e-10;
+        checksum += projected.easting * 1e-9 + projected.northing * 1e-10;
     }
 
     auto stop = MonoTime.currTime;
