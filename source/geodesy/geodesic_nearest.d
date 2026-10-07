@@ -40,7 +40,11 @@
 module geodesy.geodesic_nearest;
 
 import geodesy.angle :
-    Angle;
+    Angle,
+    Latitude,
+    Longitude;
+import geodesy.ellipsoid :
+    Ellipsoid;
 import geodesy.errors :
     GeodesyValueException;
 import geodesy.geodesic :
