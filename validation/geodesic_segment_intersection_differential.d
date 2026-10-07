@@ -90,8 +90,7 @@ void main()
         Case("long oblique",-55,-150,55,20,50,-120,-45,50),
         Case("reversed first",0,10,0,-10,-10,0,10,0),
         Case("reversed second",0,-10,0,10,10,0,-10,0),
-        Case("almost coincident none",0,-20,0,20,0.000001,-20,0.000001,20),
-        Case("near anti long",5,-170,-5,5,-40,-80,40,100)
+        Case("almost coincident none",0,-20,0,20,0.000001,-20,0.000001,20)
     ];
 
     size_t failures = 0;
@@ -222,6 +221,29 @@ void main()
         || invalid.isValid)
     {
         writeln("FAIL exact antipodal segment should be rejected");
+        ++failures;
+    }
+
+    /*
+     * GeographicLib documents equal-and-opposite endpoint latitudes as a
+     * multiple-shortest-geodesic case when the two returned azimuths differ.
+     * Intersect::Segment itself can still return one representative solution,
+     * but its contract warns that the segment result is only well-defined for
+     * unique shortest geodesics. geodesy-d rejects this input explicitly.
+     */
+    const ambiguousA0 = gc(5.0, -170.0);
+    const ambiguousA1 = gc(-5.0, 5.0);
+
+    if (tryIntersectGeodesicSegments(
+            solver,
+            ambiguousA0,
+            ambiguousA1,
+            targetA,
+            targetB,
+            invalid)
+        || invalid.isValid)
+    {
+        writeln("FAIL ambiguous shortest segment should be rejected");
         ++failures;
     }
 
