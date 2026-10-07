@@ -29,6 +29,9 @@ static assert(is(TopocentricFrame!double));
 static assert(is(TopocentricFrame!real));
 
 static assert(is(GeocentricTranslation!double));
+static assert(is(Epoch!float));
+static assert(is(Epoch!double));
+static assert(is(Epoch!real));
 static assert(is(ProjectedCoordinate!double));
 
 static assert(is(ConformalProjectionFactors!float));
@@ -61,6 +64,12 @@ static assert(is(CoordinateFrameHelmert!double ==
     Helmert7!(double, HelmertConvention.coordinateFrame)));
 static assert(!is(PositionVectorHelmert!double ==
     CoordinateFrameHelmert!double));
+static assert(is(PositionVectorHelmert14!double ==
+    Helmert14!(double, HelmertConvention.positionVector)));
+static assert(is(CoordinateFrameHelmert14!double ==
+    Helmert14!(double, HelmertConvention.coordinateFrame)));
+static assert(!is(PositionVectorHelmert14!double ==
+    CoordinateFrameHelmert14!double));
 
 private void topocentricCheckedApiContract()
     pure nothrow @safe @nogc
@@ -283,6 +292,30 @@ private void checkedApiContract()
     GeocentricCoordinate!double cfTarget;
     tryApplyCoordinateFrameHelmert(geocentric, cf, cfTarget);
 
+    Epoch!double referenceEpoch;
+    Epoch!double.tryFromDecimalYear(2000.0, referenceEpoch);
+
+    Epoch!double observationEpoch;
+    Epoch!double.tryFromDecimalYear(2020.0, observationEpoch);
+
+    PositionVectorHelmert14!double dynamicPv;
+    PositionVectorHelmert14!double.tryFromCanonical(
+        pv,
+        0.001, 0.002, 0.003,
+        1e-9, 2e-9, 3e-9,
+        1e-10,
+        referenceEpoch,
+        dynamicPv);
+
+    PositionVectorHelmert!double evaluatedPv;
+    dynamicPv.tryEvaluate(observationEpoch, evaluatedPv);
+
+    GeocentricCoordinate!double dynamicTarget;
+    dynamicPv.tryApply(geocentric, observationEpoch, dynamicTarget);
+
+    const dynamicCf = toCoordinateFrameHelmert14(dynamicPv);
+    const dynamicPvAgain = toPositionVectorHelmert14(dynamicCf);
+
     Geodesic!double geodesic;
 
     Geodesic!double.tryFromEllipsoid(
@@ -355,6 +388,7 @@ private void checkedApiContract()
     cast(void) a; cast(void) b; cast(void) f; cast(void) invF;
     cast(void) e2; cast(void) ep2; cast(void) n;
     cast(void) inverseShift; cast(void) pvAgain;
+    cast(void) evaluatedPv; cast(void) dynamicTarget; cast(void) dynamicPvAgain;
 }
 
 
@@ -673,6 +707,18 @@ private void throwingApiContract()
     auto pvTarget = applyPositionVectorHelmert(geocentric, pv);
     auto cf = toCoordinateFrame(pv);
     auto cfTarget = applyCoordinateFrameHelmert(geocentric, cf);
+
+    auto referenceEpoch = Epoch!double.fromDecimalYear(2000.0);
+    auto observationEpoch = Epoch!double.fromDecimalYear(2020.0);
+    auto dynamicPv = PositionVectorHelmert14!double.fromCanonical(
+        pv,
+        0.001, 0.002, 0.003,
+        1e-9, 2e-9, 3e-9,
+        1e-10,
+        referenceEpoch);
+    auto evaluatedPv = dynamicPv.evaluate(observationEpoch);
+    auto dynamicTarget = dynamicPv.apply(geocentric, observationEpoch);
+
     auto pseudoMercator =
         PseudoMercator!double.fromParameters(
             ellipsoid,
@@ -694,6 +740,7 @@ private void throwingApiContract()
     GeodesyValueException exception = new GeodesyValueException("contract");
     cast(void) angle; cast(void) geodeticAgain; cast(void) shifted;
     cast(void) pvTarget; cast(void) cfTarget;
+    cast(void) evaluatedPv; cast(void) dynamicTarget;
     cast(void) pseudoReversed;
     cast(void) geodesic;
     cast(void) exception;
