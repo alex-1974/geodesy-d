@@ -1282,12 +1282,19 @@ if (isGeodesyScalar!T)
         d1 = cast(W) PI * a / cast(W) 2;
         return true;
     }
+    Latitude!T poleLatitude;
+    Longitude!T poleLongitude;
+    Angle!T poleAzimuth;
+    if (!Latitude!T.tryFromRadians(
+            cast(T) (cast(W) PI / cast(W) 2), poleLatitude)
+        || !Longitude!T.tryFromRadians(cast(T) 0, poleLongitude)
+        || !Angle!T.tryFromRadians(cast(T) 0, poleAzimuth))
+        return false;
     const auto pole = GeographicCoordinate!T.fromComponents(
-        Latitude!T.fromRadians(cast(T) (cast(W) PI / cast(W) 2)),
-        Longitude!T.fromRadians(cast(T) 0));
+        poleLatitude, poleLongitude);
     GeodesicLine!T line;
     if (!GeodesicLine!T.tryFromGeodesic(
-            solver, pole, Angle!T.fromRadians(cast(T) 0), line))
+            solver, pole, poleAzimuth, line))
         return false;
     const W tolerance = d * pow(W.epsilon, cast(W) 0.75);
     const W initial =
