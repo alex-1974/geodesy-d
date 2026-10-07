@@ -3378,7 +3378,9 @@ public:
     {
         const solver =
             Geodesic!double.fromEllipsoid(
-                wgs84!double());
+                Ellipsoid!double.fromInverseFlattening(
+                    6_378_137.0,
+                    298.257223563));
 
         const start =
             GeographicCoordinate!double.fromComponents(
@@ -3535,7 +3537,9 @@ public:
     {
         const solver =
             Geodesic!double.fromEllipsoid(
-                wgs84!double());
+                Ellipsoid!double.fromInverseFlattening(
+                    6_378_137.0,
+                    298.257223563));
 
         const start =
             GeographicCoordinate!double.fromComponents(
