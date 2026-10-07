@@ -208,6 +208,14 @@ The audit is complete when:
 | `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.signedCrossTrack` | existing | geodesics |
 | `geodesy.geodesic_nearest.tryNearestPointOnSegment` | existing | geodesics |
 | `geodesy.geodesic_nearest.nearestPointOnSegment` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicSegmentIntersectionKind` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicSegmentIntersectionResult` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicSegmentIntersectionResult.isValid` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicSegmentIntersectionResult.kind` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicSegmentIntersectionResult.firstPoint` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicSegmentIntersectionResult.secondPoint` | existing | geodesics |
+| `geodesy.geodesic_intersection.tryIntersectGeodesicSegments` | existing | geodesics |
+| `geodesy.geodesic_intersection.intersectGeodesicSegments` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.addPoint` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.compute` | existing | geodesics |
