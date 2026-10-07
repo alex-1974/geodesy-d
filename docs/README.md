@@ -182,6 +182,7 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/V1_2_RELEASE_READINESS.md` — current v1.2.0 release qualification.
 - `docs/V1_2_API_AUDIT.md` — v1.2 public API freeze audit.
 - `docs/M3_INTEGRATION_GATE.md` — M3 aggregate validation/performance closure.
+- `docs/M4_EPOCH_SEMANTICS.md` — epoch/rate model for dynamic reference-frame transformations.
 - `docs/REFERENCES.md` — reference hierarchy and validation sources.
 - `docs/adr/0001-scope-and-boundaries.md` — responsibility boundary.
 - `docs/adr/0002-core-type-and-unit-model.md` — core type/unit model.
