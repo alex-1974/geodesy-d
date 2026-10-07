@@ -30,6 +30,8 @@ The library is designed around a small, explicit numerical core:
 - geographic ↔ geocentric conversion;
 - geocentric translations;
 - static 7-parameter Helmert transformations;
+- strong decimal-year epoch semantics and dynamic 14-parameter Helmert transformations;
+- static Molodensky-Badekas transformations with Position Vector / Coordinate Frame conventions;
 - Transverse Mercator;
 - Pseudo-Mercator;
 - UTM forward and reverse projection;
@@ -122,15 +124,18 @@ void main()
 
 **Current stable feature release: v1.2.0.**
 
-v1.2.0 completes M3 — Navigation & Polar Geodesy. It adds Rhumb/RhumbLine,
-Polar Stereographic, UPS, Lambert Conformal Conic 2SP, and Lambert Azimuthal
-Equal Area while preserving the frozen v1 source contract.
+v1.2.0 completes M3 — Navigation & Polar Geodesy. Post-v1.2 development has
+also completed M4 — Reference Frames on `develop`, adding strong epoch
+semantics, dynamic 14-parameter Helmert transformations, and admitted
+Molodensky-Badekas support while deferring direct Molodensky pending a concrete
+consumer/interoperability need.
 
 ## Documentation
 
 - [Public API](docs/API.md)
 - [v1.2.0 release notes](docs/V1_2_RELEASE_NOTES.md)
 - [M3 integration and performance evidence](docs/M3_INTEGRATION_GATE.md)
+- [M4 reference-frame integration evidence](docs/M4_INTEGRATION_GATE.md)
 - [Geodesic feature matrix](docs/GEODESIC_FEATURE_MATRIX.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)
