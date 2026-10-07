@@ -257,7 +257,7 @@ if (isGeodesyScalar!T)
 
     const W longitudeDifference =
         abs(
-            wrapIntersectionPi(
+            wrapIntersectionPi!W(
                 cast(W) second.longitude.radians
                 - cast(W) first.longitude.radians));
 
@@ -390,17 +390,17 @@ if (isGeodesyScalar!T)
             cos(sphericalArc);
 
         const W firstAngle =
-            wrapIntersectionPi(
+            wrapIntersectionPi!W(
                 cast(W) inverse.initialAzimuth.radians
                 - cast(W) firstPosition.finalAzimuth.radians);
 
         const W secondAngle =
-            wrapIntersectionPi(
+            wrapIntersectionPi!W(
                 cast(W) inverse.finalAzimuth.radians
                 - cast(W) secondPosition.finalAzimuth.radians);
 
         const W orientationDifference =
-            wrapIntersectionPi(
+            wrapIntersectionPi!W(
                 secondAngle - firstAngle);
 
         const W sign =
