@@ -739,8 +739,32 @@ intentionally invalid prepared states. `GeodesicPolygonResult<T>.init` is
 the canonical empty result with zero point count, perimeter, and signed area.
 
 Line position results retain the v1 longitude and azimuth canonicalization
-rules. Polygon area is positive for counterclockwise traversal and is
-canonicalized to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
+rules. M5 extends the prepared line additively without changing the existing
+distance-position contract:
+
+~~~text
+GeodesicLine.tryArcPosition / arcPosition
+GeodesicLine.tryPositionUnrolled / positionUnrolled
+GeodesicLine.tryArcPositionUnrolled / arcPositionUnrolled
+GeodesicLineUnrolledResult<T>
+~~~
+
+Arc input is the signed auxiliary-sphere arc `sigma12` carried as
+`Angle<T>`. It is not an ellipsoidal distance. The ordinary distance and arc
+position methods return canonical `GeographicCoordinate<T>` longitude.
+
+The explicit unrolled methods instead return
+`GeodesicLineUnrolledResult<T>`, whose `unrolledLongitude` is an unrestricted
+finite `Angle<T>`. The difference from the accepted input longitude retains
+the number and direction of complete ellipsoid encirclements. It is
+intentionally not represented by `Longitude<T>`, whose domain remains
+[-pi,+pi].
+
+These additions reuse the existing prepared line state; they do not enlarge
+the `GeodesicLine<T>` object.
+
+Polygon area is positive for counterclockwise traversal and is canonicalized
+to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
 sums; ring validity, holes, containment, overlay, topology, and geometry
 ownership remain outside `geodesy-d`.
