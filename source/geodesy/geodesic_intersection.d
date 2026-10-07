@@ -1248,6 +1248,15 @@ public:
     }
 }
 
+/// Example using the closest-intersection result type.
+@safe unittest
+{
+    GeodesicClosestIntersectionResult!double result;
+    assert(!result.isValid);
+    assert(result.coincidence
+        == GeodesicIntersectionCoincidence.distinct);
+}
+
 /** L1 distance between two signed displacement pairs. */
 private W intersectionL1(W)(
     const IntersectionDisplacement!W first,
