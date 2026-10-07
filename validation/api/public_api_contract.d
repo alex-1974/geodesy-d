@@ -57,6 +57,8 @@ static assert(is(GeodesicQuantities!double));
 static assert(is(GeodesicLine!double));
 static assert(is(GeodesicLineUnrolledResult!double));
 static assert(is(GeodesicSegmentNearestResult!double));
+static assert(is(GeodesicSegmentIntersectionResult!double));
+static assert(is(GeodesicSegmentIntersectionKind));
 static assert(is(GeodesicSegmentNearestKind));
 static assert(is(GeodesicPolygonAccumulator!double));
 static assert(is(GeodesicPolygonResult!double));
@@ -549,6 +551,31 @@ private void geodesicM2CheckedApiContract()
     const alongTrack = nearest.alongTrack;
     const signedCrossTrack = nearest.signedCrossTrack;
 
+    const secondSegmentStart =
+        GeographicCoordinate!double.fromComponents(
+            latitude49,
+            longitude16);
+
+    const secondSegmentEnd =
+        GeographicCoordinate!double.fromComponents(
+            latitude48,
+            longitude17);
+
+    GeodesicSegmentIntersectionResult!double intersection;
+
+    tryIntersectGeodesicSegments(
+        solver,
+        start,
+        segmentEnd,
+        secondSegmentStart,
+        secondSegmentEnd,
+        intersection);
+
+    const intersectionValid = intersection.isValid;
+    const intersectionKind = intersection.kind;
+    const intersectionFirstPoint = intersection.firstPoint;
+    const intersectionSecondPoint = intersection.secondPoint;
+
     GeodesicPolygonAccumulator!double polygon;
     GeodesicPolygonAccumulator!double.tryFromGeodesic(
         solver,
@@ -588,6 +615,10 @@ private void geodesicM2CheckedApiContract()
     cast(void) supportingFoot;
     cast(void) alongTrack;
     cast(void) signedCrossTrack;
+    cast(void) intersectionValid;
+    cast(void) intersectionKind;
+    cast(void) intersectionFirstPoint;
+    cast(void) intersectionSecondPoint;
     cast(void) perimeter;
     cast(void) signedArea;
 }
@@ -641,6 +672,20 @@ private void geodesicM2ThrowingApiContract()
                 Latitude!double.fromDegrees(49.0),
                 Longitude!double.fromDegrees(16.0)));
 
+    auto intersection =
+        intersectGeodesicSegments(
+            solver,
+            start,
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.0),
+                Longitude!double.fromDegrees(17.0)),
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(49.0),
+                Longitude!double.fromDegrees(16.0)),
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(47.0),
+                Longitude!double.fromDegrees(16.0)));
+
     auto polygon =
         GeodesicPolygonAccumulator!double.fromGeodesic(
             solver);
@@ -663,6 +708,7 @@ private void geodesicM2ThrowingApiContract()
     cast(void) unrolledPosition;
     cast(void) unrolledArc;
     cast(void) nearest;
+    cast(void) intersection;
     cast(void) measurement;
 }
 
