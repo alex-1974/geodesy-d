@@ -1,6 +1,6 @@
 # geodesy-d v1.2.0 release readiness
 
-Status: **RELEASE CANDIDATE PREPARATION**
+Status: **FINAL RELEASE CANDIDATE**
 
 Tracking issue: #90.
 
@@ -59,7 +59,7 @@ Excluded:
 Required before tagging:
 
 - [x] declare exact v1.2.0 release-candidate head feature-frozen;
-- [ ] no new public feature after freeze except explicit release-blocking fix;
+- [x] no new public feature after freeze except explicit release-blocking fix;
 - [x] aggregate `import geodesy;` API contract passes on final candidate;
 - [x] strict public DDox/API-example audit passes on final candidate;
 - [x] frozen v1 public source contract remains source-compatible;
@@ -113,9 +113,9 @@ Required on the exact final release-candidate head:
 
 - [x] v1.2.0 release notes drafted;
 - [x] v1.2.0 CHANGELOG entry drafted;
-- [ ] release-facing README/ROADMAP/API references audited;
+- [x] release-facing README/ROADMAP/API references audited;
 - [ ] final release candidate commit recorded;
-- [ ] release date finalized.
+- [x] release date finalized: 2026-10-07.
 
 ## R7 — promotion and publication
 
