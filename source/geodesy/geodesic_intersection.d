@@ -1153,6 +1153,13 @@ enum GeodesicIntersectionCoincidence
     antiparallel
 }
 
+/// Example distinguishing ordinary and coincident line intersections.
+@safe unittest
+{
+    assert(GeodesicIntersectionCoincidence.distinct
+        != GeodesicIntersectionCoincidence.parallel);
+}
+
 /** Result of the globally closest intersection of two oriented geodesics. */
 struct GeodesicClosestIntersectionResult(T)
 if (isGeodesyScalar!T)
@@ -1185,17 +1192,59 @@ private:
     }
 
 public:
+    /** True when the result was produced by a successful closest search. */
     @property bool isValid() const pure nothrow @safe @nogc { return _valid; }
-    @property GeographicCoordinate!T position() const pure nothrow @safe @nogc { return _position; }
-    @property T distanceOnFirst() const pure nothrow @safe @nogc { return _distanceOnFirst; }
-    @property T distanceOnSecond() const pure nothrow @safe @nogc { return _distanceOnSecond; }
-    @property T referenceDistance() const pure nothrow @safe @nogc { return _referenceDistance; }
-    @property GeodesicIntersectionCoincidence coincidence() const pure nothrow @safe @nogc { return _coincidence; }
-}
 
-@safe unittest
-{
-    assert(!GeodesicClosestIntersectionResult!double.init.isValid);
+    /// Example checking the default invalid state.
+    @safe unittest
+    {
+        assert(!GeodesicClosestIntersectionResult!double.init.isValid);
+    }
+    /** Geographic position of the selected intersection representative. */
+    @property GeographicCoordinate!T position() const pure nothrow @safe @nogc { return _position; }
+
+    /// Example reading the default position value.
+    @safe unittest
+    {
+        GeodesicClosestIntersectionResult!double result;
+        cast(void) result.position;
+    }
+    /** Signed distance from the first oriented line origin. */
+    @property T distanceOnFirst() const pure nothrow @safe @nogc { return _distanceOnFirst; }
+
+    /// Example reading the first signed displacement.
+    @safe unittest
+    {
+        GeodesicClosestIntersectionResult!double result;
+        cast(void) result.distanceOnFirst;
+    }
+    /** Signed distance from the second oriented line origin. */
+    @property T distanceOnSecond() const pure nothrow @safe @nogc { return _distanceOnSecond; }
+
+    /// Example reading the second signed displacement.
+    @safe unittest
+    {
+        GeodesicClosestIntersectionResult!double result;
+        cast(void) result.distanceOnSecond;
+    }
+    /** L1 displacement-space distance to the caller reference pair. */
+    @property T referenceDistance() const pure nothrow @safe @nogc { return _referenceDistance; }
+
+    /// Example reading the closest-ranking distance.
+    @safe unittest
+    {
+        GeodesicClosestIntersectionResult!double result;
+        cast(void) result.referenceDistance;
+    }
+    /** Coincidence relationship of the two supporting oriented geodesics. */
+    @property GeodesicIntersectionCoincidence coincidence() const pure nothrow @safe @nogc { return _coincidence; }
+
+    /// Example reading the default coincidence classification.
+    @safe unittest
+    {
+        GeodesicClosestIntersectionResult!double result;
+        assert(result.coincidence == GeodesicIntersectionCoincidence.distinct);
+    }
 }
 
 private W intersectionL1(W)(
