@@ -118,6 +118,14 @@ void main()
 }
 ~~~
 
+## Status
+
+**Current stable feature release: v1.2.0.**
+
+v1.2.0 completes M3 — Navigation & Polar Geodesy. It adds Rhumb/RhumbLine,
+Polar Stereographic, UPS, Lambert Conformal Conic 2SP, and Lambert Azimuthal
+Equal Area while preserving the frozen v1 source contract.
+
 ## Documentation
 
 - [Public API](docs/API.md)
