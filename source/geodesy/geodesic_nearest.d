@@ -470,12 +470,12 @@ if (isGeodesyScalar!T)
         GnomonicXY!W projectedEnd;
         GnomonicXY!W projectedTarget;
 
-        if (!gnomonicForward(
+        if (!gnomonicForward!T(
                 solver,
                 center,
                 start,
                 projectedStart)
-            || !gnomonicForward(
+            || !gnomonicForward!T(
                 solver,
                 center,
                 end,
@@ -489,7 +489,7 @@ if (isGeodesyScalar!T)
                     cast(W) 0,
                     cast(W) 0);
         }
-        else if (!gnomonicForward(
+        else if (!gnomonicForward!T(
                 solver,
                 center,
                 target,
@@ -526,7 +526,7 @@ if (isGeodesyScalar!T)
 
         GeographicCoordinate!T nextCenter;
 
-        if (!gnomonicReverse(
+        if (!gnomonicReverse!T(
                 solver,
                 center,
                 projectedFoot,
