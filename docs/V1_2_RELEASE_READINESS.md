@@ -70,16 +70,16 @@ Required before tagging:
 Run after the exact feature-freeze basis is declared and before the final RC
 matrix.
 
-- [ ] README release-facing overview polished;
-- [ ] `docs/API.md` reconciled with all v1.2 aggregate exports;
+- [x] README release-facing overview polished;
+- [x] `docs/API.md` reconciled with all v1.2 aggregate exports;
 - [x] public module/type/function Ddoc reviewed for reader-first wording;
 - [x] compiler-checked examples reviewed for clarity and representative usage;
 - [x] terminology across Rhumb, Polar Stereographic, UPS, LCC and LAEA made
   consistent;
-- [ ] stale pre-M3 status/release wording removed;
-- [ ] README/API/research/validation/release-note cross-links reviewed;
-- [ ] generated GitHub Pages/DDox output inspected;
-- [ ] CHANGELOG and release notes polished for final publication;
+- [x] stale pre-M3 status/release wording removed;
+- [x] README/API/research/validation/release-note cross-links reviewed;
+- [x] generated GitHub Pages/DDox output inspected;
+- [x] CHANGELOG and release notes polished for final publication;
 - [x] documentation-only pass introduces no public API/semantic change.
 
 Any source correction required by this pass must rerun the affected release
@@ -154,3 +154,23 @@ found, prepare a patch release rather than rewriting the release.
 - peeled commit: `7294077b237c7b933b383e86e2e747659b333f26`.
 
 The v1.2 public source contract is frozen at this checkpoint.
+
+
+## Documentation-polish qualification
+
+PR #93 qualified head:
+
+`f5c81106885b2e7d7048474ac3601d6e830eb059`
+
+Actual merge commit:
+
+`b62537654eeb32f468286b742cb37c63e9bff12b`
+
+Rendered documentation qualification:
+
+- public module contract: 24/24 PASS;
+- rendered public API example audit: 344/344 compiled;
+- missing/additional-family classifications: add=0, family=0;
+- internal declarations excluded from public DDox;
+- versioned public documentation build PASS;
+- GitHub Pages artifact PASS.
