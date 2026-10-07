@@ -6,8 +6,8 @@
  * or clock time.
  *
  * Units:
- *     Decimal year. Differences returned by `yearsSince` are in years and
- *     match the year denominator used by dynamic transformation rates.
+ *     Decimal year. Dynamic operations subtract finite epoch values in their
+ *     own checked evaluation path.
  *
  * Default:
  *     `.init` is invalid so an omitted epoch cannot silently become year zero.
@@ -98,20 +98,6 @@ public:
                 "Epoch decimal year must be finite.");
         return result;
     }
-
-    /**
-     * Return this epoch minus `reference` in decimal years.
-     *
-     * Both operands must be valid Epoch values. Public construction guarantees
-     * finite stored values.
-     */
-    T yearsSince(const Epoch!T reference) const
-        pure nothrow @safe @nogc
-    {
-        assert(_valid);
-        assert(reference._valid);
-        return _decimalYear - reference._decimalYear;
-    }
 }
 
 /// Example constructing and comparing epochs.
@@ -123,7 +109,7 @@ public:
     const observation = Epoch!double.fromDecimalYear(2025.25);
 
     assert(reference.isValid);
-    assert(observation.yearsSince(reference) == 15.25);
+    assert(observation.decimalYear == 2025.25);
     assert(!Epoch!double.init.isValid);
 }
 
