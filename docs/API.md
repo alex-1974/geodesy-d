@@ -814,6 +814,38 @@ undefined. Very distant / antipodal configurations outside the local
 gnomonic-convergence domain fail through the checked API rather than claiming
 global infinite-line uniqueness.
 
+M5 bounded geodesic-segment intersection is exposed separately:
+
+~~~text
+tryIntersectGeodesicSegments / intersectGeodesicSegments
+GeodesicSegmentIntersectionResult<T>
+GeodesicSegmentIntersectionKind
+~~~
+
+Each endpoint pair defines one bounded shortest ellipsoidal geodesic segment.
+A successful operation returns exactly one geometric classification:
+
+~~~text
+none      finite segments share no point
+point     exactly one common point
+overlap   coincident supporting geodesics share a non-zero bounded interval
+~~~
+
+For `point`, `firstPoint == secondPoint`. For `overlap`, the two result
+points are the actual geographic overlap endpoints, ordered along the first
+input segment. GeographicLib's internal displacement/mode codes are not part of
+the public D API.
+
+A checked call returning `true` with `kind == none` is a successful
+geometric result. `false` is reserved for invalid, degenerate, ambiguous, or
+non-converged input. Exact antipodal endpoint pairs are rejected because the
+shortest connecting geodesic is not unique.
+
+The implementation follows Karney's iterative ellipsoidal geodesic-intersection
+method with prepared `GeodesicLine` values and a bounded midpoint/corner seed
+strategy independently qualified against GeographicLib 2.7. It does not use a
+planar projection shortcut.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
