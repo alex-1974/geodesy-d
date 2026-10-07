@@ -2397,6 +2397,13 @@ private struct GeodesicLineRawPosition(W)
     W latitude;
     W unrolledLongitude;
     W finalAzimuth;
+
+    W sinSigma12;
+    W cosSigma12;
+    W sinSigma2;
+    W cosSigma2;
+    W sinAlpha2;
+    W cosAlpha2;
 }
 
 
@@ -2690,6 +2697,254 @@ private:
         raw.latitude = latitude2;
         raw.unrolledLongitude = unrolledLongitude2;
         raw.finalAzimuth = finalAzimuth;
+        raw.sinSigma12 = sinSigma12;
+        raw.cosSigma12 = cosSigma12;
+        raw.sinSigma2 = sinSigma2;
+        raw.cosSigma2 = cosSigma2;
+        raw.sinAlpha2 = sinAlpha2;
+        raw.cosAlpha2 = cosAlpha2;
+        return true;
+    }
+
+    /**
+     * Evaluate reduced length, geodesic scales, and signed area from an
+     * already solved line position.
+     *
+     * Advanced C2/C4 series state is derived only for this selected overload;
+     * ordinary line positions retain the existing lean prepared state.
+     */
+    bool tryQuantitiesFromSigma(
+        const W sigma12,
+        const ref GeodesicLineRawPosition!W raw,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        quantities = GeodesicQuantities!T.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(sigma12))
+            return false;
+
+        if (sigma12 == cast(W) 0)
+        {
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    cast(T) 0,
+                    cast(T) 1,
+                    cast(T) 1,
+                    cast(T) 0);
+            return true;
+        }
+
+        enum int order = geodesicSeriesOrderFor!T;
+
+        const W f =
+            cast(W) 1 - _f1;
+
+        const W a =
+            _b / _f1;
+
+        const W e2 =
+            f * (cast(W) 2 - f);
+
+        const W ep2 =
+            e2 / (_f1 * _f1);
+
+        const W sinBeta1 =
+            _cosAlpha0 * _sinSigma1;
+
+        const W cosBeta1 =
+            stableHypot2(
+                _sinAlpha0,
+                _cosAlpha0 * _cosSigma1);
+
+        const W sinBeta2 =
+            _cosAlpha0 * raw.sinSigma2;
+
+        const W cosBeta2 =
+            stableHypot2(
+                _sinAlpha0,
+                _cosAlpha0 * raw.cosSigma2);
+
+        const W dn1 =
+            sqrt(
+                cast(W) 1
+                + ep2 * sinBeta1 * sinBeta1);
+
+        const W dn2 =
+            sqrt(
+                cast(W) 1
+                + ep2 * sinBeta2 * sinBeta2);
+
+        const W k2 =
+            _cosAlpha0 * _cosAlpha0 * ep2;
+
+        const W root =
+            sqrt(cast(W) 1 + k2);
+
+        const W eps =
+            k2
+            / (
+                cast(W) 2
+                * (cast(W) 1 + root)
+                + k2);
+
+        if (!isFiniteGeodesyScalar(a)
+            || !isFiniteGeodesyScalar(e2)
+            || !isFiniteGeodesyScalar(ep2)
+            || !isFiniteGeodesyScalar(cosBeta1)
+            || !isFiniteGeodesyScalar(cosBeta2)
+            || cosBeta1 == cast(W) 0
+            || cosBeta2 == cast(W) 0
+            || !isFiniteGeodesyScalar(dn1)
+            || !isFiniteGeodesyScalar(dn2)
+            || !isFiniteGeodesyScalar(eps))
+            return false;
+
+        const lengths =
+            geodesicLengths!(
+                W,
+                order,
+                geodesicLengthReducedLength
+                    | geodesicLengthScales)(
+                        eps,
+                        ep2,
+                        sigma12,
+                        _sinSigma1,
+                        _cosSigma1,
+                        dn1,
+                        cosBeta1,
+                        raw.sinSigma2,
+                        raw.cosSigma2,
+                        dn2,
+                        cosBeta2);
+
+        const W sinAlpha1 =
+            _sinAlpha0 / cosBeta1;
+
+        const W cosAlpha1 =
+            _cosAlpha0
+            * _cosSigma1
+            / cosBeta1;
+
+        const W n =
+            f / (cast(W) 2 - f);
+
+        W[36] c4x;
+
+        fillGeodesicC4x!(
+            W,
+            order)(
+                n,
+                c4x);
+
+        const W authalicRadiusSquared =
+            geodesicAuthalicRadiusSquared(
+                a,
+                _b,
+                e2);
+
+        const W signedArea =
+            geodesicDirectSignedArea!(
+                W,
+                order)(
+                    a,
+                    e2,
+                    authalicRadiusSquared,
+                    c4x,
+                    eps,
+                    _sinAlpha0,
+                    _cosAlpha0,
+                    sinAlpha1,
+                    cosAlpha1,
+                    raw.sinAlpha2,
+                    raw.cosAlpha2,
+                    _sinSigma1,
+                    _cosSigma1,
+                    raw.sinSigma2,
+                    raw.cosSigma2,
+                    raw.sinSigma12,
+                    raw.cosSigma12);
+
+        const T reducedLength =
+            canonicalZero(
+                cast(T) (
+                    _b
+                    * lengths.m12b));
+
+        const T scale12 =
+            cast(T) lengths.M12;
+
+        const T scale21 =
+            cast(T) lengths.M21;
+
+        const T area =
+            canonicalZero(
+                cast(T) signedArea);
+
+        if (!isFiniteGeodesyScalar(reducedLength)
+            || !isFiniteGeodesyScalar(scale12)
+            || !isFiniteGeodesyScalar(scale21)
+            || !isFiniteGeodesyScalar(area))
+            return false;
+
+        quantities =
+            GeodesicQuantities!T.fromComponents(
+                reducedLength,
+                scale12,
+                scale21,
+                area);
+
+        return true;
+    }
+
+    /**
+     * Evaluate a canonical position and advanced quantities from one solved
+     * auxiliary-sphere arc.
+     */
+    bool tryCanonicalPositionAndQuantitiesFromSigma(
+        const W sigma12,
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicDirectResult!T.init;
+        quantities = GeodesicQuantities!T.init;
+
+        GeodesicLineRawPosition!W raw;
+
+        if (!tryRawPositionFromSigma(
+                sigma12,
+                raw))
+            return false;
+
+        GeographicCoordinate!T endpoint;
+
+        if (!makeGeographicCoordinate(
+                cast(T) raw.latitude,
+                canonicalAngleRadians(
+                    cast(T) raw.unrolledLongitude),
+                endpoint))
+            return false;
+
+        const T finalAzimuth =
+            canonicalAngleRadians(
+                cast(T) raw.finalAzimuth);
+
+        if (!isFiniteGeodesyScalar(finalAzimuth))
+            return false;
+
+        if (!tryQuantitiesFromSigma(
+                sigma12,
+                raw,
+                quantities))
+            return false;
+
+        result =
+            GeodesicDirectResult!T.fromComponents(
+                endpoint,
+                angleFromRadiansUnchecked(
+                    finalAzimuth));
+
         return true;
     }
 
@@ -3070,6 +3325,86 @@ public:
         assert(line.tryPosition(1_000.0, result));
     }
 
+    /**
+     * Evaluate a signed distance together with advanced segment quantities.
+     *
+     * This overload computes m12, M12, M21, and S12 on demand without
+     * enlarging the prepared line or changing the ordinary distance hot path.
+     */
+    bool tryPosition(
+        const T distance,
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicDirectResult!T.init;
+        quantities = GeodesicQuantities!T.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(distance))
+            return false;
+
+        if (distance == cast(T) 0)
+        {
+            result =
+                GeodesicDirectResult!T.fromComponents(
+                    _start,
+                    _initialAzimuth);
+
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    cast(T) 0,
+                    cast(T) 1,
+                    cast(T) 1,
+                    cast(T) 0);
+
+            return true;
+        }
+
+        W sigma12;
+
+        if (!trySigmaFromDistance(
+                distance,
+                sigma12))
+            return false;
+
+        return tryCanonicalPositionAndQuantitiesFromSigma(
+            sigma12,
+            result,
+            quantities);
+    }
+
+    /// Example evaluating advanced quantities at a distance position.
+    @safe unittest
+    {
+        const solver =
+            Geodesic!double.fromEllipsoid(
+                wgs84!double());
+
+        const start =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+
+        const line =
+            GeodesicLine!double.fromGeodesic(
+                solver,
+                start,
+                Angle!double.fromDegrees(73.0));
+
+        GeodesicDirectResult!double result;
+        GeodesicQuantities!double quantities;
+
+        assert(line.tryPosition(
+            1_000_000.0,
+            result,
+            quantities));
+
+        assert(quantities.reducedLength != 0.0);
+        assert(quantities.scale12 == quantities.scale12);
+        assert(quantities.scale21 == quantities.scale21);
+        assert(quantities.signedArea == quantities.signedArea);
+    }
+
     /** Evaluate a signed distance along the prepared line. */
     GeodesicDirectResult!T position(
         const T distance) const
@@ -3148,6 +3483,83 @@ public:
             Angle!double.fromDegrees(90.0),
             result));
         assert(result.position.longitude.degrees > 99.999999);
+    }
+
+    /**
+     * Evaluate a signed auxiliary-sphere arc together with advanced segment
+     * quantities.
+     */
+    bool tryArcPosition(
+        const Angle!T arc,
+        out GeodesicDirectResult!T result,
+        out GeodesicQuantities!T quantities) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicDirectResult!T.init;
+        quantities = GeodesicQuantities!T.init;
+
+        if (!isValid)
+            return false;
+
+        const W sigma12 =
+            cast(W) arc.radians;
+
+        if (!isFiniteGeodesyScalar(sigma12))
+            return false;
+
+        if (sigma12 == cast(W) 0)
+        {
+            result =
+                GeodesicDirectResult!T.fromComponents(
+                    _start,
+                    _initialAzimuth);
+
+            quantities =
+                GeodesicQuantities!T.fromComponents(
+                    cast(T) 0,
+                    cast(T) 1,
+                    cast(T) 1,
+                    cast(T) 0);
+
+            return true;
+        }
+
+        return tryCanonicalPositionAndQuantitiesFromSigma(
+            sigma12,
+            result,
+            quantities);
+    }
+
+    /// Example evaluating advanced quantities at an arc position.
+    @safe unittest
+    {
+        const solver =
+            Geodesic!double.fromEllipsoid(
+                wgs84!double());
+
+        const start =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.20849),
+                Longitude!double.fromDegrees(16.37208));
+
+        const line =
+            GeodesicLine!double.fromGeodesic(
+                solver,
+                start,
+                Angle!double.fromDegrees(73.0));
+
+        GeodesicDirectResult!double result;
+        GeodesicQuantities!double quantities;
+
+        assert(line.tryArcPosition(
+            Angle!double.fromDegrees(10.0),
+            result,
+            quantities));
+
+        assert(quantities.reducedLength != 0.0);
+        assert(quantities.scale12 == quantities.scale12);
+        assert(quantities.scale21 == quantities.scale21);
+        assert(quantities.signedArea == quantities.signedArea);
     }
 
     /** Evaluate a signed auxiliary-sphere arc along the prepared line. */
