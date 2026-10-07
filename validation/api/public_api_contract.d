@@ -483,10 +483,26 @@ private void geodesicM2CheckedApiContract()
         25_000.0,
         position25);
 
+    GeodesicDirectResult!double advancedDistancePosition;
+    GeodesicQuantities!double distanceQuantities;
+
+    line.tryPosition(
+        25_000.0,
+        advancedDistancePosition,
+        distanceQuantities);
+
     GeodesicDirectResult!double arcPosition;
     line.tryArcPosition(
         arcOne,
         arcPosition);
+
+    GeodesicDirectResult!double advancedArcPosition;
+    GeodesicQuantities!double arcQuantities;
+
+    line.tryArcPosition(
+        arcOne,
+        advancedArcPosition,
+        arcQuantities);
 
     GeodesicLineUnrolledResult!double unrolledDistance;
     line.tryPositionUnrolled(
@@ -528,7 +544,11 @@ private void geodesicM2CheckedApiContract()
 
     cast(void) position10;
     cast(void) position25;
+    cast(void) advancedDistancePosition;
+    cast(void) distanceQuantities;
     cast(void) arcPosition;
+    cast(void) advancedArcPosition;
+    cast(void) arcQuantities;
     cast(void) unrolledDistance;
     cast(void) unrolledLatitude;
     cast(void) unrolledLongitude;
