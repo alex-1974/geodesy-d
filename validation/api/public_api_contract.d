@@ -686,6 +686,27 @@ private void geodesicM2ThrowingApiContract()
                 Latitude!double.fromDegrees(47.0),
                 Longitude!double.fromDegrees(16.0)));
 
+    GeodesicClosestIntersectionResult!double closestIntersection;
+
+    tryClosestGeodesicIntersection(
+        solver,
+        start,
+        Angle!double.fromDegrees(45.0),
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(49.0),
+            Longitude!double.fromDegrees(17.0)),
+        Angle!double.fromDegrees(-60.0),
+        0.0,
+        0.0,
+        closestIntersection);
+
+    const closestValid = closestIntersection.isValid;
+    const closestPosition = closestIntersection.position;
+    const closestFirst = closestIntersection.distanceOnFirst;
+    const closestSecond = closestIntersection.distanceOnSecond;
+    const closestReferenceDistance = closestIntersection.referenceDistance;
+    const closestCoincidence = closestIntersection.coincidence;
+
     auto polygon =
         GeodesicPolygonAccumulator!double.fromGeodesic(
             solver);
@@ -709,6 +730,12 @@ private void geodesicM2ThrowingApiContract()
     cast(void) unrolledArc;
     cast(void) nearest;
     cast(void) intersection;
+    cast(void) closestValid;
+    cast(void) closestPosition;
+    cast(void) closestFirst;
+    cast(void) closestSecond;
+    cast(void) closestReferenceDistance;
+    cast(void) closestCoincidence;
     cast(void) measurement;
 }
 
