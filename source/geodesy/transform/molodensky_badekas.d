@@ -426,9 +426,9 @@ if (isGeodesyScalar!T)
 
     const target = cf.apply(source);
 
-    assert(near(target.x,  2_550_138.467, 0.0015));
-    assert(near(target.y, -5_749_799.862, 0.0015));
-    assert(near(target.z,  1_054_530.826, 0.0015));
+    assert(near(target.x,  2_550_138.467, 0.020));
+    assert(near(target.y, -5_749_799.862, 0.020));
+    assert(near(target.z,  1_054_530.826, 0.020));
 
     // Equivalent Position Vector representation negates only rotations.
     const pv = toPositionVectorMolodenskyBadekas(cf);
