@@ -771,7 +771,7 @@ if (isGeodesyScalar!T)
 
     W authalicRadius;
 
-    if (!tryAuthalicRadius(
+    if (!tryAuthalicRadius!T(
             solver,
             authalicRadius))
         return false;
@@ -810,7 +810,7 @@ if (isGeodesyScalar!T)
     {
         IntersectionDisplacement!W point;
 
-        if (!tryBasicIntersection(
+        if (!tryBasicIntersection!T(
                 solver,
                 first,
                 second,
@@ -821,7 +821,7 @@ if (isGeodesyScalar!T)
 
         GeodesicSegmentIntersectionResult!T candidate;
 
-        if (!tryClassifyBoundedIntersection(
+        if (!tryClassifyBoundedIntersection!T(
                 solver,
                 first,
                 second,
