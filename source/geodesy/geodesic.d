@@ -2416,6 +2416,7 @@ private:
     Angle!T _unrolledLongitude;
     Angle!T _finalAzimuth;
 
+    /** Construct an internal unrolled result from already validated public values. */
     static GeodesicLineUnrolledResult fromComponents(
         const Latitude!T latitude,
         const Angle!T unrolledLongitude,
@@ -2529,6 +2530,7 @@ private:
     GeographicCoordinate!T _start;
     Angle!T _initialAzimuth;
 
+    /** Convert signed line distance to the corresponding auxiliary-sphere arc. */
     bool trySigmaFromDistance(
         const T distance,
         out W sigma12) const
@@ -2573,6 +2575,7 @@ private:
         return isFiniteGeodesyScalar(sigma12);
     }
 
+    /** Evaluate the shared line-position kernel from a finite auxiliary-sphere arc. */
     bool tryRawPositionFromSigma(
         const W sigma12,
         out GeodesicLineRawPosition!W raw) const
@@ -2690,6 +2693,7 @@ private:
         return true;
     }
 
+    /** Evaluate a canonical geographic line position from auxiliary-sphere arc. */
     bool tryCanonicalPositionFromSigma(
         const W sigma12,
         out GeodesicDirectResult!T result) const
@@ -2720,6 +2724,7 @@ private:
         return true;
     }
 
+    /** Evaluate a line position with continuous longitude from auxiliary-sphere arc. */
     bool tryUnrolledPositionFromSigma(
         const W sigma12,
         out GeodesicLineUnrolledResult!T result) const
