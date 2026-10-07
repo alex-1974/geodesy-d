@@ -341,9 +341,10 @@ alias CoordinateFrameMolodenskyBadekas(T) =
  * Only rotations change sign. Translations, scale, and evaluation point remain
  * unchanged.
  */
-CoordinateFrameMolodenskyBadekas!T
+MolodenskyBadekas10!(T, HelmertConvention.coordinateFrame)
 toCoordinateFrameMolodenskyBadekas(T)(
-    const PositionVectorMolodenskyBadekas!T source)
+    const MolodenskyBadekas10!(
+        T, HelmertConvention.positionVector) source)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
@@ -369,9 +370,10 @@ if (isGeodesyScalar!T)
  * Convert Coordinate Frame parameters to the equivalent Position Vector
  * representation without changing the represented forward transformation.
  */
-PositionVectorMolodenskyBadekas!T
+MolodenskyBadekas10!(T, HelmertConvention.positionVector)
 toPositionVectorMolodenskyBadekas(T)(
-    const CoordinateFrameMolodenskyBadekas!T source)
+    const MolodenskyBadekas10!(
+        T, HelmertConvention.coordinateFrame) source)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
