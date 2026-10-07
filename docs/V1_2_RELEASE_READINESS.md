@@ -1,6 +1,6 @@
 # geodesy-d v1.2.0 release readiness
 
-Status: **FINAL RELEASE CANDIDATE**
+Status: **RELEASED — v1.2.0**
 
 Tracking issue: #90.
 
@@ -121,17 +121,17 @@ Required on the exact final release-candidate head:
 
 After the exact candidate passes:
 
-- [ ] merge release candidate to `develop` if release metadata is prepared in
+- [x] merge release candidate to `develop` if release metadata is prepared in
   a release branch;
-- [ ] promote exact release commit to `main`;
-- [ ] verify `main` commit SHA;
-- [ ] create annotated signed tag `v1.2.0` on the exact release commit;
-- [ ] verify tag target;
-- [ ] publish GitHub Release using `docs/V1_2_RELEASE_NOTES.md`;
-- [ ] verify GitHub Release metadata;
-- [ ] verify fresh external DUB consumer against exact `==1.2.0`;
-- [ ] synchronize release state back to `develop`;
-- [ ] close #90.
+- [x] promote exact release commit to `main`;
+- [x] verify `main` commit SHA;
+- [x] create annotated signed tag `v1.2.0` on the exact release commit;
+- [x] verify tag target;
+- [x] publish GitHub Release using `docs/V1_2_RELEASE_NOTES.md`;
+- [x] verify GitHub Release metadata;
+- [x] verify fresh external DUB consumer against exact `==1.2.0`;
+- [x] synchronize release state back to `develop`;
+- [x] close #90.
 
 ## Release rule
 
@@ -174,3 +174,34 @@ Rendered documentation qualification:
 - internal declarations excluded from public DDox;
 - versioned public documentation build PASS;
 - GitHub Pages artifact PASS.
+
+
+## Final publication verification
+
+Release commit:
+
+`c81c262542dab1abe8352bf4fcb16f1b3205721f`
+
+Signed annotated tag:
+
+`v1.2.0`
+
+GitHub Release:
+
+- release ID: `405478512`;
+- published: `2026-10-07T07:08:17Z`;
+- draft: false;
+- prerelease: false.
+
+Fresh public DUB registry consumer:
+
+- resolved exact `geodesy-d 1.2.0`;
+- DMD debug/release PASS;
+- LDC debug/release PASS;
+- no path/git override;
+- `dub.selections.json` records `"geodesy-d": "1.2.0"`.
+
+Post-release branch state:
+
+- `main` = `c81c262542dab1abe8352bf4fcb16f1b3205721f`;
+- `develop` = `c81c262542dab1abe8352bf4fcb16f1b3205721f`.
