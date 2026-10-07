@@ -523,16 +523,15 @@ private void geodesicM2CheckedApiContract()
     const unrolledAzimuth =
         unrolledArc.finalAzimuth;
 
-    GeographicCoordinate!double segmentEnd;
-    GeographicCoordinate!double target;
-    GeographicCoordinate!double.tryFromComponents(
-        latitude48,
-        longitude17,
-        segmentEnd);
-    GeographicCoordinate!double.tryFromComponents(
-        latitude49,
-        longitude16,
-        target);
+    const segmentEnd =
+        GeographicCoordinate!double.fromComponents(
+            latitude48,
+            longitude17);
+
+    const target =
+        GeographicCoordinate!double.fromComponents(
+            latitude49,
+            longitude16);
 
     GeodesicSegmentNearestResult!double nearest;
     tryNearestPointOnSegment(
