@@ -882,6 +882,43 @@ semi-conjugate polar geometry using reduced length and geodesic scales.
 Spherical and oblate ellipsoids follow the current geodesic support profile;
 prolate extension remains separate work.
 
+M5 next intersection from a known crossing is exposed through:
+
+~~~text
+GeodesicNextIntersectionResult<T>
+tryNextGeodesicIntersection
+nextGeodesicIntersection
+~~~
+
+The known crossing is the common distance-zero origin of the two oriented
+geodesics. Prepared-line overloads validate that both lines share this origin;
+convenience overloads construct both lines from one geographic coordinate and
+two initial azimuths.
+
+The known origin is excluded. The selected result minimizes
+
+~~~text
+|x| + |y|
+~~~
+
+over all remaining intersections, where x and y are signed distances from the
+known crossing along the first and second oriented geodesics.
+`displacementDistance` reports this nonzero L1 rank.
+
+Equidistant next intersections are common, especially in symmetric spherical
+configurations. This API returns one minimum-rank representative and does not
+claim that it is unique. Enumerating every tied solution belongs to the
+all-intersections family (#106).
+
+For coincident supporting geodesics, simply moving along the continuous common
+line would not define a discrete "next" point. The implementation therefore
+advances to the nearest conjugate-point intersections in either direction,
+preserving `parallel` or `antiparallel` coincidence semantics.
+
+The global search uses Karney's eight-seed Next construction. Unlike Closest,
+the oblate path requires the full oblique conjugate spacing bound
+(`conjdist/distoblique`) derived from reduced length and geodesic scales.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
