@@ -847,6 +847,41 @@ method with prepared `GeodesicLine` values and a bounded midpoint/corner seed
 strategy independently qualified against GeographicLib 2.7. It does not use a
 planar projection shortcut.
 
+M5 closest intersection of indefinitely extended oriented geodesics is exposed
+through:
+
+~~~text
+GeodesicIntersectionCoincidence
+GeodesicClosestIntersectionResult<T>
+tryClosestGeodesicIntersection
+closestGeodesicIntersection
+~~~
+
+Prepared `GeodesicLine<T>` overloads are the primary repeated-use path.
+Convenience overloads construct lines from a geographic origin and initial
+azimuth.
+
+The returned signed distances locate the selected intersection along the first
+and second oriented line. A caller may supply a reference displacement pair
+`(x0,y0)`; closest means minimum
+
+~~~text
+|x-x0| + |y-y0|
+~~~
+
+in displacement space. `referenceDistance` reports this L1 ranking value; it
+is not a separate surface distance between geographic points.
+
+Coincident supporting geodesics have infinitely many common points. They return
+a deterministic representative centered relative to the reference pair, with
+`parallel` or `antiparallel` coincidence semantics. Distinct geodesics
+return `distinct`.
+
+The global closest search derives its ellipsoid-dependent seed spacing from
+semi-conjugate polar geometry using reduced length and geodesic scales.
+Spherical and oblate ellipsoids follow the current geodesic support profile;
+prolate extension remains separate work.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
