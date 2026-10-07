@@ -16,8 +16,9 @@ v1.2.0
 ~~~
 
 v1.2.0 completed M3 — Navigation & Polar Geodesy and was published on
-2026-10-07. It preserves the frozen v1 source contract. The next planned
-development milestone is M4 — Reference Frames.
+2026-10-07. It preserves the frozen v1 source contract. M4 — Reference Frames
+is complete on `develop`; the next planned development milestone is M5 —
+Advanced Ellipsoidal Geometry.
 
 The frozen v1 API already provides:
 
@@ -233,14 +234,18 @@ is not sufficient reason to implement it.
 
 # M4 — Reference Frames
 
-**Status:** active.
+**Status:** completed.
 
 **Goal:** extend the current static datum/reference-frame mathematics to modern
 time-dependent transformations.
 
-Dynamic Helmert is the primary planned capability. Molodensky and
-Molodensky-Badekas remain research/admission candidates rather than committed
-public API.
+M4 is complete on `develop`. Dynamic Helmert is implemented as the primary
+capability. Direct Molodensky was researched and deferred because the existing
+geodetic -> geocentric -> translation/Helmert -> geodetic composition already
+covers the stronger path and no concrete consumer requires EPSG 9604/9605
+method reproduction. Molodensky-Badekas was admitted and implemented as a
+local-origin Helmert-family transformation that reuses the existing
+`Helmert7` spatial kernel.
 
 Preferred order:
 
@@ -258,6 +263,17 @@ Issues:
 The accepted temporal design is recorded in `docs/M4_EPOCH_SEMANTICS.md`.
 It keeps observation epochs explicit at operation boundaries and does not add
 temporal metadata to the existing coordinate value types.
+
+The final M4 decisions and qualification evidence are recorded in
+`docs/M4_INTEGRATION_GATE.md`.
+
+Closure outcome:
+
+- #41 — completed: strong epoch and temporal-parameter semantics;
+- #42 — completed: dynamic 14-parameter Helmert, EPSG 1053/1056;
+- #43 — deferred/not planned: direct Molodensky pending a concrete need;
+- #44 — completed: Molodensky-Badekas, EPSG 1034/1061, implemented through
+  prepared reuse of the existing static Helmert kernel.
 
 Primary target:
 
@@ -373,9 +389,8 @@ geodesy
 │   ├── geocentric translation
 │   ├── static Helmert
 │   ├── dynamic Helmert
-│   └── additional datum transformations, if admitted
-│       ├── Molodensky
-│       └── Molodensky-Badekas
+│   ├── Molodensky-Badekas
+│   └── direct Molodensky, deferred unless future evidence admits it
 │
 └── physical
     ├── normal gravity, if admitted
