@@ -1675,3 +1675,791 @@ if (isGeodesyScalar!T)
     assert(result.isValid);
     assert(result.coincidence == GeodesicIntersectionCoincidence.distinct);
 }
+
+
+/**
+ * Result of the next intersection after a known common-origin crossing.
+ *
+ * The two signed distances are measured from the known intersection along the
+ * oriented input geodesics. displacementDistance is the L1 ranking value
+ * abs(x) + abs(y).
+ *
+ * If multiple next intersections have the same minimum rank, this operation
+ * returns one deterministic representative but does not claim uniqueness.
+ * Use the future all-intersections API (#106) when all tied solutions are
+ * required.
+ *
+ * .init is invalid.
+ */
+struct GeodesicNextIntersectionResult(T)
+if (isGeodesyScalar!T)
+{
+private:
+    bool _valid;
+    GeographicCoordinate!T _position;
+    T _distanceOnFirst = T.nan;
+    T _distanceOnSecond = T.nan;
+    T _displacementDistance = T.nan;
+    GeodesicIntersectionCoincidence _coincidence =
+        GeodesicIntersectionCoincidence.distinct;
+
+    /** Construct a validated next-intersection result. */
+    static GeodesicNextIntersectionResult fromComponents(
+        const GeographicCoordinate!T position,
+        const T distanceOnFirst,
+        const T distanceOnSecond,
+        const T displacementDistance,
+        const GeodesicIntersectionCoincidence coincidence)
+        pure nothrow @safe @nogc
+    {
+        GeodesicNextIntersectionResult result;
+        result._valid = true;
+        result._position = position;
+        result._distanceOnFirst = distanceOnFirst;
+        result._distanceOnSecond = distanceOnSecond;
+        result._displacementDistance = displacementDistance;
+        result._coincidence = coincidence;
+        return result;
+    }
+
+public:
+    /** True when the next-intersection search succeeded. */
+    @property bool isValid() const pure nothrow @safe @nogc
+    {
+        return _valid;
+    }
+
+    /// Example checking the default invalid state.
+    @safe unittest
+    {
+        assert(!GeodesicNextIntersectionResult!double.init.isValid);
+    }
+
+    /** Geographic position of the selected next intersection. */
+    @property GeographicCoordinate!T position() const
+        pure nothrow @safe @nogc
+    {
+        return _position;
+    }
+
+    /// Example reading the default position value.
+    @safe unittest
+    {
+        GeodesicNextIntersectionResult!double result;
+        cast(void) result.position;
+    }
+
+    /** Signed distance from the known crossing along the first geodesic. */
+    @property T distanceOnFirst() const pure nothrow @safe @nogc
+    {
+        return _distanceOnFirst;
+    }
+
+    /// Example reading the first signed displacement.
+    @safe unittest
+    {
+        GeodesicNextIntersectionResult!double result;
+        cast(void) result.distanceOnFirst;
+    }
+
+    /** Signed distance from the known crossing along the second geodesic. */
+    @property T distanceOnSecond() const pure nothrow @safe @nogc
+    {
+        return _distanceOnSecond;
+    }
+
+    /// Example reading the second signed displacement.
+    @safe unittest
+    {
+        GeodesicNextIntersectionResult!double result;
+        cast(void) result.distanceOnSecond;
+    }
+
+    /** Minimum nonzero L1 displacement rank. */
+    @property T displacementDistance() const pure nothrow @safe @nogc
+    {
+        return _displacementDistance;
+    }
+
+    /// Example reading the next-intersection ranking distance.
+    @safe unittest
+    {
+        GeodesicNextIntersectionResult!double result;
+        cast(void) result.displacementDistance;
+    }
+
+    /** Coincidence relationship of the two supporting geodesics. */
+    @property GeodesicIntersectionCoincidence coincidence() const
+        pure nothrow @safe @nogc
+    {
+        return _coincidence;
+    }
+
+    /// Example reading the default coincidence classification.
+    @safe unittest
+    {
+        GeodesicNextIntersectionResult!double result;
+        assert(result.coincidence
+            == GeodesicIntersectionCoincidence.distinct);
+    }
+}
+
+/// Example using the next-intersection result type.
+@safe unittest
+{
+    GeodesicNextIntersectionResult!double result;
+    assert(!result.isValid);
+}
+
+
+/** Build a zero-valued geographic origin without throwing. */
+private bool tryIntersectionZeroCoordinate(T)(
+    out GeographicCoordinate!T coordinate)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    Latitude!T latitude;
+    Longitude!T longitude;
+
+    if (!Latitude!T.tryFromRadians(cast(T) 0, latitude)
+        || !Longitude!T.tryFromRadians(cast(T) 0, longitude))
+        return false;
+
+    coordinate =
+        GeographicCoordinate!T.fromComponents(
+            latitude,
+            longitude);
+
+    return true;
+}
+
+
+/** Compute one conjugate distance and the asymmetry used by distoblique. */
+private bool tryIntersectionConjDist(T)(
+    const Geodesic!T solver,
+    const IntersectionWorkingScalar!T authalicRadius,
+    const IntersectionWorkingScalar!T azimuthRadians,
+    out IntersectionWorkingScalar!T distance,
+    out IntersectionWorkingScalar!T asymmetry)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    GeographicCoordinate!T origin;
+    Angle!T azimuth;
+
+    if (!tryIntersectionZeroCoordinate!T(origin)
+        || !Angle!T.tryFromRadians(
+            cast(T) azimuthRadians,
+            azimuth))
+        return false;
+
+    GeodesicLine!T line;
+
+    if (!GeodesicLine!T.tryFromGeodesic(
+            solver,
+            origin,
+            azimuth,
+            line))
+        return false;
+
+    const W d =
+        cast(W) PI * authalicRadius;
+
+    const W tolerance =
+        d * pow(W.epsilon, cast(W) 0.75);
+
+    W conjugate;
+
+    if (!tryIntersectionConjugateFromOrigin!T(
+            line,
+            tolerance,
+            d,
+            false,
+            conjugate))
+        return false;
+
+    const PreparedSegment!T prepared =
+        PreparedSegment!T(cast(T) 0, line);
+
+    IntersectionDisplacement!W crossing;
+
+    if (!tryBasicIntersection!T(
+            solver,
+            prepared,
+            prepared,
+            authalicRadius,
+            IntersectionDisplacement!W(
+                conjugate / cast(W) 2,
+                -cast(W) 3 * conjugate / cast(W) 2,
+                0),
+            crossing))
+        return false;
+
+    distance = conjugate;
+    asymmetry =
+        abs(crossing.x)
+        + abs(crossing.y)
+        - cast(W) 2 * conjugate;
+
+    return isFiniteGeodesyScalar(distance)
+        && isFiniteGeodesyScalar(asymmetry);
+}
+
+
+/** Derive Karney's oblique minimum conjugate spacing for oblate ellipsoids. */
+private bool tryIntersectionDistOblique(T)(
+    const Geodesic!T solver,
+    const IntersectionWorkingScalar!T authalicRadius,
+    out IntersectionWorkingScalar!T distance)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    const W degreesToRadians =
+        cast(W) PI / cast(W) 180;
+
+    W azimuth0 =
+        cast(W) 46 * degreesToRadians;
+
+    W azimuth1 =
+        cast(W) 44 * degreesToRadians;
+
+    W distance0;
+    W asymmetry0;
+    W distance1;
+    W asymmetry1;
+
+    if (!tryIntersectionConjDist!T(
+            solver,
+            authalicRadius,
+            azimuth0,
+            distance0,
+            asymmetry0)
+        || !tryIntersectionConjDist!T(
+            solver,
+            authalicRadius,
+            azimuth1,
+            distance1,
+            asymmetry1))
+        return false;
+
+    W bestDistance =
+        distance1;
+
+    W bestError =
+        abs(asymmetry1);
+
+    foreach (_; 0 .. 10)
+    {
+        if (asymmetry1 == asymmetry0)
+            break;
+
+        const W nextAzimuth =
+            (
+                azimuth0 * asymmetry1
+                - azimuth1 * asymmetry0
+            )
+            / (asymmetry1 - asymmetry0);
+
+        azimuth0 = azimuth1;
+        distance0 = distance1;
+        asymmetry0 = asymmetry1;
+        azimuth1 = nextAzimuth;
+
+        if (!tryIntersectionConjDist!T(
+                solver,
+                authalicRadius,
+                azimuth1,
+                distance1,
+                asymmetry1))
+            return false;
+
+        if (abs(asymmetry1) < bestError)
+        {
+            bestError = abs(asymmetry1);
+            bestDistance = distance1;
+
+            if (asymmetry1 == cast(W) 0)
+                break;
+        }
+    }
+
+    distance = bestDistance;
+
+    return isFiniteGeodesyScalar(distance)
+        && distance > cast(W) 0;
+}
+
+
+/** Derive seed spacing and comparison tolerance for the Next search. */
+private bool tryNextIntersectionSpacing(T)(
+    const Geodesic!T solver,
+    const IntersectionWorkingScalar!T authalicRadius,
+    out IntersectionWorkingScalar!T t1,
+    out IntersectionWorkingScalar!T d2,
+    out IntersectionWorkingScalar!T delta,
+    out IntersectionWorkingScalar!T halfCircumference)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    const W a =
+        cast(W) solver.ellipsoid.semiMajorAxis;
+
+    const W f =
+        cast(W) solver.ellipsoid.flattening;
+
+    halfCircumference =
+        cast(W) PI * authalicRadius;
+
+    t1 =
+        cast(W) PI
+        * a
+        * (cast(W) 1 - f);
+
+    delta =
+        halfCircumference
+        * pow(
+            W.epsilon,
+            cast(W) 0.2);
+
+    W t3;
+
+    if (f == cast(W) 0)
+    {
+        t3 = halfCircumference;
+    }
+    else
+    {
+        if (!tryIntersectionDistOblique!T(
+                solver,
+                authalicRadius,
+                t3))
+            return false;
+    }
+
+    d2 =
+        cast(W) 2 * t3 / cast(W) 3;
+
+    return isFiniteGeodesyScalar(t1)
+        && isFiniteGeodesyScalar(d2)
+        && isFiniteGeodesyScalar(delta)
+        && d2 > cast(W) 0
+        && d2 < cast(W) 2 * t1;
+}
+
+
+/** Validate that two prepared lines share the known intersection at distance zero. */
+private bool preparedLinesShareOrigin(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    GeodesicDirectResult!T firstOrigin;
+    GeodesicDirectResult!T secondOrigin;
+
+    if (!firstLine.tryPosition(
+            cast(T) 0,
+            firstOrigin)
+        || !secondLine.tryPosition(
+            cast(T) 0,
+            secondOrigin))
+        return false;
+
+    if (firstOrigin.position
+        == secondOrigin.position)
+        return true;
+
+    GeodesicInverseResult!T separation;
+
+    if (!solver.tryInverse(
+            firstOrigin.position,
+            secondOrigin.position,
+            separation))
+        return false;
+
+    const W a =
+        cast(W) solver.ellipsoid.semiMajorAxis;
+
+    return cast(W) separation.distance
+        <= cast(W) 3 * W.epsilon * a;
+}
+
+
+/**
+ * Find the next closest intersection after a known common-origin crossing.
+ *
+ * The prepared lines must share their distance-zero geographic origin. The
+ * known crossing at (0,0) is excluded. The returned solution minimizes
+ * abs(x)+abs(y) among the remaining intersections.
+ *
+ * Equidistant minima are possible and this operation returns one representative
+ * without asserting uniqueness.
+ */
+bool tryNextGeodesicIntersection(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    out GeodesicNextIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    result =
+        GeodesicNextIntersectionResult!T.init;
+
+    if (!solver.isValid
+        || !firstLine.isValid
+        || !secondLine.isValid
+        || !preparedLinesShareOrigin!T(
+            solver,
+            firstLine,
+            secondLine))
+        return false;
+
+    W authalicRadius;
+
+    if (!tryAuthalicRadius!T(
+            solver,
+            authalicRadius))
+        return false;
+
+    W t1;
+    W d2;
+    W delta;
+    W d;
+
+    if (!tryNextIntersectionSpacing!T(
+            solver,
+            authalicRadius,
+            t1,
+            d2,
+            delta,
+            d))
+        return false;
+
+    const PreparedSegment!T first =
+        PreparedSegment!T(
+            cast(T) 0,
+            firstLine);
+
+    const PreparedSegment!T second =
+        PreparedSegment!T(
+            cast(T) 0,
+            secondLine);
+
+    const int[8] xSeed =
+        [-1, -1, 1, 1, -2, 0, 2, 0];
+
+    const int[8] ySeed =
+        [-1, 1, -1, 1, 0, 2, 0, -2];
+
+    bool[8] skip;
+
+    const IntersectionDisplacement!W zero =
+        IntersectionDisplacement!W(
+            cast(W) 0,
+            cast(W) 0,
+            0);
+
+    bool haveBest;
+    IntersectionDisplacement!W best;
+
+    foreach (n; 0 .. 8)
+    {
+        if (skip[n])
+            continue;
+
+        IntersectionDisplacement!W candidate;
+
+        if (!tryBasicIntersection!T(
+                solver,
+                first,
+                second,
+                authalicRadius,
+                IntersectionDisplacement!W(
+                    cast(W) xSeed[n] * d2,
+                    cast(W) ySeed[n] * d2,
+                    0),
+                candidate))
+            return false;
+
+        candidate =
+            fixClosestCoincident!W(
+                zero,
+                candidate);
+
+        const bool atKnownOrigin =
+            intersectionL1!W(
+                candidate,
+                zero) <= delta;
+
+        if (candidate.coincidence == 0
+            && atKnownOrigin)
+            continue;
+
+        if (candidate.coincidence != 0
+            && atKnownOrigin)
+        {
+            foreach (sign; [-1, 1])
+            {
+                W conjugate;
+
+                if (!tryIntersectionConjugateFromOrigin!T(
+                        firstLine,
+                        d * pow(W.epsilon, cast(W) 0.75),
+                        cast(W) sign * d,
+                        false,
+                        conjugate))
+                    return false;
+
+                const IntersectionDisplacement!W discrete =
+                    IntersectionDisplacement!W(
+                        conjugate,
+                        cast(W) candidate.coincidence
+                            * conjugate,
+                        candidate.coincidence);
+
+                if (!haveBest
+                    || intersectionL1!W(
+                        discrete,
+                        zero)
+                        < intersectionL1!W(
+                            best,
+                            zero))
+                {
+                    best = discrete;
+                    haveBest = true;
+                }
+            }
+        }
+        else if (!haveBest
+            || intersectionL1!W(
+                candidate,
+                zero)
+                < intersectionL1!W(
+                    best,
+                    zero))
+        {
+            best = candidate;
+            haveBest = true;
+        }
+
+        foreach (sign; [-1, 0, 1])
+        {
+            if ((candidate.coincidence == 0
+                    && sign != 0)
+                || (atKnownOrigin
+                    && sign == 0))
+                continue;
+
+            const IntersectionDisplacement!W shifted =
+                candidate.coincidence != 0
+                    ? IntersectionDisplacement!W(
+                        candidate.x
+                            + cast(W) sign * d2,
+                        candidate.y
+                            + cast(W) candidate.coincidence
+                                * cast(W) sign
+                                * d2,
+                        candidate.coincidence)
+                    : candidate;
+
+            foreach (m; n + 1 .. 8)
+            {
+                const IntersectionDisplacement!W seed =
+                    IntersectionDisplacement!W(
+                        cast(W) xSeed[m] * d2,
+                        cast(W) ySeed[m] * d2,
+                        0);
+
+                if (intersectionL1!W(
+                        shifted,
+                        seed)
+                    < cast(W) 2 * t1
+                        - d2
+                        - delta)
+                {
+                    skip[m] = true;
+                }
+            }
+        }
+    }
+
+    if (!haveBest)
+        return false;
+
+    GeodesicDirectResult!T position;
+
+    if (!firstLine.tryPosition(
+            cast(T) best.x,
+            position))
+        return false;
+
+    const GeodesicIntersectionCoincidence coincidence =
+        best.coincidence > 0
+            ? GeodesicIntersectionCoincidence.parallel
+            : best.coincidence < 0
+                ? GeodesicIntersectionCoincidence.antiparallel
+                : GeodesicIntersectionCoincidence.distinct;
+
+    result =
+        GeodesicNextIntersectionResult!T.fromComponents(
+            position.position,
+            cast(T) best.x,
+            cast(T) best.y,
+            cast(T) intersectionL1!W(
+                best,
+                zero),
+            coincidence);
+
+    return true;
+}
+
+
+/** Construct two common-origin oriented geodesics and find their next crossing. */
+bool tryNextGeodesicIntersection(T)(
+    const Geodesic!T solver,
+    const GeographicCoordinate!T knownIntersection,
+    const Angle!T firstAzimuth,
+    const Angle!T secondAzimuth,
+    out GeodesicNextIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    result =
+        GeodesicNextIntersectionResult!T.init;
+
+    GeodesicLine!T firstLine;
+    GeodesicLine!T secondLine;
+
+    if (!GeodesicLine!T.tryFromGeodesic(
+            solver,
+            knownIntersection,
+            firstAzimuth,
+            firstLine)
+        || !GeodesicLine!T.tryFromGeodesic(
+            solver,
+            knownIntersection,
+            secondAzimuth,
+            secondLine))
+        return false;
+
+    return tryNextGeodesicIntersection(
+        solver,
+        firstLine,
+        secondLine,
+        result);
+}
+
+
+/// Example finding the next intersection without throwing.
+@safe unittest
+{
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            wgs84!double());
+
+    const known =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(0.0));
+
+    GeodesicNextIntersectionResult!double result;
+
+    assert(tryNextGeodesicIntersection(
+        solver,
+        known,
+        Angle!double.fromDegrees(30.0),
+        Angle!double.fromDegrees(120.0),
+        result));
+
+    assert(result.isValid);
+    assert(result.displacementDistance > 0.0);
+}
+
+
+/** Throwing prepared-line next-intersection operation. */
+GeodesicNextIntersectionResult!T nextGeodesicIntersection(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicNextIntersectionResult!T result;
+
+    if (!tryNextGeodesicIntersection(
+            solver,
+            firstLine,
+            secondLine,
+            result))
+    {
+        throw new GeodesyValueException(
+            "Next geodesic intersection requires valid prepared lines "
+            ~ "sharing the same known geographic origin and a converged "
+            ~ "supported spherical or oblate solution.");
+    }
+
+    return result;
+}
+
+
+/** Throwing common-origin/azimuth next-intersection operation. */
+GeodesicNextIntersectionResult!T nextGeodesicIntersection(T)(
+    const Geodesic!T solver,
+    const GeographicCoordinate!T knownIntersection,
+    const Angle!T firstAzimuth,
+    const Angle!T secondAzimuth)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicNextIntersectionResult!T result;
+
+    if (!tryNextGeodesicIntersection(
+            solver,
+            knownIntersection,
+            firstAzimuth,
+            secondAzimuth,
+            result))
+    {
+        throw new GeodesyValueException(
+            "Next geodesic intersection requires a valid known crossing, "
+            ~ "valid azimuths, and a converged supported spherical or "
+            ~ "oblate solution.");
+    }
+
+    return result;
+}
+
+
+/// Example finding the next intersection with the throwing convenience API.
+@safe unittest
+{
+    const solver =
+        Geodesic!double.fromEllipsoid(
+            wgs84!double());
+
+    const known =
+        GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(0.0));
+
+    const result =
+        nextGeodesicIntersection(
+            solver,
+            known,
+            Angle!double.fromDegrees(30.0),
+            Angle!double.fromDegrees(120.0));
+
+    assert(result.isValid);
+}
