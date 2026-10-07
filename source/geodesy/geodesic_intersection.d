@@ -1812,6 +1812,84 @@ public:
 }
 
 
+/**
+ * Prepared ellipsoid-dependent state for repeated geodesic intersections.
+ *
+ * Construction performs the invariant setup required by the intersection
+ * family once. In particular, oblate next-intersection spacing is prepared
+ * here instead of being recomputed for every pair of lines.
+ *
+ * This type is experimental on the research branch and is not yet part of the
+ * production API contract.
+ *
+ * .init is invalid.
+ */
+struct GeodesicIntersectionSolver(T)
+if (isGeodesyScalar!T)
+{
+private:
+    alias W = IntersectionWorkingScalar!T;
+
+    bool _valid;
+    Geodesic!T _solver;
+    W _authalicRadius = W.nan;
+    W _nextT1 = W.nan;
+    W _nextD2 = W.nan;
+    W _nextDelta = W.nan;
+    W _halfCircumference = W.nan;
+
+public:
+    /** Prepare reusable intersection state from a valid geodesic solver. */
+    static bool tryFromGeodesic(
+        const Geodesic!T solver,
+        out GeodesicIntersectionSolver result)
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicIntersectionSolver.init;
+
+        if (!solver.isValid)
+            return false;
+
+        W authalicRadius;
+
+        if (!tryAuthalicRadius!T(
+                solver,
+                authalicRadius))
+            return false;
+
+        W t1;
+        W d2;
+        W delta;
+        W halfCircumference;
+
+        if (!tryNextIntersectionSpacing!T(
+                solver,
+                authalicRadius,
+                t1,
+                d2,
+                delta,
+                halfCircumference))
+            return false;
+
+        result._solver = solver;
+        result._authalicRadius = authalicRadius;
+        result._nextT1 = t1;
+        result._nextD2 = d2;
+        result._nextDelta = delta;
+        result._halfCircumference = halfCircumference;
+        result._valid = true;
+        return true;
+    }
+
+    /** True when invariant intersection setup was prepared successfully. */
+    @property bool isValid() const
+        pure nothrow @safe @nogc
+    {
+        return _valid;
+    }
+}
+
+
 /** Build a zero-valued geographic origin without throwing. */
 private bool tryIntersectionZeroCoordinate(T)(
     out GeographicCoordinate!T coordinate)
@@ -2104,10 +2182,15 @@ if (isGeodesyScalar!T)
  * Equidistant minima are possible and this operation returns one representative
  * without asserting uniqueness.
  */
-bool tryNextGeodesicIntersection(T)(
+private bool tryNextGeodesicIntersectionPrepared(T)(
     const Geodesic!T solver,
     const GeodesicLine!T firstLine,
     const GeodesicLine!T secondLine,
+    const IntersectionWorkingScalar!T authalicRadius,
+    const IntersectionWorkingScalar!T t1,
+    const IntersectionWorkingScalar!T d2,
+    const IntersectionWorkingScalar!T delta,
+    const IntersectionWorkingScalar!T d,
     out GeodesicNextIntersectionResult!T result)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
@@ -2124,27 +2207,6 @@ if (isGeodesyScalar!T)
             solver,
             firstLine,
             secondLine))
-        return false;
-
-    W authalicRadius;
-
-    if (!tryAuthalicRadius!T(
-            solver,
-            authalicRadius))
-        return false;
-
-    W t1;
-    W d2;
-    W delta;
-    W d;
-
-    if (!tryNextIntersectionSpacing!T(
-            solver,
-            authalicRadius,
-            t1,
-            d2,
-            delta,
-            d))
         return false;
 
     const PreparedSegment!T first =
@@ -2323,6 +2385,94 @@ if (isGeodesyScalar!T)
             coincidence);
 
     return true;
+}
+
+
+
+/**
+ * Find the next closest intersection after a known common-origin crossing.
+ *
+ * This one-shot overload preserves the existing API and computes invariant
+ * ellipsoid spacing for the call. Repeated callers should use the prepared
+ * GeodesicIntersectionSolver overload.
+ */
+bool tryNextGeodesicIntersection(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    out GeodesicNextIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    result = GeodesicNextIntersectionResult!T.init;
+
+    if (!solver.isValid)
+        return false;
+
+    W authalicRadius;
+
+    if (!tryAuthalicRadius!T(
+            solver,
+            authalicRadius))
+        return false;
+
+    W t1;
+    W d2;
+    W delta;
+    W halfCircumference;
+
+    if (!tryNextIntersectionSpacing!T(
+            solver,
+            authalicRadius,
+            t1,
+            d2,
+            delta,
+            halfCircumference))
+        return false;
+
+    return tryNextGeodesicIntersectionPrepared!T(
+        solver,
+        firstLine,
+        secondLine,
+        authalicRadius,
+        t1,
+        d2,
+        delta,
+        halfCircumference,
+        result);
+}
+
+
+/**
+ * Find the next intersection using ellipsoid-dependent prepared state.
+ *
+ * Preparation cost is excluded from the repeated operation while the
+ * mathematical result and line-origin validation remain identical to the
+ * one-shot overload.
+ */
+bool tryNextGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    out GeodesicNextIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    result = GeodesicNextIntersectionResult!T.init;
+
+    if (!intersector._valid)
+        return false;
+
+    return tryNextGeodesicIntersectionPrepared!T(
+        intersector._solver,
+        firstLine,
+        secondLine,
+        intersector._authalicRadius,
+        intersector._nextT1,
+        intersector._nextD2,
+        intersector._nextDelta,
+        intersector._halfCircumference,
+        result);
 }
 
 
