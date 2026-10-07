@@ -197,6 +197,17 @@ The audit is complete when:
 | `geodesy.geodesic.GeodesicQuantities.scale12` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.scale21` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.signedArea` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestKind` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.isValid` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.nearestPoint` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.nearestDistance` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.kind` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.supportingFoot` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.alongTrack` | existing | geodesics |
+| `geodesy.geodesic_nearest.GeodesicSegmentNearestResult.signedCrossTrack` | existing | geodesics |
+| `geodesy.geodesic_nearest.tryNearestPointOnSegment` | existing | geodesics |
+| `geodesy.geodesic_nearest.nearestPointOnSegment` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.addPoint` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.compute` | existing | geodesics |

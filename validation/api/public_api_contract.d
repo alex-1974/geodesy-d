@@ -56,6 +56,8 @@ static assert(is(GeodesicInverseResult!double));
 static assert(is(GeodesicQuantities!double));
 static assert(is(GeodesicLine!double));
 static assert(is(GeodesicLineUnrolledResult!double));
+static assert(is(GeodesicSegmentNearestResult!double));
+static assert(is(GeodesicSegmentNearestKind));
 static assert(is(GeodesicPolygonAccumulator!double));
 static assert(is(GeodesicPolygonResult!double));
 
@@ -521,6 +523,32 @@ private void geodesicM2CheckedApiContract()
     const unrolledAzimuth =
         unrolledArc.finalAzimuth;
 
+    const segmentEnd =
+        GeographicCoordinate!double.fromComponents(
+            latitude48,
+            longitude17);
+
+    const target =
+        GeographicCoordinate!double.fromComponents(
+            latitude49,
+            longitude16);
+
+    GeodesicSegmentNearestResult!double nearest;
+    tryNearestPointOnSegment(
+        solver,
+        start,
+        segmentEnd,
+        target,
+        nearest);
+
+    const nearestValid = nearest.isValid;
+    const nearestPoint = nearest.nearestPoint;
+    const nearestDistance = nearest.nearestDistance;
+    const nearestKind = nearest.kind;
+    const supportingFoot = nearest.supportingFoot;
+    const alongTrack = nearest.alongTrack;
+    const signedCrossTrack = nearest.signedCrossTrack;
+
     GeodesicPolygonAccumulator!double polygon;
     GeodesicPolygonAccumulator!double.tryFromGeodesic(
         solver,
@@ -553,6 +581,13 @@ private void geodesicM2CheckedApiContract()
     cast(void) unrolledLatitude;
     cast(void) unrolledLongitude;
     cast(void) unrolledAzimuth;
+    cast(void) nearestValid;
+    cast(void) nearestPoint;
+    cast(void) nearestDistance;
+    cast(void) nearestKind;
+    cast(void) supportingFoot;
+    cast(void) alongTrack;
+    cast(void) signedCrossTrack;
     cast(void) perimeter;
     cast(void) signedArea;
 }
@@ -595,6 +630,17 @@ private void geodesicM2ThrowingApiContract()
         line.arcPositionUnrolled(
             Angle!double.fromDegrees(361.0));
 
+    auto nearest =
+        nearestPointOnSegment(
+            solver,
+            start,
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.0),
+                Longitude!double.fromDegrees(17.0)),
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(49.0),
+                Longitude!double.fromDegrees(16.0)));
+
     auto polygon =
         GeodesicPolygonAccumulator!double.fromGeodesic(
             solver);
@@ -616,6 +662,7 @@ private void geodesicM2ThrowingApiContract()
     cast(void) arcPosition;
     cast(void) unrolledPosition;
     cast(void) unrolledArc;
+    cast(void) nearest;
     cast(void) measurement;
 }
 

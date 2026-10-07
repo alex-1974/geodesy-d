@@ -61,6 +61,7 @@ public import geodesy.epoch;
 public import geodesy.errors;
 public import geodesy.geographic;
 public import geodesy.geodesic;
+public import geodesy.geodesic_nearest;
 public import geodesy.geodesic_polygon;
 public import geodesy.geodetic;
 public import geodesy.geocentric;

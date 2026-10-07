@@ -782,6 +782,38 @@ Only these overloads compute `m12`, `M12`, `M21`, and `S12`. The ordinary
 distance/arc position paths do not prepare or evaluate the additional C2/C4
 series state.
 
+M5 also adds bounded nearest-point geometry for oriented geodesic segments:
+
+~~~text
+tryNearestPointOnSegment / nearestPointOnSegment
+GeodesicSegmentNearestResult<T>
+GeodesicSegmentNearestKind
+~~~
+
+A and B define the shortest geodesic segment and its A->B orientation. The
+result separates bounded-segment quantities from supporting-geodesic
+quantities:
+
+~~~text
+nearestPoint / nearestDistance   finite segment
+kind                             start | interior | end
+supportingFoot                   local perpendicular intercept
+alongTrack                       signed from A in A->B direction
+signedCrossTrack                 right-positive, left-negative
+~~~
+
+For endpoint-clamped results, `nearestDistance` is the true target-to-endpoint
+distance. `signedCrossTrack` remains the perpendicular distance to the local
+supporting geodesic and is therefore not substituted for the endpoint distance.
+
+The implementation uses Karney's ellipsoidal gnomonic interception
+construction from the existing geodesic reduced length and scale quantities.
+It does not use spherical great-circle cross-track formulae. Degenerate A==B
+segments are rejected because orientation and signed track quantities are
+undefined. Very distant / antipodal configurations outside the local
+gnomonic-convergence domain fail through the checked API rather than claiming
+global infinite-line uniqueness.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
