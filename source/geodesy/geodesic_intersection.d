@@ -1173,6 +1173,7 @@ private:
     GeodesicIntersectionCoincidence _coincidence =
         GeodesicIntersectionCoincidence.distinct;
 
+    /** Construct a validated closest-intersection result. */
     static GeodesicClosestIntersectionResult fromComponents(
         const GeographicCoordinate!T position,
         const T distanceOnFirst,
@@ -1247,6 +1248,7 @@ public:
     }
 }
 
+/** L1 distance between two signed displacement pairs. */
 private W intersectionL1(W)(
     const IntersectionDisplacement!W first,
     const IntersectionDisplacement!W second)
@@ -1256,6 +1258,7 @@ if (isGeodesyScalar!W)
     return abs(first.x - second.x) + abs(first.y - second.y);
 }
 
+/** Normalize a coincident-line representative around the reference pair. */
 private IntersectionDisplacement!W fixClosestCoincident(W)(
     const IntersectionDisplacement!W reference,
     const IntersectionDisplacement!W point)
@@ -1274,6 +1277,7 @@ if (isGeodesyScalar!W)
         point.coincidence);
 }
 
+/** Solve the semi-conjugate distance used by global closest seeding. */
 private bool tryIntersectionConjugateDistance(T)(
     const GeodesicLine!T line,
     const IntersectionWorkingScalar!T tolerance,
@@ -1311,6 +1315,7 @@ if (isGeodesyScalar!T)
     return false;
 }
 
+/** Derive closest-search spacing and tolerance for sphere/oblate ellipsoids. */
 private bool tryClosestIntersectionSpacing(T)(
     const Geodesic!T solver,
     const IntersectionWorkingScalar!T authalicRadius,
@@ -1352,6 +1357,7 @@ if (isGeodesyScalar!T)
         line, tolerance, initial, d1);
 }
 
+/** Compare two closest candidates with deterministic displacement tie-breaks. */
 private bool closestIntersectionBetter(W)(
     const IntersectionDisplacement!W candidate,
     const IntersectionDisplacement!W best,
