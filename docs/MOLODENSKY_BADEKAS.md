@@ -117,6 +117,14 @@ Z =  1054530.826 m
 The independent differential gate runs the same case against PROJ
 `+proj=molobadekas` in both Coordinate Frame and Position Vector convention.
 
+The published EPSG worked example prints both its source/parameters and target
+to limited decimal precision. Re-evaluating those displayed values yields a
+maximum difference of about 14.3 mm from the displayed target, so that
+publication check uses a 20 mm regression tolerance. It is not the numerical
+equivalence gate. D-versus-PROJ uses a 2 micrometre tolerance, and the
+equivalent Position Vector/Coordinate Frame representations use a 1 nanometre
+tolerance.
+
 Acceptance checks:
 
 - D versus PROJ for both conventions;
