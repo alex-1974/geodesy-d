@@ -507,6 +507,56 @@ if (isGeodesyScalar!T && isGeodesyScalar!W)
     return true;
 }
 
+version (unittest)
+{
+    @safe unittest
+    {
+        import geodesy;
+
+        const solver =
+            Geodesic!double.fromEllipsoid(
+                Ellipsoid!double.fromInverseFlattening(
+                    6_378_137.0,
+                    298.257223563));
+
+        const a =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.0),
+                Longitude!double.fromDegrees(10.0));
+        const b =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(48.0),
+                Longitude!double.fromDegrees(20.0));
+        const target =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(49.2),
+                Longitude!double.fromDegrees(15.0));
+
+        GnomonicPoint!double pa;
+        GnomonicPoint!double pb;
+
+        assert(gnomonicForward!(double, double)(solver, target, a, pa));
+        assert(gnomonicForward!(double, double)(solver, target, b, pb));
+
+        const double dx = pb.x - pa.x;
+        const double dy = pb.y - pa.y;
+        const double denominator = dx * dx + dy * dy;
+        const double cross = pa.x * pb.y - pa.y * pb.x;
+
+        GnomonicPoint!double foot;
+        foot.x = cross * dy / denominator;
+        foot.y = -cross * dx / denominator;
+
+        GeographicCoordinate!double reversed;
+        assert(gnomonicReverse!(double, double)(
+            solver, target, foot, reversed));
+
+        GeographicCoordinate!double intercept;
+        assert(supportingIntercept!(double, double)(
+            solver, a, b, target, intercept));
+    }
+}
+
 /**
  * Find the nearest point from a target to a bounded ellipsoidal geodesic
  * segment without throwing.
