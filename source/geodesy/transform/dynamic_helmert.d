@@ -740,8 +740,9 @@ alias CoordinateFrameHelmert14(T) =
  * Rotations and rotation rates are negated. Translations, translation rates,
  * scale, scale rate, and reference epoch are preserved.
  */
-CoordinateFrameHelmert14!T toCoordinateFrameHelmert14(T)(
-    const PositionVectorHelmert14!T source)
+Helmert14!(T, HelmertConvention.coordinateFrame)
+toCoordinateFrameHelmert14(T)(
+    const Helmert14!(T, HelmertConvention.positionVector) source)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
@@ -775,8 +776,9 @@ if (isGeodesyScalar!T)
  * Convert dynamic Coordinate Frame parameters to the equivalent Position
  * Vector representation.
  */
-PositionVectorHelmert14!T toPositionVectorHelmert14(T)(
-    const CoordinateFrameHelmert14!T source)
+Helmert14!(T, HelmertConvention.positionVector)
+toPositionVectorHelmert14(T)(
+    const Helmert14!(T, HelmertConvention.coordinateFrame) source)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
