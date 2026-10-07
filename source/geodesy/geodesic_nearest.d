@@ -689,15 +689,11 @@ if (isGeodesyScalar!T)
     if (segment.distance == cast(T) 0)
         return false;
 
-    GeodesicInverseResult!T fromStart;
-
-    if (!solver.tryInverse(
-            start,
-            target,
-            fromStart))
-        return false;
-
-    if (fromStart.distance == cast(T) 0)
+    /*
+     * GeographicCoordinate is a canonical value type. Exact endpoint
+     * coincidence therefore needs no inverse-geodesic solve.
+     */
+    if (target == start)
     {
         result =
             GeodesicSegmentNearestResult!T.fromComponents(
@@ -711,15 +707,7 @@ if (isGeodesyScalar!T)
         return true;
     }
 
-    GeodesicInverseResult!T fromEnd;
-
-    if (!solver.tryInverse(
-            end,
-            target,
-            fromEnd))
-        return false;
-
-    if (fromEnd.distance == cast(T) 0)
+    if (target == end)
     {
         result =
             GeodesicSegmentNearestResult!T.fromComponents(
