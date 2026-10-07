@@ -2387,15 +2387,118 @@ unittest
 }
 
 /**
- * Prepared oriented geodesic line for repeated distance-based positions.
+ * Internal raw prepared-line position.
+ *
+ * Longitude is carried unrolled so canonical and continuous public result
+ * forms can share one spatial kernel.
+ */
+private struct GeodesicLineRawPosition(W)
+{
+    W latitude;
+    W unrolledLongitude;
+    W finalAzimuth;
+}
+
+
+/**
+ * Prepared-line position whose longitude is not reduced to one revolution.
+ *
+ * `unrolledLongitude` is an unrestricted finite `Angle!T`. The difference
+ * from the line's input longitude records both direction and complete
+ * encirclements. This deliberately does not use `Longitude!T`, whose public
+ * contract is bounded to [-pi,+pi].
+ */
+struct GeodesicLineUnrolledResult(T)
+if (isGeodesyScalar!T)
+{
+private:
+    Latitude!T _latitude;
+    Angle!T _unrolledLongitude;
+    Angle!T _finalAzimuth;
+
+    static GeodesicLineUnrolledResult fromComponents(
+        const Latitude!T latitude,
+        const Angle!T unrolledLongitude,
+        const Angle!T finalAzimuth)
+        pure nothrow @safe @nogc
+    {
+        GeodesicLineUnrolledResult result;
+        result._latitude = latitude;
+        result._unrolledLongitude = unrolledLongitude;
+        result._finalAzimuth = finalAzimuth;
+        return result;
+    }
+
+public:
+    /** Geodetic latitude at the evaluated position. */
+    @property Latitude!T latitude() const pure nothrow @safe @nogc
+    {
+        return _latitude;
+    }
+
+    /// Example reading the latitude from an unrolled line result.
+    @safe unittest
+    {
+        GeodesicLineUnrolledResult!double value;
+        assert(value.latitude.radians == 0.0);
+    }
+
+    /**
+     * Continuous longitude, allowed to extend beyond one revolution.
+     */
+    @property Angle!T unrolledLongitude() const pure nothrow @safe @nogc
+    {
+        return _unrolledLongitude;
+    }
+
+    /// Example reading an unrestricted longitude angle.
+    @safe unittest
+    {
+        GeodesicLineUnrolledResult!double value;
+        assert(value.unrolledLongitude.radians == 0.0);
+    }
+
+    /** Forward azimuth at the evaluated position. */
+    @property Angle!T finalAzimuth() const pure nothrow @safe @nogc
+    {
+        return _finalAzimuth;
+    }
+
+    /// Example reading the final azimuth from an unrolled line result.
+    @safe unittest
+    {
+        GeodesicLineUnrolledResult!double value;
+        assert(value.finalAzimuth.radians == 0.0);
+    }
+}
+
+/// Example representing a longitude beyond the ordinary geographic interval.
+@safe unittest
+{
+    const value =
+        GeodesicLineUnrolledResult!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Angle!double.fromDegrees(540.0),
+            Angle!double.fromDegrees(90.0));
+    assert(value.unrolledLongitude.degrees == 540.0);
+}
+
+
+/**
+ * Prepared oriented geodesic line for repeated distance- or arc-based positions.
  *
  * A line binds one valid `Geodesic!T`, start coordinate, and initial
  * azimuth. Line-dependent auxiliary-sphere and series state is computed once
- * during preparation and reused by `tryPosition` / `position`.
+ * during preparation and reused by the position operations.
  *
- * The initial M2 slice is intentionally distance-mode only. Arc-mode,
- * longitude unrolling, and advanced quantities are not part of this surface.
- * Signed distance follows the same oriented geodesic backward when negative.
+ * Distance input follows the ellipsoid linear unit. Arc input is the signed
+ * auxiliary-sphere arc sigma12 represented by `Angle!T`. Ordinary position
+ * results retain canonical geographic longitude. Explicit unrolled operations
+ * instead return a continuous unrestricted longitude angle so encirclements
+ * are not discarded.
+ *
+ * Signed distance and signed arc both follow the same oriented geodesic
+ * backward when negative.
  *
  * `.init` is invalid.
  */
@@ -2425,6 +2528,236 @@ private:
     W[9] _c3;
     GeographicCoordinate!T _start;
     Angle!T _initialAzimuth;
+
+    bool trySigmaFromDistance(
+        const T distance,
+        out W sigma12) const
+        pure nothrow @safe @nogc
+    {
+        sigma12 = W.nan;
+
+        if (!isValid || !isFiniteGeodesyScalar(distance))
+            return false;
+
+        enum int order = geodesicSeriesOrderFor!T;
+
+        const W denominator =
+            _b * (cast(W) 1 + _a1m1);
+
+        if (!isFiniteGeodesyScalar(denominator)
+            || denominator == cast(W) 0)
+            return false;
+
+        const W tau12 =
+            cast(W) distance / denominator;
+
+        if (!isFiniteGeodesyScalar(tau12))
+            return false;
+
+        const W sinTau12 = sin(tau12);
+        const W cosTau12 = cos(tau12);
+
+        const W b12 =
+            -geodesicSinCosSeries!W(
+                true,
+                _sinTau1 * cosTau12
+                    + _cosTau1 * sinTau12,
+                _cosTau1 * cosTau12
+                    - _sinTau1 * sinTau12,
+                _c1p,
+                order);
+
+        sigma12 =
+            tau12 - (b12 - _b11);
+
+        return isFiniteGeodesyScalar(sigma12);
+    }
+
+    bool tryRawPositionFromSigma(
+        const W sigma12,
+        out GeodesicLineRawPosition!W raw) const
+        pure nothrow @safe @nogc
+    {
+        raw = GeodesicLineRawPosition!W.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(sigma12))
+            return false;
+
+        enum int order = geodesicSeriesOrderFor!T;
+
+        const W sinSigma12 = sin(sigma12);
+        const W cosSigma12 = cos(sigma12);
+
+        W sinSigma2 =
+            _sinSigma1 * cosSigma12
+            + _cosSigma1 * sinSigma12;
+
+        W cosSigma2 =
+            _cosSigma1 * cosSigma12
+            - _sinSigma1 * sinSigma12;
+
+        const W sinBeta2 =
+            _cosAlpha0 * sinSigma2;
+
+        W cosBeta2 =
+            stableHypot2(
+                _sinAlpha0,
+                _cosAlpha0 * cosSigma2);
+
+        const W tiny = sqrt(W.min_normal);
+
+        if (cosBeta2 == cast(W) 0)
+        {
+            cosBeta2 = tiny;
+            cosSigma2 = tiny;
+        }
+
+        const W sinAlpha2 = _sinAlpha0;
+        const W cosAlpha2 =
+            _cosAlpha0 * cosSigma2;
+
+        const W latitude2 =
+            atan2(
+                sinBeta2,
+                _f1 * cosBeta2);
+
+        const W sinOmega2 =
+            _sinAlpha0 * sinSigma2;
+
+        const W cosOmega2 =
+            cosSigma2;
+
+        const W direction =
+            _sinAlpha0 < cast(W) 0
+                ? cast(W) -1
+                : cast(W) 1;
+
+        /*
+         * Continuous auxiliary-sphere longitude difference. This is the
+         * GeographicLib LONG_UNROLL construction expressed in radians.
+         */
+        const W omega12 =
+            direction
+            * (
+                sigma12
+                - (
+                    atan2(sinSigma2, cosSigma2)
+                    - atan2(_sinSigma1, _cosSigma1)
+                )
+                + (
+                    atan2(direction * sinOmega2, cosOmega2)
+                    - atan2(direction * _sinOmega1, _cosOmega1)
+                )
+            );
+
+        const W b32 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma2,
+                cosSigma2,
+                _c3,
+                order - 1);
+
+        const W lambda12 =
+            omega12
+            + _a3c
+                * (
+                    sigma12
+                    + (b32 - _b31));
+
+        /*
+         * Preserve the caller's accepted +pi/-pi start representation for
+         * the continuous result instead of the internally canonicalized
+         * longitude used by the ordinary geographic result.
+         */
+        const W unrolledLongitude2 =
+            cast(W) _start.longitude.radians
+            + lambda12;
+
+        const W finalAzimuth =
+            atan2(
+                sinAlpha2,
+                cosAlpha2);
+
+        if (!isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(unrolledLongitude2)
+            || !isFiniteGeodesyScalar(finalAzimuth))
+            return false;
+
+        raw.latitude = latitude2;
+        raw.unrolledLongitude = unrolledLongitude2;
+        raw.finalAzimuth = finalAzimuth;
+        return true;
+    }
+
+    bool tryCanonicalPositionFromSigma(
+        const W sigma12,
+        out GeodesicDirectResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicDirectResult!T.init;
+
+        GeodesicLineRawPosition!W raw;
+        if (!tryRawPositionFromSigma(sigma12, raw))
+            return false;
+
+        GeographicCoordinate!T endpoint;
+
+        if (!makeGeographicCoordinate(
+                cast(T) raw.latitude,
+                canonicalAngleRadians(
+                    cast(T) raw.unrolledLongitude),
+                endpoint))
+            return false;
+
+        result =
+            GeodesicDirectResult!T.fromComponents(
+                endpoint,
+                angleFromRadiansUnchecked(
+                    canonicalAngleRadians(
+                        cast(T) raw.finalAzimuth)));
+
+        return true;
+    }
+
+    bool tryUnrolledPositionFromSigma(
+        const W sigma12,
+        out GeodesicLineUnrolledResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicLineUnrolledResult!T.init;
+
+        GeodesicLineRawPosition!W raw;
+        if (!tryRawPositionFromSigma(sigma12, raw))
+            return false;
+
+        Latitude!T latitude;
+
+        if (!Latitude!T.tryFromRadians(
+                canonicalLatitudeRadians(
+                    cast(T) raw.latitude),
+                latitude))
+            return false;
+
+        const T longitude =
+            cast(T) raw.unrolledLongitude;
+
+        const T finalAzimuth =
+            canonicalAngleRadians(
+                cast(T) raw.finalAzimuth);
+
+        if (!isFiniteGeodesyScalar(longitude)
+            || !isFiniteGeodesyScalar(finalAzimuth))
+            return false;
+
+        result =
+            GeodesicLineUnrolledResult!T.fromComponents(
+                latitude,
+                angleFromRadiansUnchecked(longitude),
+                angleFromRadiansUnchecked(finalAzimuth));
+
+        return true;
+    }
 
 public:
     /** True when this line contains fully prepared finite state. */
@@ -2698,9 +3031,7 @@ public:
         if (!isValid || !isFiniteGeodesyScalar(distance))
             return false;
 
-        const W s12 = cast(W) distance;
-
-        if (s12 == cast(W) 0)
+        if (distance == cast(T) 0)
         {
             result =
                 GeodesicDirectResult!T.fromComponents(
@@ -2709,130 +3040,13 @@ public:
             return true;
         }
 
-        enum int order = geodesicSeriesOrderFor!T;
-
-        const W denominator =
-            _b * (cast(W) 1 + _a1m1);
-
-        if (!isFiniteGeodesyScalar(denominator)
-            || denominator == cast(W) 0)
+        W sigma12;
+        if (!trySigmaFromDistance(distance, sigma12))
             return false;
 
-        const W tau12 = s12 / denominator;
-
-        if (!isFiniteGeodesyScalar(tau12))
-            return false;
-
-        const W sinTau12 = sin(tau12);
-        const W cosTau12 = cos(tau12);
-
-        const W b12 =
-            -geodesicSinCosSeries!W(
-                true,
-                _sinTau1 * cosTau12
-                    + _cosTau1 * sinTau12,
-                _cosTau1 * cosTau12
-                    - _sinTau1 * sinTau12,
-                _c1p,
-                order);
-
-        const W sigma12 =
-            tau12 - (b12 - _b11);
-
-        const W sinSigma12 = sin(sigma12);
-        const W cosSigma12 = cos(sigma12);
-
-        W sinSigma2 =
-            _sinSigma1 * cosSigma12
-            + _cosSigma1 * sinSigma12;
-
-        W cosSigma2 =
-            _cosSigma1 * cosSigma12
-            - _sinSigma1 * sinSigma12;
-
-        const W sinBeta2 =
-            _cosAlpha0 * sinSigma2;
-
-        W cosBeta2 =
-            stableHypot2(
-                _sinAlpha0,
-                _cosAlpha0 * cosSigma2);
-
-        const W tiny = sqrt(W.min_normal);
-
-        if (cosBeta2 == cast(W) 0)
-        {
-            cosBeta2 = tiny;
-            cosSigma2 = tiny;
-        }
-
-        const W sinAlpha2 = _sinAlpha0;
-        const W cosAlpha2 =
-            _cosAlpha0 * cosSigma2;
-
-        const W latitude2 =
-            atan2(
-                sinBeta2,
-                _f1 * cosBeta2);
-
-        const W sinOmega2 =
-            _sinAlpha0 * sinSigma2;
-
-        const W cosOmega2 =
-            cosSigma2;
-
-        const W omega12 =
-            atan2(
-                sinOmega2 * _cosOmega1
-                    - cosOmega2 * _sinOmega1,
-                cosOmega2 * _cosOmega1
-                    + sinOmega2 * _sinOmega1);
-
-        const W b32 =
-            geodesicSinCosSeries!W(
-                true,
-                sinSigma2,
-                cosSigma2,
-                _c3,
-                order - 1);
-
-        const W lambda12 =
-            omega12
-            + _a3c
-                * (
-                    sigma12
-                    + (b32 - _b31));
-
-        const W longitude2 =
-            canonicalAngleRadians(
-                _longitude1 + lambda12);
-
-        const W finalAzimuth =
-            atan2(
-                sinAlpha2,
-                cosAlpha2);
-
-        if (!isFiniteGeodesyScalar(latitude2)
-            || !isFiniteGeodesyScalar(longitude2)
-            || !isFiniteGeodesyScalar(finalAzimuth))
-            return false;
-
-        GeographicCoordinate!T endpoint;
-
-        if (!makeGeographicCoordinate(
-                cast(T) latitude2,
-                cast(T) longitude2,
-                endpoint))
-            return false;
-
-        result =
-            GeodesicDirectResult!T.fromComponents(
-                endpoint,
-                angleFromRadiansUnchecked(
-                    canonicalAngleRadians(
-                        cast(T) finalAzimuth)));
-
-        return true;
+        return tryCanonicalPositionFromSigma(
+            sigma12,
+            result);
     }
 
     /// Example evaluating a prepared line without throwing.
@@ -2882,6 +3096,262 @@ public:
         const result = line.position(1_000.0);
         assert(result.position.latitude.radians
             == result.position.latitude.radians);
+    }
+
+    /**
+     * Evaluate a signed auxiliary-sphere arc along the prepared line.
+     */
+    bool tryArcPosition(
+        const Angle!T arc,
+        out GeodesicDirectResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicDirectResult!T.init;
+
+        if (!isValid)
+            return false;
+
+        const W sigma12 =
+            cast(W) arc.radians;
+
+        if (sigma12 == cast(W) 0)
+        {
+            result =
+                GeodesicDirectResult!T.fromComponents(
+                    _start,
+                    _initialAzimuth);
+            return true;
+        }
+
+        return tryCanonicalPositionFromSigma(
+            sigma12,
+            result);
+    }
+
+    /// Example evaluating a prepared line by auxiliary-sphere arc.
+    @safe unittest
+    {
+        const sphere = Ellipsoid!double.sphere(6_371_000.0);
+        const solver = Geodesic!double.fromEllipsoid(sphere);
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(10.0));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(90.0));
+        GeodesicDirectResult!double result;
+        assert(line.tryArcPosition(
+            Angle!double.fromDegrees(90.0),
+            result));
+        assert(result.position.longitude.degrees > 99.999999);
+    }
+
+    /** Evaluate a signed auxiliary-sphere arc along the prepared line. */
+    GeodesicDirectResult!T arcPosition(
+        const Angle!T arc) const
+        @safe
+    {
+        GeodesicDirectResult!T result;
+
+        if (!tryArcPosition(arc, result))
+        {
+            throw new GeodesyValueException(
+                "GeodesicLine arc position requires a valid line and finite representable result.");
+        }
+
+        return result;
+    }
+
+    /// Example evaluating an arc with throwing failure semantics.
+    @safe unittest
+    {
+        const solver =
+            Geodesic!double.fromEllipsoid(
+                Ellipsoid!double.sphere(6_371_000.0));
+        const start =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(0.0),
+                Longitude!double.fromDegrees(0.0));
+        const line =
+            GeodesicLine!double.fromGeodesic(
+                solver,
+                start,
+                Angle!double.fromDegrees(90.0));
+        const result =
+            line.arcPosition(
+                Angle!double.fromDegrees(45.0));
+        assert(result.position.longitude.degrees > 44.999999);
+    }
+
+    /**
+     * Evaluate a signed distance and retain continuous longitude.
+     */
+    bool tryPositionUnrolled(
+        const T distance,
+        out GeodesicLineUnrolledResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicLineUnrolledResult!T.init;
+
+        if (!isValid || !isFiniteGeodesyScalar(distance))
+            return false;
+
+        if (distance == cast(T) 0)
+        {
+            result =
+                GeodesicLineUnrolledResult!T.fromComponents(
+                    _start.latitude,
+                    angleFromRadiansUnchecked(
+                        _start.longitude.radians),
+                    _initialAzimuth);
+            return true;
+        }
+
+        W sigma12;
+        if (!trySigmaFromDistance(distance, sigma12))
+            return false;
+
+        return tryUnrolledPositionFromSigma(
+            sigma12,
+            result);
+    }
+
+    /// Example retaining longitude continuity for a distance position.
+    @safe unittest
+    {
+        const sphere = Ellipsoid!double.sphere(1.0);
+        const solver = Geodesic!double.fromEllipsoid(sphere);
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(10.0));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(90.0));
+        GeodesicLineUnrolledResult!double result;
+        assert(line.tryPositionUnrolled(
+            2.0 * PI + PI / 2.0,
+            result));
+        assert(result.unrolledLongitude.degrees > 459.999999);
+    }
+
+    /** Evaluate a signed distance and retain continuous longitude. */
+    GeodesicLineUnrolledResult!T positionUnrolled(
+        const T distance) const
+        @safe
+    {
+        GeodesicLineUnrolledResult!T result;
+
+        if (!tryPositionUnrolled(distance, result))
+        {
+            throw new GeodesyValueException(
+                "GeodesicLine unrolled position requires a valid line, finite distance, and finite representable result.");
+        }
+
+        return result;
+    }
+
+    /// Example evaluating an unrolled distance position.
+    @safe unittest
+    {
+        const solver =
+            Geodesic!double.fromEllipsoid(
+                Ellipsoid!double.sphere(1.0));
+        const start =
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(0.0),
+                Longitude!double.fromDegrees(0.0));
+        const line =
+            GeodesicLine!double.fromGeodesic(
+                solver,
+                start,
+                Angle!double.fromDegrees(90.0));
+        const result =
+            line.positionUnrolled(2.0 * PI);
+        assert(result.unrolledLongitude.degrees > 359.999999);
+    }
+
+    /**
+     * Evaluate a signed auxiliary-sphere arc and retain continuous longitude.
+     */
+    bool tryArcPositionUnrolled(
+        const Angle!T arc,
+        out GeodesicLineUnrolledResult!T result) const
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicLineUnrolledResult!T.init;
+
+        if (!isValid)
+            return false;
+
+        const W sigma12 =
+            cast(W) arc.radians;
+
+        if (sigma12 == cast(W) 0)
+        {
+            result =
+                GeodesicLineUnrolledResult!T.fromComponents(
+                    _start.latitude,
+                    angleFromRadiansUnchecked(
+                        _start.longitude.radians),
+                    _initialAzimuth);
+            return true;
+        }
+
+        return tryUnrolledPositionFromSigma(
+            sigma12,
+            result);
+    }
+
+    /// Example preserving multiple complete encirclements in arc mode.
+    @safe unittest
+    {
+        const sphere = Ellipsoid!double.sphere(1.0);
+        const solver = Geodesic!double.fromEllipsoid(sphere);
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(10.0));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(90.0));
+        GeodesicLineUnrolledResult!double result;
+        assert(line.tryArcPositionUnrolled(
+            Angle!double.fromDegrees(810.0),
+            result));
+        assert(result.unrolledLongitude.degrees > 819.999999);
+        assert(result.unrolledLongitude.degrees < 820.000001);
+    }
+
+    /**
+     * Evaluate a signed auxiliary-sphere arc and retain continuous longitude.
+     */
+    GeodesicLineUnrolledResult!T arcPositionUnrolled(
+        const Angle!T arc) const
+        @safe
+    {
+        GeodesicLineUnrolledResult!T result;
+
+        if (!tryArcPositionUnrolled(
+                arc,
+                result))
+        {
+            throw new GeodesyValueException(
+                "GeodesicLine unrolled arc position requires a valid line and finite representable result.");
+        }
+
+        return result;
+    }
+
+    /// Example evaluating an unrolled arc position.
+    @safe unittest
+    {
+        const sphere = Ellipsoid!double.sphere(1.0);
+        const solver = Geodesic!double.fromEllipsoid(sphere);
+        const start = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(0.0));
+        const line = GeodesicLine!double.fromGeodesic(
+            solver, start, Angle!double.fromDegrees(90.0));
+        const result =
+            line.arcPositionUnrolled(
+                Angle!double.fromDegrees(-450.0));
+        assert(result.unrolledLongitude.degrees < -449.999999);
     }
 }
 
