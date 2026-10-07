@@ -122,7 +122,8 @@ enum GeodesicSegmentNearestLocation : ubyte
  * left. segmentAlongTrackDistance is clamped to the segment. nearestDistance
  * is always unsigned.
  *
- * .init is invalid.
+ * .init is invalid; its scalar distance carriers are canonical +0 and its
+ * location is invalid.
  */
 struct GeodesicSegmentNearestResult(T)
 if (isGeodesyScalar!T)
@@ -131,11 +132,11 @@ private:
     bool _valid;
     GeographicCoordinate!T _intercept;
     GeographicCoordinate!T _nearestPoint;
-    T _nearestDistance;
-    T _alongTrackDistance;
-    T _signedCrossTrackDistance;
-    T _segmentAlongTrackDistance;
-    T _segmentLength;
+    T _nearestDistance = 0;
+    T _alongTrackDistance = 0;
+    T _signedCrossTrackDistance = 0;
+    T _segmentAlongTrackDistance = 0;
+    T _segmentLength = 0;
     GeodesicSegmentNearestLocation _location;
 
     static GeodesicSegmentNearestResult fromComponents(
