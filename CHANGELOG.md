@@ -2,7 +2,7 @@
 
 All notable changes to `geodesy-d` will be documented here.
 
-## [1.2.0] - 2026-10-06
+## [1.2.0] - 2026-10-07
 
 ### Added
 
