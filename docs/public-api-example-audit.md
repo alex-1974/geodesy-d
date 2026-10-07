@@ -38,6 +38,7 @@ The public surface is organized into these documentation families:
 | geocentric translation | EPSG 1031 family | existing |
 | Helmert | EPSG 1032 / 1033 families | existing |
 | dynamic Helmert | `Epoch`, EPSG 1053 / 1056 families | existing |
+| Molodensky-Badekas | EPSG 1034 / 1061 local-origin Helmert family | existing |
 | Transverse Mercator | prepared projection, forward/reverse, factors | existing |
 | Pseudo-Mercator | prepared projection and bounded policy | existing |
 | UTM | zones, hemispheres, prepared/automatic/tagged operations | existing |
@@ -479,3 +480,20 @@ The audit is complete when:
 | `geodesy.transform.dynamic_helmert.PositionVectorHelmert14` | existing | dynamic Helmert |
 | `geodesy.transform.dynamic_helmert.toCoordinateFrameHelmert14` | existing | dynamic Helmert |
 | `geodesy.transform.dynamic_helmert.toPositionVectorHelmert14` | existing | dynamic Helmert |
+
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.baseParameters` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.evaluationPointX` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.evaluationPointY` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.evaluationPointZ` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.equivalentHelmert` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.tryFromCanonical` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.fromCanonical` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.tryFromArcSecondsAndPpm` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.fromArcSecondsAndPpm` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.tryApply` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.MolodenskyBadekas10.apply` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.PositionVectorMolodenskyBadekas` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.CoordinateFrameMolodenskyBadekas` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.toCoordinateFrameMolodenskyBadekas` | existing | Molodensky-Badekas |
+| `geodesy.transform.molodensky_badekas.toPositionVectorMolodenskyBadekas` | existing | Molodensky-Badekas |
