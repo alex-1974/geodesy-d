@@ -1,10 +1,9 @@
 /**
  * Bounded generic Transverse Mercator with EPSG 9807 parameter semantics.
  *
- * TransverseMercator is a prepared projection object for repeated forward,
- * reverse, and conformal-factor evaluation. It deliberately separates generic
- * Transverse Mercator mathematics from UTM zoning policy and precomputes
- * ellipsoid/series/origin state instead of rebuilding it for each point.
+ * Use TransverseMercator for repeated forward, reverse, and conformal-factor
+ * evaluation. The prepared value caches ellipsoid, series, and origin state.
+ * UTM zoning remains a separate policy layer.
  *
  * Standards:
  *     Public operation parameters and semantics follow EPSG method 9807 --

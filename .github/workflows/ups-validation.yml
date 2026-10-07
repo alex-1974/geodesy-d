@@ -1,0 +1,60 @@
+name: UPS differential validation
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/projection/ups.d"
+      - "source/geodesy/projection/polar_stereographic.d"
+      - "validation/ups_*"
+      - "tools/validate-ups-differential.sh"
+      - "docs/UPS_POLICY.md"
+      - ".github/workflows/ups-validation.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/projection/ups.d"
+      - "source/geodesy/projection/polar_stereographic.d"
+      - "validation/ups_*"
+      - "tools/validate-ups-differential.sh"
+      - "docs/UPS_POLICY.md"
+      - ".github/workflows/ups-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: PROJ + GeographicLib UTMUPS
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install DMD
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-2.111.0
+
+      - name: Install independent references
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin libgeographiclib-dev
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: UPS differential corpus
+        shell: bash
+        run: bash tools/validate-ups-differential.sh

@@ -73,6 +73,138 @@ tools/validate-api.sh
 DC=ldc2 tools/validate-api.sh
 ~~~
 
+
+
+## Polar Stereographic PS-C / PS-D differential gate
+
+Polar Stereographic has its own independent differential validator:
+
+~~~bash
+bash tools/validate-polar-stereographic-differential.sh
+~~~
+
+The gate intentionally uses two independent external implementations:
+
+- PROJ `stere` validates forward projected positions and independently
+  generated reverse inputs for both EPSG 9810-style `k_0` and EPSG
+  9829-style `lat_ts` parameterizations;
+- GeographicLib `PolarStereographic` validates forward/reverse positions,
+  meridian convergence, point scale, and the central scale derived from a
+  variant-B standard parallel.
+
+The external libraries are validation oracles only. They are not package,
+build, or runtime dependencies of `geodesy-d`.
+
+The deterministic corpus contains eight prepared configurations:
+
+~~~text
+variant A: WGS 84 north
+variant A: WGS 84 south with shifted origin/offsets
+variant A: GRS 80 north
+variant A: sphere south
+variant B: WGS 84 south / EPSG example parameters
+variant B: WGS 84 north
+variant B: Airy 1830 south
+variant B: sphere north
+~~~
+
+Each configuration covers the selected hemisphere from the equator through
+ordinary polar latitudes to a near-pole case and the exact selected pole,
+combined with central-meridian, very small longitude offsets, quadrant
+offsets, antimeridian-near offsets, non-zero false origins, and shifted
+central meridians.
+
+Reverse validation never relies on a geodesy-d self-roundtrip. PROJ or
+GeographicLib first creates the projected input; geodesy-d must then recover
+the source geographic coordinate. The exact pole follows the public
+geodesy-d canonical convention: longitude is the natural-origin longitude and
+meridian convergence is zero.
+
+Current double-precision characterization guards are:
+
+~~~text
+projected position:       0.1 mm
+latitude/longitude:       1e-9 degrees
+point scale:              2e-12 absolute
+variant-B derived k0:     2e-14 absolute
+~~~
+
+These are validation thresholds, not public API accuracy promises.
+
+The GitHub Actions workflow
+`.github/workflows/polar-stereographic-validation.yml` installs PROJ and
+GeographicLib on Ubuntu, runs the normal unit suite, and then executes this
+corpus. The workflow is path-scoped to the Polar Stereographic implementation,
+factor result type, validator, validation documentation, and the workflow
+itself.
+
+## Polar Stereographic PS-E / PS-F / PS-G qualification
+
+PS-E validates scalar and representation behavior independently of the
+external differential corpus:
+
+~~~bash
+dmd  -i -Isource -run validation/polar_stereographic_scalar_validation.d
+ldc2 -i -Isource -run validation/polar_stereographic_scalar_validation.d
+~~~
+
+The same templated program exercises `float`, `double`, and `real` and
+covers:
+
+- ordinary forward/reverse and factor consistency;
+- exact selected-pole E/N, canonical longitude, convergence, and scale;
+- the closed equator boundary and represented boundary slack;
+- rejection of the opposite hemisphere;
+- antimeridian-near longitude differences;
+- the near-pole preserved-`tau` reverse-factor path;
+- variant-B unit scale on the standard parallel;
+- invariance under consistent linear-unit scaling;
+- preservation of precision beyond binary64 where the platform `real`
+  actually has a wider mantissa.
+
+PS-F is provided by
+`.github/workflows/polar-stereographic-platform-matrix.yml`. It deliberately
+separates two qualification dimensions:
+
+1. a multi-platform baseline matrix using DMD 2.111.0 / LDC 1.41.0 across
+   Linux x86_64, Linux AArch64, Windows x86_64, macOS AArch64, macOS x86_64,
+   plus informational Windows AArch64;
+2. the controlled six-compiler Linux matrix:
+   DMD 2.111.0, 2.112.1, 2.113.0 and LDC 1.41.0, 1.42.0, 1.43.0.
+
+Every non-experimental lane runs the normal unit suite, PS-E, and a release
+codegen build. The six-compiler lane additionally verifies that stable C probe
+symbols remain emitted for forward, reverse, and factor paths and records an
+`objdump` excerpt for regression inspection. The codegen probe is validation
+support only; its C symbols are not public geodesy-d API.
+
+PS-G performance characterization is reproducible through:
+
+~~~bash
+DC=ldc2 bash tools/benchmark-polar-stereographic.sh
+~~~
+
+The benchmark builds optimized native code and compares prepared geodesy-d
+forward/reverse hot paths with GeographicLib. A PROJ one-shot reference is
+also printed, but it intentionally includes PROJ context/projection
+construction and therefore is not treated as a direct hot-path comparison.
+
+For a recordable performance baseline, run on controlled hardware, pin a CPU,
+and require the performance governor/turbo policy:
+
+~~~bash
+PS_BENCH_CPU=2 \
+PS_BENCH_REQUIRE_CONTROLLED=1 \
+PS_BENCH_ITERATIONS=2000000 \
+DC=ldc2 \
+bash tools/benchmark-polar-stereographic.sh
+~~~
+
+CI runs only a short unpinned benchmark smoke. Timing values from hosted
+runners are not acceptance thresholds and must not be recorded as performance
+baselines. No broad `@fastmath` or equivalent relaxed floating-point mode is
+used by this qualification.
+
 ## Optional PROJ differential gate
 
 When PROJ command-line tools are installed:

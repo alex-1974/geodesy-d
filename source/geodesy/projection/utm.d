@@ -1,11 +1,10 @@
 /**
  * Universal Transverse Mercator policy, tagging, and prepared projection.
  *
- * UTM is implemented as a policy layer over the accepted bounded Transverse
- * Mercator implementation. This module owns zone and hemisphere semantics,
- * standard automatic-zone selection, fixed UTM parameters, tagged coordinates,
- * and explicit prepared-zone operations without duplicating the numerical
- * Transverse Mercator kernel.
+ * Use UTM for standard zone/hemisphere selection, tagged coordinates, and
+ * repeated operations in an explicit prepared zone. The module supplies UTM
+ * policy and fixed parameters while reusing the Transverse Mercator numerical
+ * kernel.
  *
  * Standards:
  *     UTM semantics follow the conventional EPSG/IOGP Transverse Mercator

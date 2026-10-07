@@ -503,7 +503,7 @@ prolate ellipsoids.
 
 ### Additive v1.1 geodesic quantities
 
-The v1.1 candidate adds advanced quantities without changing the frozen v1
+The released v1.1 line adds advanced quantities without changing the frozen v1
 result types or ordinary direct/inverse signatures.
 
 The shared quantity value type is:
@@ -578,7 +578,7 @@ Compatible post-v1 additions do not alter the v1.0 direct/inverse contract.
 
 ### Complete v1.1 geodesic family
 
-The v1.1 candidate completes the admitted geodesic family with two prepared
+The released v1.1 line completes the admitted geodesic family with two prepared
 measurement abstractions in addition to the advanced direct/inverse quantities:
 
 ~~~text
@@ -710,6 +710,156 @@ vertex merely to close the measurement.
 
 See ADR-0008 and `docs/GEODESIC_VALIDATION_PLAN.md` for the accepted
 numerical, canonicalization, and validation contract.
+
+## Additive v1.2 navigation and projection families
+
+v1.2 extends the frozen v1 line with five additive public families. Existing
+v1.0/v1.1 names, call shapes, parameter names, scalar policy, failure channels,
+and operation domains remain unchanged.
+
+### Rhumb / RhumbLine
+
+The aggregate API exports:
+
+~~~text
+Rhumb<T>
+RhumbLine<T>
+RhumbDirectResult<T>
+RhumbInverseResult<T>
+~~~
+
+`Rhumb<T>` is a prepared ellipsoidal loxodrome solver. Construction follows
+the checked/throwing factory pattern:
+
+~~~text
+Rhumb.tryFromEllipsoid / fromEllipsoid
+~~~
+
+The operational surface provides checked/throwing direct and inverse pairs.
+Inverse returns shortest-wrap rhumb distance and constant bearing. Direct
+accepts signed distance. Exact opposite-meridian inverse ties choose the
+east-going solution.
+
+`RhumbLine<T>` prepares one start point and bearing for repeated positions.
+It is distinct from `GeodesicLine<T>`; rhumb and geodesic mathematics remain
+separate public families.
+
+Supported scalar and ellipsoid policy is:
+
+~~~text
+T = float | double | real
+a > 0
+0 <= f <= 0.01
+~~~
+
+Public `float` uses double working precision. Longitudes are canonicalized to
+`[-pi,+pi)`. Prolate ellipsoids and longitude-unrolled output are not part of
+the v1.2 contract.
+
+See `docs/RHUMB_RESEARCH.md` for the numerical and singularity policy.
+
+### Polar Stereographic
+
+The aggregate API exports:
+
+~~~text
+PolarStereographic<T>
+~~~
+
+The prepared projection provides checked/throwing construction, forward,
+reverse, and conformal-factor operations.
+
+The primary public semantics follow bounded ellipsoidal Polar Stereographic
+with EPSG 9810 variant-A parameterization. EPSG 9829 variant-B construction is
+represented through the equivalent natural-origin scale.
+
+North and south aspects are both supported. The exact pole maps to the false
+origin. Public `float` uses double working precision.
+
+Projection factors use the existing:
+
+~~~text
+ConformalProjectionFactors<T>
+~~~
+
+result type.
+
+See `docs/POLAR_STEREOGRAPHIC_RESEARCH.md` for domain, aspect, pole, and
+validation details.
+
+### UPS
+
+UPS is a WGS 84 policy and tagged-coordinate layer over the accepted
+`PolarStereographic<T>` kernel.
+
+The aggregate API exports:
+
+~~~text
+UpsHemisphere
+UpsCoordinate<T>
+UpsProjection<T>
+tryStandardUps...
+forward/reverse UPS helpers
+~~~
+
+Automatic UTM/UPS selection uses the standard transition policy:
+
+~~~text
+south: latitude < -80 deg -> UPS
+north: latitude >= +84 deg -> UPS
+~~~
+
+Explicit overlap handling is supported around the transition bands. UPS owns
+policy and coordinate semantics; it does not duplicate Polar Stereographic
+mathematics.
+
+See `docs/UPS_POLICY.md` for the accepted range and overlap contract.
+
+### Lambert Conformal Conic 2SP
+
+The aggregate API exports:
+
+~~~text
+LambertConformalConic<T>
+~~~
+
+The v1.2 family is the genuine two-standard-parallel ellipsoidal form
+corresponding to EPSG method 9802. Equal standard parallels are deliberately
+rejected rather than silently treated as a 1SP tangent limit.
+
+Prepared operations expose checked/throwing forward and reverse projection plus
+conformal factors through `ConformalProjectionFactors<T>`.
+
+Independent validation includes authority-backed parameter sets for:
+
+- EPSG:31287 — MGI / Austria Lambert;
+- EPSG:3034 — ETRS89-extended / LCC Europe.
+
+See `docs/LAMBERT_CONFORMAL_CONIC_RESEARCH.md`.
+
+### Lambert Azimuthal Equal Area
+
+The aggregate API exports:
+
+~~~text
+LambertAzimuthalEqualArea<T>
+~~~
+
+The prepared ellipsoidal family supports oblique, equatorial, north-polar, and
+south-polar projection centres, with checked/throwing forward and reverse
+operations.
+
+The exact projection centre canonicalizes to false easting/northing. The exact
+authalic antipode is a directional singularity and is rejected. Reverse
+projection accepts the open represented disk and rejects the antipodal
+boundary and points beyond it.
+
+LAEA is equal-area, not conformal; it therefore deliberately does not expose
+`ConformalProjectionFactors<T>`.
+
+Independent validation includes EPSG:3035 — ETRS89-extended / LAEA Europe.
+
+See `docs/LAMBERT_AZIMUTHAL_EQUAL_AREA_RESEARCH.md`.
 
 ## Public API contract
 

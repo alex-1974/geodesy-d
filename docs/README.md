@@ -6,15 +6,15 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Stable v1 line — v1.0.1 released; v1.1.0 release-candidate qualification in progress.**
+**Stable v1 line — v1.2.0 released. M3 Navigation & Polar Geodesy is complete.**
 
 `geodesy-d v1.0.0` was released on September 26, 2026. The frozen v1 public
 API includes the accepted coordinate, transformation, projection, geodesic,
 and topocentric families documented below.
 
-v1.0.1 is the current published stable patch release. The completed M2
-geodesic family is now being qualified as the additive v1.1.0 release
-candidate while preserving the frozen v1 source-compatibility baseline.
+v1.2.0 is the current published stable feature release. It completes M3
+Navigation & Polar Geodesy while preserving the frozen v1 source-compatibility
+baseline. The next planned development milestone is M4 — Reference Frames.
 
 ## Responsibility boundary
 
@@ -29,9 +29,11 @@ GeodeticCoordinate
 GeocentricCoordinate (ECEF terminology)
 geodetic ↔ geocentric conversion
 Helmert transformations
-Transverse Mercator
-UTM
+Transverse Mercator / Pseudo-Mercator
+UTM / Polar Stereographic / UPS
+Lambert Conformal Conic 2SP / Lambert Azimuthal Equal Area
 ellipsoidal geodesics
+rhumb / RhumbLine navigation
 ```
 
 It does **not** own:
@@ -64,7 +66,7 @@ v0.1 release blockers.
 
 ## Frozen v1 implementation
 
-The frozen v1 release-candidate surface additionally contains:
+The frozen v1 surface additionally contains:
 
 ```text
 bounded generic Transverse Mercator
@@ -100,9 +102,17 @@ source/geodesy/
 │   ├── geocentric_translation.d # EPSG 1031
 │   └── helmert.d                 # EPSG 1032 / 1033
 ├── projection/
+│   ├── factors.d                 # conformal convergence / scale
 │   ├── transverse_mercator.d     # implemented
-│   └── utm.d                     # implemented
-└── geodesic.d                    # implemented direct/inverse solver
+│   ├── pseudo_mercator.d         # implemented
+│   ├── utm.d                     # implemented
+│   ├── polar_stereographic.d     # implemented
+│   ├── ups.d                     # implemented
+│   ├── lambert_conformal_conic.d # implemented 2SP
+│   └── lambert_azimuthal_equal_area.d # implemented
+├── geodesic.d                    # direct/inverse + quantities/line
+├── geodesic_polygon.d            # perimeter / signed area
+└── rhumb.d                       # rhumb / RhumbLine
 ```
 
 The layout is not an API commitment. Modules should be added only when a real implementation requires them.
@@ -169,7 +179,9 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 
 - `docs/API.md` — frozen v1 public API reference.
 - `docs/VALIDATION.md` — compiler and independent PROJ validation policy.
-- `docs/V0_1_READINESS.md` — release gate checklist.
+- `docs/V1_2_RELEASE_READINESS.md` — current v1.2.0 release qualification.
+- `docs/V1_2_API_AUDIT.md` — v1.2 public API freeze audit.
+- `docs/M3_INTEGRATION_GATE.md` — M3 aggregate validation/performance closure.
 - `docs/REFERENCES.md` — reference hierarchy and validation sources.
 - `docs/adr/0001-scope-and-boundaries.md` — responsibility boundary.
 - `docs/adr/0002-core-type-and-unit-model.md` — core type/unit model.
@@ -183,6 +195,9 @@ It is treated only as a historical design and test-case source. `geodesy-d` will
 - `docs/UTM_VALIDATION_PLAN.md` — UTM validation.
 - `docs/GEODESIC_VALIDATION_PLAN.md` — geodesic acceptance program and evidence.
 - `docs/GEODESIC_FEATURE_MATRIX.md` — post-M2 capability audit against GeographicLib/PROJ and admission decisions.
+- `docs/RHUMB_RESEARCH.md` — rhumb/RhumbLine numerical and semantic contract.
+- `docs/POLAR_STEREOGRAPHIC_RESEARCH.md` — Polar Stereographic research and accepted contract.
+- `docs/ADDITIONAL_PROJECTION_ADMISSION_AUDIT.md` — LCC/LAEA admission evidence.
 - `docs/TOPOCENTRIC_VALIDATION_PLAN.md` — topocentric acceptance program and evidence.
 - `docs/operations/geographic-geocentric.md` — EPSG 9602.
 - `docs/operations/geocentric-translation.md` — EPSG 1031.
@@ -196,11 +211,14 @@ The workspace-wide coordination roadmap is available locally as
 ## Release readiness
 
 The completed v1.0.0 release record is `docs/V1_RELEASE_READINESS.md`.
-The active v1.0.1 patch gate is `docs/V1_0_1_RELEASE_READINESS.md`.
+The completed v1.0.1 patch record is `docs/V1_0_1_RELEASE_READINESS.md`.
+The completed v1.1.0 release record is `docs/V1_1_RELEASE_READINESS.md`.
+The completed M3 integration record is issue #74. The v1.2.0 release record is
+`docs/V1_2_RELEASE_READINESS.md`; post-v1.2 work follows the repository roadmap.
 
 
 ## Compiler compatibility
 
-`geodesy-d` v0.1 declares D frontend **2.111.0** as the minimum supported
+`geodesy-d` declares D frontend **2.111.0** as the minimum supported
 frontend. CI also tests current DMD and LDC. A newer workspace development
 baseline does not imply that consumers must use that newer frontend.

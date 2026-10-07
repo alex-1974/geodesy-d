@@ -1,0 +1,50 @@
+name: Rhumb differential validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - "source/geodesy/rhumb.d"
+      - "validation/rhumb_*"
+      - "tools/validate-rhumb-differential.sh"
+      - "docs/RHUMB_RESEARCH.md"
+      - ".github/workflows/rhumb-validation.yml"
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - "source/geodesy/rhumb.d"
+      - "validation/rhumb_*"
+      - "tools/validate-rhumb-differential.sh"
+      - "docs/RHUMB_RESEARCH.md"
+      - ".github/workflows/rhumb-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: GeographicLib Rhumb
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-2.111.0
+
+      - name: Install GeographicLib
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libgeographiclib-dev
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: Rhumb differential corpus
+        shell: bash
+        run: bash tools/validate-rhumb-differential.sh

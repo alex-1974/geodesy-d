@@ -1,35 +1,27 @@
 /**
  * Public package API for dependency-light, pure-D geodetic mathematics.
  *
- * geodesy-d provides strongly typed, bounded numerical operations for
- * reference ellipsoids, geographic/geocentric/topocentric coordinates,
- * map projections, surface geodesics, and static reference-frame
- * transformations. Import this module to access the supported public API:
+ * Import this module for geodesy-d's supported public API: strong geodetic
+ * value types, coordinate conversions, map projections, surface paths, and
+ * static reference-frame transformations.
  *
  * ---
  * import geodesy;
  * ---
  *
- * The library is designed for applications where explicit geodetic semantics,
- * numerical robustness, predictable hot-path behaviour, and independent
- * validation matter. Public scalar types support float, double, and real;
- * numerically sensitive float operations may use promoted double working
- * precision. Checked numerical paths are allocation-free where the operation
- * permits it, and prepared projection, geodesic, and topocentric objects cache
- * reusable state for repeated operations.
+ * Public numerical APIs support float, double, and real. Numerically sensitive
+ * float operations may use double working precision while preserving float at
+ * the public boundary. Checked numerical paths avoid allocation where the
+ * operation permits it. Prepared solvers, projections, and frames retain
+ * reusable state for repeated work.
  *
- * Numerical algorithms have documented provenance and bounded support domains.
- * Substantial operations are qualified with analytical/reference cases,
- * deterministic adversarial/property tests, and independent implementations
- * such as PROJ or GeographicLib where appropriate. There is no library-wide
- * epsilon and no broad fast-math policy: numerical stability and explicit
- * semantics take precedence over raw benchmark speed.
+ * Each numerical family documents its supported domain and precision policy.
+ * The library has no global epsilon or broad fast-math mode.
  *
- * geodesy-d deliberately is not a general CRS engine. It does not provide an
- * authority database, WKT/PROJJSON parsing, grid-resource management,
- * automatic operation discovery, or general CRS pipelines, and PROJ and
- * GeographicLib are validation/reference systems rather than runtime
- * dependencies.
+ * geodesy-d is a mathematical geodesy library, not a general CRS engine. It
+ * does not provide authority lookup, WKT/PROJJSON parsing, grid management, or
+ * automatic operation discovery. PROJ and GeographicLib serve as independent
+ * validation references, not runtime dependencies.
  *
  * Performance:
  *     Performance is an explicit quality property after correctness and
@@ -45,7 +37,9 @@
  *
  * See_Also:
  *     `GeodeticCoordinate`, `GeocentricCoordinate`, `TopocentricFrame`,
- *     `TransverseMercator`, `UtmProjection`, `Geodesic`
+ *     `TransverseMercator`, `UtmProjection`, `PolarStereographic`, `UpsProjection`,
+ *     `LambertConformalConic`, `LambertAzimuthalEqualArea`, `Geodesic`,
+ *     `Rhumb`, `RhumbLine`
  *
  * Authors:
  *     Alexander Bernardi
@@ -57,7 +51,7 @@
  *     MIT
  *
  * Date:
- *     September 26, 2026
+ *     October 6, 2026
  */
 module geodesy;
 
@@ -71,13 +65,18 @@ public import geodesy.geodetic;
 public import geodesy.geocentric;
 public import geodesy.topocentric;
 public import geodesy.projected;
+public import geodesy.rhumb;
 public import geodesy.scalar;
 
 public import geodesy.conversion;
 public import geodesy.projection.factors;
+public import geodesy.projection.lambert_azimuthal_equal_area;
+public import geodesy.projection.lambert_conformal_conic;
 public import geodesy.projection.pseudo_mercator;
+public import geodesy.projection.polar_stereographic;
 public import geodesy.projection.transverse_mercator;
 public import geodesy.projection.utm;
+public import geodesy.projection.ups;
 
 public import geodesy.transform.geocentric_translation;
 

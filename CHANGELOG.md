@@ -2,6 +2,33 @@
 
 All notable changes to `geodesy-d` will be documented here.
 
+## [1.2.0] - 2026-10-07
+
+### Added
+
+- Added ellipsoidal `Rhumb!T` / `RhumbLine!T` direct, inverse, and prepared
+  repeated-position navigation.
+- Added bounded ellipsoidal Polar Stereographic with EPSG 9810 primary
+  semantics and EPSG 9829 variant-B construction.
+- Added UPS as a WGS 84 policy and tagged-coordinate layer over Polar
+  Stereographic.
+- Added bounded Lambert Conformal Conic 2SP with EPSG 9802 semantics.
+- Added bounded Lambert Azimuthal Equal Area with oblique, equatorial, and
+  polar centre modes.
+
+### Validation
+
+- Added durable GeographicLib/PROJ differential validation for all admitted M3
+  families, including EPSG:31287, EPSG:3034, and EPSG:3035 parameter coverage.
+- Added controlled six-compiler aggregate release/consumer qualification and
+  Linux/Windows/macOS platform matrices for the admitted numerical kernels.
+- Added controlled M3 performance baselines for Rhumb, Polar Stereographic,
+  LCC 2SP, and LAEA.
+
+### Compatibility
+
+- Preserves the frozen v1 source contract; all v1.2 capabilities are additive.
+
 ## [1.1.0] - 2026-10-06
 
 ### Added

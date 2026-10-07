@@ -33,8 +33,14 @@ The library is designed around a small, explicit numerical core:
 - Transverse Mercator;
 - Pseudo-Mercator;
 - UTM forward and reverse projection;
-- meridian convergence and point scale for Transverse Mercator and UTM;
+- bounded Polar Stereographic projection;
+- UPS policy and tagged coordinates over Polar Stereographic;
+- Lambert Conformal Conic 2SP;
+- Lambert Azimuthal Equal Area;
+- meridian convergence and point scale for Transverse Mercator, UTM, Polar
+  Stereographic, and Lambert Conformal Conic;
 - direct and inverse ellipsoidal geodesics;
+- ellipsoidal rhumb direct/inverse navigation and prepared `RhumbLine`;
 - reduced length, geodesic scales, and signed geodesic area quantities;
 - prepared `GeodesicLine` evaluation for repeated positions;
 - streaming ellipsoidal polygon perimeter and signed-area measurement;
@@ -58,8 +64,7 @@ import geodesy;
 
 ## Example
 
-The following example creates a WGS 84 position in Vienna, converts it to ECEF,
-projects it to UTM, and computes the geodesic distance to another position.
+The following example creates a WGS 84 position in Vienna, converts it to ECEF, projects it to UTM, and computes both geodesic and rhumb navigation to another position.
 
 ~~~d
 import geodesy;
@@ -96,18 +101,36 @@ void main()
     const geodesic = Geodesic!double.fromEllipsoid(earth);
     const route = geodesic.inverse(vienna, graz);
 
+    const rhumb = Rhumb!double.fromEllipsoid(earth);
+    const rhumbRoute = rhumb.inverse(vienna, graz);
+
     writeln("ECEF: ", ecef.x, ", ", ecef.y, ", ", ecef.z);
     writeln(
         "UTM zone ", utm.zone.number,
         ": ", utm.easting, ", ", utm.northing
     );
-    writeln("Vienna–Graz distance: ", route.distance, " m");
+    writeln("Vienna–Graz geodesic distance: ", route.distance, " m");
+    writeln(
+        "Vienna–Graz rhumb distance/bearing: ",
+        rhumbRoute.distance, " m / ",
+        rhumbRoute.bearing.degrees, " deg"
+    );
 }
 ~~~
+
+## Status
+
+**Current stable feature release: v1.2.0.**
+
+v1.2.0 completes M3 — Navigation & Polar Geodesy. It adds Rhumb/RhumbLine,
+Polar Stereographic, UPS, Lambert Conformal Conic 2SP, and Lambert Azimuthal
+Equal Area while preserving the frozen v1 source contract.
 
 ## Documentation
 
 - [Public API](docs/API.md)
+- [v1.2.0 release notes](docs/V1_2_RELEASE_NOTES.md)
+- [M3 integration and performance evidence](docs/M3_INTEGRATION_GATE.md)
 - [Geodesic feature matrix](docs/GEODESIC_FEATURE_MATRIX.md)
 - [Roadmap](ROADMAP.md)
 - [Changelog](CHANGELOG.md)

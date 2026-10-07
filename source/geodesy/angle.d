@@ -1,11 +1,10 @@
 /**
  * Strong angular and geographic angular-coordinate value types.
  *
- * This module separates unrestricted finite angles from latitude and longitude
- * domains so callers cannot accidentally substitute raw scalars for geographic
- * angular concepts. Values are stored canonically in radians while explicit
- * factories support radians and degrees. Latitude and longitude own their
- * public domain and canonicalization rules.
+ * Use Angle for unrestricted finite angles and Latitude/Longitude for
+ * geographic coordinates. The strong types keep these domains distinct from
+ * raw scalars and from each other. Values use radians internally; explicit
+ * factories accept radians or degrees.
  *
  * Domain:
  *     `Angle` accepts every finite represented angle. `Latitude` is bounded

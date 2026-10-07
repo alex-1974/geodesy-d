@@ -1,0 +1,57 @@
+name: Lambert Azimuthal Equal Area differential validation
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/projection/lambert_azimuthal_equal_area.d"
+      - "validation/lambert_azimuthal_equal_area_*"
+      - "tools/validate-lambert-azimuthal-equal-area-differential.sh"
+      - "docs/LAMBERT_AZIMUTHAL_EQUAL_AREA_RESEARCH.md"
+      - ".github/workflows/lambert-azimuthal-equal-area-validation.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/projection/lambert_azimuthal_equal_area.d"
+      - "validation/lambert_azimuthal_equal_area_*"
+      - "tools/validate-lambert-azimuthal-equal-area-differential.sh"
+      - "docs/LAMBERT_AZIMUTHAL_EQUAL_AREA_RESEARCH.md"
+      - ".github/workflows/lambert-azimuthal-equal-area-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: PROJ LAEA
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-2.111.0
+
+      - name: Install PROJ
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin
+          proj 2>&1 | head -n 2 || true
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: LAEA differential corpus
+        shell: bash
+        run: bash tools/validate-lambert-azimuthal-equal-area-differential.sh

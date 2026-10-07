@@ -12,12 +12,12 @@ forward as active roadmap text.
 The released stable line is:
 
 ~~~text
-v1.0.1
+v1.2.0
 ~~~
 
-The completed M2 geodesic family is now in v1.1.0 release-candidate
-qualification. No further M2 feature expansion is required for the v1.1
-release decision.
+v1.2.0 completed M3 — Navigation & Polar Geodesy and was published on
+2026-10-07. It preserves the frozen v1 source contract. The next planned
+development milestone is M4 — Reference Frames.
 
 The frozen v1 API already provides:
 
@@ -36,6 +36,16 @@ The frozen v1 API already provides:
 
 The v1 compatibility baseline remains authoritative. Post-v1 work should be
 additive unless a separately justified breaking-change process is started.
+
+## v1.2.0 qualification record
+
+The completed v1.2.0 release qualification is recorded in
+`docs/V1_2_RELEASE_READINESS.md`.
+
+Immutable stabilization checkpoints:
+
+- `freeze/feature-1.2.0` — v1.2 feature set;
+- `freeze/api-1.2.0` — audited caller-visible v1.2 API contract.
 
 ## Development principles
 
@@ -110,7 +120,7 @@ It introduces no new public capability family.
 
 # M2 — Geodesic Core Completion
 
-**Release intent:** primary **v1.1 candidate**.
+**Status:** completed and released in **v1.1.0**.
 
 The first post-v1 feature milestone completes the existing Karney-family
 geodesic core instead of starting unrelated new families. "Core completion"
@@ -154,9 +164,26 @@ or workspace-boundary responsibilities.
 
 # M3 — Navigation & Polar Geodesy
 
+**Status:** completed.
+
 **Goal:** complete the principal navigation/polar families after the geodesic
 core is mature, unless concrete consumer evidence justifies advancing an
 individual item earlier.
+
+Tracking issue:
+
+- #74 — M3 Navigation & Polar Geodesy integration gate.
+
+Preferred order:
+
+1. #38 — establish and accept the bounded Polar Stereographic kernel;
+2. #39 — add UPS as a semantic/policy layer over that accepted kernel;
+3. #37 — research and admit the independent Rhumb/RhumbLine family;
+4. #40 — complete the consumer-driven admission audit for further projections.
+
+Rhumb research may proceed independently of the Polar Stereographic/UPS chain,
+but UPS must not duplicate or precede the accepted Polar Stereographic
+mathematics.
 
 Issues:
 
@@ -176,18 +203,31 @@ navigation / projection
 
 Polar Stereographic, UPS, and Rhumb/RhumbLine form the intended M3 core.
 
+The M3 core issues #37/#38/#39/#40 are complete. The two projection families
+admitted by #40, #83 LCC 2SP and #84 LAEA, are also complete.
+
+The aggregate six-compiler release/consumer gate and controlled local
+performance baseline are complete. Final evidence is recorded in
+`docs/M3_INTEGRATION_GATE.md` and tracking issue #74.
+
 Additional projections are research/admission candidates rather than automatic
-scope. Candidate families include:
+scope. The #40 admission audit is recorded in
+`docs/ADDITIONAL_PROJECTION_ADMISSION_AUDIT.md`.
 
-- Lambert Conformal Conic;
-- Albers Equal Area;
-- Lambert Azimuthal Equal Area;
-- Azimuthal Equidistant;
-- Stereographic;
-- Oblique Mercator.
+Audit outcome:
 
-A projection is admitted only when a real consumer, workspace need,
-interoperability gap, or strong research case exists.
+- #83 — Lambert Conformal Conic 2SP: admitted from concrete Austria and
+  pan-European interoperability evidence;
+- #84 — Lambert Azimuthal Equal Area: admitted from EPSG:3035 pan-European
+  equal-area/statistical interoperability;
+- Albers Equal Area: deferred pending a concrete conic equal-area consumer;
+- Azimuthal Equidistant: deferred pending a projection-plane consumer;
+- generic/Oblique Stereographic: deferred despite national-CRS relevance,
+  pending a concrete consumer;
+- Oblique Mercator: deferred pending a corridor/oblique-region consumer.
+
+Admission remains evidence-driven. A reference library exposing a projection
+is not sufficient reason to implement it.
 
 ---
 

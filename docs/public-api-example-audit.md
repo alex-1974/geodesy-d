@@ -1,7 +1,7 @@
 # Public API Example Audit
 
 **Status:** strict per-symbol coverage  
-**Baseline:** post-v1 development branch `audit/v1-public-api`
+**Baseline:** v1.2 API-freeze contract (`freeze/api-1.2.0`)
 
 ## Purpose
 
@@ -29,19 +29,24 @@ The public surface is organized into these documentation families:
 
 | Family | Representative public surface | Initial state |
 | --- | --- | --- |
-| scalar policy | `isGeodesyScalar`, finite-scalar policy | audit required |
-| angles | `Angle`, `Latitude`, `Longitude` | audit required |
-| ellipsoid | `Ellipsoid`, `wgs84` | audit required |
-| geographic/geodetic values | `GeographicCoordinate`, `GeodeticCoordinate` | audit required |
-| Cartesian values | `GeocentricCoordinate`, `ProjectedCoordinate`, `TopocentricCoordinate` | audit required |
-| conversion | geographic/geocentric checked and throwing operations | audit required |
-| geocentric translation | EPSG 1031 family | audit required |
-| Helmert | EPSG 1032 / 1033 families | audit required |
-| Transverse Mercator | prepared projection, forward/reverse, factors | audit required |
-| Pseudo-Mercator | prepared projection and bounded policy | audit required |
-| UTM | zones, hemispheres, prepared/automatic/tagged operations | audit required |
-| geodesics | prepared solver, direct/inverse results and operations | audit required |
-| topocentric | prepared ENU frame and conversions | audit required |
+| scalar policy | `isGeodesyScalar`, finite-scalar policy | existing |
+| angles | `Angle`, `Latitude`, `Longitude` | existing |
+| ellipsoid | `Ellipsoid`, `wgs84` | existing |
+| geographic/geodetic values | `GeographicCoordinate`, `GeodeticCoordinate` | existing |
+| Cartesian values | `GeocentricCoordinate`, `ProjectedCoordinate`, `TopocentricCoordinate` | existing |
+| conversion | geographic/geocentric checked and throwing operations | existing |
+| geocentric translation | EPSG 1031 family | existing |
+| Helmert | EPSG 1032 / 1033 families | existing |
+| Transverse Mercator | prepared projection, forward/reverse, factors | existing |
+| Pseudo-Mercator | prepared projection and bounded policy | existing |
+| UTM | zones, hemispheres, prepared/automatic/tagged operations | existing |
+| Polar Stereographic | prepared north/south projection and conformal factors | existing |
+| UPS | tagged coordinates, standard selection, prepared/automatic operations | existing |
+| Lambert Conformal Conic | prepared EPSG 9802 2SP projection and factors | existing |
+| Lambert Azimuthal Equal Area | prepared equal-area projection | existing |
+| Rhumb navigation | `Rhumb`, results, and prepared `RhumbLine` | existing |
+| geodesics | prepared solver, direct/inverse results and operations | existing |
+| topocentric | prepared ENU frame and conversions | existing |
 | errors | `GeodesyValueException` | usually family-covered |
 
 ## Coverage policy
@@ -72,7 +77,9 @@ Examples should make important domain semantics visible:
 - invalid `.init` where applicable;
 - checked versus throwing behaviour;
 - geographic domain boundaries;
-- explicit versus automatic UTM policy;
+- explicit versus automatic UTM/UPS policy;
+- rhumb versus geodesic path semantics;
+- projection singularities and bounded-domain behavior;
 - prepared-operation reuse;
 - frame/convention explicitness;
 - singular cases where instructional value is high.
@@ -221,6 +228,58 @@ The audit is complete when:
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.isValid` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryFromParameters` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.fromParameters` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.ellipsoid` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.latitudeOfProjectionCentre` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.longitudeOfProjectionCentre` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.falseEasting` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.falseNorthing` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryForward` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.forward` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryReverse` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.reverse` | existing | Lambert Azimuthal Equal Area |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.isValid` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryFromTwoStandardParallels` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.fromTwoStandardParallels` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.ellipsoid` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.latitudeOfFalseOrigin` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.longitudeOfFalseOrigin` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.firstStandardParallel` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.secondStandardParallel` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.falseEasting` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.falseNorthing` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryForward` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.forward` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryReverse` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.reverse` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryForwardFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.forwardFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.tryReverseFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.lambert_conformal_conic.LambertConformalConic.reverseFactors` | existing | Lambert Conformal Conic |
+| `geodesy.projection.polar_stereographic.PolarStereographic` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.ellipsoid` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.falseEasting` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.falseNorthing` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.forward` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.fromParameters` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.isValid` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.latitudeOfNaturalOrigin` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.longitudeOfNaturalOrigin` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.reverse` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.scaleFactorAtNaturalOrigin` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryForward` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryFromParameters` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryReverse` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.forwardFactors` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.fromStandardParallel` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.reverseFactors` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryForwardFactors` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryFromStandardParallel` | existing | Polar Stereographic |
+| `geodesy.projection.polar_stereographic.PolarStereographic.tryReverseFactors` | existing | Polar Stereographic |
 | `geodesy.projection.transverse_mercator.TransverseMercator.ellipsoid` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator.falseEasting` | existing | Transverse Mercator |
 | `geodesy.projection.transverse_mercator.TransverseMercator.falseNorthing` | existing | Transverse Mercator |
@@ -275,11 +334,68 @@ The audit is complete when:
 | `geodesy.projection.utm.UtmZone.isValid` | existing | UTM |
 | `geodesy.projection.utm.UtmZone.number` | existing | UTM |
 | `geodesy.projection.utm.UtmZone.tryFromNumber` | existing | UTM |
+| `geodesy.projection.ups.UpsCoordinate` | existing | UPS |
+| `geodesy.projection.ups.UpsHemisphere` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.easting` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.fromComponents` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.hemisphere` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.isValid` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.northing` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.projected` | existing | UPS |
+| `geodesy.projection.ups.UpsCoordinate.tryFromComponents` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.ellipsoid` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.falseEasting` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.falseNorthing` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.forward` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.forwardFactors` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.fromHemisphere` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.hemisphere` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.isValid` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.latitudeOfNaturalOrigin` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.longitudeOfNaturalOrigin` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.reverse` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.reverseFactors` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.scaleFactorAtNaturalOrigin` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.tryForward` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.tryForwardFactors` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.tryFromHemisphere` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.tryReverse` | existing | UPS |
+| `geodesy.projection.ups.UpsProjection.tryReverseFactors` | existing | UPS |
+| `geodesy.projection.ups.forwardUps` | existing | UPS |
+| `geodesy.projection.ups.reverseUps` | existing | UPS |
+| `geodesy.projection.ups.tryForwardUps` | existing | UPS |
+| `geodesy.projection.ups.tryReverseUps` | existing | UPS |
+| `geodesy.projection.ups.tryStandardUpsHemisphere` | existing | UPS |
 | `geodesy.projection.utm.forwardUtm` | existing | UTM |
 | `geodesy.projection.utm.reverseUtm` | existing | UTM |
 | `geodesy.projection.utm.tryForwardUtm` | existing | UTM |
 | `geodesy.projection.utm.tryReverseUtm` | existing | UTM |
 | `geodesy.projection.utm.tryStandardUtmZone` | existing | UTM |
+| `geodesy.rhumb.Rhumb` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.ellipsoid` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.fromEllipsoid` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.isValid` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.inverse` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.line` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.tryDirect` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.tryFromEllipsoid` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.tryInverse` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.tryLine` | existing | Rhumb |
+| `geodesy.rhumb.Rhumb.direct` | existing | Rhumb |
+| `geodesy.rhumb.RhumbDirectResult` | existing | Rhumb |
+| `geodesy.rhumb.RhumbDirectResult.position` | existing | Rhumb |
+| `geodesy.rhumb.RhumbInverseResult` | existing | Rhumb |
+| `geodesy.rhumb.RhumbInverseResult.bearing` | existing | Rhumb |
+| `geodesy.rhumb.RhumbInverseResult.distance` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.bearing` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.fromRhumb` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.isValid` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.position` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.start` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.tryFromRhumb` | existing | Rhumb |
+| `geodesy.rhumb.RhumbLine.tryPosition` | existing | Rhumb |
 | `geodesy.scalar.isGeodesyScalar` | existing | scalar policy |
 | `geodesy.topocentric.TopocentricCoordinate.east` | existing | topocentric |
 | `geodesy.topocentric.TopocentricCoordinate.fromComponents` | existing | topocentric |
