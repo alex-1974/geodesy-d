@@ -871,7 +871,7 @@ if (isGeodesyScalar!T)
             0)
     ];
 
-    foreach (seed; seeds)
+    foreach (index, seed; seeds)
     {
         IntersectionDisplacement!W point;
 
@@ -908,6 +908,43 @@ if (isGeodesyScalar!T)
             result =
                 candidate;
             return true;
+        }
+
+        /*
+         * After the midpoint seed, use a metric lower bound before paying for
+         * the four conservative corner seeds. If the segments shared a point
+         * P, the triangle inequality would require
+         *
+         *   distance(firstStart, secondStart)
+         *       <= firstLength + secondLength.
+         *
+         * A strict violation therefore proves the bounded segments disjoint.
+         * Keep a unit-scaled numerical margin so this remains a one-sided
+         * rejection only.
+         */
+        if (index == 0)
+        {
+            GeodesicInverseResult!T startSeparation;
+
+            if (!solver.tryInverse(
+                    firstStart,
+                    secondStart,
+                    startSeparation))
+                return false;
+
+            const W rejectionMargin =
+                cast(W) solver.ellipsoid.semiMajorAxis
+                * cast(W) 128
+                * W.epsilon;
+
+            if (cast(W) startSeparation.distance
+                > firstLength + secondLength + rejectionMargin)
+            {
+                result =
+                    GeodesicSegmentIntersectionResult!T.noIntersection();
+
+                return true;
+            }
         }
     }
 
