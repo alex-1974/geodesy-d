@@ -182,6 +182,16 @@ The audit is complete when:
 | `geodesy.geodesic.GeodesicLine.position` | existing | geodesics |
 | `geodesy.geodesic.GeodesicLine.tryFromGeodesic` | existing | geodesics |
 | `geodesy.geodesic.GeodesicLine.tryPosition` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.tryArcPosition` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.arcPosition` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.tryPositionUnrolled` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.positionUnrolled` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.tryArcPositionUnrolled` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLine.arcPositionUnrolled` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLineUnrolledResult` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLineUnrolledResult.latitude` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLineUnrolledResult.unrolledLongitude` | existing | geodesics |
+| `geodesy.geodesic.GeodesicLineUnrolledResult.finalAzimuth` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.reducedLength` | existing | geodesics |
 | `geodesy.geodesic.GeodesicQuantities.scale12` | existing | geodesics |

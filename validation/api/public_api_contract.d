@@ -55,6 +55,7 @@ static assert(is(GeodesicDirectResult!double));
 static assert(is(GeodesicInverseResult!double));
 static assert(is(GeodesicQuantities!double));
 static assert(is(GeodesicLine!double));
+static assert(is(GeodesicLineUnrolledResult!double));
 static assert(is(GeodesicPolygonAccumulator!double));
 static assert(is(GeodesicPolygonResult!double));
 
@@ -454,6 +455,16 @@ private void geodesicM2CheckedApiContract()
         60.0,
         azimuth);
 
+    Angle!double arcOne;
+    Angle!double.tryFromDegrees(
+        1.0,
+        arcOne);
+
+    Angle!double arc361;
+    Angle!double.tryFromDegrees(
+        361.0,
+        arc361);
+
     GeodesicLine!double line;
     GeodesicLine!double.tryFromGeodesic(
         solver,
@@ -471,6 +482,44 @@ private void geodesicM2CheckedApiContract()
     line.tryPosition(
         25_000.0,
         position25);
+
+    GeodesicDirectResult!double advancedDistancePosition;
+    GeodesicQuantities!double distanceQuantities;
+
+    line.tryPosition(
+        25_000.0,
+        advancedDistancePosition,
+        distanceQuantities);
+
+    GeodesicDirectResult!double arcPosition;
+    line.tryArcPosition(
+        arcOne,
+        arcPosition);
+
+    GeodesicDirectResult!double advancedArcPosition;
+    GeodesicQuantities!double arcQuantities;
+
+    line.tryArcPosition(
+        arcOne,
+        advancedArcPosition,
+        arcQuantities);
+
+    GeodesicLineUnrolledResult!double unrolledDistance;
+    line.tryPositionUnrolled(
+        50_000.0,
+        unrolledDistance);
+
+    GeodesicLineUnrolledResult!double unrolledArc;
+    line.tryArcPositionUnrolled(
+        arc361,
+        unrolledArc);
+
+    const unrolledLatitude =
+        unrolledArc.latitude;
+    const unrolledLongitude =
+        unrolledArc.unrolledLongitude;
+    const unrolledAzimuth =
+        unrolledArc.finalAzimuth;
 
     GeodesicPolygonAccumulator!double polygon;
     GeodesicPolygonAccumulator!double.tryFromGeodesic(
@@ -495,6 +544,15 @@ private void geodesicM2CheckedApiContract()
 
     cast(void) position10;
     cast(void) position25;
+    cast(void) advancedDistancePosition;
+    cast(void) distanceQuantities;
+    cast(void) arcPosition;
+    cast(void) advancedArcPosition;
+    cast(void) arcQuantities;
+    cast(void) unrolledDistance;
+    cast(void) unrolledLatitude;
+    cast(void) unrolledLongitude;
+    cast(void) unrolledAzimuth;
     cast(void) perimeter;
     cast(void) signedArea;
 }
@@ -526,6 +584,17 @@ private void geodesicM2ThrowingApiContract()
     auto position =
         line.position(10_000.0);
 
+    auto arcPosition =
+        line.arcPosition(
+            Angle!double.fromDegrees(1.0));
+
+    auto unrolledPosition =
+        line.positionUnrolled(10_000.0);
+
+    auto unrolledArc =
+        line.arcPositionUnrolled(
+            Angle!double.fromDegrees(361.0));
+
     auto polygon =
         GeodesicPolygonAccumulator!double.fromGeodesic(
             solver);
@@ -544,6 +613,9 @@ private void geodesicM2ThrowingApiContract()
         polygon.compute();
 
     cast(void) position;
+    cast(void) arcPosition;
+    cast(void) unrolledPosition;
+    cast(void) unrolledArc;
     cast(void) measurement;
 }
 
