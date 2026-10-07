@@ -1291,37 +1291,105 @@ private bool tryIntersectionConjugateDistance(T)(
     const GeodesicLine!T line,
     const IntersectionWorkingScalar!T tolerance,
     const IntersectionWorkingScalar!T initial,
+    const bool semi,
+    const IntersectionWorkingScalar!T baseReducedLength,
+    const IntersectionWorkingScalar!T baseScale12,
+    const IntersectionWorkingScalar!T baseScale21,
     out IntersectionWorkingScalar!T distance)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
     alias W = IntersectionWorkingScalar!T;
     W current = initial;
+
     foreach (_; 0 .. 100)
     {
         GeodesicDirectResult!T position;
         GeodesicQuantities!T quantities;
+
         if (!line.tryPosition(cast(T) current, position, quantities))
             return false;
-        const W m = cast(W) quantities.reducedLength;
-        const W m12 = cast(W) quantities.scale12;
-        const W m21 = cast(W) quantities.scale21;
-        const W denominator = cast(W) 1 - m12 * m21;
-        if (!isFiniteGeodesyScalar(denominator) || denominator == cast(W) 0)
+
+        const W m13 = cast(W) quantities.reducedLength;
+        const W M13 = cast(W) quantities.scale12;
+        const W M31 = cast(W) quantities.scale21;
+
+        const W m23 =
+            m13 * baseScale12
+            - baseReducedLength * M13;
+
+        const W M23 =
+            M13 * baseScale21
+            + (
+                baseReducedLength == cast(W) 0
+                    ? cast(W) 0
+                    : (cast(W) 1 - baseScale12 * baseScale21)
+                        * m13 / baseReducedLength
+            );
+
+        const W M32 =
+            M31 * baseScale12
+            + (
+                m13 == cast(W) 0
+                    ? cast(W) 0
+                    : (cast(W) 1 - M13 * M31)
+                        * baseReducedLength / m13
+            );
+
+        const W denominator =
+            semi
+                ? cast(W) 1 - M23 * M32
+                : M32;
+
+        if (!isFiniteGeodesyScalar(denominator)
+            || denominator == cast(W) 0)
             return false;
-        const W delta = m * m12 / denominator;
+
+        const W delta =
+            semi
+                ? m23 * M23 / denominator
+                : -m23 / denominator;
+
         if (!isFiniteGeodesyScalar(delta))
             return false;
+
         current += delta;
+
         if (!isFiniteGeodesyScalar(current))
             return false;
+
         if (abs(delta) <= tolerance)
         {
             distance = current;
             return true;
         }
     }
+
     return false;
+}
+
+
+/** Solve conjugacy relative to the line origin. */
+private bool tryIntersectionConjugateFromOrigin(T)(
+    const GeodesicLine!T line,
+    const IntersectionWorkingScalar!T tolerance,
+    const IntersectionWorkingScalar!T initial,
+    const bool semi,
+    out IntersectionWorkingScalar!T distance)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    return tryIntersectionConjugateDistance!T(
+        line,
+        tolerance,
+        initial,
+        semi,
+        cast(W) 0,
+        cast(W) 1,
+        cast(W) 1,
+        distance);
 }
 
 /** Derive closest-search spacing and tolerance for sphere/oblate ellipsoids. */
@@ -1362,8 +1430,8 @@ if (isGeodesyScalar!T)
     const W tolerance = d * pow(W.epsilon, cast(W) 0.75);
     const W initial =
         (cast(W) 1 + f / cast(W) 2) * a * cast(W) PI / cast(W) 2;
-    return tryIntersectionConjugateDistance!T(
-        line, tolerance, initial, d1);
+    return tryIntersectionConjugateFromOrigin!T(
+        line, tolerance, initial, true, d1);
 }
 
 /** Compare two closest candidates with deterministic displacement tie-breaks. */
