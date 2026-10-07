@@ -25,6 +25,18 @@
  *     No inverse convenience API is exposed. The evaluation point belongs to
  *     the forward source Cartesian CRS, so the same ten parameter values are
  *     not in general an exact reverse transformation.
+ *
+ * Authors:
+ *     Alexander Bernardi
+ *
+ * Copyright:
+ *     Copyright © 2026 Alexander Bernardi
+ *
+ * License:
+ *     MIT
+ *
+ * Date:
+ *     October 7, 2026
  */
 module geodesy.transform.molodensky_badekas;
 
@@ -72,10 +84,25 @@ public:
         return _baseParameters;
     }
 
+    /// Example reading the base Helmert-family parameters.
+    @safe unittest
+    {
+        import geodesy;
+        assert(PositionVectorMolodenskyBadekas!double.init
+            .baseParameters == PositionVectorHelmert!double.init);
+    }
+
     /** Source-geocentric X ordinate of the evaluation point. */
     @property T evaluationPointX() const pure nothrow @safe @nogc
     {
         return _evaluationPointX;
+    }
+
+    /// Example reading the X evaluation-point ordinate.
+    @safe unittest
+    {
+        import geodesy;
+        assert(PositionVectorMolodenskyBadekas!double.init.evaluationPointX == 0.0);
     }
 
     /** Source-geocentric Y ordinate of the evaluation point. */
@@ -84,10 +111,24 @@ public:
         return _evaluationPointY;
     }
 
+    /// Example reading the Y evaluation-point ordinate.
+    @safe unittest
+    {
+        import geodesy;
+        assert(PositionVectorMolodenskyBadekas!double.init.evaluationPointY == 0.0);
+    }
+
     /** Source-geocentric Z ordinate of the evaluation point. */
     @property T evaluationPointZ() const pure nothrow @safe @nogc
     {
         return _evaluationPointZ;
+    }
+
+    /// Example reading the Z evaluation-point ordinate.
+    @safe unittest
+    {
+        import geodesy;
+        assert(PositionVectorMolodenskyBadekas!double.init.evaluationPointZ == 0.0);
     }
 
     /**
@@ -104,6 +145,14 @@ public:
         pure nothrow @safe @nogc
     {
         return _equivalentHelmert;
+    }
+
+    /// Example reading the prepared equivalent Helmert transform.
+    @safe unittest
+    {
+        import geodesy;
+        assert(PositionVectorMolodenskyBadekas!double.init
+            .equivalentHelmert == PositionVectorHelmert!double.init);
     }
 
     /**
@@ -201,6 +250,18 @@ public:
         return true;
     }
 
+    /// Example checking canonical construction without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        PositionVectorMolodenskyBadekas!double transform;
+        assert(PositionVectorMolodenskyBadekas!double.tryFromCanonical(
+            PositionVectorHelmert!double.init,
+            1.0, 2.0, 3.0,
+            transform));
+        assert(transform.evaluationPointY == 2.0);
+    }
+
     /** Construct from canonical parameters. */
     static MolodenskyBadekas10!(T, convention) fromCanonical(
         const Helmert7!(T, convention) baseParameters,
@@ -219,6 +280,16 @@ public:
             throw new GeodesyValueException(
                 "Molodensky-Badekas parameters must be finite and representable.");
         return result;
+    }
+
+    /// Example constructing canonical Position Vector parameters.
+    @safe unittest
+    {
+        import geodesy;
+        const transform = PositionVectorMolodenskyBadekas!double.fromCanonical(
+            PositionVectorHelmert!double.init,
+            1.0, 2.0, 3.0);
+        assert(transform.evaluationPointZ == 3.0);
     }
 
     /**
@@ -261,6 +332,20 @@ public:
             result);
     }
 
+    /// Example checking EPSG-unit construction without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        PositionVectorMolodenskyBadekas!double transform;
+        assert(PositionVectorMolodenskyBadekas!double.tryFromArcSecondsAndPpm(
+            1.0, 2.0, 3.0,
+            0.1, 0.2, 0.3,
+            0.4,
+            4.0, 5.0, 6.0,
+            transform));
+        assert(transform.baseParameters.translationX == 1.0);
+    }
+
     /** Construct from EPSG arc-second/ppm units. */
     static MolodenskyBadekas10!(T, convention) fromArcSecondsAndPpm(
         const T translationX,
@@ -293,6 +378,19 @@ public:
         return result;
     }
 
+    /// Example constructing EPSG-style Position Vector parameters.
+    @safe unittest
+    {
+        import geodesy;
+        const transform =
+            PositionVectorMolodenskyBadekas!double.fromArcSecondsAndPpm(
+                1.0, 2.0, 3.0,
+                0.1, 0.2, 0.3,
+                0.4,
+                4.0, 5.0, 6.0);
+        assert(transform.evaluationPointX == 4.0);
+    }
+
     /** Apply the prepared forward transformation without throwing. */
     bool tryApply(
         const GeocentricCoordinate!T source,
@@ -310,6 +408,16 @@ public:
         }
     }
 
+    /// Example applying the identity transform without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+        GeocentricCoordinate!double target;
+        assert(PositionVectorMolodenskyBadekas!double.init.tryApply(source, target));
+        assert(target == source);
+    }
+
     /** Apply the prepared forward transformation. */
     GeocentricCoordinate!T apply(
         const GeocentricCoordinate!T source) const
@@ -321,6 +429,22 @@ public:
                 "Molodensky-Badekas transformation produced a non-finite result.");
         return result;
     }
+
+    /// Example applying the identity transform.
+    @safe unittest
+    {
+        import geodesy;
+        const source = GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0);
+        assert(PositionVectorMolodenskyBadekas!double.init.apply(source) == source);
+    }
+}
+
+/// Example using the generic convention-parameterized family.
+@safe unittest
+{
+    import geodesy;
+    static assert(is(MolodenskyBadekas10!(
+        double, HelmertConvention.positionVector)));
 }
 
 
@@ -328,10 +452,24 @@ public:
 alias PositionVectorMolodenskyBadekas(T) =
     MolodenskyBadekas10!(T, HelmertConvention.positionVector);
 
+/// Example selecting EPSG 1061 Position Vector semantics.
+@safe unittest
+{
+    import geodesy;
+    static assert(is(PositionVectorMolodenskyBadekas!double));
+}
+
 
 /** EPSG 1034 Coordinate Frame parameter type. */
 alias CoordinateFrameMolodenskyBadekas(T) =
     MolodenskyBadekas10!(T, HelmertConvention.coordinateFrame);
+
+/// Example selecting EPSG 1034 Coordinate Frame semantics.
+@safe unittest
+{
+    import geodesy;
+    static assert(is(CoordinateFrameMolodenskyBadekas!double));
+}
 
 
 /**
@@ -365,6 +503,17 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/// Example converting Position Vector parameters to Coordinate Frame.
+@safe unittest
+{
+    import geodesy;
+    const pv = PositionVectorMolodenskyBadekas!double.fromArcSecondsAndPpm(
+        0, 0, 0, 0.1, 0.2, 0.3, 0, 1, 2, 3);
+    const cf = toCoordinateFrameMolodenskyBadekas(pv);
+    assert(cf.baseParameters.rotationX.radians
+        == -pv.baseParameters.rotationX.radians);
+}
+
 
 /**
  * Convert Coordinate Frame parameters to the equivalent Position Vector
@@ -392,6 +541,17 @@ if (isGeodesyScalar!T)
 
     assert(ok);
     return result;
+}
+
+/// Example converting Coordinate Frame parameters to Position Vector.
+@safe unittest
+{
+    import geodesy;
+    const cf = CoordinateFrameMolodenskyBadekas!double.fromArcSecondsAndPpm(
+        0, 0, 0, -0.1, -0.2, -0.3, 0, 1, 2, 3);
+    const pv = toPositionVectorMolodenskyBadekas(cf);
+    assert(pv.baseParameters.rotationZ.radians
+        == -cf.baseParameters.rotationZ.radians);
 }
 
 
