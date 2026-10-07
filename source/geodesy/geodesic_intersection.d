@@ -19,7 +19,8 @@
  * planar CRS.
  *
  * Endpoint pairs must define non-degenerate, unambiguous shortest geodesics.
- * Exact antipodal endpoint pairs are rejected by the checked operation.
+ * Exact antipodes and Karney's oblate equal-and-opposite-latitude
+ * multiple-shortest-geodesic case are rejected by the checked operation.
  *
  * Authors:
  *     Alexander Bernardi
@@ -263,6 +264,52 @@ if (isGeodesyScalar!T)
 
     return latitudeSum == cast(W) 0
         && longitudeDifference == cast(W) PI;
+}
+
+
+/**
+ * Detect the oblate inverse-geodesic symmetry that yields two equally short
+ * geodesics.
+ *
+ * GeographicLib documents this case for lat1 == -lat2 away from the poles:
+ * the solution is unique only when the two endpoint forward azimuths are
+ * equal. Exact antipodes and coincident points are handled separately.
+ */
+private bool hasAmbiguousShortestGeodesic(T)(
+    const GeographicCoordinate!T first,
+    const GeographicCoordinate!T second,
+    const GeodesicInverseResult!T inverse)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    const W latitude1 =
+        cast(W) first.latitude.radians;
+
+    const W latitude2 =
+        cast(W) second.latitude.radians;
+
+    if (latitude1 + latitude2 != cast(W) 0)
+        return false;
+
+    const W halfPi =
+        cast(W) PI / cast(W) 2;
+
+    if (abs(latitude1) == halfPi
+        || abs(latitude2) == halfPi)
+        return true;
+
+    const W azimuthDifference =
+        abs(
+            wrapIntersectionPi!W(
+                cast(W) inverse.finalAzimuth.radians
+                - cast(W) inverse.initialAzimuth.radians));
+
+    const W tolerance =
+        cast(W) 64 * W.epsilon;
+
+    return azimuthDifference > tolerance;
 }
 
 
@@ -680,8 +727,8 @@ if (isGeodesyScalar!T)
  * segments are a successful operation and return `kind == none`.
  *
  * Exact coincident endpoints are rejected as degenerate segments. Exact
- * antipodal endpoint pairs are rejected because the shortest geodesic is not
- * unique.
+ * antipodes and detected equal-and-opposite-latitude multiple-shortest
+ * solutions are rejected because the shortest geodesic is not unique.
  *
  * Params:
  *     solver = Valid prepared geodesic solver.
@@ -742,6 +789,16 @@ if (isGeodesyScalar!T)
 
     if (!(firstInverse.distance > cast(T) 0)
         || !(secondInverse.distance > cast(T) 0))
+        return false;
+
+    if (hasAmbiguousShortestGeodesic!T(
+            firstStart,
+            firstEnd,
+            firstInverse)
+        || hasAmbiguousShortestGeodesic!T(
+            secondStart,
+            secondEnd,
+            secondInverse))
         return false;
 
     GeodesicLine!T firstLine;
