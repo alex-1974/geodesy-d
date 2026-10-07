@@ -1525,6 +1525,32 @@ if (isGeodesyScalar!T)
         cast(T) 0, cast(T) 0, result);
 }
 
+/// Example checking the closest intersection of two oriented geodesics without throwing.
+@safe unittest
+{
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+
+    const firstStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(-20.0));
+
+    const secondStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(10.0),
+        Longitude!double.fromDegrees(20.0));
+
+    GeodesicClosestIntersectionResult!double result;
+
+    assert(tryClosestGeodesicIntersection(
+        solver,
+        firstStart,
+        Angle!double.fromDegrees(45.0),
+        secondStart,
+        Angle!double.fromDegrees(-60.0),
+        result));
+
+    assert(result.isValid);
+}
+
 /** Throwing prepared-line closest intersection. */
 GeodesicClosestIntersectionResult!T closestGeodesicIntersection(T)(
     const Geodesic!T solver,
