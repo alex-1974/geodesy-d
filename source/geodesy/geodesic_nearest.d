@@ -112,6 +112,7 @@ private:
     T _alongTrack = T.init;
     T _signedCrossTrack = T.init;
 
+    /** Construct a result from already validated nearest-point components. */
     static GeodesicSegmentNearestResult fromComponents(
         const GeographicCoordinate!T nearestPoint,
         const T nearestDistance,
@@ -272,6 +273,7 @@ private struct GnomonicXY(W)
 }
 
 
+/** Normalize a working angle to [-pi,+pi). */
 private W wrapPi(W)(W value)
     pure nothrow @safe @nogc
 if (isGeodesyScalar!W)
@@ -292,6 +294,9 @@ if (isGeodesyScalar!W)
 }
 
 
+/**
+ * Project one geographic point into Karney's local ellipsoidal gnomonic plane.
+ */
 private bool gnomonicForward(T)(
     const Geodesic!T solver,
     const GeographicCoordinate!T center,
@@ -335,6 +340,9 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Reverse Karney's local ellipsoidal gnomonic projection by Newton iteration.
+ */
 private bool gnomonicReverse(T)(
     const Geodesic!T solver,
     const GeographicCoordinate!T center,
@@ -443,6 +451,9 @@ if (isGeodesyScalar!T)
 }
 
 
+/**
+ * Solve the local perpendicular intercept on the oriented supporting geodesic.
+ */
 private bool localSupportingIntercept(T)(
     const Geodesic!T solver,
     const GeographicCoordinate!T start,
