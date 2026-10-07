@@ -1,10 +1,9 @@
 /**
  * Streaming ellipsoidal polygon perimeter and signed-area accumulation.
  *
- * This module provides mathematical measurement only. It does not define
- * polygon geometry ownership, ring validity, hole semantics, containment,
- * overlay, or topology; those responsibilities belong to geometry layers such
- * as geo-d or to consumers.
+ * Accumulate perimeter and signed area from an ordered stream of geographic
+ * vertices. The module measures a geodesic polygon; it does not own polygon
+ * topology, ring validity, holes, containment, or overlay.
  *
  * Polygon edges are shortest geodesics between consecutive geographic
  * vertices. The closing edge from the last vertex back to the first is

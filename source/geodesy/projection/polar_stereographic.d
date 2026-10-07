@@ -1,19 +1,18 @@
 /**
  * Bounded EPSG 9810 Polar Stereographic projection.
  *
- * This module provides a prepared north- or south-polar stereographic
- * projection with explicit ellipsoid, polar natural origin, central scale,
- * and false offsets.
+ * Project geographic coordinates around either pole with a prepared
+ * stereographic operation. The parameters make the ellipsoid, polar natural
+ * origin, central scale, and false offsets explicit.
  *
  * Standards:
  *     Public parameter semantics follow EPSG method 9810 -- Polar
  *     Stereographic (variant A).
  *
  * Domain:
- *     The initial geodesy-d contract covers the selected geographic
- *     hemisphere including the equator and selected pole. UPS-specific
- *     latitude and coordinate-range policy is deliberately not part of this
- *     mathematical kernel.
+ *     The projection covers the selected geographic hemisphere, including the
+ *     equator and selected pole. UPS adds its own latitude and represented-
+ *     coordinate policy on top of this mathematical kernel.
  *
  * Units:
  *     False easting, false northing, projected coordinates, and ellipsoid axes

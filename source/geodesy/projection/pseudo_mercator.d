@@ -1,17 +1,16 @@
 /**
  * Bounded EPSG 1024 Popular Visualisation Pseudo-Mercator projection.
  *
- * This module provides the familiar web-mapping projection as an explicit
- * bounded mathematical operation rather than a CRS database entry. The source
- * ellipsoid is retained as operation identity, while EPSG 1024 coordinate
- * equations intentionally use only its semi-major axis.
+ * Project geographic coordinates with the familiar web-mapping equations of
+ * EPSG method 1024. The operation keeps the source ellipsoid as semantic
+ * state, while the coordinate equations use only its semi-major axis.
  *
  * Standards:
  *     EPSG method 1024 -- Popular Visualisation Pseudo Mercator.
  *
  * Domain:
- *     Public latitude is deliberately bounded to the documented geodesy-d
- *     interval rather than implying validity arbitrarily close to the poles.
+ *     Forward latitude is bounded to the documented geodesy-d interval and
+ *     does not imply validity arbitrarily close to the poles.
  *
  * Units:
  *     Projected coordinates and false offsets use the same linear unit as the

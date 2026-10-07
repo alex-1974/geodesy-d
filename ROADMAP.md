@@ -16,8 +16,8 @@ v1.1.0
 ~~~
 
 v1.1.0 completed M2 — Geodesic Core Completion and was published on
-2026-10-06. The post-v1.1 development line now starts with M3 — Navigation &
-Polar Geodesy.
+2026-10-06. M3 — Navigation & Polar Geodesy is complete and is currently being
+qualified as the additive v1.2.0 feature release.
 
 The frozen v1 API already provides:
 
@@ -36,6 +36,20 @@ The frozen v1 API already provides:
 
 The v1 compatibility baseline remains authoritative. Post-v1 work should be
 additive unless a separately justified breaking-change process is started.
+
+## Current release qualification
+
+v1.2.0 release qualification is tracked by issue #90 and
+`docs/V1_2_RELEASE_READINESS.md`.
+
+Immutable stabilization checkpoints:
+
+- `freeze/feature-1.2.0` — intended v1.2 feature set;
+- `freeze/api-1.2.0` — audited caller-visible v1.2 API contract.
+
+After the API freeze, only implementation-preserving fixes, tests, comments,
+documentation, CI, packaging, and release metadata may change on the v1.2
+release line.
 
 ## Development principles
 

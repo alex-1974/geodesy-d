@@ -16,6 +16,10 @@ required=(
   docs/REFERENCES.md
   docs/VALIDATION.md
   docs/V0_1_READINESS.md
+  docs/V1_2_RELEASE_NOTES.md
+  docs/V1_2_RELEASE_READINESS.md
+  docs/V1_2_API_AUDIT.md
+  docs/M3_INTEGRATION_GATE.md
   docs/TOPOCENTRIC_VALIDATION_PLAN.md
   docs/adr/0001-scope-and-boundaries.md
   docs/adr/0002-core-type-and-unit-model.md
@@ -46,8 +50,7 @@ grep -q '^MIT License' "$repo/LICENSE" || {
   exit 1
 }
 
-# Implementation-sequencing wording that would be misleading in the v0.1
-# release-facing documentation.
+# Implementation-sequencing wording that would be misleading in release-facing documentation.
 if grep -RniE \
   'Frame transformations follow next|The next layer adds:|## Still pending|No stable public API exists yet|Initial implementation phase|The inverse kernel is added in a subsequent slice' \
   "$repo/docs/README.md" "$repo/docs/operations" "$repo/source/geodesy/geodesic.d"; then
@@ -62,7 +65,12 @@ for symbol in \
   GeocentricTranslation HelmertConvention Helmert7 PositionVectorHelmert \
   CoordinateFrameHelmert tryGeodeticToGeocentric geocentricToGeodetic \
   tryApplyGeocentricTranslation tryApplyPositionVectorHelmert \
-  tryApplyCoordinateFrameHelmert toCoordinateFrame toPositionVector; do
+  tryApplyCoordinateFrameHelmert toCoordinateFrame toPositionVector \
+  Geodesic GeodesicLine GeodesicQuantities GeodesicPolygonAccumulator \
+  PseudoMercator TransverseMercator UtmProjection ConformalProjectionFactors \
+  Rhumb RhumbLine RhumbDirectResult RhumbInverseResult \
+  PolarStereographic UpsHemisphere UpsCoordinate UpsProjection \
+  LambertConformalConic LambertAzimuthalEqualArea; do
   grep -q "$symbol" "$repo/docs/API.md" || {
     echo "FAIL: docs/API.md does not mention public symbol family: $symbol" >&2
     exit 1

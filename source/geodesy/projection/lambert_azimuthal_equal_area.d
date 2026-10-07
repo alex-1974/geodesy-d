@@ -1,9 +1,9 @@
 /**
  * Bounded ellipsoidal Lambert Azimuthal Equal Area projection.
  *
- * This module implements a prepared mathematical LAEA kernel for spherical
- * and oblate ellipsoids. The public family deliberately does not embed CRS
- * authority lookup or EPSG presets.
+ * Project geographic coordinates with a prepared ellipsoidal LAEA operation.
+ * The same API supports spherical and oblate ellipsoids. CRS authority lookup
+ * and named EPSG presets remain outside the projection kernel.
  *
  * Standards:
  *     The mathematical family follows ellipsoidal Lambert Azimuthal Equal
@@ -24,8 +24,8 @@
  *     nothrow, @safe, and @nogc.
  *
  * Equal-area semantics:
- *     LAEA is not conformal and therefore deliberately does not expose
- *     ConformalProjectionFactors.
+ *     LAEA preserves area rather than angles. It therefore does not return
+ *     `ConformalProjectionFactors`.
  *
  * See_Also:
  *     GeographicCoordinate, ProjectedCoordinate, LambertConformalConic

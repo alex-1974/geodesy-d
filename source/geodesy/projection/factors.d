@@ -1,11 +1,10 @@
 /**
  * Local meridian-convergence and point-scale results for conformal projections.
  *
- * The module gives projection factors their own strong result type instead of
- * returning unrelated raw scalars. The current public producers are prepared
- * Transverse Mercator and UTM operations; the type deliberately does not claim
- * to model the more general distortion quantities required by non-conformal
- * projections.
+ * Return conformal projection factors as one strong result instead of
+ * unrelated raw scalars. Transverse Mercator, UTM, Polar Stereographic, and
+ * Lambert Conformal Conic produce this type. Non-conformal distortion
+ * quantities are outside its contract.
  *
  * Units:
  *     Meridian convergence is an `Angle`; point scale is dimensionless.

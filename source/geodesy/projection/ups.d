@@ -1,11 +1,10 @@
 /**
  * Universal Polar Stereographic policy, tagging, and prepared projection.
  *
- * UPS is implemented as a thin WGS 84 semantic layer over the accepted
- * bounded Polar Stereographic kernel.  This module owns the fixed UPS
- * parameters, north/south aspect, standard automatic UTM/UPS transition,
- * explicit overlap policy, tagged coordinates, and represented-coordinate
- * admission without duplicating projection mathematics.
+ * Use UPS for WGS 84 polar coordinates with standard north/south tagging,
+ * automatic UTM/UPS transition rules, and the documented overlap. The module
+ * supplies fixed UPS parameters and coordinate policy while reusing the
+ * Polar Stereographic mathematics.
  *
  * Standards:
  *     EPSG:5041 / EPSG:5042 use EPSG method 9810 on WGS 84 with

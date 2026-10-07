@@ -60,10 +60,10 @@ Required before tagging:
 
 - [x] declare exact v1.2.0 release-candidate head feature-frozen;
 - [ ] no new public feature after freeze except explicit release-blocking fix;
-- [ ] aggregate `import geodesy;` API contract passes on final candidate;
-- [ ] strict public DDox/API-example audit passes on final candidate;
-- [ ] frozen v1 public source contract remains source-compatible;
-- [ ] all v1.2 aggregate exports are deliberate.
+- [x] aggregate `import geodesy;` API contract passes on final candidate;
+- [x] strict public DDox/API-example audit passes on final candidate;
+- [x] frozen v1 public source contract remains source-compatible;
+- [x] all v1.2 aggregate exports are deliberate.
 
 ## R4 — post-freeze documentation polish
 
@@ -72,15 +72,15 @@ matrix.
 
 - [ ] README release-facing overview polished;
 - [ ] `docs/API.md` reconciled with all v1.2 aggregate exports;
-- [ ] public module/type/function Ddoc reviewed for reader-first wording;
-- [ ] compiler-checked examples reviewed for clarity and representative usage;
-- [ ] terminology across Rhumb, Polar Stereographic, UPS, LCC and LAEA made
+- [x] public module/type/function Ddoc reviewed for reader-first wording;
+- [x] compiler-checked examples reviewed for clarity and representative usage;
+- [x] terminology across Rhumb, Polar Stereographic, UPS, LCC and LAEA made
   consistent;
 - [ ] stale pre-M3 status/release wording removed;
 - [ ] README/API/research/validation/release-note cross-links reviewed;
 - [ ] generated GitHub Pages/DDox output inspected;
 - [ ] CHANGELOG and release notes polished for final publication;
-- [ ] documentation-only pass introduces no public API/semantic change.
+- [x] documentation-only pass introduces no public API/semantic change.
 
 Any source correction required by this pass must rerun the affected release
 gates.
@@ -145,3 +145,12 @@ found, prepare a patch release rather than rewriting the release.
 - tag: `freeze/feature-1.2.0`;
 - peeled commit: `d6f49b500b15616ca396ee612fef95896405b526`;
 - release branch derived from the same feature set.
+
+
+## API-freeze checkpoint verification
+
+- tag object: `8966956de5eba7dea05413b2dbf51dcfa3638c8c`;
+- tag: `freeze/api-1.2.0`;
+- peeled commit: `7294077b237c7b933b383e86e2e747659b333f26`.
+
+The v1.2 public source contract is frozen at this checkpoint.
