@@ -1565,6 +1565,7 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/// Example finding the closest intersection of two oriented geodesics.
 @safe unittest
 {
     const solver = Geodesic!double.fromEllipsoid(wgs84!double());
