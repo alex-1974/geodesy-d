@@ -455,6 +455,16 @@ private void geodesicM2CheckedApiContract()
         60.0,
         azimuth);
 
+    Angle!double arcOne;
+    Angle!double.tryFromDegrees(
+        1.0,
+        arcOne);
+
+    Angle!double arc361;
+    Angle!double.tryFromDegrees(
+        361.0,
+        arc361);
+
     GeodesicLine!double line;
     GeodesicLine!double.tryFromGeodesic(
         solver,
@@ -475,7 +485,7 @@ private void geodesicM2CheckedApiContract()
 
     GeodesicDirectResult!double arcPosition;
     line.tryArcPosition(
-        Angle!double.fromDegrees(1.0),
+        arcOne,
         arcPosition);
 
     GeodesicLineUnrolledResult!double unrolledDistance;
@@ -485,7 +495,7 @@ private void geodesicM2CheckedApiContract()
 
     GeodesicLineUnrolledResult!double unrolledArc;
     line.tryArcPositionUnrolled(
-        Angle!double.fromDegrees(361.0),
+        arc361,
         unrolledArc);
 
     const unrolledLatitude =
