@@ -71,6 +71,13 @@ static assert(is(CoordinateFrameHelmert14!double ==
 static assert(!is(PositionVectorHelmert14!double ==
     CoordinateFrameHelmert14!double));
 
+static assert(is(PositionVectorMolodenskyBadekas!double ==
+    MolodenskyBadekas10!(double, HelmertConvention.positionVector)));
+static assert(is(CoordinateFrameMolodenskyBadekas!double ==
+    MolodenskyBadekas10!(double, HelmertConvention.coordinateFrame)));
+static assert(!is(PositionVectorMolodenskyBadekas!double ==
+    CoordinateFrameMolodenskyBadekas!double));
+
 private void topocentricCheckedApiContract()
     pure nothrow @safe @nogc
 {
@@ -316,6 +323,25 @@ private void checkedApiContract()
     const dynamicCf = toCoordinateFrameHelmert14(dynamicPv);
     const dynamicPvAgain = toPositionVectorHelmert14(dynamicCf);
 
+    PositionVectorMolodenskyBadekas!double mbPv;
+    PositionVectorMolodenskyBadekas!double.tryFromArcSecondsAndPpm(
+        -270.933, 115.599, -360.226,
+        5.266, 1.238, -2.381, -5.109,
+        2_464_351.59, -5_783_466.61, 974_809.81,
+        mbPv);
+
+    const mbCf = toCoordinateFrameMolodenskyBadekas(mbPv);
+    const mbPvAgain = toPositionVectorMolodenskyBadekas(mbCf);
+
+    GeocentricCoordinate!double mbTarget;
+    mbPv.tryApply(geocentric, mbTarget);
+
+    const mbBase = mbPv.baseParameters;
+    const mbEquivalent = mbPv.equivalentHelmert;
+    const mbPx = mbPv.evaluationPointX;
+    const mbPy = mbPv.evaluationPointY;
+    const mbPz = mbPv.evaluationPointZ;
+
     Geodesic!double geodesic;
 
     Geodesic!double.tryFromEllipsoid(
@@ -389,6 +415,9 @@ private void checkedApiContract()
     cast(void) e2; cast(void) ep2; cast(void) n;
     cast(void) inverseShift; cast(void) pvAgain;
     cast(void) evaluatedPv; cast(void) dynamicTarget; cast(void) dynamicPvAgain;
+    cast(void) mbCf; cast(void) mbPvAgain; cast(void) mbTarget;
+    cast(void) mbBase; cast(void) mbEquivalent;
+    cast(void) mbPx; cast(void) mbPy; cast(void) mbPz;
 }
 
 

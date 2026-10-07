@@ -226,3 +226,9 @@ The completed M3 integration record is issue #74. The v1.2.0 release record is
 `geodesy-d` declares D frontend **2.111.0** as the minimum supported
 frontend. CI also tests current DMD and LDC. A newer workspace development
 baseline does not imply that consumers must use that newer frontend.
+
+
+### M4 reference-frame transformation research
+
+- [Molodensky-Badekas](MOLODENSKY_BADEKAS.md) — EPSG 1034/1061 semantics,
+  Helmert-kernel reuse, reversibility boundary, and independent validation.
