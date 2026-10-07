@@ -175,7 +175,7 @@ public:
     @safe unittest
     {
         GeodesicSegmentNearestResult!double result;
-        assert(result.nearestDistance == 0.0);
+        assert(result.nearestDistance != result.nearestDistance);
     }
 
     /** Whether the bounded nearest point is A, interior, or B. */
@@ -223,7 +223,7 @@ public:
     @safe unittest
     {
         GeodesicSegmentNearestResult!double result;
-        assert(result.alongTrack == 0.0);
+        assert(result.alongTrack != result.alongTrack);
     }
 
     /**
@@ -243,7 +243,7 @@ public:
     @safe unittest
     {
         GeodesicSegmentNearestResult!double result;
-        assert(result.signedCrossTrack == 0.0);
+        assert(result.signedCrossTrack != result.signedCrossTrack);
     }
 }
 
