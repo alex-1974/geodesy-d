@@ -231,8 +231,8 @@ void main()
      * but its contract warns that the segment result is only well-defined for
      * unique shortest geodesics. geodesy-d rejects this input explicitly.
      */
-    const ambiguousA0 = gc(5.0, -170.0);
-    const ambiguousA1 = gc(-5.0, 5.0);
+    const ambiguousA0 = gc(10.0, 0.0);
+    const ambiguousA1 = gc(-10.0, 179.5);
 
     if (tryIntersectGeodesicSegments(
             solver,
