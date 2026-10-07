@@ -1,0 +1,68 @@
+name: Dynamic Helmert differential validation
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/epoch.d"
+      - "source/geodesy/transform/dynamic_helmert.d"
+      - "source/geodesy/transform/helmert.d"
+      - "validation/dynamic_helmert_*"
+      - "tools/validate-dynamic-helmert-differential.sh"
+      - "docs/M4_EPOCH_SEMANTICS.md"
+      - ".github/workflows/dynamic-helmert-validation.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/epoch.d"
+      - "source/geodesy/transform/dynamic_helmert.d"
+      - "source/geodesy/transform/helmert.d"
+      - "validation/dynamic_helmert_*"
+      - "tools/validate-dynamic-helmert-differential.sh"
+      - "docs/M4_EPOCH_SEMANTICS.md"
+      - ".github/workflows/dynamic-helmert-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: EPSG 1053/1056 + PROJ
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Install PROJ
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin
+          cct --version
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: Dynamic Helmert differential corpus
+        shell: bash
+        run: bash tools/validate-dynamic-helmert-differential.sh
