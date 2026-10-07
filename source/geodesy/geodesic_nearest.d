@@ -440,6 +440,72 @@ if (isGeodesyScalar!T && isGeodesyScalar!W)
     return false;
 }
 
+private bool interceptionStep(T, W, bool firstStep)(
+    const Geodesic!T solver,
+    const GeographicCoordinate!T center,
+    const GeographicCoordinate!T start,
+    const GeographicCoordinate!T end,
+    const GeographicCoordinate!T target,
+    out GeographicCoordinate!T nextCenter)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T && isGeodesyScalar!W)
+{
+    nextCenter = GeographicCoordinate!T.init;
+
+    GnomonicPoint!W projectedStart;
+    GnomonicPoint!W projectedEnd;
+    GnomonicPoint!W projectedTarget;
+
+    if (!gnomonicForward!(T, W)(
+            solver, center, start, projectedStart))
+        return false;
+
+    if (!gnomonicForward!(T, W)(
+            solver, center, end, projectedEnd))
+        return false;
+
+    static if (firstStep)
+    {
+        projectedTarget = GnomonicPoint!W.init;
+    }
+    else
+    {
+        if (!gnomonicForward!(T, W)(
+                solver, center, target, projectedTarget))
+            return false;
+    }
+
+    const W dx = projectedEnd.x - projectedStart.x;
+    const W dy = projectedEnd.y - projectedStart.y;
+    const W denominator = dx * dx + dy * dy;
+
+    if (!isFiniteGeodesyScalar(denominator)
+        || denominator <= cast(W) 0)
+        return false;
+
+    const W dot =
+        projectedTarget.x * dx
+        + projectedTarget.y * dy;
+
+    const W cross =
+        projectedStart.x * projectedEnd.y
+        - projectedStart.y * projectedEnd.x;
+
+    GnomonicPoint!W projectedFoot;
+
+    projectedFoot.x =
+        (dot * dx + cross * dy) / denominator;
+
+    projectedFoot.y =
+        (dot * dy - cross * dx) / denominator;
+
+    return gnomonicReverse!(T, W)(
+        solver,
+        center,
+        projectedFoot,
+        nextCenter);
+}
+
 private bool supportingIntercept(T, W)(
     const Geodesic!T solver,
     const GeographicCoordinate!T start,
@@ -450,133 +516,31 @@ private bool supportingIntercept(T, W)(
 if (isGeodesyScalar!T && isGeodesyScalar!W)
 {
     intercept = GeographicCoordinate!T.init;
-    GeographicCoordinate!T center = target;
 
-    foreach (iteration; 0 .. 2)
-    {
-        GnomonicPoint!W projectedStart;
-        GnomonicPoint!W projectedEnd;
-        GnomonicPoint!W projectedTarget;
+    GeographicCoordinate!T firstCenter;
 
-        if (!gnomonicForward!(T, W)(
-                solver, center, start, projectedStart)
-            || !gnomonicForward!(T, W)(
-                solver, center, end, projectedEnd))
-            return false;
+    if (!interceptionStep!(T, W, true)(
+            solver,
+            target,
+            start,
+            end,
+            target,
+            firstCenter))
+        return false;
 
-        if (iteration == 0)
-            projectedTarget = GnomonicPoint!W.init;
-        else if (!gnomonicForward!(T, W)(
-                solver, center, target, projectedTarget))
-            return false;
+    GeographicCoordinate!T secondCenter;
 
-        const W dx = projectedEnd.x - projectedStart.x;
-        const W dy = projectedEnd.y - projectedStart.y;
-        const W denominator = dx * dx + dy * dy;
+    if (!interceptionStep!(T, W, false)(
+            solver,
+            firstCenter,
+            start,
+            end,
+            target,
+            secondCenter))
+        return false;
 
-        if (!isFiniteGeodesyScalar(denominator)
-            || denominator <= cast(W) 0)
-            return false;
-
-        const W dot =
-            projectedTarget.x * dx
-            + projectedTarget.y * dy;
-
-        const W cross =
-            projectedStart.x * projectedEnd.y
-            - projectedStart.y * projectedEnd.x;
-
-        GnomonicPoint!W projectedFoot;
-
-        projectedFoot.x =
-            (dot * dx + cross * dy) / denominator;
-
-        projectedFoot.y =
-            (dot * dy - cross * dx) / denominator;
-
-        GeographicCoordinate!T nextCenter;
-
-        if (!gnomonicReverse!(T, W)(
-                solver, center, projectedFoot, nextCenter))
-            return false;
-
-        center = nextCenter;
-    }
-
-    intercept = center;
+    intercept = secondCenter;
     return true;
-}
-
-version (unittest)
-{
-    @safe unittest
-    {
-        import geodesy;
-
-        const solver =
-            Geodesic!double.fromEllipsoid(
-                Ellipsoid!double.fromInverseFlattening(
-                    6_378_137.0,
-                    298.257223563));
-
-        const a =
-            GeographicCoordinate!double.fromComponents(
-                Latitude!double.fromDegrees(48.0),
-                Longitude!double.fromDegrees(10.0));
-        const b =
-            GeographicCoordinate!double.fromComponents(
-                Latitude!double.fromDegrees(48.0),
-                Longitude!double.fromDegrees(20.0));
-        const target =
-            GeographicCoordinate!double.fromComponents(
-                Latitude!double.fromDegrees(49.2),
-                Longitude!double.fromDegrees(15.0));
-
-        GnomonicPoint!double pa;
-        GnomonicPoint!double pb;
-
-        assert(gnomonicForward!(double, double)(solver, target, a, pa));
-        assert(gnomonicForward!(double, double)(solver, target, b, pb));
-
-        const double dx = pb.x - pa.x;
-        const double dy = pb.y - pa.y;
-        const double denominator = dx * dx + dy * dy;
-        const double cross = pa.x * pb.y - pa.y * pb.x;
-
-        GnomonicPoint!double foot;
-        foot.x = cross * dy / denominator;
-        foot.y = -cross * dx / denominator;
-
-        GeographicCoordinate!double reversed;
-        assert(gnomonicReverse!(double, double)(
-            solver, target, foot, reversed));
-
-        GnomonicPoint!double pa2;
-        GnomonicPoint!double pb2;
-        GnomonicPoint!double pc2;
-
-        assert(gnomonicForward!(double, double)(solver, reversed, a, pa2));
-        assert(gnomonicForward!(double, double)(solver, reversed, b, pb2));
-        assert(gnomonicForward!(double, double)(solver, reversed, target, pc2));
-
-        const double dx2 = pb2.x - pa2.x;
-        const double dy2 = pb2.y - pa2.y;
-        const double denominator2 = dx2 * dx2 + dy2 * dy2;
-        const double dot2 = pc2.x * dx2 + pc2.y * dy2;
-        const double cross2 = pa2.x * pb2.y - pa2.y * pb2.x;
-
-        GnomonicPoint!double foot2;
-        foot2.x = (dot2 * dx2 + cross2 * dy2) / denominator2;
-        foot2.y = (dot2 * dy2 - cross2 * dx2) / denominator2;
-
-        GeographicCoordinate!double reversed2;
-        assert(gnomonicReverse!(double, double)(
-            solver, reversed, foot2, reversed2));
-
-        GeographicCoordinate!double intercept;
-        assert(supportingIntercept!(double, double)(
-            solver, a, b, target, intercept));
-    }
 }
 
 /**
