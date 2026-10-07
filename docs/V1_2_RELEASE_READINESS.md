@@ -203,5 +203,7 @@ Fresh public DUB registry consumer:
 
 Post-release branch state:
 
-- `main` = `c81c262542dab1abe8352bf4fcb16f1b3205721f`;
-- `develop` = `c81c262542dab1abe8352bf4fcb16f1b3205721f`.
+- `main` remains the immutable v1.2.0 release commit
+  `c81c262542dab1abe8352bf4fcb16f1b3205721f`;
+- `develop` contains that release commit plus post-release qualification
+  documentation.
