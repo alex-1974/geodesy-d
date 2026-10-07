@@ -53,10 +53,26 @@ public:
         return _valid;
     }
 
+    /// Example checking whether an epoch is valid.
+    @safe unittest
+    {
+        import geodesy;
+        assert(Epoch!double.fromDecimalYear(2000.0).isValid);
+        assert(!Epoch!double.init.isValid);
+    }
+
     /** Decimal-year representation. */
     @property T decimalYear() const pure nothrow @safe @nogc
     {
         return _decimalYear;
+    }
+
+    /// Example reading the decimal-year representation.
+    @safe unittest
+    {
+        import geodesy;
+        const epoch = Epoch!double.fromDecimalYear(2025.25);
+        assert(epoch.decimalYear == 2025.25);
     }
 
     /**
@@ -84,6 +100,15 @@ public:
         return true;
     }
 
+    /// Example checking decimal-year construction without throwing.
+    @safe unittest
+    {
+        import geodesy;
+        Epoch!double epoch;
+        assert(Epoch!double.tryFromDecimalYear(2010.0, epoch));
+        assert(epoch.decimalYear == 2010.0);
+    }
+
     /**
      * Construct a finite decimal-year epoch.
      *
@@ -97,6 +122,14 @@ public:
             throw new GeodesyValueException(
                 "Epoch decimal year must be finite.");
         return result;
+    }
+
+    /// Example constructing a decimal-year epoch.
+    @safe unittest
+    {
+        import geodesy;
+        const epoch = Epoch!double.fromDecimalYear(1994.0);
+        assert(epoch.isValid);
     }
 }
 
