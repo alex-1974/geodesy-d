@@ -6,15 +6,15 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Stable v1 line — v1.1.0 released. M3 Navigation & Polar Geodesy is complete; v1.2.0 is in release qualification.**
+**Stable v1 line — v1.2.0 released. M3 Navigation & Polar Geodesy is complete.**
 
 `geodesy-d v1.0.0` was released on September 26, 2026. The frozen v1 public
 API includes the accepted coordinate, transformation, projection, geodesic,
 and topocentric families documented below.
 
-v1.1.0 is the current published stable feature release. It completed the M2
-geodesic family while preserving the frozen v1 source-compatibility baseline.
-M3 Navigation & Polar Geodesy is complete. The current stabilization line is qualifying those additive capabilities for v1.2.0 without changing the frozen v1 source contract.
+v1.2.0 is the current published stable feature release. It completes M3
+Navigation & Polar Geodesy while preserving the frozen v1 source-compatibility
+baseline. The next planned development milestone is M4 — Reference Frames.
 
 ## Responsibility boundary
 
@@ -213,8 +213,8 @@ The workspace-wide coordination roadmap is available locally as
 The completed v1.0.0 release record is `docs/V1_RELEASE_READINESS.md`.
 The completed v1.0.1 patch record is `docs/V1_0_1_RELEASE_READINESS.md`.
 The completed v1.1.0 release record is `docs/V1_1_RELEASE_READINESS.md`.
-The completed M3 integration record is issue #74. v1.2.0 release qualification
-is tracked by issue #90 and `docs/V1_2_RELEASE_READINESS.md`.
+The completed M3 integration record is issue #74. The v1.2.0 release record is
+`docs/V1_2_RELEASE_READINESS.md`; post-v1.2 work follows the repository roadmap.
 
 
 ## Compiler compatibility
