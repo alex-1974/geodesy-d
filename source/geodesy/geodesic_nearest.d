@@ -762,6 +762,26 @@ if (isGeodesyScalar!T)
             Latitude!double.fromDegrees(49.2),
             Longitude!double.fromDegrees(15.0));
 
+    GeographicCoordinate!double diagnosticFirst;
+    assert(
+        interceptionStep!(double, double, true)(
+            solver,
+            target,
+            start,
+            end,
+            target,
+            diagnosticFirst));
+
+    GeographicCoordinate!double diagnosticSecond;
+    assert(
+        interceptionStep!(double, double, false)(
+            solver,
+            diagnosticFirst,
+            start,
+            end,
+            target,
+            diagnosticSecond));
+
     GeographicCoordinate!double diagnosticIntercept;
     assert(
         supportingIntercept!(double, double)(
