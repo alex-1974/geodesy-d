@@ -3291,7 +3291,9 @@ public:
         if (!isValid || !isFiniteGeodesyScalar(distance))
             return false;
 
-        if (distance == cast(T) 0)
+        const W s12 = cast(W) distance;
+
+        if (s12 == cast(W) 0)
         {
             result =
                 GeodesicDirectResult!T.fromComponents(
@@ -3300,13 +3302,130 @@ public:
             return true;
         }
 
-        W sigma12;
-        if (!trySigmaFromDistance(distance, sigma12))
+        enum int order = geodesicSeriesOrderFor!T;
+
+        const W denominator =
+            _b * (cast(W) 1 + _a1m1);
+
+        if (!isFiniteGeodesyScalar(denominator)
+            || denominator == cast(W) 0)
             return false;
 
-        return tryCanonicalPositionFromSigma(
-            sigma12,
-            result);
+        const W tau12 = s12 / denominator;
+
+        if (!isFiniteGeodesyScalar(tau12))
+            return false;
+
+        const W sinTau12 = sin(tau12);
+        const W cosTau12 = cos(tau12);
+
+        const W b12 =
+            -geodesicSinCosSeries!W(
+                true,
+                _sinTau1 * cosTau12
+                    + _cosTau1 * sinTau12,
+                _cosTau1 * cosTau12
+                    - _sinTau1 * sinTau12,
+                _c1p,
+                order);
+
+        const W sigma12 =
+            tau12 - (b12 - _b11);
+
+        const W sinSigma12 = sin(sigma12);
+        const W cosSigma12 = cos(sigma12);
+
+        W sinSigma2 =
+            _sinSigma1 * cosSigma12
+            + _cosSigma1 * sinSigma12;
+
+        W cosSigma2 =
+            _cosSigma1 * cosSigma12
+            - _sinSigma1 * sinSigma12;
+
+        const W sinBeta2 =
+            _cosAlpha0 * sinSigma2;
+
+        W cosBeta2 =
+            stableHypot2(
+                _sinAlpha0,
+                _cosAlpha0 * cosSigma2);
+
+        const W tiny = sqrt(W.min_normal);
+
+        if (cosBeta2 == cast(W) 0)
+        {
+            cosBeta2 = tiny;
+            cosSigma2 = tiny;
+        }
+
+        const W sinAlpha2 = _sinAlpha0;
+        const W cosAlpha2 =
+            _cosAlpha0 * cosSigma2;
+
+        const W latitude2 =
+            atan2(
+                sinBeta2,
+                _f1 * cosBeta2);
+
+        const W sinOmega2 =
+            _sinAlpha0 * sinSigma2;
+
+        const W cosOmega2 =
+            cosSigma2;
+
+        const W omega12 =
+            atan2(
+                sinOmega2 * _cosOmega1
+                    - cosOmega2 * _sinOmega1,
+                cosOmega2 * _cosOmega1
+                    + sinOmega2 * _sinOmega1);
+
+        const W b32 =
+            geodesicSinCosSeries!W(
+                true,
+                sinSigma2,
+                cosSigma2,
+                _c3,
+                order - 1);
+
+        const W lambda12 =
+            omega12
+            + _a3c
+                * (
+                    sigma12
+                    + (b32 - _b31));
+
+        const W longitude2 =
+            canonicalAngleRadians(
+                _longitude1 + lambda12);
+
+        const W finalAzimuth =
+            atan2(
+                sinAlpha2,
+                cosAlpha2);
+
+        if (!isFiniteGeodesyScalar(latitude2)
+            || !isFiniteGeodesyScalar(longitude2)
+            || !isFiniteGeodesyScalar(finalAzimuth))
+            return false;
+
+        GeographicCoordinate!T endpoint;
+
+        if (!makeGeographicCoordinate(
+                cast(T) latitude2,
+                cast(T) longitude2,
+                endpoint))
+            return false;
+
+        result =
+            GeodesicDirectResult!T.fromComponents(
+                endpoint,
+                angleFromRadiansUnchecked(
+                    canonicalAngleRadians(
+                        cast(T) finalAzimuth)));
+
+        return true;
     }
 
     /// Example evaluating a prepared line without throwing.
