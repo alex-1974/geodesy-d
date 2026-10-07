@@ -1,0 +1,64 @@
+name: Molodensky-Badekas differential validation
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/transform/molodensky_badekas.d"
+      - "source/geodesy/transform/helmert.d"
+      - "validation/molodensky_badekas_*"
+      - "tools/validate-molodensky-badekas-differential.sh"
+      - ".github/workflows/molodensky-badekas-validation.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/transform/molodensky_badekas.d"
+      - "source/geodesy/transform/helmert.d"
+      - "validation/molodensky_badekas_*"
+      - "tools/validate-molodensky-badekas-differential.sh"
+      - ".github/workflows/molodensky-badekas-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  differential:
+    name: EPSG 1034/1061 + PROJ
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - ldc-1.41.0
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Install PROJ
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes proj-bin
+          cct --version
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="$DC"
+
+      - name: Molodensky-Badekas differential corpus
+        shell: bash
+        run: bash tools/validate-molodensky-badekas-differential.sh
