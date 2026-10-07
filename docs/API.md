@@ -782,6 +782,65 @@ Only these overloads compute `m12`, `M12`, `M21`, and `S12`. The ordinary
 distance/arc position paths do not prepare or evaluate the additional C2/C4
 series state.
 
+### Bounded geodesic-segment nearest point
+
+M5 adds one bounded nearest-point operation without introducing a public
+gnomonic projection or a globally unique infinite-line nearest-point claim:
+
+~~~d
+bool tryNearestPointOnSegment(
+    Geodesic!T solver,
+    GeographicCoordinate!T start,
+    GeographicCoordinate!T end,
+    GeographicCoordinate!T target,
+    out GeodesicSegmentNearestResult!T result)
+    pure nothrow @safe @nogc;
+
+GeodesicSegmentNearestResult!T nearestPointOnSegment(
+    Geodesic!T solver,
+    GeographicCoordinate!T start,
+    GeographicCoordinate!T end,
+    GeographicCoordinate!T target)
+    @safe;
+~~~
+
+The functions are free functions with the solver first, so UFCS supports
+`solver.tryNearestPointOnSegment(...)` and
+`solver.nearestPointOnSegment(...)`.
+
+`start` and `end` define the shortest oriented geodesic segment A -> B.
+A degenerate A == B segment is rejected because its orientation is undefined.
+The implementation uses Karney's ellipsoidal gnomonic interception method on
+top of existing reduced-length and geodesic-scale quantities; it is not a
+spherical cross-track approximation.
+
+`GeodesicSegmentNearestResult!T` keeps the supporting-geodesic geometry and
+bounded-segment geometry distinct:
+
+~~~text
+intercept                   local perpendicular foot on supporting geodesic
+nearestPoint                nearest point after endpoint clamping
+nearestDistance             unsigned target-to-nearest-point distance
+alongTrackDistance          signed A-to-intercept distance, unclamped
+signedCrossTrackDistance    right of A->B positive, left negative
+segmentAlongTrackDistance   clamped to [0, segmentLength]
+segmentLength               shortest A-to-B geodesic distance
+location                    start | interior | end
+~~~
+
+For an interior result, `nearestPoint` equals `intercept` and
+`nearestDistance` is the magnitude of the signed cross-track distance within
+numerical precision. For an endpoint-clamped result, the endpoint distance is
+not mislabeled as perpendicular cross-track distance.
+
+The interception is deliberately local. If the ellipsoidal gnomonic
+construction is over its horizon (`M12 <= 0`) or fails to converge, the
+checked operation returns `false`. No global uniqueness promise is made for an
+indefinitely extended geodesic on the closed ellipsoid.
+
+Route ownership, multi-segment nearest search, corridor semantics, topology,
+and Euclidean geometry remain outside geodesy-d.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
