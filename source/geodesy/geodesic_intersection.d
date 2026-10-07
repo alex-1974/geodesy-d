@@ -36,7 +36,10 @@
 module geodesy.geodesic_intersection;
 
 import geodesy.angle :
-    Angle;
+    Latitude,
+    Longitude;
+import geodesy.ellipsoid :
+    wgs84;
 import geodesy.errors :
     GeodesyValueException;
 import geodesy.geodesic :
