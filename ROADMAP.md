@@ -299,8 +299,27 @@ transformation pipelines.
 
 # M5 — Advanced Ellipsoidal Geometry
 
+**Status:** active.
+
 **Goal:** add higher-order geodetic geometry only after the line/differential
 geodesic primitives from M2 are stable.
+
+Preferred order:
+
+1. #68 — complete the prepared `GeodesicLine` capabilities needed by higher-
+   order line geometry: arc-mode positions, longitude unrolling, and advanced
+   position quantities without regressing the lean distance-only hot path;
+2. #47 — nearest point, cross-track, and along-track quantities, establishing
+   M5 ambiguity/result semantics on infinite lines and bounded segments;
+3. #46 — robust geodesic intersection, using the prepared-line and result-
+   semantics groundwork from #68/#47;
+4. #48 — admit geodesic circles/loci only if #46/#47 or a concrete consumer
+   demonstrates value beyond repeated `Geodesic.direct` calls.
+
+#69 — prolate ellipsoid support is a separate numerical-domain admission track.
+It may be researched in parallel but does not block the oblate/spherical M5
+geometry sequence because admitting negative flattening would broaden the
+library-wide `Ellipsoid!T` contract.
 
 Issues:
 
