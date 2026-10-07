@@ -460,10 +460,20 @@ if (isGeodesyScalar!T)
     const zeroPointTarget = zeroPoint.apply(source);
     assert(zeroPointTarget == helmertTarget);
 
-    // Public scalar family.
+    // Public scalar family and identity default.
     static assert(is(PositionVectorMolodenskyBadekas!float));
     static assert(is(PositionVectorMolodenskyBadekas!double));
     static assert(is(PositionVectorMolodenskyBadekas!real));
+
+    const floatSource =
+        GeocentricCoordinate!float.fromComponents(1.0f, 2.0f, 3.0f);
+    assert(PositionVectorMolodenskyBadekas!float.init.apply(floatSource)
+        == floatSource);
+
+    const realSource =
+        GeocentricCoordinate!real.fromComponents(1.0L, 2.0L, 3.0L);
+    assert(PositionVectorMolodenskyBadekas!real.init.apply(realSource)
+        == realSource);
 
     PositionVectorMolodenskyBadekas!double invalid;
     assert(!PositionVectorMolodenskyBadekas!double.tryFromArcSecondsAndPpm(
