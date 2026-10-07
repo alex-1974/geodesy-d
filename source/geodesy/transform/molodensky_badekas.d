@@ -454,9 +454,11 @@ if (isGeodesyScalar!T)
 
     assert(zeroPoint.equivalentHelmert == helmert);
 
-    const ordinary =
-        tryApplyPositionVectorHelmert(source, helmert, GeocentricCoordinate!double.init);
-    cast(void) ordinary;
+    GeocentricCoordinate!double helmertTarget;
+    assert(tryApplyPositionVectorHelmert(
+        source, helmert, helmertTarget));
+    const zeroPointTarget = zeroPoint.apply(source);
+    assert(zeroPointTarget == helmertTarget);
 
     // Public scalar family.
     static assert(is(PositionVectorMolodenskyBadekas!float));
