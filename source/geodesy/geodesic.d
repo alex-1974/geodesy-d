@@ -3373,7 +3373,7 @@ public:
             quantities);
     }
 
-    /// Example evaluating advanced quantities at a distance position.
+    /* Regression: advanced quantities at a prepared distance position. */
     @safe unittest
     {
         const solver =
@@ -3532,7 +3532,7 @@ public:
             quantities);
     }
 
-    /// Example evaluating advanced quantities at an arc position.
+    /* Regression: advanced quantities at a prepared arc position. */
     @safe unittest
     {
         const solver =
