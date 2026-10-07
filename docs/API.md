@@ -321,6 +321,53 @@ Zero rates are required to evaluate exactly to the stored static
 See `docs/M4_EPOCH_SEMANTICS.md` and
 `docs/DYNAMIC_HELMERT_VALIDATION.md`.
 
+## Molodensky-Badekas — additive M4 reference-frame surface
+
+The aggregate API exports the static geocentric Molodensky-Badekas family:
+
+~~~text
+MolodenskyBadekas10<T, convention>
+PositionVectorMolodenskyBadekas<T>
+CoordinateFrameMolodenskyBadekas<T>
+~~~
+
+The two convention-specific aliases correspond to EPSG methods 1061 (Position
+Vector, geocentric domain) and 1034 (Coordinate Frame, geocentric domain).
+
+Construction follows the Helmert unit policy. Canonical construction accepts an
+existing convention-specific `Helmert7` plus the three source-geocentric
+evaluation-point ordinates. The EPSG interchange factory accepts translations
+and evaluation-point ordinates in the caller's geocentric linear unit,
+rotations in arc-seconds, and scale difference in ppm.
+
+Prepared values expose:
+
+~~~text
+baseParameters
+evaluationPointX / evaluationPointY / evaluationPointZ
+equivalentHelmert
+tryApply / apply
+~~~
+
+The implementation does not duplicate the Helmert spatial matrix. It prepares
+the algebraically equivalent `Helmert7` once and delegates each coordinate
+application to the existing EPSG 1032/1033 kernel.
+
+`toCoordinateFrameMolodenskyBadekas` and
+`toPositionVectorMolodenskyBadekas` negate only the rotations while
+preserving translations, scale, and evaluation point. A zero evaluation point
+reduces exactly to the existing Helmert7 family.
+
+`.init` is the identity transformation. No `inverse()` convenience API is
+provided because the EPSG evaluation point belongs to the forward source
+Cartesian CRS; reusing the same ten values in reverse is not, in general, the
+exact mathematical inverse.
+
+Independent validation uses the EPSG La Canoa -> REGVEN worked vector and PROJ
+`+proj=molobadekas` for both rotation conventions.
+
+See `docs/MOLODENSKY_BADEKAS.md`.
+
 ## Conformal projection factors — frozen v1 surface
 
 The aggregate public API exports:
