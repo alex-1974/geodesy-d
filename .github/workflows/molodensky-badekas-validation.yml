@@ -57,7 +57,22 @@ jobs:
 
       - name: Library unit tests
         shell: bash
-        run: dub test --compiler="$DC"
+        run: |
+          mkdir -p build/molodensky-badekas-validation
+          set +e
+          dub test --compiler="$DC" > build/molodensky-badekas-validation/unit-test.log 2>&1
+          status=$?
+          set -e
+          cat build/molodensky-badekas-validation/unit-test.log
+          exit "$status"
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: molodensky-badekas-unit-${{ matrix.compiler }}
+          path: build/molodensky-badekas-validation/unit-test.log
+          if-no-files-found: ignore
 
       - name: Molodensky-Badekas differential corpus
         shell: bash
