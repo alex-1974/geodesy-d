@@ -2404,6 +2404,8 @@ bool tryNextGeodesicIntersection(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
+    alias W = IntersectionWorkingScalar!T;
+
     result = GeodesicNextIntersectionResult!T.init;
 
     if (!solver.isValid)
