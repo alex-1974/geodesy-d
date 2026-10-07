@@ -1,0 +1,123 @@
+name: Dynamic Helmert platform matrix
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - develop
+    paths:
+      - "source/geodesy/epoch.d"
+      - "source/geodesy/transform/dynamic_helmert.d"
+      - "source/geodesy/transform/helmert.d"
+      - "validation/dynamic_helmert_*"
+      - "validation/api/**"
+      - "tools/validate-api.sh"
+      - ".github/workflows/dynamic-helmert-platform-matrix.yml"
+
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - "source/geodesy/epoch.d"
+      - "source/geodesy/transform/dynamic_helmert.d"
+      - "source/geodesy/transform/helmert.d"
+      - "validation/dynamic_helmert_*"
+      - "validation/api/**"
+      - "tools/validate-api.sh"
+      - ".github/workflows/dynamic-helmert-platform-matrix.yml"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  dynamic-helmert-platform:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64 / DMD 2.111.0
+            os: ubuntu-24.04
+            compiler: dmd-2.111.0
+            dc: dmd
+            experimental: false
+
+          - name: Linux x86_64 / DMD latest
+            os: ubuntu-24.04
+            compiler: dmd-latest
+            dc: dmd
+            experimental: false
+
+          - name: Linux x86_64 / LDC 1.41.0
+            os: ubuntu-24.04
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Linux AArch64 / LDC 1.41.0
+            os: ubuntu-24.04-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Windows x86_64 / LDC 1.41.0
+            os: windows-2025
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS AArch64 / LDC 1.41.0
+            os: macos-15
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: macOS x86_64 / LDC 1.41.0
+            os: macos-15-intel
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: false
+
+          - name: Windows AArch64 / LDC 1.41.0
+            os: windows-11-arm
+            compiler: ldc-1.41.0
+            dc: ldc2
+            experimental: true
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Toolchain
+        shell: bash
+        run: |
+          "${{ matrix.dc }}" --version
+          dub --version
+
+      - name: Library unit tests
+        shell: bash
+        run: dub test --compiler="${{ matrix.dc }}" --force
+
+      - name: Public API contract
+        shell: bash
+        env:
+          DC: ${{ matrix.dc }}
+        run: bash tools/validate-api.sh
+
+      - name: Dynamic Helmert scalar/platform contract
+        shell: bash
+        run: |
+          "${{ matrix.dc }}" -i -Isource             -run validation/dynamic_helmert_scalar_validation.d

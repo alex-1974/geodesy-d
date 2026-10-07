@@ -37,6 +37,7 @@ The public surface is organized into these documentation families:
 | conversion | geographic/geocentric checked and throwing operations | existing |
 | geocentric translation | EPSG 1031 family | existing |
 | Helmert | EPSG 1032 / 1033 families | existing |
+| dynamic Helmert | `Epoch`, EPSG 1053 / 1056 families | existing |
 | Transverse Mercator | prepared projection, forward/reverse, factors | existing |
 | Pseudo-Mercator | prepared projection and bounded policy | existing |
 | UTM | zones, hemispheres, prepared/automatic/tagged operations | existing |
@@ -449,3 +450,32 @@ The audit is complete when:
 | `geodesy.transform.helmert.toPositionVector` | existing | Helmert |
 | `geodesy.transform.helmert.tryApplyCoordinateFrameHelmert` | existing | Helmert |
 | `geodesy.transform.helmert.tryApplyPositionVectorHelmert` | existing | Helmert |
+
+| `geodesy.epoch.Epoch` | existing | dynamic Helmert |
+| `geodesy.epoch.Epoch.decimalYear` | existing | dynamic Helmert |
+| `geodesy.epoch.Epoch.fromDecimalYear` | existing | dynamic Helmert |
+| `geodesy.epoch.Epoch.isValid` | existing | dynamic Helmert |
+| `geodesy.epoch.Epoch.tryFromDecimalYear` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.CoordinateFrameHelmert14` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.apply` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.baseParameters` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.evaluate` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.fromArcSecondsAndPpm` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.fromCanonical` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.isValid` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.referenceEpoch` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.rotationRateX` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.rotationRateY` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.rotationRateZ` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.scaleDifferenceRate` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.translationRateX` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.translationRateY` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.translationRateZ` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.tryApply` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.tryEvaluate` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.tryFromArcSecondsAndPpm` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.Helmert14.tryFromCanonical` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.PositionVectorHelmert14` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.toCoordinateFrameHelmert14` | existing | dynamic Helmert |
+| `geodesy.transform.dynamic_helmert.toPositionVectorHelmert14` | existing | dynamic Helmert |

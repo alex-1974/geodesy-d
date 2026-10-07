@@ -45,9 +45,14 @@ GeocentricTranslation<T>
 Helmert7<T, convention>
 PositionVectorHelmert<T>
 CoordinateFrameHelmert<T>
+Epoch<T>
+Helmert14<T, convention>
+PositionVectorHelmert14<T>
+CoordinateFrameHelmert14<T>
 ```
 
-`HelmertConvention` is public and has no default.
+`HelmertConvention` is public and has no default. `Epoch<T>.init` and
+`Helmert14<T, convention>.init` are invalid.
 
 `GeocentricTranslation` exposes `deltaX/Y/Z` as read-only properties so a
 validated value cannot later be mutated into a NaN/Infinity state.
@@ -250,6 +255,71 @@ dimensionless fraction. The EPSG-style factory accepts arc-seconds and ppm.
 
 `toCoordinateFrame` and `toPositionVector` are
 `pure nothrow @safe @nogc`. No 7-parameter `inverse()` shortcut is part of the frozen v1 surface.
+
+
+## EPSG 1053 / 1056 — additive M4 dynamic Helmert
+
+The M4 reference-frame line adds a strong epoch value and a time-dependent
+14-parameter Helmert family:
+
+~~~text
+Epoch<T>
+Helmert14<T, convention>
+PositionVectorHelmert14<T>
+CoordinateFrameHelmert14<T>
+~~~
+
+The fourteen transformation parameters are the seven static Helmert values
+plus seven signed rates. The parameter reference epoch is stored separately
+and is not counted as a fifteenth transformation parameter.
+
+`Epoch<T>` stores a finite decimal year. It does not perform calendar,
+UTC/TAI/GPS, or leap-second conversion. `.init` is invalid.
+
+A dynamic transform stores:
+
+~~~text
+baseParameters       Helmert7<T, convention>
+translationRateX/Y/Z linear-unit / year
+rotationRateX/Y/Z    radians / year
+scaleDifferenceRate  dimensionless / year
+referenceEpoch       Epoch<T>
+~~~
+
+The EPSG-style construction surface accepts base rotations in arc-seconds,
+rotation rates in arc-seconds/year, base scale in ppm, and scale rate in
+ppm/year.
+
+At observation epoch `t`, each parameter is evaluated as:
+
+~~~text
+P(t) = P(t0) + rate * (t - t0)
+~~~
+
+where `t0` is the stored parameter reference epoch. Evaluation returns the
+existing convention-specific `Helmert7<T, convention>`, and spatial
+application reuses the existing EPSG 1032/1033 kernel.
+
+The prepared API exposes:
+
+~~~text
+tryEvaluate / evaluate
+tryApply    / apply
+~~~
+
+Position Vector and Coordinate Frame remain distinct compile-time types.
+`toCoordinateFrameHelmert14` and `toPositionVectorHelmert14` negate both
+rotation parameters and rotation rates while preserving translations,
+translation rates, scale, scale rate, and reference epoch.
+
+Public `float` rate propagation uses double working precision.
+`double` uses double and `real` retains platform-real precision.
+
+Zero rates are required to evaluate exactly to the stored static
+`Helmert7` parameter set for every finite observation epoch.
+
+See `docs/M4_EPOCH_SEMANTICS.md` and
+`docs/DYNAMIC_HELMERT_VALIDATION.md`.
 
 ## Conformal projection factors — frozen v1 surface
 
