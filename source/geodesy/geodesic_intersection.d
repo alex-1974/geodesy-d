@@ -195,6 +195,14 @@ public:
     }
 }
 
+/// Example using the bounded segment-intersection result type.
+@safe unittest
+{
+    GeodesicSegmentIntersectionResult!double result;
+    assert(!result.isValid);
+    assert(result.kind == GeodesicSegmentIntersectionKind.invalid);
+}
+
 
 private template IntersectionWorkingScalar(T)
 if (isGeodesyScalar!T)
