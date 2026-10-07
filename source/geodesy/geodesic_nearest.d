@@ -551,6 +551,28 @@ version (unittest)
         assert(gnomonicReverse!(double, double)(
             solver, target, foot, reversed));
 
+        GnomonicPoint!double pa2;
+        GnomonicPoint!double pb2;
+        GnomonicPoint!double pc2;
+
+        assert(gnomonicForward!(double, double)(solver, reversed, a, pa2));
+        assert(gnomonicForward!(double, double)(solver, reversed, b, pb2));
+        assert(gnomonicForward!(double, double)(solver, reversed, target, pc2));
+
+        const double dx2 = pb2.x - pa2.x;
+        const double dy2 = pb2.y - pa2.y;
+        const double denominator2 = dx2 * dx2 + dy2 * dy2;
+        const double dot2 = pc2.x * dx2 + pc2.y * dy2;
+        const double cross2 = pa2.x * pb2.y - pa2.y * pb2.x;
+
+        GnomonicPoint!double foot2;
+        foot2.x = (dot2 * dx2 + cross2 * dy2) / denominator2;
+        foot2.y = (dot2 * dy2 - cross2 * dx2) / denominator2;
+
+        GeographicCoordinate!double reversed2;
+        assert(gnomonicReverse!(double, double)(
+            solver, reversed, foot2, reversed2));
+
         GeographicCoordinate!double intercept;
         assert(supportingIntercept!(double, double)(
             solver, a, b, target, intercept));
