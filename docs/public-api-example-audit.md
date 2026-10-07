@@ -216,6 +216,16 @@ The audit is complete when:
 | `geodesy.geodesic_intersection.GeodesicSegmentIntersectionResult.secondPoint` | existing | geodesics |
 | `geodesy.geodesic_intersection.tryIntersectGeodesicSegments` | existing | geodesics |
 | `geodesy.geodesic_intersection.intersectGeodesicSegments` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicIntersectionCoincidence` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.isValid` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.position` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.distanceOnFirst` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.distanceOnSecond` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.referenceDistance` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.coincidence` | existing | geodesics |
+| `geodesy.geodesic_intersection.tryClosestGeodesicIntersection` | existing | geodesics |
+| `geodesy.geodesic_intersection.closestGeodesicIntersection` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.addPoint` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.compute` | existing | geodesics |
