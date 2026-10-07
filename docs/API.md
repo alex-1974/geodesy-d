@@ -763,6 +763,25 @@ intentionally not represented by `Longitude<T>`, whose domain remains
 These additions reuse the existing prepared line state; they do not enlarge
 the `GeodesicLine<T>` object.
 
+Advanced prepared-line segment quantities use additive checked overloads that
+mirror the existing advanced direct-geodesic contract:
+
+~~~d
+bool tryPosition(
+    T distance,
+    out GeodesicDirectResult!T result,
+    out GeodesicQuantities!T quantities) const;
+
+bool tryArcPosition(
+    Angle!T arc,
+    out GeodesicDirectResult!T result,
+    out GeodesicQuantities!T quantities) const;
+~~~
+
+Only these overloads compute `m12`, `M12`, `M21`, and `S12`. The ordinary
+distance/arc position paths do not prepare or evaluate the additional C2/C4
+series state.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated
