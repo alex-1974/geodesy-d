@@ -689,6 +689,25 @@ public:
     }
 }
 
+/// Example preparing and applying a time-dependent Helmert transformation.
+@safe unittest
+{
+    import geodesy;
+
+    const transform = PositionVectorHelmert14!double.fromCanonical(
+        PositionVectorHelmert!double.init,
+        0.001, 0.0, 0.0,
+        0.0, 0.0, 0.0,
+        0.0,
+        Epoch!double.fromDecimalYear(2000.0));
+
+    const target = transform.apply(
+        GeocentricCoordinate!double.fromComponents(1.0, 2.0, 3.0),
+        Epoch!double.fromDecimalYear(2010.0));
+
+    assert(target.x == 1.01);
+}
+
 
 /** EPSG 1053 time-dependent Position Vector parameter type. */
 alias PositionVectorHelmert14(T) =
