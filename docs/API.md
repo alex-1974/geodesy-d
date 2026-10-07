@@ -838,8 +838,9 @@ the public D API.
 
 A checked call returning `true` with `kind == none` is a successful
 geometric result. `false` is reserved for invalid, degenerate, ambiguous, or
-non-converged input. Exact antipodal endpoint pairs are rejected because the
-shortest connecting geodesic is not unique.
+non-converged input. Degenerate endpoint pairs, exact antipodes, opposite poles, and detected
+equal-and-opposite-latitude multiple-shortest-geodesic cases are rejected
+because the bounded segment would not have one unambiguous shortest path.
 
 The implementation follows Karney's iterative ellipsoidal geodesic-intersection
 method with prepared `GeodesicLine` values and a bounded midpoint/corner seed
