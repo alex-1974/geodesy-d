@@ -762,6 +762,15 @@ if (isGeodesyScalar!T)
             Latitude!double.fromDegrees(49.2),
             Longitude!double.fromDegrees(15.0));
 
+    GeographicCoordinate!double diagnosticIntercept;
+    assert(
+        supportingIntercept!(double, double)(
+            solver,
+            start,
+            end,
+            target,
+            diagnosticIntercept));
+
     GeodesicSegmentNearestResult!double result;
 
     assert(
