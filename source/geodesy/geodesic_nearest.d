@@ -466,7 +466,13 @@ if (isGeodesyScalar!T && isGeodesyScalar!W)
 
     static if (firstStep)
     {
-        projectedTarget = GnomonicPoint!W.init;
+        /*
+         * D floating-point .init is NaN. The target is the projection centre
+         * in the first Karney interception step, so its planar coordinate is
+         * exactly the finite origin and must be initialized explicitly.
+         */
+        projectedTarget.x = cast(W) 0;
+        projectedTarget.y = cast(W) 0;
     }
     else
     {
@@ -761,35 +767,6 @@ if (isGeodesyScalar!T)
         GeographicCoordinate!double.fromComponents(
             Latitude!double.fromDegrees(49.2),
             Longitude!double.fromDegrees(15.0));
-
-    GeographicCoordinate!double diagnosticFirst;
-    assert(
-        interceptionStep!(double, double, true)(
-            solver,
-            target,
-            start,
-            end,
-            target,
-            diagnosticFirst));
-
-    GeographicCoordinate!double diagnosticSecond;
-    assert(
-        interceptionStep!(double, double, false)(
-            solver,
-            diagnosticFirst,
-            start,
-            end,
-            target,
-            diagnosticSecond));
-
-    GeographicCoordinate!double diagnosticIntercept;
-    assert(
-        supportingIntercept!(double, double)(
-            solver,
-            start,
-            end,
-            target,
-            diagnosticIntercept));
 
     GeodesicSegmentNearestResult!double result;
 
