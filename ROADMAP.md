@@ -233,6 +233,8 @@ is not sufficient reason to implement it.
 
 # M4 — Reference Frames
 
+**Status:** active.
+
 **Goal:** extend the current static datum/reference-frame mathematics to modern
 time-dependent transformations.
 
@@ -240,12 +242,22 @@ Dynamic Helmert is the primary planned capability. Molodensky and
 Molodensky-Badekas remain research/admission candidates rather than committed
 public API.
 
+Preferred order:
+
+1. #41 — freeze epoch and temporal-parameter semantics;
+2. #42 — implement the dynamic 14-parameter Helmert family on that contract;
+3. #43 / #44 — research admission only after the dynamic Helmert core is stable.
+
 Issues:
 
 - #41 — epoch and temporal-parameter semantics;
 - #42 — dynamic 14-parameter Helmert transformation;
 - #43 — research/admit Molodensky transformation;
 - #44 — research/admit Molodensky-Badekas transformation.
+
+The accepted temporal design is recorded in `docs/M4_EPOCH_SEMANTICS.md`.
+It keeps observation epochs explicit at operation boundaries and does not add
+temporal metadata to the existing coordinate value types.
 
 Primary target:
 
