@@ -37,6 +37,7 @@
 module geodesy.geodesic_intersection;
 
 import geodesy.angle :
+    Angle,
     Latitude,
     Longitude;
 import geodesy.ellipsoid :
@@ -47,7 +48,8 @@ import geodesy.geodesic :
     Geodesic,
     GeodesicDirectResult,
     GeodesicInverseResult,
-    GeodesicLine;
+    GeodesicLine,
+    GeodesicQuantities;
 import geodesy.geographic :
     GeographicCoordinate;
 import geodesy.scalar :
@@ -321,6 +323,62 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Error-free transform for one floating-point sum. */
+private W intersectionTwoSum(W)(
+    const W u,
+    const W v,
+    out W error)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!W)
+{
+    const W sum = u + v;
+    const W up = sum - v;
+    const W vpp = sum - up;
+    const W du = up - u;
+    const W dv = vpp - v;
+    error = sum != cast(W) 0 ? -(du + dv) : sum;
+    return sum;
+}
+
+/** Compensated canonical difference y-x in radians. */
+private W intersectionAngleDiff(W)(
+    const W x,
+    const W y,
+    out W error)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!W)
+{
+    const W period = cast(W) 2 * cast(W) PI;
+    W difference = intersectionTwoSum!W((-x) % period, y % period, error);
+    W correction;
+    difference = intersectionTwoSum!W(difference % period, error, correction);
+    error = correction;
+    if (difference > cast(W) PI)
+        difference -= period;
+    else if (difference < -cast(W) PI)
+        difference += period;
+    if (difference == cast(W) 0 || abs(difference) == cast(W) PI)
+        difference = copysign(difference, error == cast(W) 0 ? y - x : -error);
+    return difference;
+}
+
+/** Evaluate sin/cos of a reduced angle plus a small correction. */
+private void intersectionSinCosCorrected(W)(
+    const W angle,
+    const W correction,
+    out W sine,
+    out W cosine)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!W)
+{
+    const W s = sin(angle);
+    const W c = cos(angle);
+    const W se = sin(correction);
+    const W ce = cos(correction);
+    sine = s * ce + c * se;
+    cosine = c * ce - s * se;
+}
+
 /**
  * Compute the authalic-radius scale used by Karney's local spherical update.
  */
@@ -444,36 +502,50 @@ if (isGeodesyScalar!T)
         const W cosSeparation =
             cos(sphericalArc);
 
+        W firstError;
+        W secondError;
+
         const W firstAngle =
-            wrapIntersectionPi!W(
-                cast(W) inverse.initialAzimuth.radians
-                - cast(W) firstPosition.finalAzimuth.radians);
+            intersectionAngleDiff!W(
+                cast(W) firstPosition.finalAzimuth.radians,
+                cast(W) inverse.initialAzimuth.radians,
+                firstError);
 
         const W secondAngle =
-            wrapIntersectionPi!W(
-                cast(W) inverse.finalAzimuth.radians
-                - cast(W) secondPosition.finalAzimuth.radians);
+            intersectionAngleDiff!W(
+                cast(W) secondPosition.finalAzimuth.radians,
+                cast(W) inverse.finalAzimuth.radians,
+                secondError);
+
+        W orientationError;
 
         const W orientationDifference =
-            wrapIntersectionPi!W(
-                secondAngle - firstAngle);
+            intersectionAngleDiff!W(
+                firstAngle,
+                secondAngle,
+                orientationError);
 
         const W sign =
             copysign(
                 cast(W) 1,
-                orientationDifference);
+                orientationDifference + orientationError + secondError - firstError);
 
-        const W sinFirst =
-            sin(sign * firstAngle);
+        W sinFirst;
+        W cosFirst;
+        W sinSecond;
+        W cosSecond;
 
-        const W cosFirst =
-            cos(sign * firstAngle);
+        intersectionSinCosCorrected!W(
+            sign * firstAngle,
+            sign * firstError,
+            sinFirst,
+            cosFirst);
 
-        const W sinSecond =
-            sin(sign * secondAngle);
-
-        const W cosSecond =
-            cos(sign * secondAngle);
+        intersectionSinCosCorrected!W(
+            sign * secondAngle,
+            sign * secondError,
+            sinSecond,
+            cosSecond);
 
         W deltaFirst;
         W deltaSecond;
