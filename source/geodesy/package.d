@@ -3,7 +3,7 @@
  *
  * Import this module for geodesy-d's supported public API: strong geodetic
  * value types, coordinate conversions, map projections, surface paths, and
- * static reference-frame transformations.
+ * static or time-dependent reference-frame transformations.
  *
  * ---
  * import geodesy;
@@ -57,6 +57,7 @@ module geodesy;
 
 public import geodesy.angle;
 public import geodesy.ellipsoid;
+public import geodesy.epoch;
 public import geodesy.errors;
 public import geodesy.geographic;
 public import geodesy.geodesic;
@@ -81,3 +82,4 @@ public import geodesy.projection.ups;
 public import geodesy.transform.geocentric_translation;
 
 public import geodesy.transform.helmert;
+public import geodesy.transform.dynamic_helmert;
