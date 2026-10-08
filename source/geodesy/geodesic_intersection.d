@@ -1210,6 +1210,7 @@ public:
         assert(!GeodesicClosestIntersectionResult!double.init.isValid);
     }
     /** Geographic position of the selected intersection representative. */
+    /** Geographic position of the enumerated intersection. */
     @property GeographicCoordinate!T position() const pure nothrow @safe @nogc { return _position; }
 
     /// Example reading the default position value.
@@ -1219,6 +1220,7 @@ public:
         cast(void) result.position;
     }
     /** Signed distance from the first oriented line origin. */
+    /** Signed displacement from the first line origin. */
     @property T distanceOnFirst() const pure nothrow @safe @nogc { return _distanceOnFirst; }
 
     /// Example reading the first signed displacement.
@@ -1228,6 +1230,7 @@ public:
         cast(void) result.distanceOnFirst;
     }
     /** Signed distance from the second oriented line origin. */
+    /** Signed displacement from the second line origin. */
     @property T distanceOnSecond() const pure nothrow @safe @nogc { return _distanceOnSecond; }
 
     /// Example reading the second signed displacement.
@@ -1237,6 +1240,7 @@ public:
         cast(void) result.distanceOnSecond;
     }
     /** L1 displacement-space distance to the caller reference pair. */
+    /** L1 ranking distance relative to the caller reference pair. */
     @property T referenceDistance() const pure nothrow @safe @nogc { return _referenceDistance; }
 
     /// Example reading the closest-ranking distance.
@@ -2044,6 +2048,7 @@ public:
     }
 
     /** Coincidence relationship of the two supporting geodesics. */
+    /** Coincidence relationship of the supporting geodesics. */
     @property GeodesicIntersectionCoincidence coincidence() const
         pure nothrow @safe @nogc
     {
@@ -2108,6 +2113,7 @@ private:
     }
 
 public:
+    /** True when this enumerated intersection is valid. */
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _valid;
@@ -2226,6 +2232,7 @@ private:
     size_t _minimumFoundCapacity;
 
 public:
+    /** Enumeration status. */
     @property GeodesicIntersectionEnumerationStatus status() const
         pure nothrow @safe @nogc
     {
@@ -2240,6 +2247,7 @@ public:
             == GeodesicIntersectionEnumerationStatus.invalid);
     }
 
+    /** True when enumeration completed successfully. */
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _status == GeodesicIntersectionEnumerationStatus.success;
@@ -2251,6 +2259,7 @@ public:
         assert(!GeodesicIntersectionEnumeration.init.isValid);
     }
 
+    /** Number of intersections written to caller output storage. */
     @property size_t written() const pure nothrow @safe @nogc
     {
         return _written;
@@ -2263,6 +2272,7 @@ public:
         assert(value.written == 0);
     }
 
+    /** Exact total number of intersections in the requested region. */
     @property size_t total() const pure nothrow @safe @nogc
     {
         return _total;
@@ -2275,6 +2285,7 @@ public:
         assert(value.total == 0);
     }
 
+    /** True when output storage held only a canonical prefix. */
     @property bool truncated() const pure nothrow @safe @nogc
     {
         return _truncated;
@@ -2287,6 +2298,7 @@ public:
         assert(!value.truncated);
     }
 
+    /** Number of workspace tiles required by this enumeration. */
     @property size_t requiredTiles() const pure nothrow @safe @nogc
     {
         return _requiredTiles;
@@ -2299,6 +2311,7 @@ public:
         assert(value.requiredTiles == 0);
     }
 
+    /** Minimum observed found-entry workspace capacity required. */
     @property size_t minimumFoundCapacity() const
         pure nothrow @safe @nogc
     {
@@ -2360,6 +2373,7 @@ private:
     GeodesicIntersectionWorkspaceEntry!T[] _coincidentCenters;
 
 public:
+    /** Bind caller-owned scratch arrays into a reusable enumeration workspace. */
     static bool tryFromStorage(
         GeodesicIntersectionWorkspaceEntry!T[] starts,
         bool[] skip,
@@ -2396,6 +2410,7 @@ public:
             starts[], skip[], found[], centers[], workspace));
     }
 
+    /** True when caller-owned storage has been bound consistently. */
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _starts.length != 0
