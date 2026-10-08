@@ -2125,6 +2125,7 @@ public:
         assert(!GeodesicIntersectionPoint!double.init.isValid);
     }
 
+    /** Geographic position of the enumerated intersection. */
     @property GeographicCoordinate!T position() const
         pure nothrow @safe @nogc
     {
@@ -2138,6 +2139,7 @@ public:
         cast(void) point.position;
     }
 
+    /** Signed displacement from the first line origin. */
     @property T distanceOnFirst() const pure nothrow @safe @nogc
     {
         return _distanceOnFirst;
@@ -2150,6 +2152,7 @@ public:
         cast(void) point.distanceOnFirst;
     }
 
+    /** Signed displacement from the second line origin. */
     @property T distanceOnSecond() const pure nothrow @safe @nogc
     {
         return _distanceOnSecond;
@@ -2162,6 +2165,7 @@ public:
         cast(void) point.distanceOnSecond;
     }
 
+    /** L1 ranking distance relative to the caller reference pair. */
     @property T referenceDistance() const pure nothrow @safe @nogc
     {
         return _referenceDistance;
@@ -2174,6 +2178,7 @@ public:
         cast(void) point.referenceDistance;
     }
 
+    /** Coincidence relationship of the supporting geodesics. */
     @property GeodesicIntersectionCoincidence coincidence() const
         pure nothrow @safe @nogc
     {
