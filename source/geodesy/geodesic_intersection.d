@@ -2053,6 +2053,7 @@ private:
     GeodesicIntersectionCoincidence _coincidence =
         GeodesicIntersectionCoincidence.distinct;
 
+    /** Construct a validated enumerated intersection point. */
     static GeodesicIntersectionPoint fromComponents(
         const GeographicCoordinate!T position,
         const T distanceOnFirst,
@@ -3392,6 +3393,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Compare two workspace entries using the family duplicate tolerance. */
 private bool allIntersectionEntryEqual(T)(
     const GeodesicIntersectionWorkspaceEntry!T first,
     const GeodesicIntersectionWorkspaceEntry!T second,
@@ -3406,6 +3408,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Convert one internal displacement into opaque workspace storage. */
 private GeodesicIntersectionWorkspaceEntry!T allIntersectionEntry(T)(
     const IntersectionDisplacement!(IntersectionWorkingScalar!T) point)
     pure nothrow @safe @nogc
@@ -3433,6 +3436,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Return whether a workspace prefix already contains an equivalent point. */
 private bool allIntersectionContains(T)(
     const GeodesicIntersectionWorkspaceEntry!T[] values,
     const size_t count,
@@ -3454,6 +3458,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Append one workspace entry when caller-provided capacity permits it. */
 private bool appendAllIntersectionEntry(T)(
     GeodesicIntersectionWorkspaceEntry!T[] values,
     ref size_t count,
@@ -3469,6 +3474,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Remove stored points belonging to one normalized coincident line. */
 private void removeAllCoincidentLine(T)(
     GeodesicIntersectionWorkspaceEntry!T[] values,
     ref size_t count,
@@ -3496,6 +3502,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Compare two entries by L1 rank and deterministic displacement tie-breaks. */
 private bool allIntersectionLess(T)(
     const GeodesicIntersectionWorkspaceEntry!T first,
     const GeodesicIntersectionWorkspaceEntry!T second,
@@ -3517,6 +3524,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Sort the retained result prefix in canonical all-intersection order. */
 private void sortAllIntersections(T)(
     GeodesicIntersectionWorkspaceEntry!T[] values,
     const size_t count,
@@ -3544,6 +3552,7 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Mark later tile seeds covered by a converged intersection neighborhood. */
 private void updateAllIntersectionSkip(T)(
     bool[] skip,
     const GeodesicIntersectionWorkspaceEntry!T[] starts,
