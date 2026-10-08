@@ -1,0 +1,67 @@
+name: Geodesic prolate differential validation
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - "source/geodesy/**"
+      - "validation/geodesic_prolate_*"
+      - "validation/geodesic_nearest_geographiclib_oracle.cpp"
+      - "validation/geodesic_closest_intersection_geographiclib_oracle.cpp"
+      - "validation/geodesic_next_intersection_geographiclib_oracle.cpp"
+      - "validation/geodesic_all_intersection_geographiclib_oracle.cpp"
+      - "tools/validate-geodesic-prolate-differential.sh"
+      - ".github/workflows/geodesic-prolate-validation.yml"
+  pull_request:
+    paths:
+      - "source/geodesy/**"
+      - "validation/geodesic_prolate_*"
+      - "validation/geodesic_nearest_geographiclib_oracle.cpp"
+      - "validation/geodesic_closest_intersection_geographiclib_oracle.cpp"
+      - "validation/geodesic_next_intersection_geographiclib_oracle.cpp"
+      - "validation/geodesic_all_intersection_geographiclib_oracle.cpp"
+      - "tools/validate-geodesic-prolate-differential.sh"
+      - ".github/workflows/geodesic-prolate-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  geographiclib-differential:
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [dmd-2.111.0, ldc-1.41.0]
+
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/checkout@v6
+        with:
+          repository: geographiclib/geographiclib
+          ref: v2.7
+          path: geographiclib
+          persist-credentials: false
+
+      - uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+
+      - name: Build GeographicLib 2.7
+        run: |
+          cmake -S geographiclib -B geographiclib-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/geographiclib-2.7" \
+            -DBUILD_SHARED_LIBS=ON
+          cmake --build geographiclib-build --parallel 2
+          cmake --install geographiclib-build
+
+      - name: Run prolate differential validation
+        env:
+          GEOGRAPHICLIB_ROOT: ${{ runner.temp }}/geographiclib-2.7
+          DC: ${{ startsWith(matrix.compiler, 'dmd') && 'dmd' || 'ldc2' }}
+          CXX: g++
+        run: bash tools/validate-geodesic-prolate-differential.sh
