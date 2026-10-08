@@ -3930,6 +3930,91 @@ if (isGeodesyScalar!T)
 }
 
 
+
+/** Zero-reference one-shot overload. */
+bool tryAllGeodesicIntersections(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace,
+    out GeodesicIntersectionEnumeration enumeration)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return tryAllGeodesicIntersections(
+        solver,
+        firstLine,
+        secondLine,
+        maxDisplacement,
+        cast(T) 0,
+        cast(T) 0,
+        output,
+        workspace,
+        enumeration);
+}
+
+
+/** Throwing prepared-state zero-reference all-intersection enumeration. */
+GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace)
+    @safe
+if (isGeodesyScalar!T)
+{
+    return allGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        maxDisplacement,
+        cast(T) 0,
+        cast(T) 0,
+        output,
+        workspace);
+}
+
+
+/** Throwing one-shot all-intersection enumeration. */
+GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicIntersectionEnumeration enumeration;
+
+    if (!tryAllGeodesicIntersections(
+            solver,
+            firstLine,
+            secondLine,
+            maxDisplacement,
+            referenceOnFirst,
+            referenceOnSecond,
+            output,
+            workspace,
+            enumeration))
+    {
+        throw new GeodesyValueException(
+            "All geodesic intersections require a valid solver, valid lines, "
+            ~ "a non-negative finite displacement radius, and sufficient "
+            ~ "caller-owned workspace.");
+    }
+
+    return enumeration;
+}
+
+
 /** Throwing prepared-state all-intersection enumeration. */
 GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
     const GeodesicIntersectionSolver!T intersector,
