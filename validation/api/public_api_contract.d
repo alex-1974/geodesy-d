@@ -11,6 +11,8 @@ static assert(is(Angle!double));
 static assert(is(Latitude!double));
 static assert(is(Longitude!double));
 static assert(is(Ellipsoid!double));
+static assert(is(typeof(Ellipsoid!double.init.equatorialRadius) == double));
+static assert(is(typeof(Ellipsoid!double.init.polarRadius) == double));
 static assert(is(GeodeticCoordinate!double));
 static assert(is(GeocentricCoordinate!double));
 
