@@ -109,14 +109,29 @@ private bool validateDirectInverse(double f)
                 &m12,&M12,&M21,&S12))
             return false;
 
-        if (abs(actual.position.latitude.degrees-lat2) > 2e-9
-            || angleDelta(actual.position.longitude.degrees,lon2) > 2e-9
-            || angleDelta(actual.finalAzimuth.degrees,azi2) > 2e-9
-            || abs(q.reducedLength-m12) > 3e-5
-            || abs(q.scale12-M12) > 3e-12
-            || abs(q.scale21-M21) > 3e-12
+        const double dLat = abs(actual.position.latitude.degrees-lat2);
+        const double dLon = angleDelta(actual.position.longitude.degrees,lon2);
+        const double dAzi = angleDelta(actual.finalAzimuth.degrees,azi2);
+        const double dReduced = abs(q.reducedLength-m12);
+        const double dScale12 = abs(q.scale12-M12);
+        const double dScale21 = abs(q.scale21-M21);
+        const double dArea = abs(q.signedArea-S12);
+
+        if (dLat > 2e-9
+            || dLon > 2e-9
+            || dAzi > 2e-9
+            || dReduced > 3e-5
+            || dScale12 > 3e-12
+            || dScale21 > 3e-12
             || !closeArea(q.signedArea,S12))
+        {
+            stderr.writefln(
+                "DIRECT mismatch f=%.12g lat=%.12g lon=%.12g azi=%.12g s=%.12g "
+                ~ "dlat=%.12g dlon=%.12g dazi=%.12g dm12=%.12g dM12=%.12g dM21=%.12g dS12=%.12g",
+                f, tc.lat, tc.lon, tc.azi, tc.s,
+                dLat, dLon, dAzi, dReduced, dScale12, dScale21, dArea);
             return false;
+        }
     }
 
     struct InverseCase { double lat1,lon1,lat2,lon2; }
@@ -147,14 +162,29 @@ private bool validateDirectInverse(double f)
                 &m12,&M12,&M21,&S12))
             return false;
 
-        if (abs(actual.distance-s12) > 3e-5
-            || angleDelta(actual.initialAzimuth.degrees,azi1) > 3e-9
-            || angleDelta(actual.finalAzimuth.degrees,azi2) > 3e-9
-            || abs(q.reducedLength-m12) > 3e-5
-            || abs(q.scale12-M12) > 3e-12
-            || abs(q.scale21-M21) > 3e-12
+        const double dDistance = abs(actual.distance-s12);
+        const double dAzi1 = angleDelta(actual.initialAzimuth.degrees,azi1);
+        const double dAzi2 = angleDelta(actual.finalAzimuth.degrees,azi2);
+        const double dReduced = abs(q.reducedLength-m12);
+        const double dScale12 = abs(q.scale12-M12);
+        const double dScale21 = abs(q.scale21-M21);
+        const double dArea = abs(q.signedArea-S12);
+
+        if (dDistance > 3e-5
+            || dAzi1 > 3e-9
+            || dAzi2 > 3e-9
+            || dReduced > 3e-5
+            || dScale12 > 3e-12
+            || dScale21 > 3e-12
             || !closeArea(q.signedArea,S12))
+        {
+            stderr.writefln(
+                "INVERSE mismatch f=%.12g lat1=%.12g lon1=%.12g lat2=%.12g lon2=%.12g "
+                ~ "ds=%.12g dazi1=%.12g dazi2=%.12g dm12=%.12g dM12=%.12g dM21=%.12g dS12=%.12g",
+                f, tc.lat1, tc.lon1, tc.lat2, tc.lon2,
+                dDistance, dAzi1, dAzi2, dReduced, dScale12, dScale21, dArea);
             return false;
+        }
     }
 
     return true;
