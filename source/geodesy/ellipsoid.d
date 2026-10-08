@@ -252,10 +252,10 @@ public:
     }
 
     /**
-     * Construct from semi-major and semi-minor axes without throwing.
+     * Construct from canonical equatorial axis `a` and polar axis `b` without throwing.
      *
      * Params:
-     *     semiMajorAxis = Finite positive semi-major axis.
+     *     semiMajorAxis = Finite positive canonical equatorial semi-axis `a`.
      *     semiMinorAxis = Finite positive polar semi-axis in the same linear unit. Values greater than `semiMajorAxis` construct a prolate ellipsoid.
      *     result = Receives the constructed ellipsoid on success.
      *
@@ -278,7 +278,7 @@ public:
         return tryFromFlattening(semiMajorAxis, flattening, result);
     }
 
-    /// Example checking construction from semi-major and semi-minor axes.
+    /// Example checking construction from equatorial and polar axes.
     @safe unittest
     {
         import geodesy;
@@ -289,12 +289,12 @@ public:
     }
 
     /**
-     * Construct from semi-major and semi-minor axes or throw on invalid parameters.
+     * Construct from canonical equatorial axis `a` and polar axis `b` or throw on invalid parameters.
      *
      * Params:
-     *     semiMajorAxis = Finite positive semi-major axis.
-     *     semiMinorAxis = Finite positive semi-minor axis in the same linear unit,
-     *         with semiMinorAxis <= semiMajorAxis.
+     *     semiMajorAxis = Finite positive canonical equatorial semi-axis `a`.
+     *     semiMinorAxis = Finite positive polar semi-axis `b` in the same linear unit.
+     *         Values greater than `semiMajorAxis` construct a prolate ellipsoid.
      *
      * Returns:
      *     The constructed rotational ellipsoid.
