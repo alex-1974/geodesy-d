@@ -2,14 +2,14 @@
  * Reference ellipsoid value type, construction, and derived parameters.
  *
  * Ellipsoid makes the reference surface an explicit value instead of hidden
- * global state. It supports spherical and oblate models, preserves the
+ * global state. It supports spherical, oblate, and prolate rotational models, preserves the
  * caller-selected linear unit of the semi-major axis, and deliberately gives
  * `.init` an invalid state so accidental default construction cannot silently
  * select a plausible Earth model.
  *
  * Domain:
  *     General ellipsoid construction accepts finite `a > 0` and
- *     `0 <= f < 1`. Individual numerical operations may intentionally impose
+ *     `-1 < f < 1`. Individual numerical operations may intentionally impose
  *     narrower documented domains.
  *
  * Units:
@@ -42,8 +42,8 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
 
 
 /**
- * A spherical or oblate reference ellipsoid stored canonically as semi-major
- * axis `a` and flattening `f`.
+ * A rotational reference ellipsoid stored canonically as equatorial semi-axis
+ * `a` and flattening `f`.
  *
  * The semi-major axis defines the caller-selected linear unit. Operations
  * combining an ellipsoid with heights or Cartesian coordinates require those
@@ -51,9 +51,10 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
  * invalid so accidental default construction cannot silently select a
  * plausible Earth model.
  *
- * General construction accepts finite `a > 0` and `0 <= f < 1`.
- * `fromInverseFlattening` requires a finite inverse flattening greater than
- * one; construct spheres explicitly with `sphere`.
+ * General construction accepts finite `a > 0` and `-1 < f < 1`.
+ * `fromInverseFlattening` accepts finite negative values for prolate models
+ * and finite values greater than one for oblate models; construct spheres
+ * explicitly with `sphere`.
  *
  * Checked factories return `false` for invalid parameters. Their throwing
  * peers throw `GeodesyValueException`. Derived properties do not allocate.
@@ -150,7 +151,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
-     *     flattening = Finite flattening in the interval 0 <= f < 1.
+     *     flattening = Finite flattening in the interval -1 < f < 1.
      *
      * Returns:
      *     The constructed rotational ellipsoid.
@@ -221,7 +222,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
-     *     inverseFlattening = Finite inverse flattening greater than one.
+     *     inverseFlattening = Finite inverse flattening less than zero for prolate ellipsoids or greater than one for oblate ellipsoids.
      *
      * Returns:
      *     The constructed rotational ellipsoid.
