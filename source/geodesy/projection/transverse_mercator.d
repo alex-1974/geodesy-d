@@ -1446,6 +1446,7 @@ public:
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _ellipsoid.isValid
+            && _ellipsoid.flattening >= cast(T) 0
             && _ellipsoid.flattening <= cast(T) 0.01
             && isFiniteScalar(_scaleFactorAtNaturalOrigin)
             && _scaleFactorAtNaturalOrigin > cast(T) 0
@@ -1501,6 +1502,7 @@ public:
         pure nothrow @safe @nogc
     {
         if (!ellipsoid.isValid
+            || ellipsoid.flattening < cast(T) 0
             || ellipsoid.flattening > cast(T) 0.01
             || !isFiniteScalar(scaleFactorAtNaturalOrigin)
             || !(scaleFactorAtNaturalOrigin > cast(T) 0)
