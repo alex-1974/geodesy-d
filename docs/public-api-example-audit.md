@@ -161,6 +161,9 @@ The audit is complete when:
 | `geodesy.geocentric.GeocentricCoordinate.x` | existing | Cartesian values |
 | `geodesy.geocentric.GeocentricCoordinate.y` | existing | Cartesian values |
 | `geodesy.geocentric.GeocentricCoordinate.z` | existing | Cartesian values |
+| `geodesy.geodesic_intersection.GeodesicIntersectionSolver` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionSolver.tryFromGeodesic` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionSolver.isValid` | existing | geodesic intersections |
 | `geodesy.geodesic.Geodesic.direct` | existing | geodesics |
 | `geodesy.geodesic.Geodesic.ellipsoid` | existing | geodesics |
 | `geodesy.geodesic.Geodesic.fromEllipsoid` | existing | geodesics |
@@ -226,6 +229,15 @@ The audit is complete when:
 | `geodesy.geodesic_intersection.GeodesicClosestIntersectionResult.coincidence` | existing | geodesics |
 | `geodesy.geodesic_intersection.tryClosestGeodesicIntersection` | existing | geodesics |
 | `geodesy.geodesic_intersection.closestGeodesicIntersection` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.isValid` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.position` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.distanceOnFirst` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.distanceOnSecond` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.displacementDistance` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.coincidence` | existing | geodesics |
+| `geodesy.geodesic_intersection.tryNextGeodesicIntersection` | existing | geodesics |
+| `geodesy.geodesic_intersection.nextGeodesicIntersection` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.addPoint` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.compute` | existing | geodesics |

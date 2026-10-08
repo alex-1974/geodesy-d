@@ -707,6 +707,22 @@ private void geodesicM2ThrowingApiContract()
     const closestReferenceDistance = closestIntersection.referenceDistance;
     const closestCoincidence = closestIntersection.coincidence;
 
+    GeodesicNextIntersectionResult!double nextIntersection;
+
+    tryNextGeodesicIntersection(
+        solver,
+        start,
+        Angle!double.fromDegrees(30.0),
+        Angle!double.fromDegrees(120.0),
+        nextIntersection);
+
+    const nextValid = nextIntersection.isValid;
+    const nextPosition = nextIntersection.position;
+    const nextFirst = nextIntersection.distanceOnFirst;
+    const nextSecond = nextIntersection.distanceOnSecond;
+    const nextDisplacement = nextIntersection.displacementDistance;
+    const nextCoincidence = nextIntersection.coincidence;
+
     auto polygon =
         GeodesicPolygonAccumulator!double.fromGeodesic(
             solver);
@@ -736,6 +752,12 @@ private void geodesicM2ThrowingApiContract()
     cast(void) closestSecond;
     cast(void) closestReferenceDistance;
     cast(void) closestCoincidence;
+    cast(void) nextValid;
+    cast(void) nextPosition;
+    cast(void) nextFirst;
+    cast(void) nextSecond;
+    cast(void) nextDisplacement;
+    cast(void) nextCoincidence;
     cast(void) measurement;
 }
 
