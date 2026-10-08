@@ -1449,7 +1449,114 @@ if (isGeodesyScalar!W)
     return candidate.y < best.y;
 }
 
-/** Find the closest intersection of two prepared oriented geodesics. */
+/** Find the closest intersection using already prepared family state. */
+private bool tryClosestGeodesicIntersectionPrepared(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    const IntersectionWorkingScalar!T authalicRadius,
+    const IntersectionWorkingScalar!T t1,
+    const IntersectionWorkingScalar!T d1,
+    const IntersectionWorkingScalar!T delta,
+    out GeodesicClosestIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+    result = GeodesicClosestIntersectionResult!T.init;
+
+    if (!solver.isValid || !firstLine.isValid || !secondLine.isValid
+        || !isFiniteGeodesyScalar(referenceOnFirst)
+        || !isFiniteGeodesyScalar(referenceOnSecond))
+        return false;
+
+    const PreparedSegment!T first = PreparedSegment!T(cast(T) 0, firstLine);
+    const PreparedSegment!T second = PreparedSegment!T(cast(T) 0, secondLine);
+    const IntersectionDisplacement!W reference =
+        IntersectionDisplacement!W(
+            cast(W) referenceOnFirst, cast(W) referenceOnSecond, 0);
+    const int[5] xs = [0, 1, -1, 0, 0];
+    const int[5] ys = [0, 0, 0, 1, -1];
+    bool[5] skip;
+    bool haveBest;
+    IntersectionDisplacement!W best;
+
+    foreach (n; 0 .. 5)
+    {
+        if (skip[n]) continue;
+        IntersectionDisplacement!W candidate;
+
+        if (!tryBasicIntersection!T(
+                solver, first, second, authalicRadius,
+                IntersectionDisplacement!W(
+                    reference.x + cast(W) xs[n] * d1,
+                    reference.y + cast(W) ys[n] * d1, 0),
+                candidate))
+            return false;
+
+        candidate = fixClosestCoincident!W(reference, candidate);
+
+        if (haveBest && intersectionL1!W(best, candidate) <= delta)
+            continue;
+
+        if (intersectionL1!W(candidate, reference) < t1)
+        {
+            best = candidate;
+            haveBest = true;
+            break;
+        }
+
+        if (!haveBest || closestIntersectionBetter!W(candidate, best, reference))
+        {
+            best = candidate;
+            haveBest = true;
+        }
+
+        foreach (m; n + 1 .. 5)
+        {
+            const auto seed = IntersectionDisplacement!W(
+                reference.x + cast(W) xs[m] * d1,
+                reference.y + cast(W) ys[m] * d1, 0);
+
+            if (intersectionL1!W(candidate, seed)
+                < cast(W) 2 * t1 - d1 - delta)
+                skip[m] = true;
+        }
+    }
+
+    if (!haveBest)
+        return false;
+
+    GeodesicDirectResult!T position;
+
+    if (!firstLine.tryPosition(cast(T) best.x, position))
+        return false;
+
+    const GeodesicIntersectionCoincidence coincidence =
+        best.coincidence > 0
+            ? GeodesicIntersectionCoincidence.parallel
+            : best.coincidence < 0
+                ? GeodesicIntersectionCoincidence.antiparallel
+                : GeodesicIntersectionCoincidence.distinct;
+
+    result = GeodesicClosestIntersectionResult!T.fromComponents(
+        position.position,
+        cast(T) best.x,
+        cast(T) best.y,
+        cast(T) intersectionL1!W(best, reference),
+        coincidence);
+
+    return true;
+}
+
+/**
+ * Find the closest intersection of two prepared oriented geodesics.
+ *
+ * This one-shot overload preserves the established API. Repeated callers can
+ * prepare `GeodesicIntersectionSolver` once and use the matching overload.
+ */
 bool tryClosestGeodesicIntersection(T)(
     const Geodesic!T solver,
     const GeodesicLine!T firstLine,
@@ -1462,81 +1569,65 @@ if (isGeodesyScalar!T)
 {
     alias W = IntersectionWorkingScalar!T;
     result = GeodesicClosestIntersectionResult!T.init;
-    if (!solver.isValid || !firstLine.isValid || !secondLine.isValid
-        || !isFiniteGeodesyScalar(referenceOnFirst)
-        || !isFiniteGeodesyScalar(referenceOnSecond))
+
+    if (!solver.isValid)
         return false;
+
     W authalicRadius;
+
     if (!tryAuthalicRadius!T(solver, authalicRadius))
         return false;
-    W t1, d1, delta;
+
+    W t1;
+    W d1;
+    W delta;
+
     if (!tryClosestIntersectionSpacing!T(
             solver, authalicRadius, t1, d1, delta))
         return false;
-    const PreparedSegment!T first = PreparedSegment!T(cast(T) 0, firstLine);
-    const PreparedSegment!T second = PreparedSegment!T(cast(T) 0, secondLine);
-    const IntersectionDisplacement!W reference =
-        IntersectionDisplacement!W(
-            cast(W) referenceOnFirst, cast(W) referenceOnSecond, 0);
-    const int[5] xs = [0, 1, -1, 0, 0];
-    const int[5] ys = [0, 0, 0, 1, -1];
-    bool[5] skip;
-    bool haveBest;
-    IntersectionDisplacement!W best;
-    foreach (n; 0 .. 5)
-    {
-        if (skip[n]) continue;
-        IntersectionDisplacement!W candidate;
-        if (!tryBasicIntersection!T(
-                solver, first, second, authalicRadius,
-                IntersectionDisplacement!W(
-                    reference.x + cast(W) xs[n] * d1,
-                    reference.y + cast(W) ys[n] * d1, 0),
-                candidate))
-            return false;
-        candidate = fixClosestCoincident!W(reference, candidate);
-        if (haveBest && intersectionL1!W(best, candidate) <= delta)
-            continue;
-        if (intersectionL1!W(candidate, reference) < t1)
-        {
-            best = candidate;
-            haveBest = true;
-            break;
-        }
-        if (!haveBest || closestIntersectionBetter!W(candidate, best, reference))
-        {
-            best = candidate;
-            haveBest = true;
-        }
-        foreach (m; n + 1 .. 5)
-        {
-            const auto seed = IntersectionDisplacement!W(
-                reference.x + cast(W) xs[m] * d1,
-                reference.y + cast(W) ys[m] * d1, 0);
-            if (intersectionL1!W(candidate, seed)
-                < cast(W) 2 * t1 - d1 - delta)
-                skip[m] = true;
-        }
-    }
-    if (!haveBest)
-        return false;
-    GeodesicDirectResult!T position;
-    if (!firstLine.tryPosition(cast(T) best.x, position))
-        return false;
-    GeodesicIntersectionCoincidence coincidence =
-        best.coincidence > 0
-            ? GeodesicIntersectionCoincidence.parallel
-            : best.coincidence < 0
-                ? GeodesicIntersectionCoincidence.antiparallel
-                : GeodesicIntersectionCoincidence.distinct;
-    result = GeodesicClosestIntersectionResult!T.fromComponents(
-        position.position,
-        cast(T) best.x,
-        cast(T) best.y,
-        cast(T) intersectionL1!W(best, reference),
-        coincidence);
-    return true;
+
+    return tryClosestGeodesicIntersectionPrepared!T(
+        solver,
+        firstLine,
+        secondLine,
+        referenceOnFirst,
+        referenceOnSecond,
+        authalicRadius,
+        t1,
+        d1,
+        delta,
+        result);
 }
+
+/** Find the closest intersection using reusable intersection-family state. */
+bool tryClosestGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    out GeodesicClosestIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    result = GeodesicClosestIntersectionResult!T.init;
+
+    if (!intersector._valid)
+        return false;
+
+    return tryClosestGeodesicIntersectionPrepared!T(
+        intersector._solver,
+        firstLine,
+        secondLine,
+        referenceOnFirst,
+        referenceOnSecond,
+        intersector._authalicRadius,
+        intersector._closestT1,
+        intersector._closestD1,
+        intersector._closestDelta,
+        result);
+}
+
 
 /** Zero-reference prepared-line overload. */
 bool tryClosestGeodesicIntersection(T)(
@@ -1549,6 +1640,19 @@ if (isGeodesyScalar!T)
 {
     return tryClosestGeodesicIntersection(
         solver, firstLine, secondLine, cast(T) 0, cast(T) 0, result);
+}
+
+/** Zero-reference overload using reusable intersection-family state. */
+bool tryClosestGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    out GeodesicClosestIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return tryClosestGeodesicIntersection(
+        intersector, firstLine, secondLine, cast(T) 0, cast(T) 0, result);
 }
 
 /** Construct lines from origins and azimuths and find the closest intersection. */
@@ -1577,6 +1681,42 @@ if (isGeodesyScalar!T)
         referenceOnFirst, referenceOnSecond, result);
 }
 
+/** Construct lines and find the closest intersection using reusable family state. */
+bool tryClosestGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeographicCoordinate!T firstStart,
+    const Angle!T firstAzimuth,
+    const GeographicCoordinate!T secondStart,
+    const Angle!T secondAzimuth,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    out GeodesicClosestIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    result = GeodesicClosestIntersectionResult!T.init;
+
+    if (!intersector._valid)
+        return false;
+
+    GeodesicLine!T firstLine;
+    GeodesicLine!T secondLine;
+
+    if (!GeodesicLine!T.tryFromGeodesic(
+            intersector._solver, firstStart, firstAzimuth, firstLine)
+        || !GeodesicLine!T.tryFromGeodesic(
+            intersector._solver, secondStart, secondAzimuth, secondLine))
+        return false;
+
+    return tryClosestGeodesicIntersection(
+        intersector,
+        firstLine,
+        secondLine,
+        referenceOnFirst,
+        referenceOnSecond,
+        result);
+}
+
 /** Zero-reference origin/azimuth overload. */
 bool tryClosestGeodesicIntersection(T)(
     const Geodesic!T solver,
@@ -1591,6 +1731,28 @@ if (isGeodesyScalar!T)
     return tryClosestGeodesicIntersection(
         solver, firstStart, firstAzimuth, secondStart, secondAzimuth,
         cast(T) 0, cast(T) 0, result);
+}
+
+/** Zero-reference origin/azimuth overload using reusable family state. */
+bool tryClosestGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeographicCoordinate!T firstStart,
+    const Angle!T firstAzimuth,
+    const GeographicCoordinate!T secondStart,
+    const Angle!T secondAzimuth,
+    out GeodesicClosestIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return tryClosestGeodesicIntersection(
+        intersector,
+        firstStart,
+        firstAzimuth,
+        secondStart,
+        secondAzimuth,
+        cast(T) 0,
+        cast(T) 0,
+        result);
 }
 
 /// Example checking the closest intersection of two oriented geodesics without throwing.
@@ -1819,8 +1981,9 @@ public:
  * family once. In particular, oblate next-intersection spacing is prepared
  * here instead of being recomputed for every pair of lines.
  *
- * This type is experimental on the research branch and is not yet part of the
- * production API contract.
+ * The prepared value is immutable-by-convention after construction and can be
+ * reused across independent line pairs. One-shot overloads remain available
+ * for occasional calls and use the same mathematical kernels.
  *
  * .init is invalid.
  */
@@ -1833,13 +1996,24 @@ private:
     bool _valid;
     Geodesic!T _solver;
     W _authalicRadius = W.nan;
+
+    W _closestT1 = W.nan;
+    W _closestD1 = W.nan;
+    W _closestDelta = W.nan;
+
     W _nextT1 = W.nan;
     W _nextD2 = W.nan;
     W _nextDelta = W.nan;
     W _halfCircumference = W.nan;
 
 public:
-    /** Prepare reusable intersection state from a valid geodesic solver. */
+    /**
+     * Prepare reusable invariant state for the oriented-intersection family.
+     *
+     * Closest and next-intersection searches share the same geodesic solver
+     * and authalic scale. Their ellipsoid-dependent seed spacings are derived
+     * once here and reused by every prepared operation.
+     */
     static bool tryFromGeodesic(
         const Geodesic!T solver,
         out GeodesicIntersectionSolver result)
@@ -1857,36 +2031,98 @@ public:
                 authalicRadius))
             return false;
 
-        W t1;
-        W d2;
-        W delta;
+        W closestT1;
+        W closestD1;
+        W closestDelta;
+
+        if (!tryClosestIntersectionSpacing!T(
+                solver,
+                authalicRadius,
+                closestT1,
+                closestD1,
+                closestDelta))
+            return false;
+
+        W nextT1;
+        W nextD2;
+        W nextDelta;
         W halfCircumference;
 
         if (!tryNextIntersectionSpacing!T(
                 solver,
                 authalicRadius,
-                t1,
-                d2,
-                delta,
+                nextT1,
+                nextD2,
+                nextDelta,
                 halfCircumference))
             return false;
 
         result._solver = solver;
         result._authalicRadius = authalicRadius;
-        result._nextT1 = t1;
-        result._nextD2 = d2;
-        result._nextDelta = delta;
+
+        result._closestT1 = closestT1;
+        result._closestD1 = closestD1;
+        result._closestDelta = closestDelta;
+
+        result._nextT1 = nextT1;
+        result._nextD2 = nextD2;
+        result._nextDelta = nextDelta;
         result._halfCircumference = halfCircumference;
+
         result._valid = true;
         return true;
     }
 
-    /** True when invariant intersection setup was prepared successfully. */
+    /** True when invariant intersection-family setup was prepared successfully. */
     @property bool isValid() const
         pure nothrow @safe @nogc
     {
         return _valid;
     }
+}
+
+
+/// Prepared state is valid and preserves closest-search results.
+@safe unittest
+{
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+
+    GeodesicIntersectionSolver!double intersector;
+    assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+        solver, intersector));
+    assert(intersector.isValid);
+
+    const firstStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(-20.0));
+    const secondStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(10.0),
+        Longitude!double.fromDegrees(20.0));
+
+    GeodesicClosestIntersectionResult!double oneShot;
+    GeodesicClosestIntersectionResult!double prepared;
+
+    assert(tryClosestGeodesicIntersection(
+        solver,
+        firstStart,
+        Angle!double.fromDegrees(45.0),
+        secondStart,
+        Angle!double.fromDegrees(-60.0),
+        oneShot));
+
+    assert(tryClosestGeodesicIntersection(
+        intersector,
+        firstStart,
+        Angle!double.fromDegrees(45.0),
+        secondStart,
+        Angle!double.fromDegrees(-60.0),
+        prepared));
+
+    assert(prepared.position == oneShot.position);
+    assert(prepared.distanceOnFirst == oneShot.distanceOnFirst);
+    assert(prepared.distanceOnSecond == oneShot.distanceOnSecond);
+    assert(prepared.referenceDistance == oneShot.referenceDistance);
+    assert(prepared.coincidence == oneShot.coincidence);
 }
 
 
@@ -2513,6 +2749,43 @@ if (isGeodesyScalar!T)
         result);
 }
 
+
+/** Construct common-origin lines and find the next crossing using reusable family state. */
+bool tryNextGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeographicCoordinate!T knownIntersection,
+    const Angle!T firstAzimuth,
+    const Angle!T secondAzimuth,
+    out GeodesicNextIntersectionResult!T result)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    result = GeodesicNextIntersectionResult!T.init;
+
+    if (!intersector._valid)
+        return false;
+
+    GeodesicLine!T firstLine;
+    GeodesicLine!T secondLine;
+
+    if (!GeodesicLine!T.tryFromGeodesic(
+            intersector._solver,
+            knownIntersection,
+            firstAzimuth,
+            firstLine)
+        || !GeodesicLine!T.tryFromGeodesic(
+            intersector._solver,
+            knownIntersection,
+            secondAzimuth,
+            secondLine))
+        return false;
+
+    return tryNextGeodesicIntersection(
+        intersector,
+        firstLine,
+        secondLine,
+        result);
+}
 
 /// Example finding the next intersection without throwing.
 @safe unittest
