@@ -86,8 +86,8 @@ static Ellipsoid fromCanonicalUnchecked(const T semiMajorAxis, const T flattenin
 
 public:
     /**
-     * True when this value represents a supported spherical or oblate
-     * ellipsoid.
+     * True when this value represents a finite rotational ellipsoid.
+     * Negative flattening denotes a prolate ellipsoid.
      *
      * In particular, `Ellipsoid!T.init.isValid` is false.
      */
@@ -96,7 +96,7 @@ public:
         return isFiniteGeodesyScalar(_semiMajorAxis)
             && _semiMajorAxis > cast(T) 0
             && isFiniteGeodesyScalar(_flattening)
-            && _flattening >= cast(T) 0
+            && _flattening > cast(T) -1
             && _flattening < cast(T) 1;
     }
 
@@ -113,7 +113,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
-     *     flattening = Finite flattening in the interval 0 <= f < 1.
+     *     flattening = Finite flattening in the interval -1 < f < 1.
      *     result = Receives the constructed ellipsoid on success.
      *
      * Returns:
@@ -128,7 +128,7 @@ public:
     {
         if (!isFiniteGeodesyScalar(semiMajorAxis) || semiMajorAxis <= 0)
             return false;
-        if (!isFiniteGeodesyScalar(flattening) || flattening < 0 || flattening >= 1)
+        if (!isFiniteGeodesyScalar(flattening) || flattening <= -1 || flattening >= 1)
             return false;
 
         result = fromCanonicalUnchecked(semiMajorAxis, flattening);
@@ -153,7 +153,7 @@ public:
      *     flattening = Finite flattening in the interval 0 <= f < 1.
      *
      * Returns:
-     *     The constructed spherical or oblate ellipsoid.
+     *     The constructed rotational ellipsoid.
      *
      * Throws:
      *     `GeodesyValueException` for invalid parameters.
@@ -164,7 +164,7 @@ public:
         Ellipsoid result;
         if (!tryFromFlattening(semiMajorAxis, flattening, result))
             throw new GeodesyValueException(
-                "Ellipsoid requires finite a > 0 and finite flattening 0 <= f < 1.");
+                "Ellipsoid requires finite a > 0 and finite flattening -1 < f < 1.");
         return result;
     }
 
@@ -182,7 +182,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
-     *     inverseFlattening = Finite inverse flattening greater than one.
+     *     inverseFlattening = Finite inverse flattening less than zero for prolate ellipsoids or greater than one for oblate ellipsoids.
      *     result = Receives the constructed ellipsoid on success.
      *
      * Returns:
@@ -196,7 +196,9 @@ public:
         out Ellipsoid result)
         pure nothrow @safe @nogc
     {
-        if (!isFiniteGeodesyScalar(inverseFlattening) || inverseFlattening <= 1)
+        if (!isFiniteGeodesyScalar(inverseFlattening)
+            || inverseFlattening == 0
+            || (inverseFlattening > 0 && inverseFlattening <= 1))
             return false;
         return tryFromFlattening(
             semiMajorAxis,
@@ -222,7 +224,7 @@ public:
      *     inverseFlattening = Finite inverse flattening greater than one.
      *
      * Returns:
-     *     The constructed oblate ellipsoid.
+     *     The constructed rotational ellipsoid.
      *
      * Throws:
      *     `GeodesyValueException` for invalid parameters. Use `sphere` for a sphere.
@@ -235,7 +237,7 @@ public:
         Ellipsoid result;
         if (!tryFromInverseFlattening(semiMajorAxis, inverseFlattening, result))
             throw new GeodesyValueException(
-                "Inverse flattening must be finite and greater than 1; use sphere(radius) for a sphere.");
+                "Inverse flattening must be finite and either negative or greater than 1; use sphere(radius) for a sphere.");
         return result;
     }
 
@@ -253,8 +255,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis.
-     *     semiMinorAxis = Finite positive semi-minor axis in the same linear unit,
-     *         with semiMinorAxis <= semiMajorAxis.
+     *     semiMinorAxis = Finite positive polar semi-axis in the same linear unit. Values greater than `semiMajorAxis` construct a prolate ellipsoid.
      *     result = Receives the constructed ellipsoid on success.
      *
      * Returns:
@@ -269,7 +270,7 @@ public:
     {
         if (!isFiniteGeodesyScalar(semiMajorAxis) || semiMajorAxis <= 0)
             return false;
-        if (!isFiniteGeodesyScalar(semiMinorAxis) || semiMinorAxis <= 0 || semiMinorAxis > semiMajorAxis)
+        if (!isFiniteGeodesyScalar(semiMinorAxis) || semiMinorAxis <= 0)
             return false;
 
         const T flattening = (semiMajorAxis - semiMinorAxis) / semiMajorAxis;
@@ -295,7 +296,7 @@ public:
      *         with semiMinorAxis <= semiMajorAxis.
      *
      * Returns:
-     *     The constructed spherical or oblate ellipsoid.
+     *     The constructed rotational ellipsoid.
      *
      * Throws:
      *     `GeodesyValueException` for invalid axes.
@@ -306,7 +307,7 @@ public:
         Ellipsoid result;
         if (!tryFromAxes(semiMajorAxis, semiMinorAxis, result))
             throw new GeodesyValueException(
-                "Ellipsoid axes must be finite with a > 0 and 0 < b <= a.");
+                "Ellipsoid axes must be finite with a > 0, b > 0, and -1 < (a-b)/a < 1.");
         return result;
     }
 
@@ -374,8 +375,18 @@ public:
         assert(sphere.semiMajorAxis == sphere.semiMinorAxis);
     }
 
-    /** Semi-major axis `a` in the ellipsoid linear unit. */
+    /** Canonical equatorial semi-axis `a` in the ellipsoid linear unit.
+     *
+     * The historic `semiMajorAxis` name is retained for API compatibility.
+     * For prolate ellipsoids `a` is geometrically the smaller semi-axis.
+     */
     @property T semiMajorAxis() const pure nothrow @safe @nogc
+    {
+        return _semiMajorAxis;
+    }
+
+    /** Equatorial radius alias for the canonical semi-axis `a`. */
+    @property T equatorialRadius() const pure nothrow @safe @nogc
     {
         return _semiMajorAxis;
     }
@@ -400,10 +411,20 @@ public:
         assert(wgs84!double().flattening > 0.0);
     }
 
-    /** Derived semi-minor axis `b = a(1-f)`. */
+    /** Derived polar semi-axis `b = a(1-f)`.
+     *
+     * The historic `semiMinorAxis` name is retained for API compatibility.
+     * For prolate ellipsoids `b > a`.
+     */
     @property T semiMinorAxis() const pure nothrow @safe @nogc
     {
         return _semiMajorAxis * (cast(T) 1 - _flattening);
+    }
+
+    /** Polar radius alias for the derived semi-axis `b = a(1-f)`. */
+    @property T polarRadius() const pure nothrow @safe @nogc
+    {
+        return semiMinorAxis;
     }
 
     /// Example reading the derived semi-minor axis.
@@ -427,7 +448,7 @@ public:
         assert(wgs84!double().inverseFlattening > 298.0);
     }
 
-    /** First eccentricity squared `e²`. */
+    /** Signed first eccentricity squared `e² = f(2-f)`; negative for prolate ellipsoids. */
     @property T firstEccentricitySquared() const pure nothrow @safe @nogc
     {
         return _flattening * (cast(T) 2 - _flattening);
@@ -440,7 +461,7 @@ public:
         assert(wgs84!double().firstEccentricitySquared > 0.0);
     }
 
-    /** Second eccentricity squared (e′²). */
+    /** Signed second eccentricity squared (e′²); negative for prolate ellipsoids. */
     @property T secondEccentricitySquared() const pure nothrow @safe @nogc
     {
         const T e2 = firstEccentricitySquared;
@@ -454,7 +475,7 @@ public:
         assert(wgs84!double().secondEccentricitySquared > 0.0);
     }
 
-    /** Third flattening `n = f/(2-f)`. */
+    /** Signed third flattening `n = f/(2-f)`. */
     @property T thirdFlattening() const pure nothrow @safe @nogc
     {
         return _flattening / (cast(T) 2 - _flattening);
@@ -466,6 +487,36 @@ public:
         import geodesy;
         assert(wgs84!double().thirdFlattening > 0.0);
     }
+}
+
+/// Prolate rotational ellipsoids are representable independently of geodesic admission.
+@safe unittest
+{
+    import geodesy;
+
+    const prolate = Ellipsoid!double.fromFlattening(
+        6_378_137.0,
+        -0.01);
+
+    assert(prolate.isValid);
+    assert(prolate.flattening < 0.0);
+    assert(prolate.polarRadius > prolate.equatorialRadius);
+    assert(prolate.semiMinorAxis > prolate.semiMajorAxis);
+    assert(prolate.firstEccentricitySquared < 0.0);
+    assert(prolate.secondEccentricitySquared < 0.0);
+    assert(prolate.thirdFlattening < 0.0);
+
+    const fromInverse = Ellipsoid!double.fromInverseFlattening(
+        6_378_137.0,
+        -100.0);
+
+    assert(fromInverse.flattening == -0.01);
+
+    const fromAxes = Ellipsoid!double.fromAxes(
+        6_378_137.0,
+        6_441_918.37);
+
+    assert(fromAxes.flattening < 0.0);
 }
 
 /// Example constructing Earth and spherical ellipsoids.
