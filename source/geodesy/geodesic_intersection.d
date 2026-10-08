@@ -41,6 +41,7 @@ import geodesy.angle :
     Latitude,
     Longitude;
 import geodesy.ellipsoid :
+    Ellipsoid,
     wgs84;
 import geodesy.errors :
     GeodesyValueException;
