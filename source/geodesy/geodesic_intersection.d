@@ -2077,10 +2077,23 @@ public:
         return _valid;
     }
 
+    /// Example checking the default invalid point state.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionPoint!double.init.isValid);
+    }
+
     @property GeographicCoordinate!T position() const
         pure nothrow @safe @nogc
     {
         return _position;
+    }
+
+    /// Example reading the default position.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.position;
     }
 
     @property T distanceOnFirst() const pure nothrow @safe @nogc
@@ -2088,9 +2101,23 @@ public:
         return _distanceOnFirst;
     }
 
+    /// Example reading the first signed displacement.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.distanceOnFirst;
+    }
+
     @property T distanceOnSecond() const pure nothrow @safe @nogc
     {
         return _distanceOnSecond;
+    }
+
+    /// Example reading the second signed displacement.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.distanceOnSecond;
     }
 
     @property T referenceDistance() const pure nothrow @safe @nogc
@@ -2098,11 +2125,33 @@ public:
         return _referenceDistance;
     }
 
+    /// Example reading the L1 rank.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.referenceDistance;
+    }
+
     @property GeodesicIntersectionCoincidence coincidence() const
         pure nothrow @safe @nogc
     {
         return _coincidence;
     }
+
+    /// Example reading the default coincidence classification.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        assert(point.coincidence
+            == GeodesicIntersectionCoincidence.distinct);
+    }
+}
+
+/// Example using the all-intersection point type.
+@safe unittest
+{
+    GeodesicIntersectionPoint!double point;
+    assert(!point.isValid);
 }
 
 
@@ -2113,6 +2162,13 @@ enum GeodesicIntersectionEnumerationStatus
     success,
     workspaceTooSmall,
     numericalFailure
+}
+
+/// Example distinguishing success from insufficient workspace.
+@safe unittest
+{
+    assert(GeodesicIntersectionEnumerationStatus.success
+        != GeodesicIntersectionEnumerationStatus.workspaceTooSmall);
 }
 
 
@@ -2140,9 +2196,23 @@ public:
         return _status;
     }
 
+    /// Example reading the default status.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.status
+            == GeodesicIntersectionEnumerationStatus.invalid);
+    }
+
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _status == GeodesicIntersectionEnumerationStatus.success;
+    }
+
+    /// Example checking the default invalid enumeration.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionEnumeration.init.isValid);
     }
 
     @property size_t written() const pure nothrow @safe @nogc
@@ -2150,9 +2220,23 @@ public:
         return _written;
     }
 
+    /// Example reading the written count.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.written == 0);
+    }
+
     @property size_t total() const pure nothrow @safe @nogc
     {
         return _total;
+    }
+
+    /// Example reading the total count.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.total == 0);
     }
 
     @property bool truncated() const pure nothrow @safe @nogc
@@ -2160,9 +2244,23 @@ public:
         return _truncated;
     }
 
+    /// Example reading truncation metadata.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(!value.truncated);
+    }
+
     @property size_t requiredTiles() const pure nothrow @safe @nogc
     {
         return _requiredTiles;
+    }
+
+    /// Example reading the required tile count.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.requiredTiles == 0);
     }
 
     @property size_t minimumFoundCapacity() const
@@ -2170,6 +2268,20 @@ public:
     {
         return _minimumFoundCapacity;
     }
+
+    /// Example reading the observed result-workspace requirement.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.minimumFoundCapacity == 0);
+    }
+}
+
+/// Example using enumeration metadata.
+@safe unittest
+{
+    GeodesicIntersectionEnumeration value;
+    assert(!value.isValid);
 }
 
 
@@ -2187,6 +2299,13 @@ private:
     W _x = W.nan;
     W _y = W.nan;
     int _coincidence;
+}
+
+/// Example allocating opaque workspace entries.
+@safe unittest
+{
+    GeodesicIntersectionWorkspaceEntry!double[4] entries;
+    assert(entries.length == 4);
 }
 
 
@@ -2228,6 +2347,19 @@ public:
         return true;
     }
 
+    /// Example preparing caller-owned workspace.
+    @safe unittest
+    {
+        GeodesicIntersectionWorkspaceEntry!double[4] starts;
+        bool[4] skip;
+        GeodesicIntersectionWorkspaceEntry!double[8] found;
+        GeodesicIntersectionWorkspaceEntry!double[4] centers;
+        GeodesicIntersectionWorkspace!double workspace;
+
+        assert(GeodesicIntersectionWorkspace!double.tryFromStorage(
+            starts[], skip[], found[], centers[], workspace));
+    }
+
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _starts.length != 0
@@ -2235,6 +2367,19 @@ public:
             && _found.length != 0
             && _coincidentCenters.length != 0;
     }
+
+    /// Example checking the default invalid workspace.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionWorkspace!double.init.isValid);
+    }
+}
+
+/// Example using the workspace type.
+@safe unittest
+{
+    GeodesicIntersectionWorkspace!double workspace;
+    assert(!workspace.isValid);
 }
 
 
