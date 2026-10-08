@@ -161,6 +161,9 @@ The audit is complete when:
 | `geodesy.geocentric.GeocentricCoordinate.x` | existing | Cartesian values |
 | `geodesy.geocentric.GeocentricCoordinate.y` | existing | Cartesian values |
 | `geodesy.geocentric.GeocentricCoordinate.z` | existing | Cartesian values |
+| `geodesy.geodesic_intersection.GeodesicIntersectionSolver` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionSolver.tryFromGeodesic` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionSolver.isValid` | existing | geodesic intersections |
 | `geodesy.geodesic.Geodesic.direct` | existing | geodesics |
 | `geodesy.geodesic.Geodesic.ellipsoid` | existing | geodesics |
 | `geodesy.geodesic.Geodesic.fromEllipsoid` | existing | geodesics |
