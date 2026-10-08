@@ -124,11 +124,14 @@ void main()
 
 **Current stable feature release: v1.2.0.**
 
-v1.2.0 completes M3 — Navigation & Polar Geodesy. Post-v1.2 development has
-also completed M4 — Reference Frames on `develop`, adding strong epoch
-semantics, dynamic 14-parameter Helmert transformations, and admitted
-Molodensky-Badekas support while deferring direct Molodensky pending a concrete
-consumer/interoperability need.
+v1.2.0 completes M3 — Navigation & Polar Geodesy. The current `develop` line
+has since completed M4 — Reference Frames and M5 — Advanced Ellipsoidal
+Geometry, including the qualified prolate geodesic domain.
+
+The next release target is **v2.0.0**, planned primarily as a consolidation and
+API-stabilization release rather than another breadth milestone. Physical
+geodesy / gravity work remains research-only for now and is not part of the
+initial v2.0 scope.
 
 ## Documentation
 
