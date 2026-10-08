@@ -247,6 +247,59 @@ private void validateScalar(T)()
         poleDirect.finalAzimuth.radians
         == poleDirect.finalAzimuth.radians);
 
+    /*
+     * #69 prolate admission: the portable scalar path must construct and solve
+     * ordinary non-spherical direct/inverse cases at the qualified lower
+     * flattening bound. GeographicLib differential accuracy is gated
+     * separately in binary64; this freezes generic scalar viability.
+     */
+    const T prolateA =
+        cast(T) 6_378_137.0L;
+
+    const prolateSolver =
+        Geodesic!T.fromEllipsoid(
+            Ellipsoid!T.fromFlattening(
+                prolateA,
+                cast(T) -0.01L));
+
+    const prolateStart =
+        GeographicCoordinate!T.fromComponents(
+            Latitude!T.fromDegrees(cast(T) 12.5L),
+            Longitude!T.fromDegrees(cast(T) -33.0L));
+
+    GeodesicDirectResult!T prolateDirect;
+
+    assert(prolateSolver.tryDirect(
+        prolateStart,
+        Angle!T.fromDegrees(cast(T) 47.0L),
+        cast(T) 2_500_000.0L,
+        prolateDirect));
+
+    assert(
+        prolateDirect.position.latitude.radians
+        == prolateDirect.position.latitude.radians);
+
+    assert(
+        prolateDirect.position.longitude.radians
+        == prolateDirect.position.longitude.radians);
+
+    GeodesicInverseResult!T prolateInverse;
+
+    assert(prolateSolver.tryInverse(
+        prolateStart,
+        GeographicCoordinate!T.fromComponents(
+            Latitude!T.fromDegrees(cast(T) -25.0L),
+            Longitude!T.fromDegrees(cast(T) 130.0L)),
+        prolateInverse));
+
+    assert(prolateInverse.distance > cast(T) 0);
+    assert(
+        prolateInverse.initialAzimuth.radians
+        == prolateInverse.initialAzimuth.radians);
+    assert(
+        prolateInverse.finalAzimuth.radians
+        == prolateInverse.finalAzimuth.radians);
+
     writefln(
         "%s: PASS",
         scalarName!T);
