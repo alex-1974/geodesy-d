@@ -663,9 +663,9 @@ public:
 /**
  * Prepared direct/inverse geodesic solver for one reference ellipsoid.
  *
- * Supported ellipsoids satisfy `a > 0` and `0 <= f <= 0.01`; no Earth-size
+ * Supported ellipsoids satisfy `a > 0` and `-0.01 <= f <= 0.01`; no Earth-size
  * restriction applies. Linear distances use the same unit as the ellipsoid
- * semi-major axis. Exact spheres and supported oblate ellipsoids are handled.
+ * semi-major axis. Exact spheres and supported oblate/prolate ellipsoids are handled.
  *
  * `.init` is invalid. Prepare a solver once and reuse it for multiple direct
  * or inverse operations.
@@ -890,7 +890,7 @@ bool tryDirectEllipsoidImpl(
 
         /*
          * Invert the distance series.  The support profile is
-         * 0 <= f <= 0.01, so GeographicLib's >0.01 Newton
+         * abs(f) <= 0.01, so the broader-flattening Newton
          * correction is deliberately unnecessary here.
          */
         const W sigma12 =
