@@ -238,6 +238,28 @@ The audit is complete when:
 | `geodesy.geodesic_intersection.GeodesicNextIntersectionResult.coincidence` | existing | geodesics |
 | `geodesy.geodesic_intersection.tryNextGeodesicIntersection` | existing | geodesics |
 | `geodesy.geodesic_intersection.nextGeodesicIntersection` | existing | geodesics |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint.isValid` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint.position` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint.distanceOnFirst` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint.distanceOnSecond` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint.referenceDistance` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionPoint.coincidence` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumerationStatus` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.status` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.isValid` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.written` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.total` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.truncated` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.requiredTiles` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionEnumeration.minimumFoundCapacity` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionWorkspaceEntry` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionWorkspace` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionWorkspace.tryFromStorage` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.GeodesicIntersectionWorkspace.isValid` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.tryAllGeodesicIntersections` | existing | geodesic intersections |
+| `geodesy.geodesic_intersection.allGeodesicIntersections` | existing | geodesic intersections |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.addPoint` | existing | geodesics |
 | `geodesy.geodesic_polygon.GeodesicPolygonAccumulator.compute` | existing | geodesics |

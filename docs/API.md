@@ -921,6 +921,51 @@ The global search uses Karney's eight-seed Next construction. Unlike Closest,
 the oblate path requires the full oblique conjugate spacing bound
 (`conjdist/distoblique`) derived from reduced length and geodesic scales.
 
+
+M5 all-intersection enumeration completes the oriented-intersection family:
+
+~~~text
+GeodesicIntersectionPoint<T>
+GeodesicIntersectionEnumerationStatus
+GeodesicIntersectionEnumeration
+GeodesicIntersectionWorkspaceEntry<T>
+GeodesicIntersectionWorkspace<T>
+tryAllGeodesicIntersections
+allGeodesicIntersections
+~~~
+
+The query enumerates every unique intersection whose displacement pair
+\`(x,y)\` lies within the caller's L1 radius around a reference pair
+\`(x0,y0)\`:
+
+~~~text
+|x-x0| + |y-y0| <= maxDisplacement
+~~~
+
+Results are returned in deterministic order: ascending L1 rank, then signed
+distance on the first line, then signed distance on the second line. Duplicate
+intersections use the same prepared \`delta\` tolerance family as Closest and
+Next. Coincident oriented geodesics enumerate discrete conjugate-point
+intersections rather than representing the continuous common line as an
+infinite result set.
+
+The hot core is \`pure nothrow @safe @nogc\` and performs no hidden allocation.
+Callers provide both result storage and a reusable
+\`GeodesicIntersectionWorkspace<T>\`. Output capacity and workspace capacity
+have distinct semantics:
+
+- short output is a successful query; \`written < total\` and
+  \`truncated == true\`;
+- zero-length output is an exact count query when workspace is sufficient;
+- insufficient workspace is reported as
+  \`GeodesicIntersectionEnumerationStatus.workspaceTooSmall\` and does not
+  claim an exact total.
+
+The prepared \`GeodesicIntersectionSolver<T>\` stores the ellipsoid-invariant
+All spacing together with the existing Closest/Next state. One-shot overloads
+prepare this same state internally and then invoke the identical enumeration
+kernel.
+
 Polygon area is positive for counterclockwise traversal and is canonicalized
 to `(-A/2, A/2]`, where `A` is the full ellipsoid area.
 Polygon measurement stores only the first and current vertex plus compensated

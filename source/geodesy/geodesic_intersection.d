@@ -60,6 +60,7 @@ import std.math :
     PI,
     abs,
     atan2,
+    ceil,
     atanh,
     cos,
     copysign,
@@ -2031,6 +2032,358 @@ public:
 }
 
 
+
+/**
+ * One enumerated intersection of two oriented geodesics.
+ *
+ * Distances are signed displacements from the two line origins.
+ * referenceDistance is the L1 rank relative to the caller reference pair.
+ *
+ * .init is invalid.
+ */
+struct GeodesicIntersectionPoint(T)
+if (isGeodesyScalar!T)
+{
+private:
+    bool _valid;
+    GeographicCoordinate!T _position;
+    T _distanceOnFirst = T.nan;
+    T _distanceOnSecond = T.nan;
+    T _referenceDistance = T.nan;
+    GeodesicIntersectionCoincidence _coincidence =
+        GeodesicIntersectionCoincidence.distinct;
+
+    /** Construct a validated enumerated intersection point. */
+    static GeodesicIntersectionPoint fromComponents(
+        const GeographicCoordinate!T position,
+        const T distanceOnFirst,
+        const T distanceOnSecond,
+        const T referenceDistance,
+        const GeodesicIntersectionCoincidence coincidence)
+        pure nothrow @safe @nogc
+    {
+        GeodesicIntersectionPoint result;
+        result._valid = true;
+        result._position = position;
+        result._distanceOnFirst = distanceOnFirst;
+        result._distanceOnSecond = distanceOnSecond;
+        result._referenceDistance = referenceDistance;
+        result._coincidence = coincidence;
+        return result;
+    }
+
+public:
+    @property bool isValid() const pure nothrow @safe @nogc
+    {
+        return _valid;
+    }
+
+    /// Example checking the default invalid point state.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionPoint!double.init.isValid);
+    }
+
+    @property GeographicCoordinate!T position() const
+        pure nothrow @safe @nogc
+    {
+        return _position;
+    }
+
+    /// Example reading the default position.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.position;
+    }
+
+    @property T distanceOnFirst() const pure nothrow @safe @nogc
+    {
+        return _distanceOnFirst;
+    }
+
+    /// Example reading the first signed displacement.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.distanceOnFirst;
+    }
+
+    @property T distanceOnSecond() const pure nothrow @safe @nogc
+    {
+        return _distanceOnSecond;
+    }
+
+    /// Example reading the second signed displacement.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.distanceOnSecond;
+    }
+
+    @property T referenceDistance() const pure nothrow @safe @nogc
+    {
+        return _referenceDistance;
+    }
+
+    /// Example reading the L1 rank.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        cast(void) point.referenceDistance;
+    }
+
+    @property GeodesicIntersectionCoincidence coincidence() const
+        pure nothrow @safe @nogc
+    {
+        return _coincidence;
+    }
+
+    /// Example reading the default coincidence classification.
+    @safe unittest
+    {
+        GeodesicIntersectionPoint!double point;
+        assert(point.coincidence
+            == GeodesicIntersectionCoincidence.distinct);
+    }
+}
+
+/// Example using the all-intersection point type.
+@safe unittest
+{
+    GeodesicIntersectionPoint!double point;
+    assert(!point.isValid);
+}
+
+
+/** Checked enumeration status for all-intersection queries. */
+enum GeodesicIntersectionEnumerationStatus
+{
+    invalid,
+    success,
+    workspaceTooSmall,
+    numericalFailure
+}
+
+/// Example distinguishing success from insufficient workspace.
+@safe unittest
+{
+    assert(GeodesicIntersectionEnumerationStatus.success
+        != GeodesicIntersectionEnumerationStatus.workspaceTooSmall);
+}
+
+
+/**
+ * Metadata produced by an all-intersection enumeration.
+ *
+ * Short output storage is a successful query with truncated == true.
+ * Short workspace storage is reported separately as workspaceTooSmall.
+ */
+struct GeodesicIntersectionEnumeration
+{
+private:
+    GeodesicIntersectionEnumerationStatus _status =
+        GeodesicIntersectionEnumerationStatus.invalid;
+    size_t _written;
+    size_t _total;
+    bool _truncated;
+    size_t _requiredTiles;
+    size_t _minimumFoundCapacity;
+
+public:
+    @property GeodesicIntersectionEnumerationStatus status() const
+        pure nothrow @safe @nogc
+    {
+        return _status;
+    }
+
+    /// Example reading the default status.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.status
+            == GeodesicIntersectionEnumerationStatus.invalid);
+    }
+
+    @property bool isValid() const pure nothrow @safe @nogc
+    {
+        return _status == GeodesicIntersectionEnumerationStatus.success;
+    }
+
+    /// Example checking the default invalid enumeration.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionEnumeration.init.isValid);
+    }
+
+    @property size_t written() const pure nothrow @safe @nogc
+    {
+        return _written;
+    }
+
+    /// Example reading the written count.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.written == 0);
+    }
+
+    @property size_t total() const pure nothrow @safe @nogc
+    {
+        return _total;
+    }
+
+    /// Example reading the total count.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.total == 0);
+    }
+
+    @property bool truncated() const pure nothrow @safe @nogc
+    {
+        return _truncated;
+    }
+
+    /// Example reading truncation metadata.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(!value.truncated);
+    }
+
+    @property size_t requiredTiles() const pure nothrow @safe @nogc
+    {
+        return _requiredTiles;
+    }
+
+    /// Example reading the required tile count.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.requiredTiles == 0);
+    }
+
+    @property size_t minimumFoundCapacity() const
+        pure nothrow @safe @nogc
+    {
+        return _minimumFoundCapacity;
+    }
+
+    /// Example reading the observed result-workspace requirement.
+    @safe unittest
+    {
+        GeodesicIntersectionEnumeration value;
+        assert(value.minimumFoundCapacity == 0);
+    }
+}
+
+/// Example using enumeration metadata.
+@safe unittest
+{
+    GeodesicIntersectionEnumeration value;
+    assert(!value.isValid);
+}
+
+
+/**
+ * Opaque caller-owned scratch entry for all-intersection enumeration.
+ *
+ * Applications allocate arrays of this type but should not interpret their
+ * contents.
+ */
+struct GeodesicIntersectionWorkspaceEntry(T)
+if (isGeodesyScalar!T)
+{
+private:
+    alias W = IntersectionWorkingScalar!T;
+    W _x = W.nan;
+    W _y = W.nan;
+    int _coincidence;
+}
+
+/// Example allocating opaque workspace entries.
+@safe unittest
+{
+    GeodesicIntersectionWorkspaceEntry!double[4] entries;
+    assert(entries.length == 4);
+}
+
+
+/**
+ * Caller-owned reusable scratch storage for all-intersection enumeration.
+ *
+ * No allocation is performed by the enumeration core.
+ */
+struct GeodesicIntersectionWorkspace(T)
+if (isGeodesyScalar!T)
+{
+private:
+    GeodesicIntersectionWorkspaceEntry!T[] _starts;
+    bool[] _skip;
+    GeodesicIntersectionWorkspaceEntry!T[] _found;
+    GeodesicIntersectionWorkspaceEntry!T[] _coincidentCenters;
+
+public:
+    static bool tryFromStorage(
+        GeodesicIntersectionWorkspaceEntry!T[] starts,
+        bool[] skip,
+        GeodesicIntersectionWorkspaceEntry!T[] found,
+        GeodesicIntersectionWorkspaceEntry!T[] coincidentCenters,
+        out GeodesicIntersectionWorkspace result)
+        pure nothrow @safe @nogc
+    {
+        result = GeodesicIntersectionWorkspace.init;
+
+        if (starts.length != skip.length
+            || starts.length == 0
+            || found.length == 0
+            || coincidentCenters.length == 0)
+            return false;
+
+        result._starts = starts;
+        result._skip = skip;
+        result._found = found;
+        result._coincidentCenters = coincidentCenters;
+        return true;
+    }
+
+    /// Example preparing caller-owned workspace.
+    @safe unittest
+    {
+        GeodesicIntersectionWorkspaceEntry!double[4] starts;
+        bool[4] skip;
+        GeodesicIntersectionWorkspaceEntry!double[8] found;
+        GeodesicIntersectionWorkspaceEntry!double[4] centers;
+        GeodesicIntersectionWorkspace!double workspace;
+
+        assert(GeodesicIntersectionWorkspace!double.tryFromStorage(
+            starts[], skip[], found[], centers[], workspace));
+    }
+
+    @property bool isValid() const pure nothrow @safe @nogc
+    {
+        return _starts.length != 0
+            && _starts.length == _skip.length
+            && _found.length != 0
+            && _coincidentCenters.length != 0;
+    }
+
+    /// Example checking the default invalid workspace.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionWorkspace!double.init.isValid);
+    }
+}
+
+/// Example using the workspace type.
+@safe unittest
+{
+    GeodesicIntersectionWorkspace!double workspace;
+    assert(!workspace.isValid);
+}
+
+
 /**
  * Prepared ellipsoid-dependent state for repeated geodesic intersections.
  *
@@ -2062,6 +2415,10 @@ private:
     W _nextD2 = W.nan;
     W _nextDelta = W.nan;
     W _halfCircumference = W.nan;
+
+    W _allT1 = W.nan;
+    W _allD3 = W.nan;
+    W _allDelta = W.nan;
 
 public:
     /**
@@ -2125,6 +2482,19 @@ public:
         result._nextD2 = nextD2;
         result._nextDelta = nextDelta;
         result._halfCircumference = halfCircumference;
+
+        const W flattening =
+            cast(W) solver.ellipsoid.flattening;
+
+        if (flattening < cast(W) 0)
+            return false;
+
+        result._allT1 = nextT1;
+        result._allDelta = nextDelta;
+        result._allD3 = nextT1 - nextDelta;
+
+        if (!(result._allD3 > cast(W) 0))
+            return false;
 
         result._valid = true;
         return true;
@@ -3021,6 +3391,911 @@ if (isGeodesyScalar!T)
 
     assert(result.isValid);
 }
+
+
+/** Compare two workspace entries using the family duplicate tolerance. */
+private bool allIntersectionEntryEqual(T)(
+    const GeodesicIntersectionWorkspaceEntry!T first,
+    const GeodesicIntersectionWorkspaceEntry!T second,
+    const IntersectionWorkingScalar!T delta)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+    return abs(first._x - second._x)
+        + abs(first._y - second._y)
+        <= delta;
+}
+
+
+/** Convert one internal displacement into opaque workspace storage. */
+private GeodesicIntersectionWorkspaceEntry!T allIntersectionEntry(T)(
+    const IntersectionDisplacement!(IntersectionWorkingScalar!T) point)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    GeodesicIntersectionWorkspaceEntry!T result;
+    result._x = point.x;
+    result._y = point.y;
+    result._coincidence = point.coincidence;
+    return result;
+}
+
+
+private IntersectionDisplacement!(IntersectionWorkingScalar!T)
+allIntersectionPoint(T)(
+    const GeodesicIntersectionWorkspaceEntry!T entry)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+    return IntersectionDisplacement!W(
+        entry._x,
+        entry._y,
+        entry._coincidence);
+}
+
+
+/** Return whether a workspace prefix already contains an equivalent point. */
+private bool allIntersectionContains(T)(
+    const GeodesicIntersectionWorkspaceEntry!T[] values,
+    const size_t count,
+    const GeodesicIntersectionWorkspaceEntry!T value,
+    const IntersectionWorkingScalar!T delta)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    foreach (i; 0 .. count)
+    {
+        if (allIntersectionEntryEqual!T(
+                values[i],
+                value,
+                delta))
+            return true;
+    }
+
+    return false;
+}
+
+
+/** Append one workspace entry when caller-provided capacity permits it. */
+private bool appendAllIntersectionEntry(T)(
+    GeodesicIntersectionWorkspaceEntry!T[] values,
+    ref size_t count,
+    const GeodesicIntersectionWorkspaceEntry!T value)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    if (count >= values.length)
+        return false;
+
+    values[count++] = value;
+    return true;
+}
+
+
+/** Remove stored points belonging to one normalized coincident line. */
+private void removeAllCoincidentLine(T)(
+    GeodesicIntersectionWorkspaceEntry!T[] values,
+    ref size_t count,
+    const IntersectionDisplacement!(IntersectionWorkingScalar!T) reference,
+    const IntersectionDisplacement!(IntersectionWorkingScalar!T) normalized,
+    const int coincidence,
+    const IntersectionWorkingScalar!T delta)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+    size_t outIndex;
+
+    foreach (i; 0 .. count)
+    {
+        auto point = allIntersectionPoint!T(values[i]);
+        point.coincidence = coincidence;
+        point = fixClosestCoincident!W(reference, point);
+
+        if (intersectionL1!W(point, normalized) > delta)
+            values[outIndex++] = values[i];
+    }
+
+    count = outIndex;
+}
+
+
+/** Compare two entries by L1 rank and deterministic displacement tie-breaks. */
+private bool allIntersectionLess(T)(
+    const GeodesicIntersectionWorkspaceEntry!T first,
+    const GeodesicIntersectionWorkspaceEntry!T second,
+    const IntersectionDisplacement!(IntersectionWorkingScalar!T) reference)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+    const auto a = allIntersectionPoint!T(first);
+    const auto b = allIntersectionPoint!T(second);
+    const W da = intersectionL1!W(a, reference);
+    const W db = intersectionL1!W(b, reference);
+
+    if (da != db)
+        return da < db;
+    if (a.x != b.x)
+        return a.x < b.x;
+    return a.y < b.y;
+}
+
+
+/** Sort the retained result prefix in canonical all-intersection order. */
+private void sortAllIntersections(T)(
+    GeodesicIntersectionWorkspaceEntry!T[] values,
+    const size_t count,
+    const IntersectionDisplacement!(IntersectionWorkingScalar!T) reference)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    foreach (i; 1 .. count)
+    {
+        const auto value = values[i];
+        size_t j = i;
+
+        while (j > 0
+            && allIntersectionLess!T(
+                value,
+                values[j - 1],
+                reference))
+        {
+            values[j] = values[j - 1];
+            --j;
+        }
+
+        values[j] = value;
+    }
+}
+
+
+/** Mark later tile seeds covered by a converged intersection neighborhood. */
+private void updateAllIntersectionSkip(T)(
+    bool[] skip,
+    const GeodesicIntersectionWorkspaceEntry!T[] starts,
+    const size_t from,
+    const IntersectionDisplacement!(IntersectionWorkingScalar!T) point,
+    const IntersectionWorkingScalar!T threshold)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    foreach (i; from .. starts.length)
+    {
+        if (!skip[i]
+            && intersectionL1!W(
+                point,
+                allIntersectionPoint!T(starts[i]))
+                < threshold)
+            skip[i] = true;
+    }
+}
+
+
+/** Enumerate all intersections using already prepared family state. */
+private bool tryAllGeodesicIntersectionsPrepared(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const IntersectionWorkingScalar!T authalicRadius,
+    const IntersectionWorkingScalar!T t1,
+    const IntersectionWorkingScalar!T d3,
+    const IntersectionWorkingScalar!T delta,
+    const IntersectionWorkingScalar!T halfCircumference,
+    const T maxDisplacement,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace,
+    out GeodesicIntersectionEnumeration enumeration)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    enumeration = GeodesicIntersectionEnumeration.init;
+
+    if (!solver.isValid
+        || !firstLine.isValid
+        || !secondLine.isValid
+        || !workspace.isValid
+        || !isFiniteGeodesyScalar(maxDisplacement)
+        || !isFiniteGeodesyScalar(referenceOnFirst)
+        || !isFiniteGeodesyScalar(referenceOnSecond)
+        || maxDisplacement < cast(T) 0)
+        return false;
+
+    const IntersectionDisplacement!W reference =
+        IntersectionDisplacement!W(
+            cast(W) referenceOnFirst,
+            cast(W) referenceOnSecond,
+            0);
+
+    const W radius =
+        cast(W) maxDisplacement;
+
+    const W expanded =
+        radius + delta;
+
+    size_t tiles =
+        cast(size_t) ceil(expanded / d3);
+
+    if (tiles == 0)
+        tiles = 1;
+
+    const size_t requiredTiles =
+        tiles * tiles + (tiles - 1) % 2;
+
+    enumeration._requiredTiles = requiredTiles;
+
+    if (workspace._starts.length < requiredTiles
+        || workspace._skip.length < requiredTiles)
+    {
+        enumeration._status =
+            GeodesicIntersectionEnumerationStatus.workspaceTooSmall;
+        return false;
+    }
+
+    const size_t n = tiles - 1;
+    const W spacing =
+        expanded / cast(W) tiles;
+
+    size_t startCount;
+    workspace._starts[startCount++] =
+        allIntersectionEntry!T(reference);
+
+    for (long i = -cast(long) n;
+         i <= cast(long) n;
+         i += 2)
+    {
+        for (long j = -cast(long) n;
+             j <= cast(long) n;
+             j += 2)
+        {
+            if (i == 0 && j == 0)
+                continue;
+
+            const auto seed =
+                IntersectionDisplacement!W(
+                    reference.x
+                        + spacing
+                            * cast(W) (i + j)
+                            / cast(W) 2,
+                    reference.y
+                        + spacing
+                            * cast(W) (i - j)
+                            / cast(W) 2,
+                    0);
+
+            workspace._starts[startCount++] =
+                allIntersectionEntry!T(seed);
+        }
+    }
+
+    if (startCount != requiredTiles)
+    {
+        enumeration._status =
+            GeodesicIntersectionEnumerationStatus.numericalFailure;
+        return false;
+    }
+
+    foreach (i; 0 .. requiredTiles)
+        workspace._skip[i] = false;
+
+    const PreparedSegment!T first =
+        PreparedSegment!T(cast(T) 0, firstLine);
+
+    const PreparedSegment!T second =
+        PreparedSegment!T(cast(T) 0, secondLine);
+
+    size_t foundCount;
+    size_t coincidentCount;
+    int coincidenceOrientation;
+
+    const W skipThreshold =
+        cast(W) 2 * t1 - spacing - delta;
+
+    foreach (k; 0 .. requiredTiles)
+    {
+        if (workspace._skip[k])
+            continue;
+
+        IntersectionDisplacement!W candidate;
+
+        if (!tryBasicIntersection!T(
+                solver,
+                first,
+                second,
+                authalicRadius,
+                allIntersectionPoint!T(
+                    workspace._starts[k]),
+                candidate))
+        {
+            enumeration._status =
+                GeodesicIntersectionEnumerationStatus.numericalFailure;
+            return false;
+        }
+
+        auto candidateEntry =
+            allIntersectionEntry!T(candidate);
+
+        if (allIntersectionContains!T(
+                workspace._found,
+                foundCount,
+                candidateEntry,
+                delta))
+            continue;
+
+        if (coincidenceOrientation != 0)
+        {
+            auto normalizedCandidate = candidate;
+            normalizedCandidate.coincidence =
+                coincidenceOrientation;
+
+            normalizedCandidate =
+                fixClosestCoincident!W(
+                    reference,
+                    normalizedCandidate);
+
+            if (allIntersectionContains!T(
+                    workspace._coincidentCenters,
+                    coincidentCount,
+                    allIntersectionEntry!T(
+                        normalizedCandidate),
+                    delta))
+                continue;
+        }
+
+        if (candidate.coincidence != 0)
+        {
+            coincidenceOrientation =
+                candidate.coincidence;
+
+            candidate =
+                fixClosestCoincident!W(
+                    reference,
+                    candidate);
+
+            candidateEntry =
+                allIntersectionEntry!T(candidate);
+
+            if (!appendAllIntersectionEntry!T(
+                    workspace._coincidentCenters,
+                    coincidentCount,
+                    candidateEntry))
+            {
+                enumeration._minimumFoundCapacity =
+                    coincidentCount + 1;
+                enumeration._status =
+                    GeodesicIntersectionEnumerationStatus.workspaceTooSmall;
+                return false;
+            }
+
+            removeAllCoincidentLine!T(
+                workspace._found,
+                foundCount,
+                reference,
+                candidate,
+                coincidenceOrientation,
+                delta);
+
+            const W s0 = candidate.x;
+            GeodesicDirectResult!T position;
+            GeodesicQuantities!T quantities;
+
+            if (!firstLine.tryPosition(
+                    cast(T) s0,
+                    position,
+                    quantities))
+            {
+                enumeration._status =
+                    GeodesicIntersectionEnumerationStatus.numericalFailure;
+                return false;
+            }
+
+            foreach (sign; [-1, 1])
+            {
+                W sa = cast(W) 0;
+                IntersectionDisplacement!W conjugatePoint;
+
+                do
+                {
+                    W absoluteDistance;
+
+                    if (!tryIntersectionConjugateDistance!T(
+                            firstLine,
+                            halfCircumference
+                                * pow(
+                                    W.epsilon,
+                                    cast(W) 0.75),
+                            s0 + sa
+                                + cast(W) sign
+                                    * halfCircumference,
+                            false,
+                            cast(W) quantities.reducedLength,
+                            cast(W) quantities.scale12,
+                            cast(W) quantities.scale21,
+                            absoluteDistance))
+                    {
+                        enumeration._status =
+                            GeodesicIntersectionEnumerationStatus.numericalFailure;
+                        return false;
+                    }
+
+                    sa =
+                        absoluteDistance - s0;
+
+                    conjugatePoint =
+                        IntersectionDisplacement!W(
+                            candidate.x + sa,
+                            candidate.y
+                                + cast(W) coincidenceOrientation
+                                    * sa,
+                            coincidenceOrientation);
+
+                    const auto conjugateEntry =
+                        allIntersectionEntry!T(
+                            conjugatePoint);
+
+                    if (!allIntersectionContains!T(
+                            workspace._found,
+                            foundCount,
+                            conjugateEntry,
+                            delta))
+                    {
+                        if (!appendAllIntersectionEntry!T(
+                                workspace._found,
+                                foundCount,
+                                conjugateEntry))
+                        {
+                            enumeration._minimumFoundCapacity =
+                                foundCount + 1;
+                            enumeration._status =
+                                GeodesicIntersectionEnumerationStatus.workspaceTooSmall;
+                            return false;
+                        }
+                    }
+
+                    updateAllIntersectionSkip!T(
+                        workspace._skip[0 .. requiredTiles],
+                        workspace._starts[0 .. requiredTiles],
+                        k + 1,
+                        conjugatePoint,
+                        skipThreshold);
+                }
+                while (intersectionL1!W(
+                    conjugatePoint,
+                    reference) <= expanded);
+            }
+        }
+
+        candidateEntry =
+            allIntersectionEntry!T(candidate);
+
+        if (!allIntersectionContains!T(
+                workspace._found,
+                foundCount,
+                candidateEntry,
+                delta))
+        {
+            if (!appendAllIntersectionEntry!T(
+                    workspace._found,
+                    foundCount,
+                    candidateEntry))
+            {
+                enumeration._minimumFoundCapacity =
+                    foundCount + 1;
+                enumeration._status =
+                    GeodesicIntersectionEnumerationStatus.workspaceTooSmall;
+                return false;
+            }
+        }
+
+        updateAllIntersectionSkip!T(
+            workspace._skip[0 .. requiredTiles],
+            workspace._starts[0 .. requiredTiles],
+            k + 1,
+            candidate,
+            skipThreshold);
+    }
+
+    size_t retainedCount;
+
+    foreach (i; 0 .. foundCount)
+    {
+        const auto point =
+            allIntersectionPoint!T(
+                workspace._found[i]);
+
+        if (intersectionL1!W(
+                point,
+                reference) <= radius)
+            workspace._found[retainedCount++] =
+                workspace._found[i];
+    }
+
+    foundCount = retainedCount;
+
+    sortAllIntersections!T(
+        workspace._found,
+        foundCount,
+        reference);
+
+    const size_t written =
+        output.length < foundCount
+            ? output.length
+            : foundCount;
+
+    foreach (i; 0 .. written)
+    {
+        const auto point =
+            allIntersectionPoint!T(
+                workspace._found[i]);
+
+        GeodesicDirectResult!T position;
+
+        if (!firstLine.tryPosition(
+                cast(T) point.x,
+                position))
+        {
+            enumeration._status =
+                GeodesicIntersectionEnumerationStatus.numericalFailure;
+            return false;
+        }
+
+        const GeodesicIntersectionCoincidence coincidence =
+            point.coincidence > 0
+                ? GeodesicIntersectionCoincidence.parallel
+                : point.coincidence < 0
+                    ? GeodesicIntersectionCoincidence.antiparallel
+                    : GeodesicIntersectionCoincidence.distinct;
+
+        output[i] =
+            GeodesicIntersectionPoint!T.fromComponents(
+                position.position,
+                cast(T) point.x,
+                cast(T) point.y,
+                cast(T) intersectionL1!W(
+                    point,
+                    reference),
+                coincidence);
+    }
+
+    enumeration._written = written;
+    enumeration._total = foundCount;
+    enumeration._truncated =
+        written < foundCount;
+    enumeration._minimumFoundCapacity =
+        foundCount;
+    enumeration._status =
+        GeodesicIntersectionEnumerationStatus.success;
+
+    return true;
+}
+
+
+/**
+ * Enumerate all intersections within an L1 displacement radius.
+ *
+ * The core path is allocation-free. Output storage may be shorter than the
+ * result set; in that case the canonical prefix is written and truncated is
+ * true. Workspace storage must be sufficient to compute the exact total.
+ */
+bool tryAllGeodesicIntersections(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace,
+    out GeodesicIntersectionEnumeration enumeration)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    if (!intersector._valid)
+    {
+        enumeration = GeodesicIntersectionEnumeration.init;
+        return false;
+    }
+
+    return tryAllGeodesicIntersectionsPrepared!T(
+        intersector._solver,
+        firstLine,
+        secondLine,
+        intersector._authalicRadius,
+        intersector._allT1,
+        intersector._allD3,
+        intersector._allDelta,
+        intersector._halfCircumference,
+        maxDisplacement,
+        referenceOnFirst,
+        referenceOnSecond,
+        output,
+        workspace,
+        enumeration);
+}
+
+
+/** One-shot all-intersection enumeration using the same mathematical kernel. */
+bool tryAllGeodesicIntersections(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace,
+    out GeodesicIntersectionEnumeration enumeration)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    GeodesicIntersectionSolver!T intersector;
+
+    if (!GeodesicIntersectionSolver!T.tryFromGeodesic(
+            solver,
+            intersector))
+    {
+        enumeration = GeodesicIntersectionEnumeration.init;
+        return false;
+    }
+
+    return tryAllGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        maxDisplacement,
+        referenceOnFirst,
+        referenceOnSecond,
+        output,
+        workspace,
+        enumeration);
+}
+
+
+/** Zero-reference overload using prepared state. */
+bool tryAllGeodesicIntersections(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace,
+    out GeodesicIntersectionEnumeration enumeration)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return tryAllGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        maxDisplacement,
+        cast(T) 0,
+        cast(T) 0,
+        output,
+        workspace,
+        enumeration);
+}
+
+
+
+/** Zero-reference one-shot overload. */
+bool tryAllGeodesicIntersections(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace,
+    out GeodesicIntersectionEnumeration enumeration)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    return tryAllGeodesicIntersections(
+        solver,
+        firstLine,
+        secondLine,
+        maxDisplacement,
+        cast(T) 0,
+        cast(T) 0,
+        output,
+        workspace,
+        enumeration);
+}
+
+
+/** Throwing prepared-state zero-reference all-intersection enumeration. */
+GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace)
+    @safe
+if (isGeodesyScalar!T)
+{
+    return allGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        maxDisplacement,
+        cast(T) 0,
+        cast(T) 0,
+        output,
+        workspace);
+}
+
+
+/** Throwing one-shot all-intersection enumeration. */
+GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
+    const Geodesic!T solver,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicIntersectionEnumeration enumeration;
+
+    if (!tryAllGeodesicIntersections(
+            solver,
+            firstLine,
+            secondLine,
+            maxDisplacement,
+            referenceOnFirst,
+            referenceOnSecond,
+            output,
+            workspace,
+            enumeration))
+    {
+        throw new GeodesyValueException(
+            "All geodesic intersections require a valid solver, valid lines, "
+            ~ "a non-negative finite displacement radius, and sufficient "
+            ~ "caller-owned workspace.");
+    }
+
+    return enumeration;
+}
+
+
+
+/// Example enumerating intersections without throwing.
+@safe unittest
+{
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+    GeodesicIntersectionSolver!double intersector;
+    assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+        solver, intersector));
+
+    const firstStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(0.0));
+    const secondStart = firstStart;
+
+    GeodesicLine!double firstLine;
+    GeodesicLine!double secondLine;
+
+    assert(GeodesicLine!double.tryFromGeodesic(
+        solver, firstStart, Angle!double.fromDegrees(30.0), firstLine));
+    assert(GeodesicLine!double.tryFromGeodesic(
+        solver, secondStart, Angle!double.fromDegrees(120.0), secondLine));
+
+    GeodesicIntersectionWorkspaceEntry!double[16] starts;
+    bool[16] skip;
+    GeodesicIntersectionWorkspaceEntry!double[32] found;
+    GeodesicIntersectionWorkspaceEntry!double[16] centers;
+    GeodesicIntersectionWorkspace!double workspace;
+
+    assert(GeodesicIntersectionWorkspace!double.tryFromStorage(
+        starts[], skip[], found[], centers[], workspace));
+
+    GeodesicIntersectionPoint!double[8] output;
+    GeodesicIntersectionEnumeration enumeration;
+
+    assert(tryAllGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        1_000_000.0,
+        output[],
+        workspace,
+        enumeration));
+
+    assert(enumeration.isValid);
+    assert(enumeration.total >= 1);
+}
+
+
+/** Throwing prepared-state all-intersection enumeration. */
+GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T maxDisplacement,
+    const T referenceOnFirst,
+    const T referenceOnSecond,
+    GeodesicIntersectionPoint!T[] output,
+    ref GeodesicIntersectionWorkspace!T workspace)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicIntersectionEnumeration enumeration;
+
+    if (!tryAllGeodesicIntersections(
+            intersector,
+            firstLine,
+            secondLine,
+            maxDisplacement,
+            referenceOnFirst,
+            referenceOnSecond,
+            output,
+            workspace,
+            enumeration))
+    {
+        throw new GeodesyValueException(
+            "All geodesic intersections require valid prepared state, "
+            ~ "valid lines, a non-negative finite displacement radius, "
+            ~ "and sufficient caller-owned workspace.");
+    }
+
+    return enumeration;
+}
+
+
+
+/// Example using the throwing all-intersection convenience.
+@safe unittest
+{
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+    GeodesicIntersectionSolver!double intersector;
+    assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+        solver, intersector));
+
+    const origin = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(0.0));
+
+    GeodesicLine!double firstLine;
+    GeodesicLine!double secondLine;
+
+    assert(GeodesicLine!double.tryFromGeodesic(
+        solver, origin, Angle!double.fromDegrees(30.0), firstLine));
+    assert(GeodesicLine!double.tryFromGeodesic(
+        solver, origin, Angle!double.fromDegrees(120.0), secondLine));
+
+    GeodesicIntersectionWorkspaceEntry!double[16] starts;
+    bool[16] skip;
+    GeodesicIntersectionWorkspaceEntry!double[32] found;
+    GeodesicIntersectionWorkspaceEntry!double[16] centers;
+    GeodesicIntersectionWorkspace!double workspace;
+
+    assert(GeodesicIntersectionWorkspace!double.tryFromStorage(
+        starts[], skip[], found[], centers[], workspace));
+
+    GeodesicIntersectionPoint!double[8] output;
+
+    const enumeration = allGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        1_000_000.0,
+        output[],
+        workspace);
+
+    assert(enumeration.isValid);
+}
+
 
 // Prepared throwing conveniences preserve the one-shot #104/#105 results.
 @safe unittest
