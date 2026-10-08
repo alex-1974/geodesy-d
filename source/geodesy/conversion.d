@@ -1452,7 +1452,7 @@ unittest
 
     GeocentricCoordinate!double prolateForward;
     assert(!tryGeodeticToGeocentric(
-        source,
+        geographicLibGeo,
         prolateCandidate,
         prolateForward));
 
