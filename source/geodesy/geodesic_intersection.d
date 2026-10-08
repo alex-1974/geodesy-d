@@ -1800,6 +1800,63 @@ if (isGeodesyScalar!T)
     return result;
 }
 
+/** Throwing prepared-state closest intersection for prepared lines. */
+GeodesicClosestIntersectionResult!T closestGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine,
+    const T referenceOnFirst = cast(T) 0,
+    const T referenceOnSecond = cast(T) 0)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicClosestIntersectionResult!T result;
+
+    if (!tryClosestGeodesicIntersection(
+            intersector,
+            firstLine,
+            secondLine,
+            referenceOnFirst,
+            referenceOnSecond,
+            result))
+        throw new GeodesyValueException(
+            "Closest geodesic intersection failed for the supplied prepared "
+            ~ "intersection state, lines, or reference.");
+
+    return result;
+}
+
+/** Throwing prepared-state closest intersection for line definitions. */
+GeodesicClosestIntersectionResult!T closestGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeographicCoordinate!T firstStart,
+    const Angle!T firstAzimuth,
+    const GeographicCoordinate!T secondStart,
+    const Angle!T secondAzimuth,
+    const T referenceOnFirst = cast(T) 0,
+    const T referenceOnSecond = cast(T) 0)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicClosestIntersectionResult!T result;
+
+    if (!tryClosestGeodesicIntersection(
+            intersector,
+            firstStart,
+            firstAzimuth,
+            secondStart,
+            secondAzimuth,
+            referenceOnFirst,
+            referenceOnSecond,
+            result))
+        throw new GeodesyValueException(
+            "Closest geodesic intersection failed for the supplied prepared "
+            ~ "intersection state, line definitions, or reference.");
+
+    return result;
+}
+
+
 /** Throwing origin/azimuth closest intersection. */
 GeodesicClosestIntersectionResult!T closestGeodesicIntersection(T)(
     const Geodesic!T solver,
@@ -2833,6 +2890,57 @@ if (isGeodesyScalar!T)
             "Next geodesic intersection requires valid prepared lines "
             ~ "sharing the same known geographic origin and a converged "
             ~ "supported spherical or oblate solution.");
+    }
+
+    return result;
+}
+
+
+/** Throwing prepared-state next-intersection operation for prepared lines. */
+GeodesicNextIntersectionResult!T nextGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeodesicLine!T firstLine,
+    const GeodesicLine!T secondLine)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicNextIntersectionResult!T result;
+
+    if (!tryNextGeodesicIntersection(
+            intersector,
+            firstLine,
+            secondLine,
+            result))
+    {
+        throw new GeodesyValueException(
+            "Next geodesic intersection requires valid prepared intersection "
+            ~ "state and lines sharing the same known geographic origin.");
+    }
+
+    return result;
+}
+
+/** Throwing prepared-state next-intersection operation for a known crossing. */
+GeodesicNextIntersectionResult!T nextGeodesicIntersection(T)(
+    const GeodesicIntersectionSolver!T intersector,
+    const GeographicCoordinate!T knownIntersection,
+    const Angle!T firstAzimuth,
+    const Angle!T secondAzimuth)
+    @safe
+if (isGeodesyScalar!T)
+{
+    GeodesicNextIntersectionResult!T result;
+
+    if (!tryNextGeodesicIntersection(
+            intersector,
+            knownIntersection,
+            firstAzimuth,
+            secondAzimuth,
+            result))
+    {
+        throw new GeodesyValueException(
+            "Next geodesic intersection requires valid prepared intersection "
+            ~ "state, a valid known crossing, and valid azimuths.");
     }
 
     return result;
