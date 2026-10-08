@@ -2996,3 +2996,62 @@ if (isGeodesyScalar!T)
 
     assert(result.isValid);
 }
+
+/// Prepared throwing conveniences preserve the one-shot #104/#105 results.
+@safe unittest
+{
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+
+    GeodesicIntersectionSolver!double intersector;
+    assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+        solver, intersector));
+
+    const firstStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(-20.0));
+    const secondStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(10.0),
+        Longitude!double.fromDegrees(20.0));
+
+    const closestOneShot = closestGeodesicIntersection(
+        solver,
+        firstStart,
+        Angle!double.fromDegrees(45.0),
+        secondStart,
+        Angle!double.fromDegrees(-60.0));
+
+    const closestPrepared = closestGeodesicIntersection(
+        intersector,
+        firstStart,
+        Angle!double.fromDegrees(45.0),
+        secondStart,
+        Angle!double.fromDegrees(-60.0));
+
+    assert(closestPrepared.position == closestOneShot.position);
+    assert(closestPrepared.distanceOnFirst == closestOneShot.distanceOnFirst);
+    assert(closestPrepared.distanceOnSecond == closestOneShot.distanceOnSecond);
+    assert(closestPrepared.referenceDistance == closestOneShot.referenceDistance);
+    assert(closestPrepared.coincidence == closestOneShot.coincidence);
+
+    const known = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(0.0));
+
+    const nextOneShot = nextGeodesicIntersection(
+        solver,
+        known,
+        Angle!double.fromDegrees(30.0),
+        Angle!double.fromDegrees(120.0));
+
+    const nextPrepared = nextGeodesicIntersection(
+        intersector,
+        known,
+        Angle!double.fromDegrees(30.0),
+        Angle!double.fromDegrees(120.0));
+
+    assert(nextPrepared.position == nextOneShot.position);
+    assert(nextPrepared.distanceOnFirst == nextOneShot.distanceOnFirst);
+    assert(nextPrepared.distanceOnSecond == nextOneShot.distanceOnSecond);
+    assert(nextPrepared.displacementDistance == nextOneShot.displacementDistance);
+    assert(nextPrepared.coincidence == nextOneShot.coincidence);
+}
