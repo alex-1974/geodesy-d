@@ -3549,7 +3549,7 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Next geodesic intersection requires valid prepared lines "
             ~ "sharing the same known geographic origin and a converged "
-            ~ "supported spherical or oblate solution.");
+            ~ "supported rotational-ellipsoid solution.");
     }
 
     return result;
@@ -3627,8 +3627,8 @@ if (isGeodesyScalar!T)
     {
         throw new GeodesyValueException(
             "Next geodesic intersection requires a valid known crossing, "
-            ~ "valid azimuths, and a converged supported spherical or "
-            ~ "oblate solution.");
+            ~ "valid azimuths, and a converged supported rotational-ellipsoid "
+            ~ "solution.");
     }
 
     return result;
