@@ -52,8 +52,8 @@ import geodesy.scalar : isGeodesyScalar, isFiniteGeodesyScalar;
  * plausible Earth model.
  *
  * General construction accepts finite `a > 0` and `-1 < f < 1`.
- * `fromInverseFlattening` accepts finite negative values for prolate models
- * and finite values greater than one for oblate models; construct spheres
+ * `fromInverseFlattening` accepts finite values less than -1 for prolate
+ * models and finite values greater than 1 for oblate models; construct spheres
  * explicitly with `sphere`.
  *
  * Checked factories return `false` for invalid parameters. Their throwing
@@ -183,7 +183,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
-     *     inverseFlattening = Finite inverse flattening less than zero for prolate ellipsoids or greater than one for oblate ellipsoids.
+     *     inverseFlattening = Finite inverse flattening less than -1 for prolate ellipsoids or greater than 1 for oblate ellipsoids.
      *     result = Receives the constructed ellipsoid on success.
      *
      * Returns:
@@ -198,8 +198,8 @@ public:
         pure nothrow @safe @nogc
     {
         if (!isFiniteGeodesyScalar(inverseFlattening)
-            || inverseFlattening == 0
-            || (inverseFlattening > 0 && inverseFlattening <= 1))
+            || (inverseFlattening >= cast(T) -1
+                && inverseFlattening <= cast(T) 1))
             return false;
         return tryFromFlattening(
             semiMajorAxis,
@@ -222,7 +222,7 @@ public:
      *
      * Params:
      *     semiMajorAxis = Finite positive semi-major axis in the caller-selected linear unit.
-     *     inverseFlattening = Finite inverse flattening less than zero for prolate ellipsoids or greater than one for oblate ellipsoids.
+     *     inverseFlattening = Finite inverse flattening less than -1 for prolate ellipsoids or greater than 1 for oblate ellipsoids.
      *
      * Returns:
      *     The constructed rotational ellipsoid.
@@ -238,8 +238,22 @@ public:
         Ellipsoid result;
         if (!tryFromInverseFlattening(semiMajorAxis, inverseFlattening, result))
             throw new GeodesyValueException(
-                "Inverse flattening must be finite and either negative or greater than 1; use sphere(radius) for a sphere.");
+                "Inverse flattening must be finite and either less than -1 or greater than 1; use sphere(radius) for a sphere.");
         return result;
+    }
+
+    /// Inverse flattening must map into the represented -1 < f < 1 domain.
+    @safe unittest
+    {
+        Ellipsoid!double candidate;
+        assert(!Ellipsoid!double.tryFromInverseFlattening(
+            1.0,
+            -1.0,
+            candidate));
+        assert(!Ellipsoid!double.tryFromInverseFlattening(
+            1.0,
+            -0.5,
+            candidate));
     }
 
     /// Example constructing WGS 84 from inverse flattening.
