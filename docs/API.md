@@ -702,6 +702,8 @@ measurement abstractions in addition to the advanced direct/inverse quantities:
 GeodesicQuantities<T>
 GeodesicLine<T>
 GeodesicPolygonAccumulator<T>
+
+Prepared oriented-geodesic intersection work can reuse `GeodesicIntersectionSolver`, while one-shot intersection overloads remain available for occasional calls.
 GeodesicPolygonResult<T>
 ~~~
 
