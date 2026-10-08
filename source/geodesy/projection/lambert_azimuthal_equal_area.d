@@ -768,6 +768,7 @@ public:
         pure nothrow @safe @nogc
     {
         return _ellipsoid.isValid
+            && _ellipsoid.flattening >= cast(T) 0
             && _ellipsoid.flattening <= cast(T) 0.01
             && isFiniteGeodesyScalar(_falseEasting)
             && isFiniteGeodesyScalar(_falseNorthing)
@@ -806,6 +807,7 @@ public:
         result = LambertAzimuthalEqualArea.init;
 
         if (!ellipsoid.isValid
+            || ellipsoid.flattening < cast(T) 0
             || ellipsoid.flattening > cast(T) 0.01
             || !isFiniteGeodesyScalar(falseEasting)
             || !isFiniteGeodesyScalar(falseNorthing))
