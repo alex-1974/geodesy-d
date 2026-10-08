@@ -2130,12 +2130,37 @@ public:
         return true;
     }
 
+    /// Example preparing reusable intersection-family state.
+    @safe unittest
+    {
+        const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+        GeodesicIntersectionSolver!double prepared;
+
+        assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+            solver, prepared));
+        assert(prepared.isValid);
+    }
+
     /** True when invariant intersection-family setup was prepared successfully. */
     @property bool isValid() const
         pure nothrow @safe @nogc
     {
         return _valid;
     }
+
+    /// Example checking the default invalid prepared state.
+    @safe unittest
+    {
+        assert(!GeodesicIntersectionSolver!double.init.isValid);
+    }
+}
+
+
+/// Example using reusable intersection-family state.
+@safe unittest
+{
+    GeodesicIntersectionSolver!double prepared;
+    assert(!prepared.isValid);
 }
 
 
