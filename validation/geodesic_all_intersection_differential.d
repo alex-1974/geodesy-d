@@ -205,7 +205,7 @@ private bool runCase(const Case item)
             item.radius,
             item.p0x,
             item.p0y,
-            null,
+            cast(GeodesicIntersectionPoint!double[]) null,
             workspace,
             countOnly)
         || countOnly.total != expectedCount
