@@ -2164,7 +2164,7 @@ public:
 }
 
 
-/// Prepared state is valid and preserves closest-search results.
+// Prepared state is valid and preserves closest-search results.
 @safe unittest
 {
     const solver = Geodesic!double.fromEllipsoid(wgs84!double());
@@ -3022,7 +3022,7 @@ if (isGeodesyScalar!T)
     assert(result.isValid);
 }
 
-/// Prepared throwing conveniences preserve the one-shot #104/#105 results.
+// Prepared throwing conveniences preserve the one-shot #104/#105 results.
 @safe unittest
 {
     const solver = Geodesic!double.fromEllipsoid(wgs84!double());
