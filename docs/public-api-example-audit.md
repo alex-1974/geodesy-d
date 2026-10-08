@@ -137,6 +137,8 @@ The audit is complete when:
 | `geodesy.conversion.tryGeodeticToGeocentric` | existing | conversion |
 | `geodesy.ellipsoid.Ellipsoid.firstEccentricitySquared` | existing | ellipsoid |
 | `geodesy.ellipsoid.Ellipsoid.flattening` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.equatorialRadius` | existing | ellipsoid |
+| `geodesy.ellipsoid.Ellipsoid.polarRadius` | existing | ellipsoid |
 | `geodesy.ellipsoid.Ellipsoid.fromAxes` | existing | ellipsoid |
 | `geodesy.ellipsoid.Ellipsoid.fromFlattening` | existing | ellipsoid |
 | `geodesy.ellipsoid.Ellipsoid.fromInverseFlattening` | existing | ellipsoid |

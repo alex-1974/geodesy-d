@@ -447,7 +447,8 @@ public:
         pure nothrow @safe @nogc
     {
         return _valid
-            && _ellipsoid.isValid;
+            && _ellipsoid.isValid
+            && _ellipsoid.flattening >= cast(T) 0;
     }
 
     /// Example checking whether a topocentric frame is prepared.
@@ -510,7 +511,8 @@ public:
         out TopocentricFrame result)
         pure nothrow @safe @nogc
     {
-        if (!ellipsoid.isValid)
+        if (!ellipsoid.isValid
+            || ellipsoid.flattening < cast(T) 0)
             return false;
 
         const W latitude =
@@ -643,7 +645,8 @@ public:
         out TopocentricFrame result)
         pure nothrow @safe @nogc
     {
-        if (!ellipsoid.isValid)
+        if (!ellipsoid.isValid
+            || ellipsoid.flattening < cast(T) 0)
             return false;
 
         const W originX =

@@ -752,6 +752,7 @@ public:
         pure nothrow @safe @nogc
     {
         return _ellipsoid.isValid
+            && _ellipsoid.flattening >= cast(T) 0
             && _ellipsoid.flattening <= cast(T) 0.01L
             && isFiniteGeodesyScalar(_a)
             && _a > cast(W) 0
@@ -781,6 +782,7 @@ public:
         result = Rhumb.init;
 
         if (!ellipsoid.isValid
+            || ellipsoid.flattening < cast(T) 0
             || ellipsoid.flattening > cast(T) 0.01L)
             return false;
 

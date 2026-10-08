@@ -189,7 +189,8 @@ bool tryGeodeticToGeocentric(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
-    if (!ellipsoid.isValid)
+    if (!ellipsoid.isValid
+        || ellipsoid.flattening < cast(T) 0)
         return false;
 
     T x;
@@ -1071,7 +1072,8 @@ bool tryGeocentricToGeodetic(T)(
     pure nothrow @safe @nogc
 if (isGeodesyScalar!T)
 {
-    if (!ellipsoid.isValid)
+    if (!ellipsoid.isValid
+        || ellipsoid.flattening < cast(T) 0)
         return false;
 
     alias W = Epsg9602WorkingScalar!T;
@@ -1437,17 +1439,28 @@ unittest
 
     /*
      * GeographicLib's neighboring CartConvert1 regression is prolate
-     * (f = -1/100). Verify that the model boundary remains explicit.
+     * (f = -1/100). Ellipsoid representation now admits this model, while
+     * EPSG 9602 conversion remains explicitly spherical/oblate until a
+     * separate numerical qualification admits prolate conversion.
      */
-    Ellipsoid!double prolateCandidate;
-
-    const bool acceptedProlate =
-        Ellipsoid!double.tryFromFlattening(
+    const prolateCandidate =
+        Ellipsoid!double.fromFlattening(
             6_400_000.0,
-            -1.0 / 100.0,
-            prolateCandidate);
+            -1.0 / 100.0);
 
-    assert(!acceptedProlate);
+    assert(prolateCandidate.isValid);
+
+    GeocentricCoordinate!double prolateForward;
+    assert(!tryGeodeticToGeocentric(
+        geographicLibGeo,
+        prolateCandidate,
+        prolateForward));
+
+    GeodeticCoordinate!double prolateReverse;
+    assert(!tryGeocentricToGeodetic(
+        geographicLibXyz,
+        prolateCandidate,
+        prolateReverse));
 
     /*
      * GeographicLib documents the WGS84 equatorial evolute cusp at

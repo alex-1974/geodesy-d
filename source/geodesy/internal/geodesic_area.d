@@ -10,6 +10,7 @@
 module geodesy.internal.geodesic_area;
 
 import std.math :
+    atan,
     atan2,
     atanh,
     sqrt;
@@ -30,8 +31,9 @@ package(geodesy):
 /**
  * Compute the authalic-radius-squared factor used by Karney's S12 formula.
  *
- * The supported geodesy-d ellipsoid domain is spherical or oblate, so e2 is
- * non-negative.
+ * Ellipsoid representation permits oblate and prolate rotational ellipsoids.
+ * Positive e2 uses the oblate hyperbolic form; negative e2 uses the real
+ * prolate trigonometric continuation.
  */
 W geodesicAuthalicRadiusSquared(W)(
     const W a,
@@ -42,14 +44,14 @@ W geodesicAuthalicRadiusSquared(W)(
     if (e2 == cast(W) 0)
         return a * a;
 
-    const W e =
-        sqrt(e2);
+    const W factor =
+        e2 > cast(W) 0
+            ? atanh(sqrt(e2)) / sqrt(e2)
+            : atan(sqrt(-e2)) / sqrt(-e2);
 
     return (
         a * a
-        + b * b
-            * atanh(e)
-            / e
+        + b * b * factor
     ) / cast(W) 2;
 }
 

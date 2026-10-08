@@ -584,6 +584,8 @@ public:
         pure nothrow @safe @nogc
     {
         return _ellipsoid.isValid
+            && _ellipsoid.flattening >= cast(T) 0
+            && _ellipsoid.flattening <= cast(T) 0.01
             && (_latitudeOfNaturalOrigin.radians == halfPi!T
                 || _latitudeOfNaturalOrigin.radians == -halfPi!T)
             && isFiniteScalar(_scaleFactorAtNaturalOrigin)
@@ -624,7 +626,8 @@ public:
         if (!ellipsoid.isValid)
             return false;
 
-        if (ellipsoid.flattening > cast(T) 0.01)
+        if (ellipsoid.flattening < cast(T) 0
+            || ellipsoid.flattening > cast(T) 0.01)
             return false;
 
         if (latitudeOfNaturalOrigin.radians != halfPi!T

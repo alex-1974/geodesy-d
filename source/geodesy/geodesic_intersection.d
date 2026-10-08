@@ -41,6 +41,7 @@ import geodesy.angle :
     Latitude,
     Longitude;
 import geodesy.ellipsoid :
+    Ellipsoid,
     wgs84;
 import geodesy.errors :
     GeodesyValueException;
@@ -59,6 +60,7 @@ import geodesy.scalar :
 import std.math :
     PI,
     abs,
+    atan,
     atan2,
     ceil,
     atanh,
@@ -411,19 +413,24 @@ if (isGeodesyScalar!T)
         return true;
     }
 
-    if (!(e2 > cast(W) 0)
+    if (!(e2 > cast(W) -1)
         || !(e2 < cast(W) 1))
         return false;
 
     const W e =
-        sqrt(e2);
+        sqrt(abs(e2));
+
+    const W factor =
+        e2 > cast(W) 0
+            ? atanh(e) / e
+            : atan(e) / e;
 
     const W radiusSquared =
         a * a
         * cast(W) 0.5
         * (
             cast(W) 1
-            + (cast(W) 1 - e2) / e * atanh(e));
+            + (cast(W) 1 - e2) * factor);
 
     if (!isFiniteGeodesyScalar(radiusSquared)
         || !(radiusSquared > cast(W) 0))
@@ -1203,6 +1210,7 @@ public:
         assert(!GeodesicClosestIntersectionResult!double.init.isValid);
     }
     /** Geographic position of the selected intersection representative. */
+    /** Geographic position of the enumerated intersection. */
     @property GeographicCoordinate!T position() const pure nothrow @safe @nogc { return _position; }
 
     /// Example reading the default position value.
@@ -1212,6 +1220,7 @@ public:
         cast(void) result.position;
     }
     /** Signed distance from the first oriented line origin. */
+    /** Signed displacement from the first line origin. */
     @property T distanceOnFirst() const pure nothrow @safe @nogc { return _distanceOnFirst; }
 
     /// Example reading the first signed displacement.
@@ -1221,6 +1230,7 @@ public:
         cast(void) result.distanceOnFirst;
     }
     /** Signed distance from the second oriented line origin. */
+    /** Signed displacement from the second line origin. */
     @property T distanceOnSecond() const pure nothrow @safe @nogc { return _distanceOnSecond; }
 
     /// Example reading the second signed displacement.
@@ -1230,6 +1240,7 @@ public:
         cast(void) result.distanceOnSecond;
     }
     /** L1 displacement-space distance to the caller reference pair. */
+    /** L1 ranking distance relative to the caller reference pair. */
     @property T referenceDistance() const pure nothrow @safe @nogc { return _referenceDistance; }
 
     /// Example reading the closest-ranking distance.
@@ -1393,7 +1404,7 @@ if (isGeodesyScalar!T)
         distance);
 }
 
-/** Derive closest-search spacing and tolerance for sphere/oblate ellipsoids. */
+/** Derive closest-search spacing and tolerance for supported rotational ellipsoids. */
 private bool tryClosestIntersectionSpacing(T)(
     const Geodesic!T solver,
     const IntersectionWorkingScalar!T authalicRadius,
@@ -1407,7 +1418,9 @@ if (isGeodesyScalar!T)
     const W a = cast(W) solver.ellipsoid.semiMajorAxis;
     const W f = cast(W) solver.ellipsoid.flattening;
     const W d = cast(W) PI * authalicRadius;
-    t1 = cast(W) PI * a * (cast(W) 1 - f);
+    const W meridionalHalf =
+        cast(W) PI * a * (cast(W) 1 - f);
+    t1 = meridionalHalf;
     delta = d * pow(W.epsilon, cast(W) 0.2);
     if (f == cast(W) 0)
     {
@@ -1431,8 +1444,34 @@ if (isGeodesyScalar!T)
     const W tolerance = d * pow(W.epsilon, cast(W) 0.75);
     const W initial =
         (cast(W) 1 + f / cast(W) 2) * a * cast(W) PI / cast(W) 2;
-    return tryIntersectionConjugateFromOrigin!T(
-        line, tolerance, initial, true, d1);
+    W polarSemiConjugate;
+
+    if (!tryIntersectionConjugateFromOrigin!T(
+            line,
+            tolerance,
+            initial,
+            true,
+            polarSemiConjugate))
+        return false;
+
+    if (f < cast(W) 0)
+    {
+        t1 =
+            cast(W) 2 * polarSemiConjugate;
+
+        d1 =
+            meridionalHalf / cast(W) 2;
+
+        return isFiniteGeodesyScalar(t1)
+            && isFiniteGeodesyScalar(d1)
+            && t1 > cast(W) 0
+            && d1 > cast(W) 0;
+    }
+
+    d1 =
+        polarSemiConjugate;
+
+    return true;
 }
 
 /** Compare two closest candidates with deterministic displacement tie-breaks. */
@@ -2009,6 +2048,7 @@ public:
     }
 
     /** Coincidence relationship of the two supporting geodesics. */
+    /** Coincidence relationship of the supporting geodesics. */
     @property GeodesicIntersectionCoincidence coincidence() const
         pure nothrow @safe @nogc
     {
@@ -2073,6 +2113,7 @@ private:
     }
 
 public:
+    /** True when this enumerated intersection is valid. */
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _valid;
@@ -2084,6 +2125,7 @@ public:
         assert(!GeodesicIntersectionPoint!double.init.isValid);
     }
 
+    /** Geographic position of the enumerated intersection. */
     @property GeographicCoordinate!T position() const
         pure nothrow @safe @nogc
     {
@@ -2097,6 +2139,7 @@ public:
         cast(void) point.position;
     }
 
+    /** Signed displacement from the first line origin. */
     @property T distanceOnFirst() const pure nothrow @safe @nogc
     {
         return _distanceOnFirst;
@@ -2109,6 +2152,7 @@ public:
         cast(void) point.distanceOnFirst;
     }
 
+    /** Signed displacement from the second line origin. */
     @property T distanceOnSecond() const pure nothrow @safe @nogc
     {
         return _distanceOnSecond;
@@ -2121,6 +2165,7 @@ public:
         cast(void) point.distanceOnSecond;
     }
 
+    /** L1 ranking distance relative to the caller reference pair. */
     @property T referenceDistance() const pure nothrow @safe @nogc
     {
         return _referenceDistance;
@@ -2133,6 +2178,7 @@ public:
         cast(void) point.referenceDistance;
     }
 
+    /** Coincidence relationship of the supporting geodesics. */
     @property GeodesicIntersectionCoincidence coincidence() const
         pure nothrow @safe @nogc
     {
@@ -2191,6 +2237,7 @@ private:
     size_t _minimumFoundCapacity;
 
 public:
+    /** Enumeration status. */
     @property GeodesicIntersectionEnumerationStatus status() const
         pure nothrow @safe @nogc
     {
@@ -2205,6 +2252,7 @@ public:
             == GeodesicIntersectionEnumerationStatus.invalid);
     }
 
+    /** True when enumeration completed successfully. */
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _status == GeodesicIntersectionEnumerationStatus.success;
@@ -2216,6 +2264,7 @@ public:
         assert(!GeodesicIntersectionEnumeration.init.isValid);
     }
 
+    /** Number of intersections written to caller output storage. */
     @property size_t written() const pure nothrow @safe @nogc
     {
         return _written;
@@ -2228,6 +2277,7 @@ public:
         assert(value.written == 0);
     }
 
+    /** Exact total number of intersections in the requested region. */
     @property size_t total() const pure nothrow @safe @nogc
     {
         return _total;
@@ -2240,6 +2290,7 @@ public:
         assert(value.total == 0);
     }
 
+    /** True when output storage held only a canonical prefix. */
     @property bool truncated() const pure nothrow @safe @nogc
     {
         return _truncated;
@@ -2252,6 +2303,7 @@ public:
         assert(!value.truncated);
     }
 
+    /** Number of workspace tiles required by this enumeration. */
     @property size_t requiredTiles() const pure nothrow @safe @nogc
     {
         return _requiredTiles;
@@ -2264,6 +2316,7 @@ public:
         assert(value.requiredTiles == 0);
     }
 
+    /** Minimum observed found-entry workspace capacity required. */
     @property size_t minimumFoundCapacity() const
         pure nothrow @safe @nogc
     {
@@ -2325,6 +2378,7 @@ private:
     GeodesicIntersectionWorkspaceEntry!T[] _coincidentCenters;
 
 public:
+    /** Bind caller-owned scratch arrays into a reusable enumeration workspace. */
     static bool tryFromStorage(
         GeodesicIntersectionWorkspaceEntry!T[] starts,
         bool[] skip,
@@ -2361,6 +2415,7 @@ public:
             starts[], skip[], found[], centers[], workspace));
     }
 
+    /** True when caller-owned storage has been bound consistently. */
     @property bool isValid() const pure nothrow @safe @nogc
     {
         return _starts.length != 0
@@ -2388,7 +2443,7 @@ public:
  * Prepared ellipsoid-dependent state for repeated geodesic intersections.
  *
  * Construction performs the invariant setup required by the intersection
- * family once. In particular, oblate next-intersection spacing is prepared
+ * family once. In particular, ellipsoid-dependent next-intersection spacing is prepared
  * here instead of being recomputed for every pair of lines.
  *
  * The prepared value is immutable-by-convention after construction and can be
@@ -2486,12 +2541,19 @@ public:
         const W flattening =
             cast(W) solver.ellipsoid.flattening;
 
-        if (flattening < cast(W) 0)
+        W allT4 =
+            nextT1;
+
+        if (flattening < cast(W) 0
+            && !tryIntersectionPolarBound!T(
+                solver,
+                authalicRadius,
+                allT4))
             return false;
 
         result._allT1 = nextT1;
         result._allDelta = nextDelta;
-        result._allD3 = nextT1 - nextDelta;
+        result._allD3 = allT4 - nextDelta;
 
         if (!(result._allD3 > cast(W) 0))
             return false;
@@ -2516,6 +2578,23 @@ public:
         pure nothrow @safe @nogc
     {
         return _valid;
+    }
+
+    /// Example preparing the intersection family for a qualified prolate ellipsoid.
+    @safe unittest
+    {
+        const solver =
+            Geodesic!double.fromEllipsoid(
+                Ellipsoid!double.fromFlattening(
+                    6_378_137.0,
+                    -0.01));
+
+        GeodesicIntersectionSolver!double prepared;
+
+        assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+            solver,
+            prepared));
+        assert(prepared.isValid);
     }
 
     /// Example checking the default invalid prepared state.
@@ -2674,6 +2753,160 @@ if (isGeodesyScalar!T)
 }
 
 
+/** Compute the polar semi-conjugate distance from a selected latitude. */
+private bool tryIntersectionDistPolar(T)(
+    const Geodesic!T solver,
+    const IntersectionWorkingScalar!T authalicRadius,
+    const IntersectionWorkingScalar!T latitudeDegrees,
+    out IntersectionWorkingScalar!T distance)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    Latitude!T latitude;
+    Longitude!T longitude;
+    Angle!T azimuth;
+
+    if (!Latitude!T.tryFromRadians(
+            cast(T) (
+                latitudeDegrees
+                * cast(W) PI
+                / cast(W) 180),
+            latitude)
+        || !Longitude!T.tryFromRadians(
+            cast(T) 0,
+            longitude)
+        || !Angle!T.tryFromRadians(
+            cast(T) 0,
+            azimuth))
+        return false;
+
+    const auto origin =
+        GeographicCoordinate!T.fromComponents(
+            latitude,
+            longitude);
+
+    GeodesicLine!T line;
+
+    if (!GeodesicLine!T.tryFromGeodesic(
+            solver,
+            origin,
+            azimuth,
+            line))
+        return false;
+
+    const W d =
+        cast(W) PI * authalicRadius;
+
+    const W tolerance =
+        d * pow(
+            W.epsilon,
+            cast(W) 0.75);
+
+    const W f =
+        cast(W) solver.ellipsoid.flattening;
+
+    const W a =
+        cast(W) solver.ellipsoid.semiMajorAxis;
+
+    const W initial =
+        (cast(W) 1 + f / cast(W) 2)
+        * a
+        * cast(W) PI
+        / cast(W) 2;
+
+    return tryIntersectionConjugateFromOrigin!T(
+        line,
+        tolerance,
+        initial,
+        true,
+        distance);
+}
+
+
+/** Derive GeographicLib's polar tiling bound used for prolate All searches. */
+private bool tryIntersectionPolarBound(T)(
+    const Geodesic!T solver,
+    const IntersectionWorkingScalar!T authalicRadius,
+    out IntersectionWorkingScalar!T distance)
+    pure nothrow @safe @nogc
+if (isGeodesyScalar!T)
+{
+    alias W = IntersectionWorkingScalar!T;
+
+    W lat0 = cast(W) 63;
+    W lat1 = cast(W) 65;
+    W lat2 = cast(W) 64;
+
+    W s0;
+    W s1;
+    W s2;
+
+    if (!tryIntersectionDistPolar!T(
+            solver, authalicRadius, lat0, s0)
+        || !tryIntersectionDistPolar!T(
+            solver, authalicRadius, lat1, s1)
+        || !tryIntersectionDistPolar!T(
+            solver, authalicRadius, lat2, s2))
+        return false;
+
+    W best =
+        s2;
+
+    const W f =
+        cast(W) solver.ellipsoid.flattening;
+
+    foreach (_; 0 .. 10)
+    {
+        const W denominator =
+            (lat1 - lat0) * s2
+            + (lat0 - lat2) * s1
+            + (lat2 - lat1) * s0;
+
+        if (!(denominator < cast(W) 0
+            || denominator > cast(W) 0))
+            break;
+
+        const W nextLatitude =
+            (
+                (lat1 - lat0) * (lat1 + lat0) * s2
+                + (lat0 - lat2) * (lat0 + lat2) * s1
+                + (lat2 - lat1) * (lat2 + lat1) * s0
+            )
+            / (
+                cast(W) 2 * denominator);
+
+        lat0 = lat1;
+        s0 = s1;
+        lat1 = lat2;
+        s1 = s2;
+        lat2 = nextLatitude;
+
+        if (!tryIntersectionDistPolar!T(
+                solver,
+                authalicRadius,
+                lat2,
+                s2))
+            return false;
+
+        const bool improves =
+            f < cast(W) 0
+                ? s2 < best
+                : s2 > best;
+
+        if (improves)
+            best = s2;
+    }
+
+    distance =
+        cast(W) 2 * best;
+
+    return isFiniteGeodesyScalar(distance)
+        && distance > cast(W) 0;
+}
+
+
 /** Derive Karney's oblique minimum conjugate spacing for oblate ellipsoids. */
 private bool tryIntersectionDistOblique(T)(
     const Geodesic!T solver,
@@ -2798,6 +3031,58 @@ if (isGeodesyScalar!T)
     if (f == cast(W) 0)
     {
         t3 = halfCircumference;
+    }
+    else if (f < cast(W) 0)
+    {
+        Latitude!T poleLatitude;
+        Longitude!T zeroLongitude;
+        Latitude!T zeroLatitude;
+
+        if (!Latitude!T.tryFromRadians(
+                cast(T) (cast(W) PI / cast(W) 2),
+                poleLatitude)
+            || !Latitude!T.tryFromRadians(
+                cast(T) 0,
+                zeroLatitude)
+            || !Longitude!T.tryFromRadians(
+                cast(T) 0,
+                zeroLongitude))
+            return false;
+
+        const auto equator =
+            GeographicCoordinate!T.fromComponents(
+                zeroLatitude,
+                zeroLongitude);
+
+        const auto pole =
+            GeographicCoordinate!T.fromComponents(
+                poleLatitude,
+                zeroLongitude);
+
+        GeodesicInverseResult!T meridian;
+
+        if (!solver.tryInverse(
+                equator,
+                pole,
+                meridian))
+            return false;
+
+        t3 =
+            cast(W) 2
+            * cast(W) meridian.distance;
+
+        W polarSemiConjugate;
+
+        if (!tryIntersectionDistPolar!T(
+                solver,
+                authalicRadius,
+                cast(W) 90,
+                polarSemiConjugate))
+            return false;
+
+        t1 =
+            cast(W) 2
+            * polarSemiConjugate;
     }
     else
     {
@@ -3284,7 +3569,7 @@ if (isGeodesyScalar!T)
         throw new GeodesyValueException(
             "Next geodesic intersection requires valid prepared lines "
             ~ "sharing the same known geographic origin and a converged "
-            ~ "supported spherical or oblate solution.");
+            ~ "supported rotational-ellipsoid solution.");
     }
 
     return result;
@@ -3362,8 +3647,8 @@ if (isGeodesyScalar!T)
     {
         throw new GeodesyValueException(
             "Next geodesic intersection requires a valid known crossing, "
-            ~ "valid azimuths, and a converged supported spherical or "
-            ~ "oblate solution.");
+            ~ "valid azimuths, and a converged supported rotational-ellipsoid "
+            ~ "solution.");
     }
 
     return result;

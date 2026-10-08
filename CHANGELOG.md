@@ -2,6 +2,31 @@
 
 All notable changes to `geodesy-d` will be documented here.
 
+## [Unreleased]
+
+### Added
+
+- Added prolate rotational-ellipsoid representation to `Ellipsoid!T`,
+  including negative flattening/inverse flattening, prolate axis construction,
+  and explicit `equatorialRadius` / `polarRadius` aliases.
+- Extended `Geodesic!T` and the admitted geodesic family to the qualified
+  prolate interval `-0.01 <= f <= 0.01`, including advanced quantities,
+  polygon area, nearest-point, and Closest/Next/All intersection operations.
+
+### Validation
+
+- Added a permanent GeographicLib 2.7 prolate differential gate under DMD
+  2.111.0 and LDC 1.41.0 covering direct/inverse quantities, polygon area,
+  nearest-point, and the complete oriented-intersection family.
+- Preserved the existing WGS 84/spherical platform and differential gates.
+
+### Compatibility
+
+- Existing oblate/spherical APIs remain source compatible. The historic
+  `semiMajorAxis` / `semiMinorAxis` names remain available; for prolate
+  ellipsoids they denote the canonical equatorial axis `a` and derived polar
+  axis `b=a(1-f)`, respectively.
+
 ## [1.2.0] - 2026-10-07
 
 ### Added
