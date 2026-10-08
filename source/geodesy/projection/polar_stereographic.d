@@ -624,7 +624,8 @@ public:
         if (!ellipsoid.isValid)
             return false;
 
-        if (ellipsoid.flattening > cast(T) 0.01)
+        if (ellipsoid.flattening < cast(T) 0
+            || ellipsoid.flattening > cast(T) 0.01)
             return false;
 
         if (latitudeOfNaturalOrigin.radians != halfPi!T
