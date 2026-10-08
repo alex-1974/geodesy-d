@@ -9,8 +9,8 @@
  * ellipsoid domain.
  *
  * Domain:
- *     Prepared solvers support `a > 0` and `0 <= f <= 0.01`, including
- *     spheres. Positions are surface `GeographicCoordinate` values; no datum
+ *     Prepared solvers support `a > 0` and `-0.01 <= f <= 0.01`, including
+ *     prolate, spherical, and oblate ellipsoids. Positions are surface `GeographicCoordinate` values; no datum
  *     or CRS identity is embedded.
  *
  * Units:
@@ -1151,22 +1151,23 @@ public:
         pure nothrow @safe @nogc
     {
         return _ellipsoid.isValid
+            && _ellipsoid.flattening >= cast(T) -0.01
             && _ellipsoid.flattening <= cast(T) 0.01
             && isFiniteGeodesyScalar(_a)
             && _a > cast(W) 0
             && isFiniteGeodesyScalar(_f)
-            && _f >= cast(W) 0
+            && _f >= cast(W) -0.01
             && _f <= cast(W) 0.01
             && isFiniteGeodesyScalar(_f1)
             && _f1 > cast(W) 0
             && isFiniteGeodesyScalar(_b)
             && _b > cast(W) 0
             && isFiniteGeodesyScalar(_e2)
-            && _e2 >= cast(W) 0
+            && _e2 > cast(W) -1
             && isFiniteGeodesyScalar(_ep2)
-            && _ep2 >= cast(W) 0
+            && _ep2 > cast(W) -1
             && isFiniteGeodesyScalar(_n)
-            && _n >= cast(W) 0;
+            && _n > cast(W) -1;
     }
 
     /// Example checking whether a geodesic solver is prepared.
@@ -1216,8 +1217,9 @@ public:
      * Prepare a reusable direct/inverse solver without throwing.
      *
      * Params:
-     *     ellipsoid = Valid spherical or oblate ellipsoid with
-     *         0 <= f <= 0.01. Its semi-major axis defines the distance unit.
+     *     ellipsoid = Valid rotational ellipsoid with
+     *         -0.01 <= f <= 0.01. Its canonical equatorial axis `a`
+     *         defines the distance unit.
      *     result = Receives the prepared solver on success.
      *
      * Returns:
@@ -1231,6 +1233,7 @@ public:
         pure nothrow @safe @nogc
     {
         if (!ellipsoid.isValid
+            || ellipsoid.flattening < cast(T) -0.01
             || ellipsoid.flattening > cast(T) 0.01)
             return false;
 
@@ -1286,8 +1289,8 @@ public:
      * Prepare a reusable direct/inverse solver.
      *
      * Params:
-     *     ellipsoid = Valid spherical or oblate ellipsoid with
-     *         0 <= f <= 0.01.
+     *     ellipsoid = Valid rotational ellipsoid with
+     *         -0.01 <= f <= 0.01.
      *
      * Returns:
      *     The prepared solver; distances use the ellipsoid semi-major-axis unit.
@@ -1303,10 +1306,35 @@ public:
 
         if (!tryFromEllipsoid(ellipsoid, result))
             throw new GeodesyValueException(
-                "Geodesic requires a valid ellipsoid with 0 <= f <= 0.01.");
+                "Geodesic requires a valid ellipsoid with -0.01 <= f <= 0.01.");
 
         return result;
     }
+
+    /// Example admitting the qualified prolate domain and rejecting stronger flattening.
+    @safe unittest
+    {
+        import geodesy;
+
+        Geodesic!double prolate;
+        assert(Geodesic!double.tryFromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                -0.01),
+            prolate));
+        assert(prolate.isValid);
+        assert(!prolate.isSphere);
+        assert(prolate.ellipsoid.flattening == -0.01);
+
+        Geodesic!double unsupported;
+        assert(!Geodesic!double.tryFromEllipsoid(
+            Ellipsoid!double.fromFlattening(
+                6_378_137.0,
+                -0.05),
+            unsupported));
+        assert(!unsupported.isValid);
+    }
+
 
     /// Example preparing a reusable WGS 84 geodesic solver.
     @safe unittest
