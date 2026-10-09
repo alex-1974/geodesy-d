@@ -523,3 +523,29 @@ been checked against its public entrypoint signatures
 but the compiled example, renderer inspection and full CI acceptance
 have not been independently observed in this pass. The existing
 symbol-example inventory tracks structural coverage, not reader clarity.
+
+
+## Exact-head GitHub Actions and documentation gate inventory (2026-10-09)
+
+Inspected GitHub Actions on commit `398db769`. The API reported
+140 check runs; the first 100 checked entries were **queued**. Workflow
+runs for the commit, including `CI` and `API documentation`, were also
+queued. **No pass or fail conclusion can be drawn from this state.**
+
+Verified the repository's actual documentation commands rather than
+guessing the gate names:
+
+- `.github/workflows/ci.yml` invokes `dub test --force` and
+  `tools/validate-docs.sh` under its documentation-contract step.
+- `.github/workflows/pages.yml` invokes
+  `bash tools/build-versioned-docs.sh` and publishes the generated site
+  from `build/versioned-docs/site`.
+- `tools/validate-docs.sh` checks documented file presence, release
+  contracts, and obsolete wording, among additional repository-specific
+  requirements. It does not, by itself, replace a human DDox-page reading.
+
+**Remaining evidence:** run both commands and compile the getting-started
+consumer example with DMD and LDC; inspect the generated symbol pages for
+example attachment and rendering. Mark those gates PASS only after a
+recorded successful run on the reviewed commit. This section records a
+CI-queue observation, **not** a CI failure.
