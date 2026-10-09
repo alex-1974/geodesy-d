@@ -291,13 +291,16 @@ public:
 
 
 /**
- * Streaming accumulator for one closed ellipsoidal geodesic polygon.
+ * Build a geographic polygon one vertex at a time and measure it.
  *
- * Vertices are retained only as the first and most recent points; no dynamic
- * vertex storage is used. Every vertex after the first contributes the
- * shortest inverse-geodesic edge from the previous point. Calling
- * `tryCompute` / `compute` is non-mutating and adds the closing edge from
- * the current point back to the first point.
+ * Use this accumulator when polygon vertices arrive as a stream or when
+ * you do not want to store all vertices. Add vertices in boundary order.
+ * `compute` (or checked `tryCompute`) returns perimeter and signed area,
+ * including the closing edge back to the first vertex. Computing does not
+ * modify the accumulator.
+ *
+ * Only the first and most recent vertices are retained; no dynamic vertex
+ * storage is used.
  *
  * `.init` is invalid. Prepare from a valid `Geodesic!T`.
  */
