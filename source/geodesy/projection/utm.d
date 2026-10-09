@@ -157,7 +157,10 @@ public:
     }
 
         /**
-     * Construct a UTM zone number without throwing.
+     * Read a UTM zone number from input data without throwing.
+     *
+     * Standard UTM zones are numbered 1 through 60. Use this checked
+     * factory when a supplied number may fall outside that range.
      *
      * Params:
      *     number = Zone number in the closed interval [1,60].
