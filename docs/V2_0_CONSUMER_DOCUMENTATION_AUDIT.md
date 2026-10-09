@@ -489,3 +489,37 @@ makes the source/target ellipsoid distinction explicit.
 **Validation status:** the example was built from existing public API
 signatures but has not yet been independently compiled in this pass.
 Full rendered DDox and CI checks remain required.
+
+
+## DDox evidence and documentation gate: first verification pass
+
+A source-level Ddoc formatting defect was found and corrected in
+`source/geodesy/transform/molodensky_badekas.d`: six unnecessary
+backslash-escapes around inline-code backticks in three comment lines.
+This is a rendering-quality correction, not a contract change.
+
+The new end-to-end Helmert example in `docs/getting-started.md` has
+been checked against its public entrypoint signatures
+(`GeodeticCoordinate.fromComponents`,
+`geodeticToGeocentric`,
+`PositionVectorHelmert.fromArcSecondsAndPpm`,
+`applyPositionVectorHelmert`,
+`geocentricToGeodetic`). **Signature review is not a compiler run.**
+
+### Evidence required before marking the documentation complete
+
+1. Compile and execute the getting-started example with both baseline
+   DMD and LDC as a real consumer of `import geodesy;`.
+2. Execute the repository's public-symbol Example coverage and
+   Ddoc/DDox build gates on the **exact review commit**.
+3. Open the generated pages for the modified symbols, verifying
+   correct Example ownership, visible inline code and paragraph layout.
+4. Read the generated pages without source access and record explicit
+   pass/fail for the four consumer questions per public symbol.
+5. Check the exact-head CI status; queued checks do **not** count as
+   successful checks.
+
+**Current qualification:** the source-level correction is committed,
+but the compiled example, renderer inspection and full CI acceptance
+have not been independently observed in this pass. The existing
+symbol-example inventory tracks structural coverage, not reader clarity.
