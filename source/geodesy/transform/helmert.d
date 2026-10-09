@@ -357,8 +357,11 @@ public:
     }
 
         /**
-     * Construct from the common EPSG arc-second/ppm representation without
-     * throwing.
+     * Read published seven-parameter frame conversions without throwing.
+     *
+     * Supply translations in the geocentric coordinate's length unit,
+     * rotations in arc-seconds and scale difference in ppm. The rotation
+     * convention must match the published parameter definition.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -442,7 +445,11 @@ public:
     }
 
         /**
-     * Construct from the common EPSG arc-second/ppm representation.
+     * Create a Helmert transform from published arc-seconds and ppm.
+     *
+     * Choose the Position Vector or Coordinate Frame type as specified
+     * by the source definition. Use `tryFromArcSecondsAndPpm` when invalid
+     * input should not raise an exception.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
