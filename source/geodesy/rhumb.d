@@ -1328,10 +1328,11 @@ public:
 
 
 /**
- * Prepared constant-bearing rhumb line for repeated distance positions.
+ * Reuse a constant-bearing route to find positions at several distances.
  *
- * Start auxiliary state and bearing sine/cosine are prepared once. `.init`
- * is invalid.
+ * Choose `RhumbLine` when you have one start position and bearing and need
+ * many points along the same route. Prepare it once instead of solving the
+ * setup anew for every distance. An unprepared `.init` line is invalid.
  */
 struct RhumbLine(T)
 if (isGeodesyScalar!T)
