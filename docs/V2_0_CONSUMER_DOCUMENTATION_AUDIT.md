@@ -282,3 +282,29 @@ Consumer decisions highlighted:
 This records a focused method-reading pass, **not** a full DDox-page
 certification. Overloads, examples, and remaining prepared methods need
 further review.
+
+
+## Projection-family introductions — consumer reading pass
+
+Revised opening Ddoc for six public projection modules:
+`transverse_mercator`, `polar_stereographic`, `ups`,
+`lambert_conformal_conic`, `lambert_azimuthal_equal_area`, and
+`pseudo_mercator`.
+
+| Consumer task | Projection choice |
+| --- | --- |
+| Standard UTM zone and local metre grid | Automatic `forwardUtm` or prepared `UtmProjection`. |
+| Custom transverse grid with specified central meridian | `TransverseMercator`. |
+| Standard WGS 84 polar grid | UPS, with its fixed metre-valued parameters. |
+| Custom polar map grid | `PolarStereographic`. |
+| Conic grid that preserves local angles | Two-standard-parallel `LambertConformalConic`. |
+| Flat grid that preserves area | `LambertAzimuthalEqualArea`, not a conformal projection. |
+| Coordinates for a standard web map | `PseudoMercator`, not a distance/area measurement substitute. |
+
+The opening comments now lead with the mapping problem and alternative
+choice. Existing EPSG methods, domains, parameters, units, and numerical
+constraints remain in the technical sections.
+
+**Coverage is partial:** public constructors, factors, forward/reverse
+overloads, and rendered DDox pages need individual consumer checks before
+these modules can be marked complete.
