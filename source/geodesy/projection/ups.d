@@ -467,7 +467,10 @@ public:
     }
 
 
-    /** Prepare one explicit UPS polar aspect without throwing. */
+    /** Prepare the standard UPS grid for one hemisphere without throwing.
+     *
+     * Select north or south explicitly; the WGS 84 ellipsoid, scale
+     * and false offsets are fixed by UPS rather than supplied by the caller. */
     static bool tryFromHemisphere(
         const UpsHemisphere hemisphere,
         out UpsProjection result)
@@ -524,7 +527,10 @@ public:
     }
 
 
-    /** Prepare one explicit UPS polar aspect or throw. */
+    /** Prepare the standard UPS grid for the chosen hemisphere.
+     *
+     * Use `tryFromHemisphere` if an invalid hemisphere should return
+     * `false` instead of throwing. */
     static UpsProjection fromHemisphere(
         const UpsHemisphere hemisphere)
         @safe
