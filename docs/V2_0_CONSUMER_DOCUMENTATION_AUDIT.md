@@ -383,3 +383,24 @@ must not be mixed.
 **Remaining:** full factory overload and failure-condition review,
 individual factor APIs, Helmert7/14 constructors and operation results,
 and generated DDox consumer checks. No numerical or API behavior changed.
+
+
+## Helmert14 epoch and rate method reading pass
+
+Revised the consumer introductions to the checked `Helmert14`
+canonical and EPSG-style factories, evaluation at an observation epoch
+and checked dynamic application. The docs now introduce the practical
+question before mathematical details: which reference epoch the published
+parameters belong to, which observation epoch to transform at, and what
+units each rate uses.
+
+The distinction between static `Helmert7` parameters and dynamic
+`Helmert14` parameters remains explicit. Canonical rotations/rates use
+radians and radians/year, while the interchange factory accepts arc-seconds
+and arc-seconds/year; scale is dimensionless canonically and ppm in the
+interchange form. Input geocentric XYZ coordinates and translation values
+must share a linear unit.
+
+**Open:** line-by-line review of static Helmert operation overloads,
+throwing convenience methods, coordinate-frame-specific examples, and
+generated DDox pages. The changes are documentation-only.
