@@ -54,7 +54,14 @@ private:
     Longitude!T _longitude;
 
 public:
-    /** Construct from strong latitude and longitude values. */
+    /**
+     * Make a geographic position from its latitude and longitude.
+     *
+     * Use this two-dimensional coordinate for surface routes and map
+     * projections when no height is needed. Both arguments are already
+     * checked by their strong angle types. The result does not identify a
+     * datum or reference ellipsoid.
+     */
     static GeographicCoordinate fromComponents(
         const Latitude!T latitude,
         const Longitude!T longitude)
