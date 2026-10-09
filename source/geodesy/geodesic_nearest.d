@@ -1,8 +1,10 @@
 /**
- * Ellipsoidal nearest-point geometry for bounded geodesic segments.
+ * Find the nearest point on a route segment to a geographic position.
  *
- * The accepted M5 #47 surface returns the nearest point on the finite shortest
- * geodesic segment A->B together with its distance from a target point.
+ * Supply the two endpoints of a shortest geodesic segment and the position
+ * to check. The result gives the closest point on that finite segment and
+ * its distance from the position. If the closest point on the extended route
+ * would lie beyond an endpoint, the result uses the nearer endpoint.
  *
  * Supporting-line quantities are also returned explicitly:
  *
