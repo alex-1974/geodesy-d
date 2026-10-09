@@ -188,3 +188,23 @@ implementation details.
 factory methods, direct/inverse overloads, result carriers and associated
 DDox pages still require page-level, four-question review. The existing
 geodesic and rhumb domain limits and pole policies remain intact.
+
+
+## Angle factories and route operations — function-level pass
+
+Reviewed and revised the public `Angle.fromDegrees`,
+`Angle.tryFromDegrees`, `Latitude.fromDegrees`, and
+`Longitude.fromDegrees` documentation. Consumers now see why they
+would choose a general angle, latitude or longitude and how the input
+bounds differ. Existing exception and domain contracts remain.
+
+Reviewed and revised the checked geodesic and rhumb direct/inverse
+operation summaries. The consumer-facing descriptions now start with
+their tasks: two positions to distance/bearings, or start/bearing/distance
+to destination. The checked operations retain their domain and
+non-throwing failure semantics; the geodesic result's final azimuth
+remains a **forward** bearing, not a back bearing.
+
+This is a focused function-level pass, not certification of all
+overloads, angle factories or result carriers. Each remaining DDox
+symbol page still needs a four-question reader review.
