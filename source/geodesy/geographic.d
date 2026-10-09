@@ -1,10 +1,10 @@
 /**
- * Two-dimensional geographic latitude/longitude coordinate value type.
+ * Represent a position by latitude and longitude, without a height.
  *
- * GeographicCoordinate is the height-free position used by surface geodesics
- * and map projections. It composes the strong latitude and longitude types
- * without embedding datum, CRS, axis-order, or ellipsoid identity, keeping
- * those operation-specific semantics explicit at API boundaries.
+ * Use `GeographicCoordinate` for map projections, distances and routes on
+ * the Earth's surface when you do not need elevation. It combines validated
+ * latitude and longitude values but does not choose an ellipsoid or datum;
+ * supply those when an operation requires them.
  *
  * Units:
  *     Angular representation and canonicalization are owned by `Latitude`
