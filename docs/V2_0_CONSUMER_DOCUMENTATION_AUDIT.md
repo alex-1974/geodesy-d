@@ -92,3 +92,33 @@ slice*, *parameterize a policy*.
 This is a **sample-based first pass**, not a claim that all 463 public DDox
 pages were individually read. Complete the review family by family and record
 each checked page/overload in the v2 API inventory.
+
+
+## Implementation progress (2026-10-09)
+
+The consumer comprehension gate is now part of `docs/ddoc-style.md`.
+The entry guides and the opening Ddoc for `Ellipsoid`, UTM,
+bounded nearest-point geometry, bounded intersections, and dynamic Helmert
+have received a first reader-oriented edit. The individual Ddoc entries
+for `tryForwardUtm`, `tryNearestPointOnSegment`, and
+`tryIntersectGeodesicSegments` now explain the consumer task and result
+before detailing their mathematical mechanism.
+
+**Review status is deliberately partial:** these edits have not reviewed
+every public overload or each of the 463 DDox pages. Do not mark the
+four-question acceptance gate complete until the remaining public families
+and result carriers have been read on rendered pages.
+
+### Prioritized next reading batches
+
+| Batch | Reader tasks | Status |
+| --- | --- | --- |
+| Core values / coordinate conversion | Choose geographic vs geodetic, select height and unit, convert XYZ both ways | Pending per-symbol review |
+| Geodesic, rhumb and polygon | Choose shortest path vs constant bearing, measure polygon, use prepared line | Pending per-symbol review |
+| Bounded nearest point / intersection | Understand results, crossing vs failure, extended-line metrics | Opening Ddoc reviewed; overloads pending |
+| UTM and other projections | Choose grid/zone, forward and reverse, understand valid area | Opening Ddoc and automatic forward checked form reviewed; remainder pending |
+| Static and time-dependent frames | Select EPSG convention, units and epoch, forward/inverse | Opening Ddoc reviewed; overloads pending |
+
+Each completed page must record the four answers, a realistic Example,
+and the explicit failure/units/domain contract. A module introduction
+does not substitute for reviewing the public operations it exports.
