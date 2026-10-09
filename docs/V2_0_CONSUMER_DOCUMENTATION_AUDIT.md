@@ -208,3 +208,26 @@ remains a **forward** bearing, not a back bearing.
 This is a focused function-level pass, not certification of all
 overloads, angle factories or result carriers. Each remaining DDox
 symbol page still needs a four-question reader review.
+
+
+## Geodesic and rhumb result reading pass
+
+Reviewed the public result types `GeodesicDirectResult`,
+`GeodesicInverseResult`, `RhumbDirectResult` and `RhumbInverseResult`,
+including the principal exposed properties.
+
+| Result | Practical reader answer |
+| --- | --- |
+| Geodesic direct | `position` is the destination; `finalAzimuth` is the forward travel direction *at* the destination, not a return bearing. |
+| Geodesic inverse | `distance` is shortest ellipsoidal surface distance; `initialAzimuth` leaves the start; `finalAzimuth` is forward direction at arrival. |
+| Rhumb direct | `position` is the destination after travelling on a constant-bearing route. |
+| Rhumb inverse | `distance` is the length of that constant-bearing route; `bearing` is the heading maintained along it. |
+
+The Ddoc now foregrounds these meanings, the unit relationship to the
+ellipsoid (metres with WGS 84) and the `Angle.degrees` accessor where
+relevant. Existing angular canonicalization and coincident-point behavior
+remain documented.
+
+**Review boundary:** explanatory Ddoc was revised; this does not yet
+certify all overloads or generated DDox pages against the four consumer
+questions. Those remain in the full public API review queue.
