@@ -21,7 +21,11 @@ ACCESS_BLOCK = re.compile(r"^\\s*(private|package(?:\\([^)]*\\))?|protected|publ
 
 def source_visibility(source, line, name):
     """Conservative lexical hint; brace-scoped D access requires manual review."""
-    if not isinstance(line, int) or line < 1 or line > len(source):
+    try:
+        line = int(line)  # DMD JSON supplies source positions as strings.
+    except (TypeError, ValueError):
+        return "unknown", "invalid_source_location"
+    if line < 1 or line > len(source):
         return "unknown", "missing_source_location"
     text = source[line - 1]
     # DMD line numbers can point to a Ddoc or template wrapper, not the declaration.
