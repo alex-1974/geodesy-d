@@ -200,7 +200,12 @@ private W canonicalPolygonArea(W)(
 
 
 /**
- * Result of computing a closed geodesic polygon.
+ * Perimeter and signed area of the polygon formed by the supplied vertices.
+ *
+ * Read `pointCount` for the number of vertices, `perimeter` for total
+ * boundary length in the ellipsoid's linear unit, and `signedArea` for area
+ * in that unit squared. Positive area indicates counterclockwise vertex
+ * order; reversing the order changes the sign.
  */
 struct GeodesicPolygonResult(T)
 if (isGeodesyScalar!T)
