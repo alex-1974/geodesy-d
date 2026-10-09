@@ -135,3 +135,36 @@ independently missing type pages.
 The remaining work is a source-aware privacy classifier and exact
 prototype/overload reconciliation; do not count the nine private types
 as public API.
+
+
+## Source-visibility and overload triage — next iteration
+
+The triage script now adds `source_visibility_hint` and
+`source_visibility_evidence` by consulting source lines at the DMD
+reported declaration location. An explicit `private struct` or
+`package(...) struct` modifier is preserved as evidence. Colon access
+regions, braces, mixins and conditional compilation are **not**
+resolved by this lexical check and intentionally remain `unknown`.
+
+The report separately labels generated/test records and template
+wrappers and attaches `ddox_prototype_count` to matched symbol names.
+Multiple DDox prototypes can now be prioritized for exact source-level
+signature audit. **Do not interpret matched counts as signature
+equivalence**: type spelling, parameters, constraints, attributes,
+overload sets and UFCS availability still require a compiler-backed
+comparison. A D lexer/parser and external positive/negative compile
+probes remain necessary for authoritative accessibility.
+
+To rerun after fetching this PR branch:
+
+```sh
+python3 tools/research/reconcile_api_json.py \
+  build/api-json-dmd \
+  build/v2-public-ddox-prototypes.csv \
+  build/v2-dmd-ddox-triage.csv
+```
+
+The expected initial 1,914 DMD candidate records are evidence from
+the previously supplied CSV, **not** a claim that this updated script
+has executed successfully on the XPS yet. Feature/API freeze remains
+open pending review.
