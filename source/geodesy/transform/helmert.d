@@ -1,10 +1,14 @@
 /**
- * Static 7-parameter EPSG Helmert transformations in geocentric coordinates.
+ * Move Earth-centred coordinates between two reference frames.
  *
- * The rotation convention is encoded in the public type so Position Vector and
- * Coordinate Frame parameters cannot be silently mixed. Both conventions share
- * one parameter model while remaining distinct D types, and explicit
- * conversion between conventions negates only the rotation parameters.
+ * Use a seven-parameter Helmert transformation when a published frame
+ * conversion gives three translations, three small rotations and a scale
+ * difference, without time-dependent rates. These operate on geocentric
+ * XYZ coordinates, not latitude/longitude directly.
+ *
+ * Check the convention in your published parameters: Position Vector and
+ * Coordinate Frame rotations have opposite signs. The convention is part
+ * of the public D type, so the two cannot be mixed silently.
  *
  * Standards:
  *     EPSG method 1033 -- Position Vector transformation (geocentric domain).
