@@ -47,27 +47,36 @@ Excluded initially:
 - [ ] inventory every prepared type and result type;
 - [ ] inventory checked/throwing operation pairs;
 - [ ] inventory public aliases and historical compatibility names;
-- [ ] identify stale v1/v1.2/M4/M5 wording.
+- [ ] identify stale v1/v1.2/M4/M5 wording;
+- [ ] identify any unresolved feature-scope question before freezing the v2 set.
 
-## C2 — v2 API audit
+This is a pre-freeze inventory and scope reconciliation. It may identify likely
+API problems, but the final compatibility/API audit occurs after the release
+baseline and performance/numerical qualification.
 
-For every public family:
+## C2 — feature freeze
 
-- [ ] naming is internally consistent;
-- [ ] parameter names/order are deliberate;
-- [ ] units are explicit and consistent;
-- [ ] angle conventions are explicit;
-- [ ] `.init` validity semantics are deliberate;
-- [ ] checked APIs have predictable failure state;
-- [ ] throwing peers map failures consistently;
-- [ ] prepared vs one-shot ownership is coherent;
-- [ ] result carriers contain only durable public semantics;
-- [ ] aggregate exports are intentional.
+- [ ] create immutable `freeze/feature-2.0.0` checkpoint;
+- [ ] cut a `release/2.0` stabilization branch from the same exact commit if a
+      dedicated stabilization branch is used;
+- [ ] admit no new capability family after this point;
+- [ ] continue stabilization work allowed by the workspace release contract:
+      correctness fixes, regression tests, validation, performance work, API
+      corrections discovered by the audit, documentation, CI, and packaging.
 
-Any breaking correction must be justified as a long-term v2 improvement rather
-than cleanup for its own sake.
+## C3 — release baseline
 
-## C3 — numerical/domain audit
+- [ ] record the exact frozen feature-set commit/checkpoint;
+- [ ] record supported compiler/toolchain state;
+- [ ] record complete ordinary test result;
+- [ ] record aggregate public API/export inventory;
+- [ ] record package/import smoke result;
+- [ ] record relevant independent-consumer result;
+- [ ] record performance baselines for performance-relevant families.
+
+## C4 — numerical, domain, performance, and codegen qualification
+
+Numerical/domain coverage:
 
 - [ ] sphere boundaries;
 - [ ] oblate domain boundaries;
@@ -80,20 +89,7 @@ than cleanup for its own sake.
 - [ ] float/double/platform-real behavior;
 - [ ] independent oracle coverage retained for every non-trivial family.
 
-## C4 — feature freeze and release baseline
-
-- [ ] create immutable `freeze/feature-2.0.0` checkpoint;
-- [ ] cut a `release/2.0` stabilization branch from the same exact commit if a
-      dedicated stabilization branch is used;
-- [ ] admit no new feature family after this point;
-- [ ] record the exact frozen feature-set commit and supported toolchain state;
-- [ ] record ordinary tests, aggregate API/export inventory, package/import
-      smoke, independent-consumer status, and relevant performance baselines;
-- [ ] continue stabilization work allowed by the workspace release contract:
-      correctness fixes, regression tests, validation, performance work, API
-      corrections discovered by the audit, documentation, CI, and packaging.
-
-## C5 — performance, numerical, and codegen qualification
+Performance/codegen coverage:
 
 - [ ] identify public hot paths;
 - [ ] record DMD/LDC baselines against the frozen feature-set baseline;
@@ -101,18 +97,36 @@ than cleanup for its own sake.
 - [ ] record preparation cost and break-even where meaningful;
 - [ ] verify no hidden allocation/GC in documented hot paths;
 - [ ] investigate only material regressions;
-- [ ] preserve reproducible benchmark environment metadata;
-- [ ] complete numerical/domain regression qualification before final API freeze.
+- [ ] preserve reproducible benchmark environment metadata.
 
-## C6 — v2 API audit and correction window
+## C5 — full v2 public API audit
 
-- [ ] complete the full public API audit on the frozen feature set;
+For every public family:
+
+- [ ] naming is internally consistent;
+- [ ] parameter names/order are deliberate;
+- [ ] units are explicit and consistent;
+- [ ] angle conventions are explicit;
+- [ ] `.init` validity semantics are deliberate;
+- [ ] checked APIs have predictable failure state;
+- [ ] throwing peers map failures consistently;
+- [ ] prepared vs one-shot ownership is coherent;
+- [ ] result carriers contain only durable public semantics;
+- [ ] aggregate exports are intentional;
+- [ ] supported named-argument forms and claimed attributes are compile-checked;
+- [ ] external consumer compilation covers the intended public surface.
+
+## C6 — v2 API correction window
+
 - [ ] resolve approved naming inconsistencies;
 - [ ] resolve approved signature/result-type inconsistencies;
 - [ ] remove/deprecate only APIs whose continued support would damage the v2
       contract;
 - [ ] add migration notes for every intentional breaking change;
-- [ ] rerun API/consumer/semantic gates after each public correction.
+- [ ] rerun affected API/consumer/semantic gates after each public correction.
+
+Any breaking correction must be justified as a long-term v2 improvement rather
+than cleanup for its own sake.
 
 ## C7 — API freeze
 
