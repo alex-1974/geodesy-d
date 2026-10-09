@@ -475,7 +475,11 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Result of a direct rhumb operation. */
+/** Destination reached by following a constant compass bearing.
+ *
+ * Read `position` for the resulting geographic latitude and longitude.
+ * The direct operation starts from a position, bearing and signed distance.
+ */
 struct RhumbDirectResult(T)
 if (isGeodesyScalar!T)
 {
@@ -493,7 +497,7 @@ private:
     }
 
 public:
-    /** Endpoint of the direct rhumb operation. */
+    /** Destination latitude and longitude after travelling along the rhumb. */
     @property GeographicCoordinate!T position() const
         pure nothrow @safe @nogc
     {
@@ -532,7 +536,13 @@ public:
 }
 
 
-/** Result of a shortest inverse rhumb operation. */
+/** Distance and constant bearing of a rhumb route between two positions.
+ *
+ * Read `distance` in the ellipsoid's linear unit (metres with WGS 84).
+ * Read `bearing` for the constant direction of travel, available in
+ * degrees through `.bearing.degrees`. Unlike a geodesic, a rhumb route
+ * follows the same compass bearing along its path.
+ */
 struct RhumbInverseResult(T)
 if (isGeodesyScalar!T)
 {
@@ -553,7 +563,7 @@ private:
     }
 
 public:
-    /** Shortest rhumb distance in the ellipsoid semi-major-axis unit. */
+    /** Distance along the selected rhumb route, in the ellipsoid's linear unit. */
     @property T distance() const
         pure nothrow @safe @nogc
     {
@@ -574,7 +584,11 @@ public:
         assert(solver.inverse(start, end).distance > 0.0);
     }
 
-    /** Constant rhumb bearing in the canonical half-open interval from -pi inclusive to +pi exclusive. */
+    /** Compass bearing maintained along the route, represented as an `Angle`.
+     *
+     * Read `.degrees` for degrees. The canonical angular interval runs
+     * from -pi inclusive to +pi exclusive.
+     */
     @property Angle!T bearing() const
         pure nothrow @safe @nogc
     {
