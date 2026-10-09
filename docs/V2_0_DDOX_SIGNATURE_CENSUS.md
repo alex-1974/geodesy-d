@@ -63,3 +63,34 @@ Rows are deterministically ordered by HTML path and within-page prototype order.
 - Only then close the API census gate and authorize the **feature-freeze**
   checkpoint; do not create `freeze/feature-2.0.0` or `freeze/api-2.0.0`
   based on the DDox snapshot alone.
+
+
+## Compiler-generated module snapshots (DMD)
+
+An additional tool, `tools/research/dmd_api_json_snapshot.py`, enumerates the
+`public import` statements from the root package, checks that all 28
+implementation source modules exist, and invokes DMD's `-X` JSON generation
+**for each module**. It also saves an exact Git commit, compiler version and
+per-file SHA-256 digests in a manifest.
+
+```sh
+git rev-parse HEAD
+python3 tools/research/dmd_api_json_snapshot.py --compiler dmd
+dub test --compiler=dmd
+dub test --compiler=ldc2
+```
+
+DMD officially supports `-X`/`-Xf=filename` for generated module JSON;
+the source scanner uses `-o-` so it does not write object files. The
+command must be executed on the XPS (or another environment with DMD and
+the full repository), not inferred from DDox output. Validate the produced
+JSON and manifest before constructing an authoritative visibility and
+overload comparison. **LDC DUB tests provide cross-compiler consumer
+qualification, not proof that DMD's JSON and LDC's public model are
+identical.**
+
+At this checkpoint the compiler-generated snapshot command is committed
+but **has not been executed on an installed D toolchain by this review
+environment**. Hence the exhaustive compiler-verification gate remains
+OPEN. Do not present the 488 rendered DDox prototypes as compiler-certified
+or advance C1 to a freeze checkpoint prematurely.
