@@ -64,7 +64,7 @@ import geodesy.transform.helmert :
  * additional three values are the source-geocentric coordinates of the
  * evaluation point about which rotation and scale are applied.
  *
- * \`.init\` is the identity transformation: Helmert identity parameters and an
+ * `.init` is the identity transformation: Helmert identity parameters and an
  * evaluation point at the geocentric origin.
  */
 struct MolodenskyBadekas10(T, HelmertConvention convention)
@@ -173,8 +173,8 @@ public:
      *     result = Receives the prepared transform on success.
      *
      * Returns:
-     *     \`true\` when the evaluation point and derived equivalent Helmert
-     *     parameters are finite and representable; otherwise \`false\`.
+     *     `true` when the evaluation point and derived equivalent Helmert
+     *     parameters are finite and representable; otherwise `false`.
      */
     static bool tryFromCanonical(
         const Helmert7!(T, convention) baseParameters,
