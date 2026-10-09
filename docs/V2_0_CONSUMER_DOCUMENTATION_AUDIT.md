@@ -331,3 +331,30 @@ Pseudo-Mercator is not a distance or area measurement substitute.
 **Next:** Review each projection's parameters and factory contracts,
 factor outputs and individual DDox examples. This pass does not certify
 every overload or public symbol page.
+
+
+## Projection configuration and factors — selected method pass
+
+Reviewed and revised the consumer introductions to
+`ConformalProjectionFactors`, the checked Transverse Mercator
+parameter factory, the checked/throwing Lambert Conformal Conic
+two-standard-parallel factories, and checked/throwing `UtmZone`
+number factories.
+
+- **Configure from an existing coordinate-system definition:** the natural
+  or false origin, scale, parallels and offsets are prescribed parameters,
+  not arbitrary numbers to tune by eye.
+- **Keep units consistent:** false eastings/northings use the same linear
+  unit as the ellipsoid, while scale is dimensionless.
+- **Understand local factors:** `pointScale` is the local scale relative to
+  the ground; `meridianConvergence` is the clockwise angular difference
+  from true north to grid north under this library's convention.
+- **Choose failure handling:** checked factories report invalid inputs
+  without exceptions; throwing factories provide convenient setup for
+  known-good definitions.
+
+The reviewed comments keep the existing domain constraints, including
+distinct non-polar Lambert standard parallels and valid UTM zone numbers.
+
+**Partial coverage only.** Remaining projection factories, every factor
+overload, and rendered examples require their own four-question review.
