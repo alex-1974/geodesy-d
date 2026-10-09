@@ -549,3 +549,20 @@ consumer example with DMD and LDC; inspect the generated symbol pages for
 example attachment and rendering. Mark those gates PASS only after a
 recorded successful run on the reviewed commit. This section records a
 CI-queue observation, **not** a CI failure.
+
+
+## Executable example shape and environment limitation
+
+Rechecked the new Helmert workflow in `docs/getting-started.md` and wrapped
+its declarations in a complete `void main()` program with `import geodesy;`.
+The former top-level declarations were not a self-contained runnable D
+program. The public API calls remain unchanged.
+
+A local toolchain check in the review environment found **neither `dmd`
+nor `ldc2` available**; no local compiler result is claimed. GitHub Actions
+for the prior reviewed commit also remained queued, not passed. Once a
+compiler environment is available, the whole fenced program should be
+compiled with both baseline compilers and checked in a consumer DUB project.
+
+**Do not mark this example or PR documentation gate PASS on the strength
+of signature inspection or structural fixes alone.**
