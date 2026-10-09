@@ -443,10 +443,25 @@ public:
         return _semiMajorAxis * (cast(T) 1 - _flattening);
     }
 
+    /// Example reading the semiMinorAxis property.
+    @safe unittest
+    {
+        import geodesy;
+        const earth = wgs84!double();
+        assert(earth.semiMinorAxis < earth.semiMajorAxis);
+    }
+
     /** Polar radius alias for the derived semi-axis `b = a(1-f)`. */
     @property T polarRadius() const pure nothrow @safe @nogc
     {
         return semiMinorAxis;
+    }
+
+    /// Example reading the polarRadius property.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().polarRadius < wgs84!double().equatorialRadius);
     }
 
     /// Example reading the derived semi-minor axis.
