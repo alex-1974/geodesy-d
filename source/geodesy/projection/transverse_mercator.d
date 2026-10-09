@@ -2585,7 +2585,7 @@ package bool researchTryReverseFactors(
 
 
         /**
-     * Project a geographic coordinate.
+     * Convert latitude and longitude into easting and northing on this grid.
      *
      * Non-polar inputs are accepted only for |delta longitude| <= 60 degrees
      * from the natural-origin meridian. Geographic poles are independent of
@@ -2699,7 +2699,7 @@ package bool researchTryReverseFactors(
 
 
         /**
-     * Reverse a projected coordinate.
+     * Convert grid easting and northing back into latitude and longitude.
      *
      * The represented-coordinate sheet must correspond to the supported
      * forward domain. Reverse handling preserves the projection's defined pole
