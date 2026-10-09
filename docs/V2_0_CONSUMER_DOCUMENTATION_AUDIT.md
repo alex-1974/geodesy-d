@@ -231,3 +231,28 @@ remain documented.
 **Review boundary:** explanatory Ddoc was revised; this does not yet
 certify all overloads or generated DDox pages against the four consumer
 questions. Those remain in the full public API review queue.
+
+
+## Prepared lines and polygon measurement — consumer pass
+
+Reviewed and updated the public introductions for `GeodesicLine`,
+`GeodesicLineUnrolledResult`, `RhumbLine`,
+`GeodesicPolygonAccumulator`, `GeodesicPolygonResult` and the
+`geodesic_polygon` module.
+
+- A prepared line makes sense when the start, direction and ellipsoid stay
+  fixed while the consumer requests multiple positions.
+- `GeodesicLine` can evaluate distance- or arc-based positions;
+  `RhumbLine` follows a constant bearing.
+- An unrolled geodesic longitude keeps complete turns, which is useful for
+  antimeridian crossing or paths around the Earth.
+- A polygon accumulator accepts ordered vertices and adds the closing edge
+  when computing perimeter and signed area; it is not a geometry-topology
+  validator.
+- Perimeter uses the ellipsoid's length unit; area uses its square.
+  The polygon's traversal direction determines its signed area.
+
+**Not complete:** method-by-method review of all line evaluation overloads,
+polygon edge/point methods, exception contracts and compiled DDox examples
+remains open. Avoid claiming that these modules have passed their full
+four-question consumer gate until those checks are recorded.
