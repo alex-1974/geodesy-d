@@ -886,7 +886,12 @@ public:
     }
 
 
-    /** Solve the shortest inverse rhumb problem without throwing. */
+    /** Find distance and constant bearing between two positions without throwing.
+     *
+     * Use this when you want a constant-heading route and need to handle
+     * failure without exceptions. The result contains the rhumb distance
+     * in the ellipsoid's linear unit and the constant bearing.
+     */
     bool tryInverse(
         const GeographicCoordinate!T start,
         const GeographicCoordinate!T end,
