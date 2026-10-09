@@ -148,3 +148,24 @@ restrictions remain part of the full function comments.
 operations, not a completed sign-off for every public property and overload.
 Remaining detailed work includes factories, constructors, all conversion
 overloads, and the rendered DDox page-by-page audit.
+
+
+## Coordinate construction review
+
+Reviewed the public construction paths for the three core coordinate types:
+
+| Type | Construction choice | Key consumer rule |
+| --- | --- | --- |
+| `GeographicCoordinate` | `fromComponents(latitude, longitude)` | Use strong angles when no height is present; no ellipsoid/datum is stored. |
+| `GeodeticCoordinate` | `tryFromComponents` / `fromComponents` | A height of zero is a measured/assumed ellipsoidal zero, **not** an unknown height; checked form rejects non-finite heights without throwing. |
+| `GeocentricCoordinate` | `tryFromComponents` / `fromComponents` | XYZ components share one unit; choose checked or throwing handling for non-finite input. |
+
+The public factory comments now explain **when to choose each form** before
+their parameter and exception contracts. The three types intentionally differ
+in their `.init` semantics: geographic (0°, 0°), geodetic (0°, 0°, height 0),
+and geocentric (0, 0, 0). A valid value does not imply every operation is
+defined at that value (notably, geocentric-to-geodetic conversion at the exact
+geocentre fails).
+
+This records a focused construction pass only; the remaining public getters,
+overloads, and DDox pages still require individual consumer sign-off.
