@@ -1,9 +1,14 @@
 /**
- * Ellipsoidal rhumb-line (loxodrome) direct/inverse solver and prepared line.
+ * Calculate routes that keep the same compass bearing.
  *
- * A rhumb line follows constant bearing.  The family is intentionally
- * distinct from geodesics and is formulated from isometric latitude,
- * meridian distance, and their stable divided difference.
+ * Choose a rhumb line when the course must stay constant instead of following
+ * the shortest route. Given two positions, the inverse operation returns
+ * distance and bearing. Given a starting point, bearing and distance, the
+ * direct operation finds the destination. For the shortest surface route
+ * between points, choose `Geodesic` instead.
+ *
+ * A rhumb line is also called a loxodrome. The calculation uses ellipsoidal
+ * latitude and meridian-distance mathematics.
  *
  * Domain:
  *     Spherical and oblate ellipsoids with 0 <= f <= 0.01.
