@@ -1,10 +1,11 @@
 /**
- * Static 10-parameter EPSG Molodensky-Badekas transformations in geocentric
- * coordinates.
+ * Convert Earth-centred XYZ coordinates between frames using a local pivot.
  *
- * Molodensky-Badekas is a local-origin member of the Helmert family. Rotation
- * and scale act on Cartesian coordinates relative to an evaluation point
- * P=(Xp,Yp,Zp), after which the evaluation point and translations are restored.
+ * Use Molodensky-Badekas when a published reference-frame conversion
+ * supplies seven Helmert-like parameters plus an evaluation point
+ * (Xp, Yp, Zp). The evaluation point acts as the local centre for the
+ * rotation and scale. Use Helmert7 instead when no evaluation point is
+ * part of the published transformation.
  *
  * Standards:
  *     EPSG method 1061 -- Position Vector, geocentric domain.
@@ -293,7 +294,13 @@ public:
     }
 
     /**
-     * Construct from EPSG arc-second/ppm units without throwing.
+     * Prepare a local-pivot frame transformation from published EPSG units.
+     *
+     * Use the translation, rotation, scale and evaluation-point values
+     * from the same published transformation. Rotations use arc-seconds,
+     * scale uses ppm, and the evaluation-point XYZ values use the same
+     * linear unit as the source coordinates. This checked form returns
+     * `false` for unsupported values.
      *
      * Translation and evaluation-point inputs use the same linear unit as the
      * geocentric coordinates to which the prepared transform will be applied.
@@ -391,7 +398,12 @@ public:
         assert(transform.evaluationPointX == 4.0);
     }
 
-    /** Apply the prepared forward transformation without throwing. */
+    /** Convert source geocentric XYZ to target-frame XYZ without throwing.
+     *
+     * This uses the already prepared local-pivot transformation in its
+     * published forward direction. Returns `false` if the target cannot
+     * be represented in the selected scalar type.
+     */
     bool tryApply(
         const GeocentricCoordinate!T source,
         out GeocentricCoordinate!T result) const
@@ -418,7 +430,11 @@ public:
         assert(target == source);
     }
 
-    /** Apply the prepared forward transformation. */
+    /** Convert geocentric XYZ using this prepared local-pivot transform.
+     *
+     * Use `tryApply` instead when invalid arithmetic should return
+     * `false` rather than raising an exception.
+     */
     GeocentricCoordinate!T apply(
         const GeocentricCoordinate!T source) const
         @safe
