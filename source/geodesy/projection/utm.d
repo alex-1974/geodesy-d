@@ -192,7 +192,10 @@ public:
     }
 
         /**
-     * Construct a UTM zone number.
+     * Make a UTM zone from its number (1 through 60).
+     *
+     * Use this when the zone is known and an invalid number should raise
+     * an exception. Use `tryFromNumber` to check uncertain input.
      *
      * Params:
      *     number = Zone number in the closed interval [1,60].
