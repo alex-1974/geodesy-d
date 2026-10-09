@@ -704,7 +704,12 @@ public:
     }
 
 
-    /** Project within the explicit legal UPS overlap domain or throw. */
+    /** Convert a position in the chosen polar hemisphere to UPS metres.
+     *
+     * Use this when you have already selected a UPS hemisphere and want
+     * its standard grid coordinates. The prepared projection also admits
+     * the documented overlap with UTM; use `tryForward` for checked input.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -794,7 +799,11 @@ public:
     }
 
 
-    /** Reverse an admitted represented UPS coordinate without throwing. */
+    /** Convert UPS easting and northing back to latitude and longitude.
+     *
+     * This checked form returns `false` for grid coordinates outside the
+     * valid represented UPS region.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -879,7 +888,10 @@ public:
     }
 
 
-    /** Reverse an admitted represented UPS coordinate or throw. */
+    /** Convert UPS grid coordinates back into a geographic position.
+     *
+     * Use `tryReverse` when invalid coordinates should not throw.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
