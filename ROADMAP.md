@@ -16,9 +16,11 @@ v1.2.0
 ~~~
 
 v1.2.0 completed M3 — Navigation & Polar Geodesy and was published on
-2026-10-07. It preserves the frozen v1 source contract. M4 — Reference Frames
-is complete on `develop`; the next planned development milestone is M5 —
-Advanced Ellipsoidal Geometry.
+2026-10-07. It preserves the frozen v1 source contract. The current `develop`
+line has since completed M4 — Reference Frames, M5 — Advanced Ellipsoidal
+Geometry, and the qualified prolate geodesic admission from #69. The active
+release target is v2.0.0, focused on consolidation, API stabilization, and
+qualification rather than another capability milestone.
 
 The frozen v1 API already provides:
 
@@ -380,18 +382,17 @@ Explicitly excluded from the initial v2.0 scope:
 
 Preferred release sequence:
 
-1. repository/status/documentation reconciliation;
-2. complete public-family/API inventory;
-3. compatibility and naming audit;
-4. numerical-regression and edge-domain audit;
-5. performance/codegen audit of prepared and hot-path families;
-6. feature freeze;
-7. API correction window for justified v2-only changes;
-8. immutable API freeze;
-9. Ddoc/examples/comments polish;
-10. exact-head compiler/platform/oracle/consumer gates;
-11. release-candidate publication audit;
-12. tag and publish v2.0.0.
+1. repository/status/documentation reconciliation and complete public-family/API inventory;
+2. feature freeze and immutable `freeze/feature-2.0.0` checkpoint;
+3. record the release baseline on the frozen feature set;
+4. numerical-regression, domain, performance, and codegen qualification;
+5. compatibility, naming, failure, result-carrier, and complete public API audit;
+6. API correction window for justified v2-only changes;
+7. immutable API freeze;
+8. Ddoc/examples/comments and migration-documentation polish;
+9. exact-head compiler/platform/oracle/consumer release-candidate gates;
+10. release-candidate publication audit;
+11. promote the qualified state to `main`, tag, and publish v2.0.0.
 
 The v2.0 release should therefore answer a stronger question than “what else can
 the library do?”: **is the API and numerical contract we already have the one we
