@@ -1,10 +1,14 @@
 /**
- * Bounded ellipsoidal Lambert Conformal Conic (2SP), EPSG method 9802.
+ * Project geographic positions onto a conic map that preserves local angles.
  *
- * The prepared projection accepts spherical and oblate ellipsoids with
- * 0 <= flattening <= 0.01 and two genuinely distinct non-polar standard
- * parallels. It exposes checked/throwing forward, reverse, and conformal
- * factor operations.
+ * Use Lambert Conformal Conic when your map uses two standard parallels,
+ * such as the grid definitions used for Austria Lambert or LCC Europe.
+ * Supply the specified ellipsoid, origin, two parallels and grid offsets.
+ * The prepared projection converts in both directions and reports local
+ * scale and meridian convergence.
+ *
+ * This implementation supports spherical and oblate ellipsoids with
+ * 0 <= flattening <= 0.01 and requires two distinct non-polar parallels.
  *
  * Standards:
  *     Public parameter semantics follow EPSG method 9802 -- Lambert Conic
