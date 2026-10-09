@@ -72,7 +72,10 @@ static GeocentricCoordinate fromComponentsUnchecked(
 
 public:
     /**
-     * Construct from finite X/Y/Z components without throwing.
+     * Make an Earth-centred XYZ position without throwing.
+     *
+     * Use this checked factory when any component might be missing or
+     * non-finite. All three values must use the same linear unit.
      *
      * Params:
      *     x = Finite geocentric X component.
