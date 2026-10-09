@@ -404,3 +404,25 @@ must share a linear unit.
 **Open:** line-by-line review of static Helmert operation overloads,
 throwing convenience methods, coordinate-frame-specific examples, and
 generated DDox pages. The changes are documentation-only.
+
+
+## Helmert7 static factory and application reading pass
+
+Reviewed and revised the Ddoc introductions for static Helmert
+`tryFromCanonical` / `fromCanonical`, plus
+`tryApplyPositionVectorHelmert` and
+`tryApplyCoordinateFrameHelmert`.
+
+The consumer-facing explanation now emphasizes: published source-to-target
+transformation direction, the difference between Position Vector and
+Coordinate Frame rotation conventions, checked versus throwing factory
+behavior, and canonical angle/scale units. Existing parameter lists and
+failure contracts were retained.
+
+The checked application functions accept geocentric XYZ and a
+convention-specific `Helmert7`; they do not silently reverse the
+transformation or convert convention-specific rotation signs.
+
+**Still open:** review of EPSG interchange constructors,
+`applyPositionVectorHelmert`/`applyCoordinateFrameHelmert`
+throwing forms, inverse direction decisions and DDox examples.
