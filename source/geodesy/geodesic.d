@@ -3323,7 +3323,11 @@ public:
     }
 
     /**
-     * Evaluate a signed distance along the prepared line without throwing.
+     * Find a position at a chosen distance along the prepared geodesic.
+     *
+     * Pass a distance in the ellipsoid's linear unit. A negative distance
+     * follows the same path backward. The result contains the position and
+     * forward heading there; this checked form returns `false` on failure.
      */
     bool tryPosition(
         const T distance,
@@ -3604,7 +3608,11 @@ public:
     }
 
     /**
-     * Evaluate a signed auxiliary-sphere arc along the prepared line.
+     * Find a position using geodesic arc length instead of ground distance.
+     *
+     * Pass an `Angle` describing the signed auxiliary-sphere arc, not a
+     * distance in metres. Most callers wanting positions every fixed number
+     * of metres should use `tryPosition` instead.
      */
     bool tryArcPosition(
         const Angle!T arc,
@@ -3767,7 +3775,11 @@ public:
     }
 
     /**
-     * Evaluate a signed distance and retain continuous longitude.
+     * Find a position by distance without wrapping longitude at 180 degrees.
+     *
+     * Use this when a path crosses the antimeridian or makes full turns
+     * and you need its accumulated longitude change. The result provides
+     * `unrolledLongitude` as an `Angle`, not a bounded `Longitude`.
      */
     bool tryPositionUnrolled(
         const T distance,
@@ -3853,7 +3865,10 @@ public:
     }
 
     /**
-     * Evaluate a signed auxiliary-sphere arc and retain continuous longitude.
+     * Find a position by geodesic arc while keeping continuous longitude.
+     *
+     * The input is a signed auxiliary-sphere `Angle`, not metres. Use
+     * `tryPositionUnrolled` for distance-based evaluation instead.
      */
     bool tryArcPositionUnrolled(
         const Angle!T arc,
