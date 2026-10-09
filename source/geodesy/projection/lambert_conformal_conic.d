@@ -1071,7 +1071,12 @@ public:
     }
 
 
-    /** Project a geographic coordinate or throw. */
+    /** Convert latitude and longitude to this conic map's grid coordinates.
+     *
+     * The result contains easting and northing in the ellipsoid's length
+     * unit. Use `tryForward` to handle an unsupported position without an
+     * exception.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1104,7 +1109,11 @@ public:
     }
 
 
-    /** Reverse a projected coordinate without throwing. */
+    /** Convert this conic grid's easting and northing to latitude and longitude.
+     *
+     * Returns `false` when the input cannot be reversed in the supported
+     * domain; use `reverse` when an exception is preferred.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1162,7 +1171,10 @@ public:
     }
 
 
-    /** Reverse a projected coordinate or throw. */
+    /** Convert grid coordinates back to a geographic position.
+     *
+     * Use `tryReverse` to handle invalid projected input without throwing.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
