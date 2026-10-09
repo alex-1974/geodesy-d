@@ -1475,7 +1475,12 @@ public:
 
 
         /**
-     * Prepare a bounded Transverse Mercator operation without throwing.
+     * Set up a custom Transverse Mercator grid without throwing.
+     *
+     * Supply the ellipsoid, natural origin, local scale and grid offsets
+     * specified by your coordinate system. Easting/northing offsets must
+     * use the same linear unit as the ellipsoid. A positive scale factor
+     * is required. Use `UtmProjection` for a standard UTM zone instead.
      *
      * Params:
      *     ellipsoid = Valid spherical or oblate ellipsoid with flattening
