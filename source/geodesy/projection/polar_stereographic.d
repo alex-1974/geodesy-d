@@ -1,9 +1,10 @@
 /**
- * Bounded EPSG 9810 Polar Stereographic projection.
+ * Convert positions near a pole into a flat coordinate grid.
  *
- * Project geographic coordinates around either pole with a prepared
- * stereographic operation. The parameters make the ellipsoid, polar natural
- * origin, central scale, and false offsets explicit.
+ * Use `PolarStereographic` when your polar map defines its own scale,
+ * origin and coordinate offsets. It supports a projection centred on either
+ * pole. Use `UpsProjection` instead when you want the standard WGS 84 polar
+ * grid with fixed parameters.
  *
  * Standards:
  *     Public parameter semantics follow EPSG method 9810 -- Polar
