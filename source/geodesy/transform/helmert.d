@@ -231,7 +231,11 @@ public:
     }
 
         /**
-     * Construct Helmert parameters from canonical units without throwing.
+     * Prepare seven frame-conversion parameters in canonical units without throwing.
+     *
+     * Use this factory when the source rotations are already `Angle` values
+     * in radians and the scale difference is dimensionless. Choose the
+     * correct rotation convention in the `Helmert7` type.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -292,7 +296,10 @@ public:
     }
 
         /**
-     * Construct Helmert parameters from canonical units.
+     * Prepare seven frame-conversion parameters from canonical units.
+     *
+     * Use this when invalid translations or scale should throw. The
+     * checked `tryFromCanonical` factory reports failures as `false`.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -598,7 +605,10 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1033 Position Vector in the source-to-target direction.
+ * Convert source geocentric XYZ into target-frame XYZ using Position Vector rotations.
+ *
+ * Use the parameter set published for this transformation direction.
+ * This checked operation does not reverse the frame conversion automatically.
  *
  * Params:
  *     source = Source geocentric coordinate.
@@ -915,7 +925,11 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
+ * Convert source geocentric XYZ into target-frame XYZ using Coordinate Frame rotations.
+ *
+ * Use parameters published under the Coordinate Frame convention, not
+ * Position Vector rotations with unchanged signs. This checked operation
+ * preserves the source-to-target direction.
  *
  * Params:
  *     source = Source geocentric coordinate.
