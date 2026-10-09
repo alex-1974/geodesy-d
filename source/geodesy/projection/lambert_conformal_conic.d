@@ -825,7 +825,12 @@ public:
     }
 
 
-    /** Prepare an EPSG 9802 two-standard-parallel projection or throw. */
+    /** Set up a conic map from its two standard parallels and grid parameters.
+     *
+     * Use this when invalid configuration should raise an exception.
+     * Use `tryFromTwoStandardParallels` when you want to check the
+     * parameters without throwing.
+     */
     static LambertConformalConic fromTwoStandardParallels(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfFalseOrigin,
