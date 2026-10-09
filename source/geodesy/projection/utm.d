@@ -1,10 +1,13 @@
 /**
- * Universal Transverse Mercator policy, tagging, and prepared projection.
+ * Convert geographic positions to UTM coordinates measured in metres.
  *
- * Use UTM for standard zone/hemisphere selection, tagged coordinates, and
- * repeated operations in an explicit prepared zone. The module supplies UTM
- * policy and fixed parameters while reusing the Transverse Mercator numerical
- * kernel.
+ * UTM divides most of the world into numbered zones with local eastings and
+ * northings. Use automatic UTM conversion when you want the standard zone
+ * for a position. Use a prepared `UtmProjection` when you already know the
+ * zone and need to convert many positions consistently within it.
+ *
+ * The module chooses zones and labels coordinates; Transverse Mercator
+ * performs the underlying projection.
  *
  * Standards:
  *     UTM semantics follow the conventional EPSG/IOGP Transverse Mercator
