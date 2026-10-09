@@ -8,12 +8,40 @@ import argparse
 import csv
 import json
 import re
+from collections import Counter, defaultdict
 from pathlib import Path
 
 KINDS = {"function", "template", "struct", "class", "interface",
          "enum", "enum member", "alias", "variable", "constructor"}
 TEST_NAME = re.compile(r"^__(?:unittest|lambda|foreach|ctor|dtor|postblit)")
 PRIVATE_NAME = re.compile(r"^_")
+DECLARATION = re.compile(r"\\b(?:struct|class|interface|enum|alias|template|union|mixin)\\b")
+DIRECT_ACCESS = re.compile(r"\\b(private|package(?:\\([^)]*\\))?|protected|public|export)\\s+(?=(?:struct|class|interface|enum|alias|template)\\b)")
+ACCESS_BLOCK = re.compile(r"^\\s*(private|package(?:\\([^)]*\\))?|protected|public|export)\\s*:\\s*(?://.*)?$")
+
+
+def source_visibility(source, line, name):
+    """Conservative lexical hint; brace-scoped D access requires manual review."""
+    if not isinstance(line, int) or line < 1 or line > len(source):
+        return "unknown", "missing_source_location"
+    text = source[line - 1]
+    # DMD line numbers can point to a Ddoc or template wrapper, not the declaration.
+    vicinity = "\\n".join(source[max(0, line - 3):min(len(source), line + 2)])
+    match = DIRECT_ACCESS.search(text)
+    if match:
+        return match.group(1), "explicit_declaration"
+    if name and name in vicinity:
+        prefix = text.split(name, 1)[0] if name in text else ""
+        match = DIRECT_ACCESS.search(prefix)
+        if match:
+            return match.group(1), "explicit_declaration"
+    # A colon clause is informative only within its lexical scope. We intentionally
+    # do not resolve braces, mixins or conditional compilation here.
+    block = [ACCESS_BLOCK.match(x) for x in source[:line]]
+    if any(block):
+        return "unknown", "access_block_requires_parser"
+    return "unknown", "lexical_scope_unverified"
+
 
 def walk(node, module, ancestors=(), inherited="public"):
     if isinstance(node, list):
@@ -68,19 +96,30 @@ def main():
     entries = manifest["public_modules"]
     ddox = list(csv.DictReader(a.ddox_csv.open(newline="", encoding="utf-8")))
     ddox_names = {(r["module"], r["symbol"]) for r in ddox}
+    prototypes = Counter((r["module"], r["symbol"]) for r in ddox)
     rows = []
     for item in entries:
         name = item["module"]
         data = json.loads((a.json_dir / item["json"]).read_text())
-        rows.extend(walk(data, name))
+        source = (Path(__file__).resolve().parents[2] / item["source"]).read_text(encoding="utf-8").splitlines()
+        for row in walk(data, name):
+            symbol_leaf = row["symbol"].split(".")[-1]
+            visibility, evidence = source_visibility(source, row["line"], symbol_leaf)
+            row["source_visibility_hint"] = visibility
+            row["source_visibility_evidence"] = evidence
+            rows.append(row)
     for row in rows:
+        row["ddox_prototype_count"] = prototypes.get((row["module"], row["symbol"]), 0)
+        row["wrapper_or_generated_review"] = "yes" if (row["kind"] == "template" or "compiler_or_test_generated" in row["triage"]) else "no"
         row["ddox_page_name_match"] = "yes" if (
             row["module"], row["symbol"]) in ddox_names else "no"
     a.report_csv.parent.mkdir(parents=True, exist_ok=True)
     with a.report_csv.open("w", newline="", encoding="utf-8") as f:
         cols = ["module", "symbol", "kind", "line", "protection",
                 "explicit_protection", "type", "constraint", "parameters",
-                "triage", "ddox_page_name_match"]
+                "triage", "ddox_page_name_match", "ddox_prototype_count",
+                "wrapper_or_generated_review", "source_visibility_hint",
+                "source_visibility_evidence"]
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
         w.writerows(rows)
@@ -88,6 +127,10 @@ def main():
     print("DDox prototypes:", len(ddox))
     print("Conservative triage: neither unmatched names nor underscore names")
     print("alone prove public exposure, omissions, or incompatibility.")
+    print("DDox symbol pages:", len(ddox_names))
+    print("DDox overloaded page count:", sum(v > 1 for v in prototypes.values()))
+    print("Explicit source visibility evidence:", sum(r["source_visibility_evidence"] == "explicit_declaration" for r in rows))
+    print("All other lexical access hints are UNKNOWN, not PUBLIC.")
     print("Report:", a.report_csv)
 
 
