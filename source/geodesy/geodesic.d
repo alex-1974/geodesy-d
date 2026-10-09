@@ -343,11 +343,11 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Result of a direct geodesic operation.
+ * Destination and arrival heading after following a geodesic.
  *
- * `position` is the endpoint. `finalAzimuth` is the forward azimuth at
- * that endpoint: the heading of the same oriented geodesic if continued
- * beyond the endpoint. It is not a back azimuth.
+ * Read `position` for the destination's latitude and longitude. Read
+ * `finalAzimuth` for the direction of travel at that destination if you
+ * continue along the same path. It does not point back to the start.
  *
  * Azimuths use the public canonical angle interval from -pi inclusive to +pi
  * exclusive.
@@ -402,12 +402,12 @@ public:
 
 
 /**
- * Result of an inverse geodesic operation.
+ * Shortest surface distance and travel directions between two positions.
  *
- * `distance` is the shortest geodesic distance and uses the same linear unit
- * as the solver ellipsoid semi-major axis. `initialAzimuth` is the forward
- * azimuth at the start; `finalAzimuth` is the forward azimuth of the same
- * oriented geodesic at the endpoint, not the back azimuth.
+ * Read `distance` for the shortest surface distance in the ellipsoid's
+ * linear unit (metres with WGS 84). `initialAzimuth` is the direction to
+ * leave the start point. `finalAzimuth` is the direction of travel when
+ * reaching the end, not the bearing back toward the start.
  *
  * Both azimuths are canonicalized from -pi inclusive to +pi exclusive.
  * Coincident endpoints have the unique canonical result distance +0,
@@ -461,7 +461,11 @@ public:
         assert(result.distance > 0.0);
     }
 
-    /** Forward azimuth at the start point, canonicalized from -pi inclusive to +pi exclusive. */
+    /** Direction of travel when leaving the start, as an `Angle`.
+     *
+     * Read `.degrees` for degrees. The stored value uses the canonical
+     * interval from -pi inclusive to +pi exclusive.
+     */
     @property Angle!T initialAzimuth() const
         pure nothrow @safe @nogc
     {
@@ -484,9 +488,11 @@ public:
     }
 
     /**
-     * Forward azimuth at the endpoint, canonicalized from -pi inclusive to +pi exclusive.
+     * Direction of travel on reaching the endpoint, as an `Angle`.
      *
-     * This is not the back azimuth.
+     * This is the heading along the continuing path, not the bearing
+     * back to the start. It uses the canonical interval from -pi
+     * inclusive to +pi exclusive.
      */
     @property Angle!T finalAzimuth() const
         pure nothrow @safe @nogc
