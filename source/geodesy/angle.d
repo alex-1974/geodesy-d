@@ -1,10 +1,10 @@
 /**
- * Strong angular and geographic angular-coordinate value types.
+ * Work with angles, latitudes and longitudes without mixing them up.
  *
- * Use Angle for unrestricted finite angles and Latitude/Longitude for
- * geographic coordinates. The strong types keep these domains distinct from
- * raw scalars and from each other. Values use radians internally; explicit
- * factories accept radians or degrees.
+ * Use `Angle` for a bearing or another general angle. Use `Latitude` for
+ * north/south position and `Longitude` for east/west position. Each type
+ * accepts values in degrees or radians through an explicit factory, so a
+ * caller never has to guess which unit an input number represents.
  *
  * Domain:
  *     `Angle` accepts every finite represented angle. `Latitude` is bounded
