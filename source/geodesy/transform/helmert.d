@@ -649,7 +649,10 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1033 Position Vector in the source-to-target direction.
+ * Return XYZ coordinates in the target frame using Position Vector parameters.
+ *
+ * The parameters must describe the requested source-to-target direction.
+ * Use `tryApplyPositionVectorHelmert` for non-throwing error handling.
  *
  * Params:
  *     source = Source geocentric coordinate.
@@ -970,7 +973,11 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
+ * Return XYZ coordinates in the target frame using Coordinate Frame parameters.
+ *
+ * Use the published Coordinate Frame convention and source-to-target
+ * direction. Use `tryApplyCoordinateFrameHelmert` to handle invalid
+ * arithmetic without exceptions.
  *
  * Params:
  *     source = Source geocentric coordinate.
