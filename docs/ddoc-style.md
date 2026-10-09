@@ -104,6 +104,34 @@ prefer precise verbs, lead with caller-visible meaning, keep exact technical
 terms where they carry necessary information, and never make a consumer learn
 the repository's internal history to understand an API.
 
+## 2.3 Consumer comprehension gate
+
+Review every public module and non-trivial public operation as a first-time
+consumer. Do not treat a compiled example or syntactically complete Ddoc as
+proof that the explanation is useful.
+
+A reviewer must be able to answer these four questions **from the public
+documentation alone**, without reading implementation code:
+
+1. **What is it?** State its purpose in one plain sentence.
+2. **When would I use it?** Name a recognizable task and, when relevant,
+   explain why to choose it over a nearby API.
+3. **What does it do?** Identify the inputs, result, units and meaningful
+   limits without guessing.
+4. **How do I use it?** Follow a short, realistic, compiling example and
+   know what to do when the operation fails.
+
+Write for an intelligent reader who does not know the library's history.
+Begin with the job and its result, then explain the API choice and example.
+Place standards, numerical qualifications and implementation details after
+the consumer-facing explanation. Never omit a critical unit, limit, or
+failure condition for the sake of simpler prose.
+
+For each non-trivial symbol, record pass/fail for all four questions in the
+v2.0 consumer review. A failure is a documentation defect even if all
+automated gates pass. Tiny properties need proportionate explanations, not
+boilerplate or fabricated use cases.
+
 ## 3. Public Ddoc contract
 
 Every public symbol reachable through:
