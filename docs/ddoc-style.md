@@ -132,6 +132,30 @@ v2.0 consumer review. A failure is a documentation defect even if all
 automated gates pass. Tiny properties need proportionate explanations, not
 boilerplate or fabricated use cases.
 
+## 2.3 Consumer comprehension gate
+
+Every public module and non-trivial public operation must answer four
+questions from the consumer's perspective:
+
+1. **What is it?** Explain its purpose in one plain sentence.
+2. **When would I use it?** Describe a recognizable task and when to choose
+   this API over a related alternative.
+3. **What does it do?** Explain the inputs, output, units, limits and
+   meaningful failure conditions.
+4. **How do I use it?** Give a concise, realistic example that compiles and
+   shows the operation in context.
+
+Read the generated DDox page without consulting implementation code.
+A rendered Example and technically correct signatures do not by themselves
+establish that the documentation is understandable. Human review must
+confirm all four answers. Start with the reader's task and the useful
+result, then explain technical constraints and standards. Do not simplify
+away important units, domains, or numerical guarantees.
+
+Record pass/fail per module and per non-trivial public operation in the v2.0
+consumer documentation audit. Tiny properties need proportionate explanations
+rather than artificial use cases.
+
 ## 3. Public Ddoc contract
 
 Every public symbol reachable through:
