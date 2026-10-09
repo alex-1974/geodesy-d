@@ -610,7 +610,12 @@ public:
 
 
     /**
-     * Construct a bounded EPSG 9810 projection without throwing.
+     * Set up a polar grid using the scale factor specified at the pole.
+     *
+     * Supply the ellipsoid, selected north/south pole, central meridian,
+     * positive scale factor and false easting/northing. Offsets use the
+     * ellipsoid's linear unit. Use this checked form to reject invalid
+     * parameters without throwing.
      */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -686,7 +691,9 @@ public:
     }
 
 
-    /** Construct a bounded EPSG 9810 projection or throw. */
+    /** Set up a pole-centred stereographic grid or throw on invalid parameters.
+     *
+     * Use `tryFromParameters` for a non-throwing configuration check. */
     static PolarStereographic fromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfNaturalOrigin,
@@ -832,7 +839,10 @@ public:
     }
 
 
-    /** Construct EPSG 9829 Polar Stereographic variant B or throw. */
+    /** Set up a polar grid using its specified standard parallel.
+     *
+     * This is variant B (EPSG 9829), which derives the pole scale
+     * internally. Use `tryFromStandardParallel` when failure must not throw. */
     static PolarStereographic fromStandardParallel(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfStandardParallel,
