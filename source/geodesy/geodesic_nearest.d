@@ -637,16 +637,17 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Find the nearest point on a bounded oriented ellipsoidal geodesic segment.
+ * Find the point on a finite route segment closest to a position.
  *
- * A and B define the shortest geodesic segment and its orientation. The
- * operation first solves a local perpendicular intercept on the supporting
- * geodesic using Karney's ellipsoidal gnomonic construction, then clamps the
- * bounded nearest point to A or B when the intercept lies outside the segment.
+ * Supply the route's start A, end B, and the position to check. The result
+ * gives the nearest point on the segment and its distance from the position.
+ * If the nearest point on the extended route lies beyond A or B, the nearest
+ * segment point is the corresponding endpoint.
  *
- * The returned `signedCrossTrack` is positive to the right of the oriented
- * A->B supporting geodesic and negative to the left. `alongTrack` is signed
- * from A in the A->B direction.
+ * The result also describes the extended route: `alongTrack` measures from
+ * A in the A-to-B direction; `signedCrossTrack` is positive on the right
+ * and negative on the left. These values describe the extended route, not
+ * necessarily the distance to the finite segment.
  *
  * A coincident A/B pair is rejected because its orientation, along-track
  * direction, and cross-track sign are undefined.
