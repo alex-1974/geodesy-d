@@ -1348,7 +1348,10 @@ public:
 
 
         /**
-     * Solve the direct geodesic problem without throwing.
+     * Find a destination from a start position, bearing and distance.
+     *
+     * Use this checked form when you know the direction and distance along
+     * a geodesic and want the endpoint without using exceptions.
      *
      * Starting from `start`, follow `initialAzimuth` for signed `distance`.
      * Negative distance follows the same oriented geodesic backward. Returned
