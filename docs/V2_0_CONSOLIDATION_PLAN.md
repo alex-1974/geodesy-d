@@ -80,24 +80,33 @@ than cleanup for its own sake.
 - [ ] float/double/platform-real behavior;
 - [ ] independent oracle coverage retained for every non-trivial family.
 
-## C4 — performance and codegen audit
+## C4 — feature freeze and release baseline
+
+- [ ] create immutable `freeze/feature-2.0.0` checkpoint;
+- [ ] cut a `release/2.0` stabilization branch from the same exact commit if a
+      dedicated stabilization branch is used;
+- [ ] admit no new feature family after this point;
+- [ ] record the exact frozen feature-set commit and supported toolchain state;
+- [ ] record ordinary tests, aggregate API/export inventory, package/import
+      smoke, independent-consumer status, and relevant performance baselines;
+- [ ] continue stabilization work allowed by the workspace release contract:
+      correctness fixes, regression tests, validation, performance work, API
+      corrections discovered by the audit, documentation, CI, and packaging.
+
+## C5 — performance, numerical, and codegen qualification
 
 - [ ] identify public hot paths;
-- [ ] record DMD/LDC baselines;
+- [ ] record DMD/LDC baselines against the frozen feature-set baseline;
 - [ ] compare prepared and one-shot variants where both exist;
 - [ ] record preparation cost and break-even where meaningful;
 - [ ] verify no hidden allocation/GC in documented hot paths;
 - [ ] investigate only material regressions;
-- [ ] preserve reproducible benchmark environment metadata.
+- [ ] preserve reproducible benchmark environment metadata;
+- [ ] complete numerical/domain regression qualification before final API freeze.
 
-## C5 — feature freeze
+## C6 — v2 API audit and correction window
 
-- [ ] create immutable `freeze/feature-2.0.0` checkpoint;
-- [ ] admit no new feature family after this point;
-- [ ] allow only release-blocking correctness/API/documentation fixes.
-
-## C6 — v2 API correction window
-
+- [ ] complete the full public API audit on the frozen feature set;
 - [ ] resolve approved naming inconsistencies;
 - [ ] resolve approved signature/result-type inconsistencies;
 - [ ] remove/deprecate only APIs whose continued support would damage the v2
