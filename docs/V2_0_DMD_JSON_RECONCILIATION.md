@@ -116,3 +116,22 @@ Check the nine structs' lexical protection in source code (including
 positive/negative probes for any ambiguous struct. Resolve enum-value
 page ownership separately. Then compare actual overload signatures
 rather than name-match flags. The feature freeze remains **not approved**.
+
+
+### Source verification of the nine suspect structs
+
+Checked all nine declarations against the corresponding source on
+`audit/v2.0-signature-census`. **All nine are explicitly declared
+`private struct`**, including the nested
+`TransverseMercator.TmForwardWorkingResult`. None is therefore a
+missing public DDox page.
+
+This confirms a concrete false-positive class in the triage script:
+DMD JSON `protection` inheritance from the surrounding scope is not a
+substitute for reading lexical `private` modifiers. The 27 enum values
+are separate from their documented parent-enum pages and are not
+independently missing type pages.
+
+The remaining work is a source-aware privacy classifier and exact
+prototype/overload reconciliation; do not count the nine private types
+as public API.
