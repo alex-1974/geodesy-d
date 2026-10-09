@@ -14,7 +14,10 @@ and topocentric families documented below.
 
 v1.2.0 is the current published stable feature release. It completes M3
 Navigation & Polar Geodesy while preserving the frozen v1 source-compatibility
-baseline. The next planned development milestone is M4 — Reference Frames.
+baseline. On `develop`, M4 — Reference Frames and M5 — Advanced Ellipsoidal
+Geometry are complete, including the qualified prolate geodesic domain.
+The next target is v2.0.0: consolidation and public API stabilization,
+not another feature-expansion milestone.
 
 ## Responsibility boundary
 
