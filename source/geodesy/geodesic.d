@@ -1,12 +1,14 @@
 /**
- * Robust direct and inverse ellipsoidal geodesics on a prepared ellipsoid.
+ * Find shortest routes and distances along a reference ellipsoid.
  *
- * The module solves the classical surface-geodesic problems with a
- * Karney-family auxiliary-sphere/series implementation rather than
- * Vincenty-style inverse iteration. The design explicitly covers difficult
- * configurations such as nearly antipodal points, poles, coincident points,
- * very short paths, and longitude discontinuities within its documented
- * ellipsoid domain.
+ * Use the inverse operation when you know two geographic positions and
+ * want their shortest surface distance and bearings. Use the direct operation
+ * when you know a start position, a bearing and a distance and want the
+ * destination. A prepared `Geodesic` solver lets you reuse the same
+ * ellipsoid for many calculations.
+ *
+ * The numerical solver follows Karney's geodesic method and handles difficult
+ * cases such as near-antipodal points and polar routes within its domain.
  *
  * Domain:
  *     Prepared solvers support `a > 0` and `-0.01 <= f <= 0.01`, including
