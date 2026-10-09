@@ -426,3 +426,24 @@ transformation or convert convention-specific rotation signs.
 **Still open:** review of EPSG interchange constructors,
 `applyPositionVectorHelmert`/`applyCoordinateFrameHelmert`
 throwing forms, inverse direction decisions and DDox examples.
+
+
+## Helmert interchange and throwing operations — consumer pass
+
+Reviewed and revised the Helmert7 EPSG interchange factories
+(`tryFromArcSecondsAndPpm` / `fromArcSecondsAndPpm`)
+and both throwing source-to-target operations
+(`applyPositionVectorHelmert` / `applyCoordinateFrameHelmert`).
+The public descriptions distinguish the rotation convention, transformation
+direction and units used by published parameters.
+
+For dynamic Helmert14, revised the throwing construction factories
+(`fromCanonical` and `fromArcSecondsAndPpm`), epoch evaluation
+(`evaluate`), and transformation (`apply`). The reference epoch fixes the
+published parameter values; the observation epoch determines how the yearly
+rates are propagated. The checked alternatives remain named alongside
+throwing convenience methods.
+
+**Scope:** Ddoc wording only. Exact exception, numeric and type contracts
+remain authoritative. Generated DDox review, fully compilable new consumer
+examples and complete public-method coverage are still pending.
