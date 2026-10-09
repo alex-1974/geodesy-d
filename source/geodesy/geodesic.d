@@ -2451,12 +2451,12 @@ private struct GeodesicLineRawPosition(W)
 
 
 /**
- * Prepared-line position whose longitude is not reduced to one revolution.
+ * Position along a geodesic with longitude allowed to pass beyond 180 degrees.
  *
- * `unrolledLongitude` is an unrestricted finite `Angle!T`. The difference
- * from the line's input longitude records both direction and complete
- * encirclements. This deliberately does not use `Longitude!T`, whose public
- * contract is bounded to [-pi,+pi].
+ * Use this result when you follow a path across the antimeridian or around
+ * the Earth and want to keep track of the full longitude change. Read
+ * `unrolledLongitude` as an `Angle`; unlike a regular `Longitude`, it can
+ * include complete turns instead of wrapping back into the normal range.
  */
 struct GeodesicLineUnrolledResult(T)
 if (isGeodesyScalar!T)
