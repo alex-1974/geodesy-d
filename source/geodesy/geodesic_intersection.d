@@ -808,10 +808,12 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Intersect two bounded shortest ellipsoidal geodesic segments without throwing.
+ * Find whether two finite geographic route segments cross or overlap.
  *
- * Each endpoint pair defines one oriented finite segment. Valid disjoint
- * segments are a successful operation and return `kind == none`.
+ * Give the start and end of each segment. The result distinguishes no shared
+ * point (`none`), one crossing (`point`), and a shared stretch (`overlap`).
+ * Two valid segments that do not meet are still a successful calculation:
+ * the function returns `true` with `result.kind == none`.
  *
  * Exact coincident endpoints are rejected as degenerate segments. Exact
  * antipodes and detected equal-and-opposite-latitude multiple-shortest
