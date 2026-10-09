@@ -358,3 +358,28 @@ distinct non-polar Lambert standard parallels and valid UTM zone numbers.
 
 **Partial coverage only.** Remaining projection factories, every factor
 overload, and rendered examples require their own four-question review.
+
+
+## Remaining projection factories and reference-frame entrypoint
+
+The consumer-focused introductions were revised for the
+`PolarStereographic` scale-at-pole and standard-parallel factories,
+`LambertAzimuthalEqualArea` parameter factories, and
+`UpsProjection` hemisphere factories.
+
+The reader can now distinguish:
+
+- a **custom polar grid** with supplied ellipsoid, scale and false offsets;
+- polar stereographic **variant B**, configured from a standard parallel;
+- an **equal-area map** centred on supplied geographic coordinates;
+- **UPS**, whose WGS 84 parameters are fixed and only the hemisphere
+  is selected by the consumer.
+
+Also revised the `helmert` module entrypoint: a static `Helmert7`
+converts Earth-centred XYZ coordinates using published translations,
+rotations and scale; Position Vector and Coordinate Frame conventions
+must not be mixed.
+
+**Remaining:** full factory overload and failure-condition review,
+individual factor APIs, Helmert7/14 constructors and operation results,
+and generated DDox consumer checks. No numerical or API behavior changed.
