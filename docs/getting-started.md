@@ -240,6 +240,42 @@ The convention is explicit in the type/API. There is no implicit default convent
 
 EPSG-style constructors use arc-seconds for rotations and parts per million for scale difference where documented.
 
+### Example: from geographic coordinates through a reference-frame transform
+
+A Helmert transform operates on Earth-centred XYZ, not latitude/longitude.
+First convert the position to geocentric coordinates, apply the published
+source-to-target parameters, then convert back with the **target** ellipsoid:
+
+```d
+import geodesy;
+
+const sourceEllipsoid = wgs84!double();
+const targetEllipsoid = wgs84!double(); // Illustration: use the actual target ellipsoid.
+
+const source = GeodeticCoordinate!double.fromComponents(
+    Latitude!double.fromDegrees(48.2),
+    Longitude!double.fromDegrees(16.37),
+    200.0); // Ellipsoidal height, metres.
+
+const xyz = geodeticToGeocentric(source, sourceEllipsoid);
+
+// Example-only numbers: NOT parameters for a real datum transformation.
+const publishedParameters = PositionVectorHelmert!double
+    .fromArcSecondsAndPpm(
+        1.0, 2.0, 3.0,       // Translations in metres.
+        0.1, 0.2, 0.3,       // Position Vector rotations in arc-seconds.
+        0.4);               // Scale difference in ppm.
+
+const targetXyz = applyPositionVectorHelmert(xyz, publishedParameters);
+const target = geocentricToGeodetic(targetXyz, targetEllipsoid);
+```
+
+For a real coordinate transformation, obtain the parameters, direction,
+rotation convention, and source/target ellipsoids from the authoritative
+definition of that operation. The numerical values above only demonstrate
+the API; they do **not** define a real transformation. Use the `try*`
+variants when invalid input must be handled without exceptions.
+
 ## Topocentric East/North/Up
 
 `TopocentricFrame!T` represents a prepared local East-North-Up frame.
