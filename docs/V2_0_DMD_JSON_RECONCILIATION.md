@@ -76,3 +76,43 @@ protection regions and compile negative/positive external consumer probes
 for doubtful names. Name matching does not establish signature, overload,
 template-constraint, attribute or UFCS compatibility. Do not declare C1
 complete from CSV totals.
+
+
+## XPS triage CSV evaluation (2026-10-09)
+
+The user-provided `v2-dmd-ddox-triage.csv` and
+`v2-public-ddox-prototypes.csv` were read as generated data.
+
+- **1,914 DMD triage rows**: 1,183 functions, 309 templates, 297
+  variables, 57 structs, 30 aliases, 27 enum values, nine enums,
+  one class and one constructor.
+- Protection *estimate*: 1,519 public, 385 private, ten package.
+  This estimate is not source-verified (see the `private:` limitation).
+- **598 triage rows** match a DDox page identifier; **1,316** do not.
+  These are per-DMD-node counts, not 598 distinct documented APIs
+  or 1,316 documentation defects.
+- The 488 rendered DDox prototypes remain distributed over 463 pages.
+- Of 214 unflagged `public_candidate` rows, **36** have no matching
+  DDox *page identifier*. They consist of **27 enum values** and
+  **nine structures**. Enum values can belong to a documented enum
+  page rather than owning their own pages.
+
+Nine structs to review against source protection and package exposure:
+`GeodesicLineRawPosition`, `IntersectionDisplacement`,
+`PreparedSegment`, `GnomonicXY`, `CompensatedSum`,
+`ReverseSolution`, `HalleyState`, `ComplexPair`,
+`TransverseMercator.TmForwardWorkingResult`.
+
+**Critical correction to the previous first-pass count:**
+The new triage CSV contains 1,914 rows, versus the earlier reported
+1,011 raw candidate records. These different traversals/counting
+policies must be reconciled before any exact compiler declaration census
+claim. No public API growth is inferred from the difference.
+
+### Next objective
+
+Check the nine structs' lexical protection in source code (including
+`private:` and `package:` sections), and perform external import
+positive/negative probes for any ambiguous struct. Resolve enum-value
+page ownership separately. Then compare actual overload signatures
+rather than name-match flags. The feature freeze remains **not approved**.
