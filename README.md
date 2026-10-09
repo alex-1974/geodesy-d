@@ -34,6 +34,16 @@ Start with the [guided examples](docs/getting-started.md). The first example
 below shows several operations together; for a single task, follow the
 corresponding section of the guide.
 
+## What can I do with it?
+
+Convert geographic positions into Earth-centred XYZ or UTM coordinates.
+Measure the shortest surface distance and bearing between places, find
+the closest point on a route segment, or transform coordinates between
+reference frames.
+
+Start with the [guided examples](docs/getting-started.md). The combined
+example below shows several operations; the guide introduces them separately.
+
 ## What it provides
 
 - strong angle, latitude, and longitude types;
