@@ -597,3 +597,33 @@ still needs a separate explicit DMD/LDC consumer compilation. These
 results apply to commit `79de38b`; any subsequent docs change
 requires revalidation before release sign-off. GitHub Actions
 completion remains a separate gate.
+
+
+## Rendered DDox HTML archive inspection (2026-10-09)
+
+Inspected the user-provided `geodesy-ddox-current.tar.gz`, generated
+locally on the XPS from the reviewed `79de38b` checkout.
+
+- **493 HTML files**: one documentation index, 29 module pages and
+  463 public symbol pages.
+- **463/463 public symbol pages** visibly contain an `Example`
+  section; the 29 module overview pages and index are not counted
+  as missing per-symbol examples.
+- Checked internal relative links with `.html` targets across the
+  generated site: **0 unresolved targets**.
+- Examined the rendered text and example presence for
+  `Helmert7.tryFromCanonical`,
+  `MolodenskyBadekas10.tryFromCanonical` and `Helmert14.apply`.
+  Their revised introductions appear on the corresponding function
+  pages with a rendered Example section.
+- The previously escaped code-markup issue was corrected in the
+  source, and no escaped backticks remain in the three reviewed
+  Helmert-family source modules.
+
+**Boundary:** archive parsing verifies static HTML structure,
+relative link targets and sample rendered text. It is not a
+browser-based visual/layout or accessibility test. It does not
+separately compile the standalone Getting Started snippet; the XPS
+unit-test and DDox generator PASS evidence is recorded above.
+Any future changes require an up-to-date rendered archive and
+compiler qualification before closing the review.
