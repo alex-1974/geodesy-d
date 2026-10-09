@@ -641,7 +641,14 @@ public:
 
 
     /**
-     * Prepare an EPSG 9802 two-standard-parallel projection without throwing.
+     * Set up a two-standard-parallel conic map without throwing.
+     *
+     * Use the parameters from the coordinate system you want to reproduce:
+     * ellipsoid, latitude and longitude of false origin, the two standard
+     * parallels, and false easting/northing. The parallels control the map's
+     * scale; they must be distinct and neither may be a pole. The offsets
+     * use the ellipsoid's linear unit. Returns `false` for unsupported
+     * parameters instead of raising an exception.
      */
     static bool tryFromTwoStandardParallels(
         const Ellipsoid!T ellipsoid,
