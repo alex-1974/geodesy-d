@@ -47,3 +47,32 @@ resolve at this coarse level). This is an encouraging consistency check,
 
 No production API or numerical behavior was changed. This is a partial
 C1 research finding; **feature freeze and API freeze remain unapproved**.
+
+
+## Conservative triage utility
+
+`tools/research/reconcile_api_json.py` now writes a per-declaration CSV
+with raw DMD kind, type, constraint, template parameters, effective/inherited
+protection **estimate**, and a same-name DDox page flag:
+
+```sh
+python3 tools/research/reconcile_api_json.py \
+    build/api-json-dmd \
+    build/v2-public-ddox-prototypes.csv \
+    build/v2-dmd-ddox-triage.csv
+```
+
+Important limitations: DMD JSON may omit `protection` on declarations
+inside a D `private:` block. Inheriting the JSON parent protection is
+therefore **not reliable proof of public accessibility**. All such records
+are flagged `inherited_visibility_review`. `_name` is a coding
+convention, **not** a D visibility modifier. The script flags underscore
+symbols for review instead of silently excluding them. DMD also emits
+generated `__unittest` declarations, template/aggregate wrappers and
+variables that must not be naively counted as published APIs.
+
+The generated CSV is a triage aid; a reviewer must inspect the original
+protection regions and compile negative/positive external consumer probes
+for doubtful names. Name matching does not establish signature, overload,
+template-constraint, attribute or UFCS compatibility. Do not declare C1
+complete from CSV totals.
