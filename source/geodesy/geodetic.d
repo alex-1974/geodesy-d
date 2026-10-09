@@ -74,8 +74,11 @@ static GeodeticCoordinate fromComponentsUnchecked(
 
 public:
     /**
-     * Construct from strong angular values and finite ellipsoidal height
-     * without throwing.
+     * Make a latitude/longitude/height position without throwing.
+     *
+     * Use this checked factory when the height comes from data that may be
+     * invalid. A height of zero means exactly zero above the ellipsoid;
+     * it does not mean that the height is unknown.
      *
      * Params:
      *     latitude = Geodetic latitude.
