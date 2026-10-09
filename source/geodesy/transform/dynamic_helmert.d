@@ -320,7 +320,11 @@ public:
         assert(h.isValid);
     }
 
-    /** Construct from canonical base parameters and canonical rates. */
+    /** Create a time-dependent frame transform from canonical parameters.
+     *
+     * Supply the static seven parameters at their reference epoch and
+     * seven yearly rates. Use `tryFromCanonical` for checked construction.
+     */
     static Helmert14!(T, convention) fromCanonical(
         const Helmert7!(T, convention) baseParameters,
         const T translationRateX,
@@ -449,7 +453,12 @@ public:
         assert(h.translationRateX == 0.001);
     }
 
-    /** Construct from EPSG-style arc-second/ppm base values and rates. */
+    /** Create a dynamic transform from published EPSG-style values.
+     *
+     * Rotations use arc-seconds, scale uses ppm, and rates use these
+     * units per year. Supply the reference epoch of the published values.
+     * Use `tryFromArcSecondsAndPpm` for checked construction.
+     */
     static Helmert14!(T, convention) fromArcSecondsAndPpm(
         const T translationX,
         const T translationY,
@@ -600,7 +609,10 @@ public:
     }
 
     /**
-     * Evaluate the effective static Helmert parameters at an observation epoch.
+     * Return the seven static Helmert parameters at the observation epoch.
+     *
+     * This applies the annual changes since the reference epoch. Use
+     * `tryEvaluate` to handle invalid propagated values without throwing.
      *
      * Throws:
      *     `GeodesyValueException` when the epoch or propagated parameters are
@@ -673,7 +685,11 @@ public:
     }
 
     /**
-     * Apply the dynamic transformation at an observation epoch.
+     * Convert geocentric XYZ into the target frame at the observation epoch.
+     *
+     * The stored reference epoch belongs to the parameter definition;
+     * the observation epoch belongs to the coordinate being transformed.
+     * Use `tryApply` for a non-throwing alternative.
      *
      * Throws:
      *     `GeodesyValueException` when parameter evaluation or spatial
