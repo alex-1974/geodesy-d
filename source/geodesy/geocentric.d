@@ -114,7 +114,11 @@ public:
     }
 
     /**
-     * Construct from finite X/Y/Z components.
+     * Make an Earth-centred XYZ position from three distances.
+     *
+     * Use this form when invalid data should raise an exception. Use
+     * `tryFromComponents` when the caller needs to handle invalid input
+     * without throwing.
      *
      * Params:
      *     x = Finite geocentric X component.
