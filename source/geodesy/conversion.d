@@ -4,8 +4,11 @@
  * Use `geodeticToGeocentric` to turn a geographic position with ellipsoidal
  * height into Cartesian coordinates. Use `geocentricToGeodetic` to get
  * latitude, longitude and ellipsoidal height back. Both operations need the
- * reference ellipsoid used by the coordinates. They follow EPSG method 9602
- * and include robust handling of difficult reverse-conversion cases.
+ * reference ellipsoid used by the coordinates. This changes the coordinate
+ * representation, **not** the geodetic datum or reference frame; use an
+ * appropriate frame transformation separately when the source and target
+ * datums differ. Height means height above the ellipsoid, not mean sea level.
+ * The conversions follow EPSG method 9602 and handle difficult reverse cases.
  *
  * Standards:
  *     EPSG method 9602 -- Geographic/geocentric conversions.
