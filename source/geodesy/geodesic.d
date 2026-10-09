@@ -2536,11 +2536,12 @@ public:
 
 
 /**
- * Prepared oriented geodesic line for repeated distance- or arc-based positions.
+ * Find many positions along one geodesic route without repeating setup.
  *
- * A line binds one valid `Geodesic!T`, start coordinate, and initial
- * azimuth. Line-dependent auxiliary-sphere and series state is computed once
- * during preparation and reused by the position operations.
+ * Prepare a `GeodesicLine` from a geodesic solver, starting position and
+ * initial heading. You can then find points at different distances or
+ * geodesic arc lengths along that same oriented path. Preparing the line
+ * once reuses the calculations tied to the start and heading.
  *
  * Distance input follows the ellipsoid linear unit. Arc input is the signed
  * auxiliary-sphere arc sigma12 represented by `Angle!T`. Ordinary position
