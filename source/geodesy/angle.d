@@ -575,7 +575,10 @@ public:
     }
 
     /**
-     * Construct a longitude from degrees.
+     * Make an east/west geographic longitude from degrees.
+     *
+     * Use this for the longitude of a position. Both -180 and +180 degrees
+     * are accepted; call `normalized` when one unique representation is needed.
      *
      * Params:
      *     degrees = Longitude in the closed interval [-180,+180] degrees.
