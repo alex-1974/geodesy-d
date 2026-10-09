@@ -1,10 +1,14 @@
 /**
- * Time-dependent 14-parameter EPSG Helmert transformations.
+ * Transform coordinates between reference frames that change over time.
  *
- * Helmert14 stores seven convention-specific Helmert parameters at a reference
- * epoch plus their seven signed rates. Evaluation at an observation epoch
- * produces the existing static `Helmert7` parameter set and reuses its
- * validated spatial transformation kernel.
+ * Some reference frames move relative to each other. Use a time-dependent
+ * Helmert transformation when your parameters include a reference year and
+ * rates of change, and you must transform coordinates for a different
+ * observation year.
+ *
+ * `Helmert14` stores seven transformation parameters and their seven rates
+ * at a reference epoch. It evaluates the parameters for the observation
+ * epoch and applies the corresponding static `Helmert7` transformation.
  *
  * Standards:
  *     EPSG method 1053 -- Time-dependent Position Vector transformation
