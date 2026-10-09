@@ -1,10 +1,10 @@
 /**
- * Universal Polar Stereographic policy, tagging, and prepared projection.
+ * Convert positions in the polar regions to standard UPS metre coordinates.
  *
- * Use UPS for WGS 84 polar coordinates with standard north/south tagging,
- * automatic UTM/UPS transition rules, and the documented overlap. The module
- * supplies fixed UPS parameters and coordinate policy while reusing the
- * Polar Stereographic mathematics.
+ * UPS is the standard polar companion to UTM. Use automatic UPS for positions
+ * beyond the normal UTM latitude band, or prepare `UpsProjection` when
+ * working repeatedly in one polar hemisphere. The result includes north/south
+ * tagging; the underlying mathematics comes from Polar Stereographic.
  *
  * Standards:
  *     EPSG:5041 / EPSG:5042 use EPSG method 9810 on WGS 84 with
@@ -467,7 +467,10 @@ public:
     }
 
 
-    /** Prepare one explicit UPS polar aspect without throwing. */
+    /** Prepare the standard UPS grid for one hemisphere without throwing.
+     *
+     * Select north or south explicitly; the WGS 84 ellipsoid, scale
+     * and false offsets are fixed by UPS rather than supplied by the caller. */
     static bool tryFromHemisphere(
         const UpsHemisphere hemisphere,
         out UpsProjection result)
@@ -524,7 +527,10 @@ public:
     }
 
 
-    /** Prepare one explicit UPS polar aspect or throw. */
+    /** Prepare the standard UPS grid for the chosen hemisphere.
+     *
+     * Use `tryFromHemisphere` if an invalid hemisphere should return
+     * `false` instead of throwing. */
     static UpsProjection fromHemisphere(
         const UpsHemisphere hemisphere)
         @safe
@@ -704,7 +710,12 @@ public:
     }
 
 
-    /** Project within the explicit legal UPS overlap domain or throw. */
+    /** Convert a position in the chosen polar hemisphere to UPS metres.
+     *
+     * Use this when you have already selected a UPS hemisphere and want
+     * its standard grid coordinates. The prepared projection also admits
+     * the documented overlap with UTM; use `tryForward` for checked input.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -794,7 +805,11 @@ public:
     }
 
 
-    /** Reverse an admitted represented UPS coordinate without throwing. */
+    /** Convert UPS easting and northing back to latitude and longitude.
+     *
+     * This checked form returns `false` for grid coordinates outside the
+     * valid represented UPS region.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -879,7 +894,10 @@ public:
     }
 
 
-    /** Reverse an admitted represented UPS coordinate or throw. */
+    /** Convert UPS grid coordinates back into a geographic position.
+     *
+     * Use `tryReverse` when invalid coordinates should not throw.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe

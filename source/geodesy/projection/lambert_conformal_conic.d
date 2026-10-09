@@ -1,10 +1,14 @@
 /**
- * Bounded ellipsoidal Lambert Conformal Conic (2SP), EPSG method 9802.
+ * Project geographic positions onto a conic map that preserves local angles.
  *
- * The prepared projection accepts spherical and oblate ellipsoids with
- * 0 <= flattening <= 0.01 and two genuinely distinct non-polar standard
- * parallels. It exposes checked/throwing forward, reverse, and conformal
- * factor operations.
+ * Use Lambert Conformal Conic when your map uses two standard parallels,
+ * such as the grid definitions used for Austria Lambert or LCC Europe.
+ * Supply the specified ellipsoid, origin, two parallels and grid offsets.
+ * The prepared projection converts in both directions and reports local
+ * scale and meridian convergence.
+ *
+ * This implementation supports spherical and oblate ellipsoids with
+ * 0 <= flattening <= 0.01 and requires two distinct non-polar parallels.
  *
  * Standards:
  *     Public parameter semantics follow EPSG method 9802 -- Lambert Conic
@@ -637,7 +641,14 @@ public:
 
 
     /**
-     * Prepare an EPSG 9802 two-standard-parallel projection without throwing.
+     * Set up a two-standard-parallel conic map without throwing.
+     *
+     * Use the parameters from the coordinate system you want to reproduce:
+     * ellipsoid, latitude and longitude of false origin, the two standard
+     * parallels, and false easting/northing. The parallels control the map's
+     * scale; they must be distinct and neither may be a pole. The offsets
+     * use the ellipsoid's linear unit. Returns `false` for unsupported
+     * parameters instead of raising an exception.
      */
     static bool tryFromTwoStandardParallels(
         const Ellipsoid!T ellipsoid,
@@ -814,7 +825,12 @@ public:
     }
 
 
-    /** Prepare an EPSG 9802 two-standard-parallel projection or throw. */
+    /** Set up a conic map from its two standard parallels and grid parameters.
+     *
+     * Use this when invalid configuration should raise an exception.
+     * Use `tryFromTwoStandardParallels` when you want to check the
+     * parameters without throwing.
+     */
     static LambertConformalConic fromTwoStandardParallels(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfFalseOrigin,
@@ -1067,7 +1083,12 @@ public:
     }
 
 
-    /** Project a geographic coordinate or throw. */
+    /** Convert latitude and longitude to this conic map's grid coordinates.
+     *
+     * The result contains easting and northing in the ellipsoid's length
+     * unit. Use `tryForward` to handle an unsupported position without an
+     * exception.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1100,7 +1121,11 @@ public:
     }
 
 
-    /** Reverse a projected coordinate without throwing. */
+    /** Convert this conic grid's easting and northing to latitude and longitude.
+     *
+     * Returns `false` when the input cannot be reversed in the supported
+     * domain; use `reverse` when an exception is preferred.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1158,7 +1183,10 @@ public:
     }
 
 
-    /** Reverse a projected coordinate or throw. */
+    /** Convert grid coordinates back to a geographic position.
+     *
+     * Use `tryReverse` to handle invalid projected input without throwing.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe

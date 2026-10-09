@@ -1,14 +1,13 @@
 /**
- * Robust ellipsoidal intersection for bounded geodesic segments.
+ * Find where two route segments meet on an ellipsoid.
  *
- * This module implements the bounded shortest-segment slice of Karney's
- * geodesic-intersection method. Two endpoint pairs define oriented shortest
- * geodesic segments. A successful operation returns one geometric result:
+ * Give each segment by its two geographic endpoints. The operation examines
+ * the finite shortest paths between the endpoints, not infinitely extended
+ * lines. A successful operation returns one geometric result:
  *
  * - `none`: the finite segments have no common point;
  * - `point`: the finite segments share exactly one point;
- * - `overlap`: coincident supporting geodesics overlap over a non-zero
- *   bounded interval.
+ * - `overlap`: the segments share a stretch of the same route.
  *
  * Coincident segments expose the actual geographic endpoints of the bounded
  * overlap. GeographicLib's internal displacement/mode representation is not
@@ -809,10 +808,12 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Intersect two bounded shortest ellipsoidal geodesic segments without throwing.
+ * Find whether two finite geographic route segments cross or overlap.
  *
- * Each endpoint pair defines one oriented finite segment. Valid disjoint
- * segments are a successful operation and return `kind == none`.
+ * Give the start and end of each segment. The result distinguishes no shared
+ * point (`none`), one crossing (`point`), and a shared stretch (`overlap`).
+ * Two valid segments that do not meet are still a successful calculation:
+ * the function returns `true` with `result.kind == none`.
  *
  * Exact coincident endpoints are rejected as degenerate segments. Exact
  * antipodes and detected equal-and-opposite-latitude multiple-shortest

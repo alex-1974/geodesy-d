@@ -1,10 +1,11 @@
 /**
- * Static 10-parameter EPSG Molodensky-Badekas transformations in geocentric
- * coordinates.
+ * Convert Earth-centred XYZ coordinates between frames using a local pivot.
  *
- * Molodensky-Badekas is a local-origin member of the Helmert family. Rotation
- * and scale act on Cartesian coordinates relative to an evaluation point
- * P=(Xp,Yp,Zp), after which the evaluation point and translations are restored.
+ * Use Molodensky-Badekas when a published reference-frame conversion
+ * supplies seven Helmert-like parameters plus an evaluation point
+ * (Xp, Yp, Zp). The evaluation point acts as the local centre for the
+ * rotation and scale. Use Helmert7 instead when no evaluation point is
+ * part of the published transformation.
  *
  * Standards:
  *     EPSG method 1061 -- Position Vector, geocentric domain.
@@ -63,7 +64,7 @@ import geodesy.transform.helmert :
  * additional three values are the source-geocentric coordinates of the
  * evaluation point about which rotation and scale are applied.
  *
- * \`.init\` is the identity transformation: Helmert identity parameters and an
+ * `.init` is the identity transformation: Helmert identity parameters and an
  * evaluation point at the geocentric origin.
  */
 struct MolodenskyBadekas10(T, HelmertConvention convention)
@@ -156,7 +157,13 @@ public:
     }
 
     /**
-     * Construct from canonical parameters without throwing.
+     * Prepare a local-pivot transformation from an existing Helmert7 parameter set.
+     *
+     * Use this factory when the published Molodensky-Badekas operation
+     * supplies a convention-specific set of seven parameters plus three
+     * source-frame XYZ coordinates for its evaluation point. These pivot
+     * coordinates must use the same length unit as source XYZ. On failure
+     * return `false` instead of throwing.
      *
      * Params:
      *     baseParameters = Convention-specific Helmert-family parameters.
@@ -166,8 +173,8 @@ public:
      *     result = Receives the prepared transform on success.
      *
      * Returns:
-     *     \`true\` when the evaluation point and derived equivalent Helmert
-     *     parameters are finite and representable; otherwise \`false\`.
+     *     `true` when the evaluation point and derived equivalent Helmert
+     *     parameters are finite and representable; otherwise `false`.
      */
     static bool tryFromCanonical(
         const Helmert7!(T, convention) baseParameters,
@@ -262,7 +269,11 @@ public:
         assert(transform.evaluationPointY == 2.0);
     }
 
-    /** Construct from canonical parameters. */
+    /** Prepare a local-pivot transform from seven parameters and an XYZ pivot.
+     *
+     * Use the checked `tryFromCanonical` alternative when an invalid
+     * pivot or non-representable derived transform should not throw.
+     */
     static MolodenskyBadekas10!(T, convention) fromCanonical(
         const Helmert7!(T, convention) baseParameters,
         const T evaluationPointX,
@@ -293,7 +304,13 @@ public:
     }
 
     /**
-     * Construct from EPSG arc-second/ppm units without throwing.
+     * Prepare a local-pivot frame transformation from published EPSG units.
+     *
+     * Use the translation, rotation, scale and evaluation-point values
+     * from the same published transformation. Rotations use arc-seconds,
+     * scale uses ppm, and the evaluation-point XYZ values use the same
+     * linear unit as the source coordinates. This checked form returns
+     * `false` for unsupported values.
      *
      * Translation and evaluation-point inputs use the same linear unit as the
      * geocentric coordinates to which the prepared transform will be applied.
@@ -346,7 +363,12 @@ public:
         assert(transform.baseParameters.translationX == 1.0);
     }
 
-    /** Construct from EPSG arc-second/ppm units. */
+    /** Prepare the local-pivot transform from published EPSG-style parameters.
+     *
+     * Rotations are in arc-seconds, scale difference is in ppm, and all
+     * translations and evaluation-point coordinates use the source XYZ
+     * length unit. Use `tryFromArcSecondsAndPpm` for checked construction.
+     */
     static MolodenskyBadekas10!(T, convention) fromArcSecondsAndPpm(
         const T translationX,
         const T translationY,
@@ -391,7 +413,12 @@ public:
         assert(transform.evaluationPointX == 4.0);
     }
 
-    /** Apply the prepared forward transformation without throwing. */
+    /** Convert source geocentric XYZ to target-frame XYZ without throwing.
+     *
+     * This uses the already prepared local-pivot transformation in its
+     * published forward direction. Returns `false` if the target cannot
+     * be represented in the selected scalar type.
+     */
     bool tryApply(
         const GeocentricCoordinate!T source,
         out GeocentricCoordinate!T result) const
@@ -418,7 +445,11 @@ public:
         assert(target == source);
     }
 
-    /** Apply the prepared forward transformation. */
+    /** Convert geocentric XYZ using this prepared local-pivot transform.
+     *
+     * Use `tryApply` instead when invalid arithmetic should return
+     * `false` rather than raising an exception.
+     */
     GeocentricCoordinate!T apply(
         const GeocentricCoordinate!T source) const
         @safe

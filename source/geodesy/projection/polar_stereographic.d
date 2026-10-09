@@ -1,9 +1,10 @@
 /**
- * Bounded EPSG 9810 Polar Stereographic projection.
+ * Convert positions near a pole into a flat coordinate grid.
  *
- * Project geographic coordinates around either pole with a prepared
- * stereographic operation. The parameters make the ellipsoid, polar natural
- * origin, central scale, and false offsets explicit.
+ * Use `PolarStereographic` when your polar map defines its own scale,
+ * origin and coordinate offsets. It supports a projection centred on either
+ * pole. Use `UpsProjection` instead when you want the standard WGS 84 polar
+ * grid with fixed parameters.
  *
  * Standards:
  *     Public parameter semantics follow EPSG method 9810 -- Polar
@@ -609,7 +610,12 @@ public:
 
 
     /**
-     * Construct a bounded EPSG 9810 projection without throwing.
+     * Set up a polar grid using the scale factor specified at the pole.
+     *
+     * Supply the ellipsoid, selected north/south pole, central meridian,
+     * positive scale factor and false easting/northing. Offsets use the
+     * ellipsoid's linear unit. Use this checked form to reject invalid
+     * parameters without throwing.
      */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -685,7 +691,9 @@ public:
     }
 
 
-    /** Construct a bounded EPSG 9810 projection or throw. */
+    /** Set up a pole-centred stereographic grid or throw on invalid parameters.
+     *
+     * Use `tryFromParameters` for a non-throwing configuration check. */
     static PolarStereographic fromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfNaturalOrigin,
@@ -831,7 +839,10 @@ public:
     }
 
 
-    /** Construct EPSG 9829 Polar Stereographic variant B or throw. */
+    /** Set up a polar grid using its specified standard parallel.
+     *
+     * This is variant B (EPSG 9829), which derives the pole scale
+     * internally. Use `tryFromStandardParallel` when failure must not throw. */
     static PolarStereographic fromStandardParallel(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfStandardParallel,
@@ -1057,7 +1068,11 @@ public:
     }
 
 
-    /** Project a geographic coordinate or throw. */
+    /** Convert a position near the chosen pole into grid coordinates.
+     *
+     * Returns easting and northing in the ellipsoid's linear unit. Use
+     * `tryForward` when invalid input should return `false` instead.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1180,7 +1195,11 @@ public:
     }
 
 
-    /** Reverse a projected coordinate without throwing. */
+    /** Convert polar-grid easting and northing back to latitude and longitude.
+     *
+     * This checked form returns `false` when the input is outside the
+     * supported projection rather than throwing an exception.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1243,7 +1262,10 @@ public:
     }
 
 
-    /** Reverse a projected coordinate or throw. */
+    /** Convert polar-grid coordinates back to a geographic position.
+     *
+     * Use `tryReverse` for a non-throwing failure result.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe

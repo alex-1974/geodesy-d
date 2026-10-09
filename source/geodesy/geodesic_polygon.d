@@ -1,9 +1,10 @@
 /**
- * Streaming ellipsoidal polygon perimeter and signed-area accumulation.
+ * Measure the perimeter and enclosed signed area of a geographic polygon.
  *
- * Accumulate perimeter and signed area from an ordered stream of geographic
- * vertices. The module measures a geodesic polygon; it does not own polygon
- * topology, ring validity, holes, containment, or overlay.
+ * Add the polygon's vertices in order, then compute the result. Each edge
+ * follows the shortest geodesic between consecutive positions, including the
+ * closing edge from the last vertex to the first. The module measures the
+ * outline; it does not check ring validity, holes, containment or overlays.
  *
  * Polygon edges are shortest geodesics between consecutive geographic
  * vertices. The closing edge from the last vertex back to the first is
@@ -199,7 +200,12 @@ private W canonicalPolygonArea(W)(
 
 
 /**
- * Result of computing a closed geodesic polygon.
+ * Perimeter and signed area of the polygon formed by the supplied vertices.
+ *
+ * Read `pointCount` for the number of vertices, `perimeter` for total
+ * boundary length in the ellipsoid's linear unit, and `signedArea` for area
+ * in that unit squared. Positive area indicates counterclockwise vertex
+ * order; reversing the order changes the sign.
  */
 struct GeodesicPolygonResult(T)
 if (isGeodesyScalar!T)
@@ -285,13 +291,16 @@ public:
 
 
 /**
- * Streaming accumulator for one closed ellipsoidal geodesic polygon.
+ * Build a geographic polygon one vertex at a time and measure it.
  *
- * Vertices are retained only as the first and most recent points; no dynamic
- * vertex storage is used. Every vertex after the first contributes the
- * shortest inverse-geodesic edge from the previous point. Calling
- * `tryCompute` / `compute` is non-mutating and adds the closing edge from
- * the current point back to the first point.
+ * Use this accumulator when polygon vertices arrive as a stream or when
+ * you do not want to store all vertices. Add vertices in boundary order.
+ * `compute` (or checked `tryCompute`) returns perimeter and signed area,
+ * including the closing edge back to the first vertex. Computing does not
+ * modify the accumulator.
+ *
+ * Only the first and most recent vertices are retained; no dynamic vertex
+ * storage is used.
  *
  * `.init` is invalid. Prepare from a valid `Geodesic!T`.
  */
@@ -485,10 +494,11 @@ public:
     }
 
     /**
-     * Add one ordered geographic vertex without throwing.
+     * Add the next polygon corner without throwing.
      *
-     * The operation is transactional: on numerical failure the accumulator is
-     * unchanged.
+     * Call this once for each corner, in boundary order. The first point
+     * starts the outline; each later point adds a shortest-geodesic edge.
+     * On failure the existing polygon remains unchanged.
      */
     bool tryAddPoint(
         const GeographicCoordinate!T point)
@@ -547,7 +557,11 @@ public:
         assert(accumulator.pointCount == 1);
     }
 
-    /** Add one ordered geographic vertex. */
+    /** Add the next polygon corner in boundary order.
+     *
+     * Use this convenience form when invalid input should raise an exception.
+     * Use `tryAddPoint` to handle failure without throwing.
+     */
     void addPoint(
         const GeographicCoordinate!T point)
         @safe
@@ -580,8 +594,12 @@ public:
     }
 
     /**
-     * Compute the closed perimeter and canonical signed area without mutating
-     * the accumulator.
+     * Measure the polygon's complete perimeter and signed area without throwing.
+     *
+     * This includes the closing edge from the last corner to the first.
+     * A successful result gives the number of corners, perimeter in the
+     * ellipsoid's length unit and area in that unit squared. You can call
+     * this repeatedly or add more points afterward; it changes no state.
      */
     bool tryCompute(
         out GeodesicPolygonResult!T result) const
@@ -695,7 +713,12 @@ public:
         assert(accumulator.pointCount == 3);
     }
 
-    /** Compute the closed perimeter and canonical signed area. */
+    /** Return the closed polygon's perimeter and signed area.
+     *
+     * Use `tryCompute` instead when you prefer a `bool` failure result.
+     * Computing includes the final edge back to the first corner and does
+     * not change the stored polygon.
+     */
     GeodesicPolygonResult!T compute() const
         @safe
     {

@@ -1,10 +1,14 @@
 /**
- * Static 7-parameter EPSG Helmert transformations in geocentric coordinates.
+ * Move Earth-centred coordinates between two reference frames.
  *
- * The rotation convention is encoded in the public type so Position Vector and
- * Coordinate Frame parameters cannot be silently mixed. Both conventions share
- * one parameter model while remaining distinct D types, and explicit
- * conversion between conventions negates only the rotation parameters.
+ * Use a seven-parameter Helmert transformation when a published frame
+ * conversion gives three translations, three small rotations and a scale
+ * difference, without time-dependent rates. These operate on geocentric
+ * XYZ coordinates, not latitude/longitude directly.
+ *
+ * Check the convention in your published parameters: Position Vector and
+ * Coordinate Frame rotations have opposite signs. The convention is part
+ * of the public D type, so the two cannot be mixed silently.
  *
  * Standards:
  *     EPSG method 1033 -- Position Vector transformation (geocentric domain).
@@ -227,7 +231,11 @@ public:
     }
 
         /**
-     * Construct Helmert parameters from canonical units without throwing.
+     * Prepare seven frame-conversion parameters in canonical units without throwing.
+     *
+     * Use this factory when the source rotations are already `Angle` values
+     * in radians and the scale difference is dimensionless. Choose the
+     * correct rotation convention in the `Helmert7` type.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -288,7 +296,10 @@ public:
     }
 
         /**
-     * Construct Helmert parameters from canonical units.
+     * Prepare seven frame-conversion parameters from canonical units.
+     *
+     * Use this when invalid translations or scale should throw. The
+     * checked `tryFromCanonical` factory reports failures as `false`.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -346,8 +357,11 @@ public:
     }
 
         /**
-     * Construct from the common EPSG arc-second/ppm representation without
-     * throwing.
+     * Read published seven-parameter frame conversions without throwing.
+     *
+     * Supply translations in the geocentric coordinate's length unit,
+     * rotations in arc-seconds and scale difference in ppm. The rotation
+     * convention must match the published parameter definition.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -431,7 +445,11 @@ public:
     }
 
         /**
-     * Construct from the common EPSG arc-second/ppm representation.
+     * Create a Helmert transform from published arc-seconds and ppm.
+     *
+     * Choose the Position Vector or Coordinate Frame type as specified
+     * by the source definition. Use `tryFromArcSecondsAndPpm` when invalid
+     * input should not raise an exception.
      *
      * Params:
      *     translationX = Finite X translation in the geocentric linear unit.
@@ -594,7 +612,10 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1033 Position Vector in the source-to-target direction.
+ * Convert source geocentric XYZ into target-frame XYZ using Position Vector rotations.
+ *
+ * Use the parameter set published for this transformation direction.
+ * This checked operation does not reverse the frame conversion automatically.
  *
  * Params:
  *     source = Source geocentric coordinate.
@@ -635,7 +656,10 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1033 Position Vector in the source-to-target direction.
+ * Return XYZ coordinates in the target frame using Position Vector parameters.
+ *
+ * The parameters must describe the requested source-to-target direction.
+ * Use `tryApplyPositionVectorHelmert` for non-throwing error handling.
  *
  * Params:
  *     source = Source geocentric coordinate.
@@ -911,7 +935,11 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
+ * Convert source geocentric XYZ into target-frame XYZ using Coordinate Frame rotations.
+ *
+ * Use parameters published under the Coordinate Frame convention, not
+ * Position Vector rotations with unchanged signs. This checked operation
+ * preserves the source-to-target direction.
  *
  * Params:
  *     source = Source geocentric coordinate.
@@ -952,7 +980,11 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Apply EPSG method 1032 Coordinate Frame in the source-to-target direction.
+ * Return XYZ coordinates in the target frame using Coordinate Frame parameters.
+ *
+ * Use the published Coordinate Frame convention and source-to-target
+ * direction. Use `tryApplyCoordinateFrameHelmert` to handle invalid
+ * arithmetic without exceptions.
  *
  * Params:
  *     source = Source geocentric coordinate.

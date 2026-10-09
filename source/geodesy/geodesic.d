@@ -1,12 +1,14 @@
 /**
- * Robust direct and inverse ellipsoidal geodesics on a prepared ellipsoid.
+ * Find shortest routes and distances along a reference ellipsoid.
  *
- * The module solves the classical surface-geodesic problems with a
- * Karney-family auxiliary-sphere/series implementation rather than
- * Vincenty-style inverse iteration. The design explicitly covers difficult
- * configurations such as nearly antipodal points, poles, coincident points,
- * very short paths, and longitude discontinuities within its documented
- * ellipsoid domain.
+ * Use the inverse operation when you know two geographic positions and
+ * want their shortest surface distance and bearings. Use the direct operation
+ * when you know a start position, a bearing and a distance and want the
+ * destination. A prepared `Geodesic` solver lets you reuse the same
+ * ellipsoid for many calculations.
+ *
+ * The numerical solver follows Karney's geodesic method and handles difficult
+ * cases such as near-antipodal points and polar routes within its domain.
  *
  * Domain:
  *     Prepared solvers support `a > 0` and `-0.01 <= f <= 0.01`, including
@@ -341,11 +343,11 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Result of a direct geodesic operation.
+ * Destination and arrival heading after following a geodesic.
  *
- * `position` is the endpoint. `finalAzimuth` is the forward azimuth at
- * that endpoint: the heading of the same oriented geodesic if continued
- * beyond the endpoint. It is not a back azimuth.
+ * Read `position` for the destination's latitude and longitude. Read
+ * `finalAzimuth` for the direction of travel at that destination if you
+ * continue along the same path. It does not point back to the start.
  *
  * Azimuths use the public canonical angle interval from -pi inclusive to +pi
  * exclusive.
@@ -400,12 +402,12 @@ public:
 
 
 /**
- * Result of an inverse geodesic operation.
+ * Shortest surface distance and travel directions between two positions.
  *
- * `distance` is the shortest geodesic distance and uses the same linear unit
- * as the solver ellipsoid semi-major axis. `initialAzimuth` is the forward
- * azimuth at the start; `finalAzimuth` is the forward azimuth of the same
- * oriented geodesic at the endpoint, not the back azimuth.
+ * Read `distance` for the shortest surface distance in the ellipsoid's
+ * linear unit (metres with WGS 84). `initialAzimuth` is the direction to
+ * leave the start point. `finalAzimuth` is the direction of travel when
+ * reaching the end, not the bearing back toward the start.
  *
  * Both azimuths are canonicalized from -pi inclusive to +pi exclusive.
  * Coincident endpoints have the unique canonical result distance +0,
@@ -459,7 +461,11 @@ public:
         assert(result.distance > 0.0);
     }
 
-    /** Forward azimuth at the start point, canonicalized from -pi inclusive to +pi exclusive. */
+    /** Direction of travel when leaving the start, as an `Angle`.
+     *
+     * Read `.degrees` for degrees. The stored value uses the canonical
+     * interval from -pi inclusive to +pi exclusive.
+     */
     @property Angle!T initialAzimuth() const
         pure nothrow @safe @nogc
     {
@@ -482,9 +488,11 @@ public:
     }
 
     /**
-     * Forward azimuth at the endpoint, canonicalized from -pi inclusive to +pi exclusive.
+     * Direction of travel on reaching the endpoint, as an `Angle`.
      *
-     * This is not the back azimuth.
+     * This is the heading along the continuing path, not the bearing
+     * back to the start. It uses the canonical interval from -pi
+     * inclusive to +pi exclusive.
      */
     @property Angle!T finalAzimuth() const
         pure nothrow @safe @nogc
@@ -1346,7 +1354,10 @@ public:
 
 
         /**
-     * Solve the direct geodesic problem without throwing.
+     * Find a destination from a start position, bearing and distance.
+     *
+     * Use this checked form when you know the direction and distance along
+     * a geodesic and want the endpoint without using exceptions.
      *
      * Starting from `start`, follow `initialAzimuth` for signed `distance`.
      * Negative distance follows the same oriented geodesic backward. Returned
@@ -1712,7 +1723,11 @@ public:
 
 
         /**
-     * Solve the shortest inverse geodesic problem without throwing.
+     * Find the shortest surface distance and bearings between two positions.
+     *
+     * Use this checked form for start and end coordinates when failure
+     * should be reported as `false` instead of an exception. The result
+     * includes distance, initial bearing and final forward bearing.
      *
      * The final azimuth is the forward heading of the same oriented geodesic
      * continuing beyond the endpoint, not the back azimuth. Coincident
@@ -2436,12 +2451,12 @@ private struct GeodesicLineRawPosition(W)
 
 
 /**
- * Prepared-line position whose longitude is not reduced to one revolution.
+ * Position along a geodesic with longitude allowed to pass beyond 180 degrees.
  *
- * `unrolledLongitude` is an unrestricted finite `Angle!T`. The difference
- * from the line's input longitude records both direction and complete
- * encirclements. This deliberately does not use `Longitude!T`, whose public
- * contract is bounded to [-pi,+pi].
+ * Use this result when you follow a path across the antimeridian or around
+ * the Earth and want to keep track of the full longitude change. Read
+ * `unrolledLongitude` as an `Angle`; unlike a regular `Longitude`, it can
+ * include complete turns instead of wrapping back into the normal range.
  */
 struct GeodesicLineUnrolledResult(T)
 if (isGeodesyScalar!T)
@@ -2521,11 +2536,12 @@ public:
 
 
 /**
- * Prepared oriented geodesic line for repeated distance- or arc-based positions.
+ * Find many positions along one geodesic route without repeating setup.
  *
- * A line binds one valid `Geodesic!T`, start coordinate, and initial
- * azimuth. Line-dependent auxiliary-sphere and series state is computed once
- * during preparation and reused by the position operations.
+ * Prepare a `GeodesicLine` from a geodesic solver, starting position and
+ * initial heading. You can then find points at different distances or
+ * geodesic arc lengths along that same oriented path. Preparing the line
+ * once reuses the calculations tied to the start and heading.
  *
  * Distance input follows the ellipsoid linear unit. Arc input is the signed
  * auxiliary-sphere arc sigma12 represented by `Angle!T`. Ordinary position
@@ -3307,7 +3323,11 @@ public:
     }
 
     /**
-     * Evaluate a signed distance along the prepared line without throwing.
+     * Find a position at a chosen distance along the prepared geodesic.
+     *
+     * Pass a distance in the ellipsoid's linear unit. A negative distance
+     * follows the same path backward. The result contains the position and
+     * forward heading there; this checked form returns `false` on failure.
      */
     bool tryPosition(
         const T distance,
@@ -3588,7 +3608,11 @@ public:
     }
 
     /**
-     * Evaluate a signed auxiliary-sphere arc along the prepared line.
+     * Find a position using geodesic arc length instead of ground distance.
+     *
+     * Pass an `Angle` describing the signed auxiliary-sphere arc, not a
+     * distance in metres. Most callers wanting positions every fixed number
+     * of metres should use `tryPosition` instead.
      */
     bool tryArcPosition(
         const Angle!T arc,
@@ -3751,7 +3775,11 @@ public:
     }
 
     /**
-     * Evaluate a signed distance and retain continuous longitude.
+     * Find a position by distance without wrapping longitude at 180 degrees.
+     *
+     * Use this when a path crosses the antimeridian or makes full turns
+     * and you need its accumulated longitude change. The result provides
+     * `unrolledLongitude` as an `Angle`, not a bounded `Longitude`.
      */
     bool tryPositionUnrolled(
         const T distance,
@@ -3837,7 +3865,10 @@ public:
     }
 
     /**
-     * Evaluate a signed auxiliary-sphere arc and retain continuous longitude.
+     * Find a position by geodesic arc while keeping continuous longitude.
+     *
+     * The input is a signed auxiliary-sphere `Angle`, not metres. Use
+     * `tryPositionUnrolled` for distance-based evaluation instead.
      */
     bool tryArcPositionUnrolled(
         const Angle!T arc,

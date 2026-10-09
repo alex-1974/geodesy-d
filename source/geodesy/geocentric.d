@@ -1,10 +1,10 @@
 /**
- * Geocentric Cartesian coordinate value type.
+ * Represent a position as X, Y and Z measured from the Earth's centre.
  *
- * Represent finite Earth-centred Cartesian X/Y/Z values without attaching a
- * datum, CRS, ellipsoid, or unit identity. Conversion and reference-frame
- * operations supply that context explicitly, so the same strong coordinate
- * type can be reused without hiding geodetic assumptions.
+ * Use `GeocentricCoordinate` for reference-frame transformations or when
+ * another system works with Earth-centred Cartesian coordinates (ECEF).
+ * All three distances use the same unit. The coordinate does not select a
+ * datum or ellipsoid; pass those to operations that need them.
  *
  * Units:
  *     X, Y, and Z share one caller-selected linear unit. When used with an
@@ -72,7 +72,10 @@ static GeocentricCoordinate fromComponentsUnchecked(
 
 public:
     /**
-     * Construct from finite X/Y/Z components without throwing.
+     * Make an Earth-centred XYZ position without throwing.
+     *
+     * Use this checked factory when any component might be missing or
+     * non-finite. All three values must use the same linear unit.
      *
      * Params:
      *     x = Finite geocentric X component.
@@ -111,7 +114,11 @@ public:
     }
 
     /**
-     * Construct from finite X/Y/Z components.
+     * Make an Earth-centred XYZ position from three distances.
+     *
+     * Use this form when invalid data should raise an exception. Use
+     * `tryFromComponents` when the caller needs to handle invalid input
+     * without throwing.
      *
      * Params:
      *     x = Finite geocentric X component.

@@ -1,6 +1,6 @@
 # Getting started with geodesy-d
 
-`geodesy-d` is a dependency-light pure-D library for geodetic mathematics.
+Use `geodesy-d` to convert GPS positions, work with metre-based map grids, measure distances and bearings on the Earth, and transform coordinates between reference frames. It is a dependency-light pure-D library for geodetic mathematics.
 
 The supported package-level import is:
 
@@ -28,6 +28,18 @@ dub build --compiler=ldc2
 ```
 
 The minimum supported D frontend version is 2.111.0.
+
+## Choose an operation
+
+To convert a position with ellipsoidal height into Earth-centred XYZ
+coordinates, use `geodeticToGeocentric`. To get standard UTM easting
+and northing, use `forwardUtm`; prepare a `UtmProjection` when you
+need one fixed zone for many positions.
+
+To measure the shortest surface distance and bearing between two places,
+use `Geodesic.inverse`. Use `Rhumb.inverse` for a constant-bearing
+route. To locate the nearest point on a finite geodesic segment, use
+`nearestPointOnSegment`.
 
 ## Minimal geographic/geocentric example
 
@@ -228,6 +240,45 @@ The convention is explicit in the type/API. There is no implicit default convent
 
 EPSG-style constructors use arc-seconds for rotations and parts per million for scale difference where documented.
 
+### Example: from geographic coordinates through a reference-frame transform
+
+A Helmert transform operates on Earth-centred XYZ, not latitude/longitude.
+First convert the position to geocentric coordinates, apply the published
+source-to-target parameters, then convert back with the **target** ellipsoid:
+
+```d
+import geodesy;
+
+void main()
+{
+    const sourceEllipsoid = wgs84!double();
+    const targetEllipsoid = wgs84!double(); // Illustration: use the actual target ellipsoid.
+
+    const source = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.2),
+        Longitude!double.fromDegrees(16.37),
+        200.0); // Ellipsoidal height, metres.
+
+    const xyz = geodeticToGeocentric(source, sourceEllipsoid);
+
+    // Example-only numbers: NOT parameters for a real datum transformation.
+    const publishedParameters = PositionVectorHelmert!double
+        .fromArcSecondsAndPpm(
+            1.0, 2.0, 3.0,       // Translations in metres.
+            0.1, 0.2, 0.3,       // Position Vector rotations in arc-seconds.
+            0.4);               // Scale difference in ppm.
+
+    const targetXyz = applyPositionVectorHelmert(xyz, publishedParameters);
+    const target = geocentricToGeodetic(targetXyz, targetEllipsoid);
+}
+```
+
+For a real coordinate transformation, obtain the parameters, direction,
+rotation convention, and source/target ellipsoids from the authoritative
+definition of that operation. The numerical values above only demonstrate
+the API; they do **not** define a real transformation. Use the `try*`
+variants when invalid input must be handled without exceptions.
+
 ## Topocentric East/North/Up
 
 `TopocentricFrame!T` represents a prepared local East-North-Up frame.
@@ -238,18 +289,43 @@ A frame may be prepared from a geodetic or geocentric origin and supports forwar
 
 ## Ellipsoidal geodesics
 
+Use a geodesic to measure the shortest path along a reference ellipsoid.
+An inverse calculation takes two positions and returns the surface distance
+and azimuths (bearings). A direct calculation starts at a position and
+uses a bearing and distance to find the destination.
+
 ```d
 import geodesy;
 
-const solver =
-    Geodesic!double(
-        wgs84!double()
-    );
+const earth = wgs84!double();
+const vienna = GeographicCoordinate!double.fromComponents(
+    Latitude!double.fromDegrees(48.20849),
+    Longitude!double.fromDegrees(16.37208));
+const graz = GeographicCoordinate!double.fromComponents(
+    Latitude!double.fromDegrees(47.07071),
+    Longitude!double.fromDegrees(15.43950));
+
+const solver = Geodesic!double.fromEllipsoid(earth);
+const route = solver.inverse(vienna, graz);
+assert(route.distance > 0);
 ```
 
-The geodesic API provides prepared direct and inverse operations on spheres and supported oblate ellipsoids.
+Use `GeodesicLine` to calculate several positions along the same path,
+and `GeodesicPolygonAccumulator` to measure a geographic polygon's
+perimeter and signed area. The bounded-segment nearest-point and
+intersection APIs find nearby points and crossings on finite routes.
 
-The current public support domain is documented with the API; unsupported extensions such as geodesic lines and polygon accumulation are outside the present scope.
+A valid `Ellipsoid` does not guarantee every geodesic operation supports
+its flattening. The geodesic family includes a qualified prolate range,
+while other operations may have narrower limits. Check each operation's
+published domain and failure conditions.
+
+## Checked and throwing failures
+
+Use an ordinary operation when invalid input should raise
+`GeodesyValueException`. Use its `try*` counterpart when you want a
+`bool` success result instead. Checked calls write to an `out` result;
+read it only after the call returns `true`.
 
 ## Scalar model
 

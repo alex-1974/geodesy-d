@@ -1,10 +1,10 @@
 /**
- * Strong angular and geographic angular-coordinate value types.
+ * Work with angles, latitudes and longitudes without mixing them up.
  *
- * Use Angle for unrestricted finite angles and Latitude/Longitude for
- * geographic coordinates. The strong types keep these domains distinct from
- * raw scalars and from each other. Values use radians internally; explicit
- * factories accept radians or degrees.
+ * Use `Angle` for a bearing or another general angle. Use `Latitude` for
+ * north/south position and `Longitude` for east/west position. Each type
+ * accepts values in degrees or radians through an explicit factory, so a
+ * caller never has to guess which unit an input number represents.
  *
  * Domain:
  *     `Angle` accepts every finite represented angle. `Latitude` is bounded
@@ -124,7 +124,10 @@ public:
     }
 
     /**
-     * Construct from degrees without throwing.
+     * Make an angle from degrees without throwing.
+     *
+     * Use this when the angle comes from input data that may be invalid.
+     * The result holds radians internally; read `.degrees` to get degrees.
      *
      * Params:
      *     degrees = Finite angle in degrees.
@@ -182,7 +185,10 @@ public:
     }
 
     /**
-     * Construct from degrees.
+     * Make a general angle from degrees.
+     *
+     * Use this for bearings or rotations when invalid input should raise
+     * an exception. A general `Angle` has no latitude/longitude bounds.
      *
      * Params:
      *     degrees = Finite angle in degrees.
@@ -365,7 +371,10 @@ public:
     }
 
     /**
-     * Construct a latitude from degrees.
+     * Make a north/south geographic latitude from degrees.
+     *
+     * Use this for the latitude of a position. Values must lie between
+     * -90 degrees (South Pole) and +90 degrees (North Pole).
      *
      * Params:
      *     degrees = Latitude in the closed interval [-90,+90] degrees.
@@ -566,7 +575,10 @@ public:
     }
 
     /**
-     * Construct a longitude from degrees.
+     * Make an east/west geographic longitude from degrees.
+     *
+     * Use this for the longitude of a position. Both -180 and +180 degrees
+     * are accepted; call `normalized` when one unique representation is needed.
      *
      * Params:
      *     degrees = Longitude in the closed interval [-180,+180] degrees.

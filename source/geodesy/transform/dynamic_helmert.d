@@ -1,10 +1,14 @@
 /**
- * Time-dependent 14-parameter EPSG Helmert transformations.
+ * Transform coordinates between reference frames that change over time.
  *
- * Helmert14 stores seven convention-specific Helmert parameters at a reference
- * epoch plus their seven signed rates. Evaluation at an observation epoch
- * produces the existing static `Helmert7` parameter set and reuses its
- * validated spatial transformation kernel.
+ * Some reference frames move relative to each other. Use a time-dependent
+ * Helmert transformation when your parameters include a reference year and
+ * rates of change, and you must transform coordinates for a different
+ * observation year.
+ *
+ * `Helmert14` stores seven transformation parameters and their seven rates
+ * at a reference epoch. It evaluates the parameters for the observation
+ * epoch and applies the corresponding static `Helmert7` transformation.
  *
  * Standards:
  *     EPSG method 1053 -- Time-dependent Position Vector transformation
@@ -257,8 +261,11 @@ public:
     }
 
     /**
-     * Construct from canonical base parameters and canonical rates without
-     * throwing.
+     * Build a time-dependent transformation from base parameters and yearly rates.
+     *
+     * Use the published static parameters at their reference epoch, plus
+     * their yearly changes. Rotations use radians; rotation rates use
+     * radians/year. Scale and scale rate are dimensionless.
      *
      * Rotation rates are radians/year and scale rate is dimensionless/year.
      * Translation rates use the same linear unit as the base translations.
@@ -313,7 +320,11 @@ public:
         assert(h.isValid);
     }
 
-    /** Construct from canonical base parameters and canonical rates. */
+    /** Create a time-dependent frame transform from canonical parameters.
+     *
+     * Supply the static seven parameters at their reference epoch and
+     * seven yearly rates. Use `tryFromCanonical` for checked construction.
+     */
     static Helmert14!(T, convention) fromCanonical(
         const Helmert7!(T, convention) baseParameters,
         const T translationRateX,
@@ -355,8 +366,11 @@ public:
     }
 
     /**
-     * Construct from EPSG-style arc-second/ppm base values and rates without
-     * throwing.
+     * Build a time-dependent transformation from EPSG-style parameters.
+     *
+     * This factory accepts rotations in arc-seconds, scale in ppm, and
+     * corresponding rates per year. The reference epoch describes when
+     * those published parameter values apply.
      *
      * Params use caller linear units for translations, arc-seconds for
      * rotations, ppm for scale difference, and the corresponding units per
@@ -439,7 +453,12 @@ public:
         assert(h.translationRateX == 0.001);
     }
 
-    /** Construct from EPSG-style arc-second/ppm base values and rates. */
+    /** Create a dynamic transform from published EPSG-style values.
+     *
+     * Rotations use arc-seconds, scale uses ppm, and rates use these
+     * units per year. Supply the reference epoch of the published values.
+     * Use `tryFromArcSecondsAndPpm` for checked construction.
+     */
     static Helmert14!(T, convention) fromArcSecondsAndPpm(
         const T translationX,
         const T translationY,
@@ -493,7 +512,10 @@ public:
     }
 
     /**
-     * Evaluate the effective static Helmert parameters at an observation epoch.
+     * Get the effective seven static parameters for an observation year.
+     *
+     * The rates are applied for the elapsed years since the reference
+     * epoch. Use this to inspect or reuse the epoch-specific parameters.
      *
      * Returns:
      *     `true` when the epoch and all propagated parameters are finite and
@@ -587,7 +609,10 @@ public:
     }
 
     /**
-     * Evaluate the effective static Helmert parameters at an observation epoch.
+     * Return the seven static Helmert parameters at the observation epoch.
+     *
+     * This applies the annual changes since the reference epoch. Use
+     * `tryEvaluate` to handle invalid propagated values without throwing.
      *
      * Throws:
      *     `GeodesyValueException` when the epoch or propagated parameters are
@@ -616,8 +641,11 @@ public:
     }
 
     /**
-     * Apply the dynamic transformation at an observation epoch without
-     * throwing.
+     * Transform Earth-centred XYZ coordinates at an observation epoch.
+     *
+     * The observation epoch controls how many years of parameter change
+     * are applied after the reference epoch. This checked call returns
+     * `false` rather than throwing on failure.
      */
     bool tryApply(
         const GeocentricCoordinate!T source,
@@ -657,7 +685,11 @@ public:
     }
 
     /**
-     * Apply the dynamic transformation at an observation epoch.
+     * Convert geocentric XYZ into the target frame at the observation epoch.
+     *
+     * The stored reference epoch belongs to the parameter definition;
+     * the observation epoch belongs to the coordinate being transformed.
+     * Use `tryApply` for a non-throwing alternative.
      *
      * Throws:
      *     `GeodesyValueException` when parameter evaluation or spatial

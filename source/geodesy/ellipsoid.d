@@ -1,11 +1,14 @@
 /**
- * Reference ellipsoid value type, construction, and derived parameters.
+ * Describe the reference surface used for geographic calculations.
  *
- * Ellipsoid makes the reference surface an explicit value instead of hidden
- * global state. It supports spherical, oblate, and prolate rotational models, preserves the
- * caller-selected linear unit of the semi-major axis, and deliberately gives
- * `.init` an invalid state so accidental default construction cannot silently
- * select a plausible Earth model.
+ * Earth coordinates and geodesic distances depend on a model of the Earth's
+ * shape. Use `wgs84` for the supplied WGS 84 reference ellipsoid, or build
+ * an `Ellipsoid` when your data uses another model. The library supports
+ * spherical, oblate and prolate rotational ellipsoids.
+ *
+ * Axis lengths keep the unit you supply. Coordinates and heights used with
+ * the ellipsoid must use that same unit. `Ellipsoid.init` is invalid so an
+ * uninitialized value cannot silently stand for a real Earth model.
  *
  * Domain:
  *     General ellipsoid construction accepts finite `a > 0` and

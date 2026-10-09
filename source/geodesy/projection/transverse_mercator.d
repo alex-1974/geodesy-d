@@ -1,9 +1,10 @@
 /**
- * Bounded generic Transverse Mercator with EPSG 9807 parameter semantics.
+ * Convert geographic positions to a grid centred on a chosen meridian.
  *
- * Use TransverseMercator for repeated forward, reverse, and conformal-factor
- * evaluation. The prepared value caches ellipsoid, series, and origin state.
- * UTM zoning remains a separate policy layer.
+ * Use `TransverseMercator` when your map grid specifies its own central
+ * meridian, scale and offsets rather than a standard UTM zone. Prepare it
+ * once to convert many positions or to reverse grid coordinates to latitude
+ * and longitude. Use `UtmProjection` for a standard UTM zone.
  *
  * Standards:
  *     Public operation parameters and semantics follow EPSG method 9807 --
@@ -1474,7 +1475,12 @@ public:
 
 
         /**
-     * Prepare a bounded Transverse Mercator operation without throwing.
+     * Set up a custom Transverse Mercator grid without throwing.
+     *
+     * Supply the ellipsoid, natural origin, local scale and grid offsets
+     * specified by your coordinate system. Easting/northing offsets must
+     * use the same linear unit as the ellipsoid. A positive scale factor
+     * is required. Use `UtmProjection` for a standard UTM zone instead.
      *
      * Params:
      *     ellipsoid = Valid spherical or oblate ellipsoid with flattening
@@ -2584,7 +2590,7 @@ package bool researchTryReverseFactors(
 
 
         /**
-     * Project a geographic coordinate.
+     * Convert latitude and longitude into easting and northing on this grid.
      *
      * Non-polar inputs are accepted only for |delta longitude| <= 60 degrees
      * from the natural-origin meridian. Geographic poles are independent of
@@ -2698,7 +2704,7 @@ package bool researchTryReverseFactors(
 
 
         /**
-     * Reverse a projected coordinate.
+     * Convert grid easting and northing back into latitude and longitude.
      *
      * The represented-coordinate sheet must correspond to the supported
      * forward domain. Reverse handling preserves the projection's defined pole

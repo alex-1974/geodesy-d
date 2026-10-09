@@ -1,10 +1,11 @@
 /**
- * Three-dimensional geodetic coordinate value type.
+ * Represent a geographic position with a height above the reference ellipsoid.
  *
- * A geodetic coordinate combines strong latitude and longitude values with a
- * finite ellipsoidal height. Datum, CRS, ellipsoid identity, epoch, and unit
- * metadata are deliberately not embedded; operations that need those concepts
- * receive them explicitly.
+ * Use `GeodeticCoordinate` when you need to convert latitude, longitude and
+ * ellipsoidal height to Earth-centred X/Y/Z coordinates, or back again.
+ * This height is not automatically the height above sea level. The coordinate
+ * does not select a datum or ellipsoid; supply those when an operation
+ * requires them.
  *
  * Units:
  *     Latitude and longitude use the strong angular types. Ellipsoidal height
@@ -73,8 +74,11 @@ static GeodeticCoordinate fromComponentsUnchecked(
 
 public:
     /**
-     * Construct from strong angular values and finite ellipsoidal height
-     * without throwing.
+     * Make a latitude/longitude/height position without throwing.
+     *
+     * Use this checked factory when the height comes from data that may be
+     * invalid. A height of zero means exactly zero above the ellipsoid;
+     * it does not mean that the height is unknown.
      *
      * Params:
      *     latitude = Geodetic latitude.
@@ -114,7 +118,11 @@ public:
     }
 
     /**
-     * Construct a geodetic coordinate.
+     * Make a latitude/longitude position with ellipsoidal height.
+     *
+     * Use this form when invalid height should raise an exception. If the
+     * height is unknown, use `GeographicCoordinate` instead of treating
+     * it as zero.
      *
      * Params:
      *     latitude = Geodetic latitude.

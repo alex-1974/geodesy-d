@@ -1,10 +1,12 @@
 /**
- * Local meridian-convergence and point-scale results for conformal projections.
+ * Understand how map-grid direction and local scale differ from the ground.
  *
- * Return conformal projection factors as one strong result instead of
- * unrelated raw scalars. Transverse Mercator, UTM, Polar Stereographic, and
- * Lambert Conformal Conic produce this type. Non-conformal distortion
- * quantities are outside its contract.
+ * `meridianConvergence` tells you how grid north is rotated relative to
+ * true north. `pointScale` tells you the local map scale: 1 means no local
+ * scale change, values above 1 enlarge, and values below 1 reduce lengths
+ * at that point. Use these factors with conformal projections such as UTM,
+ * Transverse Mercator, Polar Stereographic and Lambert Conformal Conic.
+ * They do not describe all types of map distortion.
  *
  * Units:
  *     Meridian convergence is an `Angle`; point scale is dimensionless.

@@ -1,9 +1,14 @@
 /**
- * Ellipsoidal rhumb-line (loxodrome) direct/inverse solver and prepared line.
+ * Calculate routes that keep the same compass bearing.
  *
- * A rhumb line follows constant bearing.  The family is intentionally
- * distinct from geodesics and is formulated from isometric latitude,
- * meridian distance, and their stable divided difference.
+ * Choose a rhumb line when the course must stay constant instead of following
+ * the shortest route. Given two positions, the inverse operation returns
+ * distance and bearing. Given a starting point, bearing and distance, the
+ * direct operation finds the destination. For the shortest surface route
+ * between points, choose `Geodesic` instead.
+ *
+ * A rhumb line is also called a loxodrome. The calculation uses ellipsoidal
+ * latitude and meridian-distance mathematics.
  *
  * Domain:
  *     Spherical and oblate ellipsoids with 0 <= f <= 0.01.
@@ -470,7 +475,11 @@ if (isGeodesyScalar!T)
 }
 
 
-/** Result of a direct rhumb operation. */
+/** Destination reached by following a constant compass bearing.
+ *
+ * Read `position` for the resulting geographic latitude and longitude.
+ * The direct operation starts from a position, bearing and signed distance.
+ */
 struct RhumbDirectResult(T)
 if (isGeodesyScalar!T)
 {
@@ -488,7 +497,7 @@ private:
     }
 
 public:
-    /** Endpoint of the direct rhumb operation. */
+    /** Destination latitude and longitude after travelling along the rhumb. */
     @property GeographicCoordinate!T position() const
         pure nothrow @safe @nogc
     {
@@ -527,7 +536,13 @@ public:
 }
 
 
-/** Result of a shortest inverse rhumb operation. */
+/** Distance and constant bearing of a rhumb route between two positions.
+ *
+ * Read `distance` in the ellipsoid's linear unit (metres with WGS 84).
+ * Read `bearing` for the constant direction of travel, available in
+ * degrees through `.bearing.degrees`. Unlike a geodesic, a rhumb route
+ * follows the same compass bearing along its path.
+ */
 struct RhumbInverseResult(T)
 if (isGeodesyScalar!T)
 {
@@ -548,7 +563,7 @@ private:
     }
 
 public:
-    /** Shortest rhumb distance in the ellipsoid semi-major-axis unit. */
+    /** Distance along the selected rhumb route, in the ellipsoid's linear unit. */
     @property T distance() const
         pure nothrow @safe @nogc
     {
@@ -569,7 +584,11 @@ public:
         assert(solver.inverse(start, end).distance > 0.0);
     }
 
-    /** Constant rhumb bearing in the canonical half-open interval from -pi inclusive to +pi exclusive. */
+    /** Compass bearing maintained along the route, represented as an `Angle`.
+     *
+     * Read `.degrees` for degrees. The canonical angular interval runs
+     * from -pi inclusive to +pi exclusive.
+     */
     @property Angle!T bearing() const
         pure nothrow @safe @nogc
     {
@@ -881,7 +900,12 @@ public:
     }
 
 
-    /** Solve the shortest inverse rhumb problem without throwing. */
+    /** Find distance and constant bearing between two positions without throwing.
+     *
+     * Use this when you want a constant-heading route and need to handle
+     * failure without exceptions. The result contains the rhumb distance
+     * in the ellipsoid's linear unit and the constant bearing.
+     */
     bool tryInverse(
         const GeographicCoordinate!T start,
         const GeographicCoordinate!T end,
@@ -1086,7 +1110,12 @@ public:
     }
 
 
-    /** Solve a signed-distance direct rhumb problem without throwing. */
+    /** Find a destination from a start point, constant bearing and distance.
+     *
+     * Use this checked form when the route may be invalid or may reach a
+     * pole. A successful result contains the destination position. Distance
+     * uses the ellipsoid's linear unit and may be signed.
+     */
     bool tryDirect(
         const GeographicCoordinate!T start,
         const Angle!T bearing,
@@ -1299,10 +1328,11 @@ public:
 
 
 /**
- * Prepared constant-bearing rhumb line for repeated distance positions.
+ * Reuse a constant-bearing route to find positions at several distances.
  *
- * Start auxiliary state and bearing sine/cosine are prepared once. `.init`
- * is invalid.
+ * Choose `RhumbLine` when you have one start position and bearing and need
+ * many points along the same route. Prepare it once instead of solving the
+ * setup anew for every distance. An unprepared `.init` line is invalid.
  */
 struct RhumbLine(T)
 if (isGeodesyScalar!T)
@@ -1526,7 +1556,12 @@ public:
     }
 
 
-    /** Evaluate a signed distance along this prepared line without throwing. */
+    /** Find a point a given distance along this constant-bearing route.
+     *
+     * Pass distance in the ellipsoid's linear unit (metres for WGS 84).
+     * A negative value travels backward. On success, the result contains
+     * the destination; failure returns `false` without throwing.
+     */
     bool tryPosition(
         const T distance,
         out RhumbDirectResult!T result) const
@@ -1563,7 +1598,11 @@ public:
     }
 
 
-    /** Evaluate a signed distance along this prepared line or throw. */
+    /** Return the destination a given distance along this constant-bearing route.
+     *
+     * Distance uses the ellipsoid's linear unit and may be negative.
+     * Use `tryPosition` when you want to handle failure without exceptions.
+     */
     RhumbDirectResult!T position(
         const T distance) const
         @safe

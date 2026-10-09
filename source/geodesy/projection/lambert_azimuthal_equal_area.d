@@ -1,9 +1,13 @@
 /**
- * Bounded ellipsoidal Lambert Azimuthal Equal Area projection.
+ * Make a map that preserves area when projecting geographic positions.
  *
- * Project geographic coordinates with a prepared ellipsoidal LAEA operation.
- * The same API supports spherical and oblate ellipsoids. CRS authority lookup
- * and named EPSG presets remain outside the projection kernel.
+ * Choose Lambert Azimuthal Equal Area when comparing mapped areas matters
+ * more than preserving local angles, as in equal-area continental mapping.
+ * Set the projection centre and ellipsoid, then convert between geographic
+ * and flat coordinates. The mathematical projection does not look up named
+ * coordinate systems or EPSG presets.
+ *
+ * This implementation supports spherical and oblate ellipsoids.
  *
  * Standards:
  *     The mathematical family follows ellipsoidal Lambert Azimuthal Equal
@@ -794,7 +798,11 @@ public:
     }
 
 
-    /** Prepare a Lambert Azimuthal Equal Area projection without throwing. */
+    /** Set up an equal-area map with a chosen geographic centre.
+     *
+     * Supply the ellipsoid, central latitude and longitude, and the
+     * false easting/northing defined by the map grid. Offsets share the
+     * ellipsoid's length unit. Returns `false` for unsupported parameters. */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfProjectionCentre,
@@ -950,7 +958,10 @@ public:
     }
 
 
-    /** Prepare a Lambert Azimuthal Equal Area projection or throw. */
+    /** Set up an equal-area grid from its centre and coordinate offsets.
+     *
+     * Use `tryFromParameters` to handle invalid configuration without
+     * an exception. */
     static LambertAzimuthalEqualArea fromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfProjectionCentre,
@@ -1142,7 +1153,11 @@ public:
     }
 
 
-    /** Project a geographic coordinate or throw. */
+    /** Put a geographic position onto this equal-area map.
+     *
+     * Returns easting and northing in the ellipsoid's linear unit. Use
+     * `tryForward` when projection failure should not throw.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1176,7 +1191,11 @@ public:
     }
 
 
-    /** Reverse a projected coordinate without throwing. */
+    /** Recover latitude and longitude from this equal-area grid.
+     *
+     * The coordinate must lie in the supported represented disk. This
+     * checked form returns `false` when it cannot be reversed.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1232,7 +1251,10 @@ public:
     }
 
 
-    /** Reverse a projected coordinate or throw. */
+    /** Recover a geographic position from the equal-area grid.
+     *
+     * Use `tryReverse` to test invalid input without throwing.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe

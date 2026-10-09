@@ -1,9 +1,10 @@
 /**
- * Bounded EPSG 1024 Popular Visualisation Pseudo-Mercator projection.
+ * Convert geographic positions into the familiar web-map coordinate grid.
  *
- * Project geographic coordinates with the familiar web-mapping equations of
- * EPSG method 1024. The operation keeps the source ellipsoid as semantic
- * state, while the coordinate equations use only its semi-major axis.
+ * Choose Pseudo-Mercator when you need coordinates for a typical online
+ * slippy map, not for accurate distance or area measurement. Its equations
+ * use the reference ellipsoid's semi-major axis. The supported latitude
+ * range is bounded and does not reach the poles.
  *
  * Standards:
  *     EPSG method 1024 -- Popular Visualisation Pseudo Mercator.
@@ -1586,7 +1587,10 @@ public:
 
 
         /**
-     * Project a geographic coordinate on the bounded Pseudo-Mercator sheet.
+     * Convert latitude and longitude into the familiar web-map grid.
+     *
+     * The result gives easting and northing in the ellipsoid's linear
+     * unit. This is for map display, not accurate surface measurement.
      *
      * Latitude must lie in the supported closed interval [-88,+88] degrees.
      * Longitude is interpreted on the principal wrapped sheet relative to the
@@ -1745,7 +1749,10 @@ public:
 
 
         /**
-     * Reverse a projected coordinate from the bounded represented sheet.
+     * Convert web-map grid coordinates back to latitude and longitude.
+     *
+     * The input must lie on this projection's supported coordinate sheet;
+     * it cannot represent geographic positions at the poles.
      *
      * The represented sheet is the one produced by the corresponding forward
      * operation, including its latitude and wrapped-longitude boundaries.
