@@ -494,10 +494,11 @@ public:
     }
 
     /**
-     * Add one ordered geographic vertex without throwing.
+     * Add the next polygon corner without throwing.
      *
-     * The operation is transactional: on numerical failure the accumulator is
-     * unchanged.
+     * Call this once for each corner, in boundary order. The first point
+     * starts the outline; each later point adds a shortest-geodesic edge.
+     * On failure the existing polygon remains unchanged.
      */
     bool tryAddPoint(
         const GeographicCoordinate!T point)
@@ -556,7 +557,11 @@ public:
         assert(accumulator.pointCount == 1);
     }
 
-    /** Add one ordered geographic vertex. */
+    /** Add the next polygon corner in boundary order.
+     *
+     * Use this convenience form when invalid input should raise an exception.
+     * Use `tryAddPoint` to handle failure without throwing.
+     */
     void addPoint(
         const GeographicCoordinate!T point)
         @safe
@@ -589,8 +594,12 @@ public:
     }
 
     /**
-     * Compute the closed perimeter and canonical signed area without mutating
-     * the accumulator.
+     * Measure the polygon's complete perimeter and signed area without throwing.
+     *
+     * This includes the closing edge from the last corner to the first.
+     * A successful result gives the number of corners, perimeter in the
+     * ellipsoid's length unit and area in that unit squared. You can call
+     * this repeatedly or add more points afterward; it changes no state.
      */
     bool tryCompute(
         out GeodesicPolygonResult!T result) const
@@ -704,7 +713,12 @@ public:
         assert(accumulator.pointCount == 3);
     }
 
-    /** Compute the closed perimeter and canonical signed area. */
+    /** Return the closed polygon's perimeter and signed area.
+     *
+     * Use `tryCompute` instead when you prefer a `bool` failure result.
+     * Computing includes the final edge back to the first corner and does
+     * not change the stored polygon.
+     */
     GeodesicPolygonResult!T compute() const
         @safe
     {
