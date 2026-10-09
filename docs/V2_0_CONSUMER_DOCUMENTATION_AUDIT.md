@@ -566,3 +566,34 @@ compiled with both baseline compilers and checked in a consumer DUB project.
 
 **Do not mark this example or PR documentation gate PASS on the strength
 of signature inspection or structural fixes alone.**
+
+
+## XPS local release-documentation gate evidence — 2026-10-09
+
+**Verified source:** XPS terminal transcript for checkout
+`79de38bea8073a27b65f553db75beac647c30e1f`
+(reported DUB package `1.2.0+commit.197.g79de38b`).
+
+| Executed command/gate | Observed outcome |
+| --- | --- |
+| `dub test --compiler=dmd` | **PASS:** 37 modules passed unittests |
+| `dub test --compiler=ldc2` | **PASS:** 37 modules passed unittests |
+| `bash tools/validate-docs.sh` | **PASS:** 38 Ddoc module files generated; documentation/release metadata contract |
+| `bash tools/build-versioned-docs.sh` | **PASS:** v1.0.0 archive plus current public-only DDox generated |
+| Current public-module Ddoc contract | **PASS:** 29 modules |
+| Public API example audit | **PASS:** 463 public symbol pages, 463 compiled examples, `add=0`, `family=0` |
+| Current/v1.0.0 site separation | **PASS** |
+
+The transcript confirms source-aware stripping of 269 internal
+declarations from 265 source-internal declarations for the current site.
+Generated current-site entrypoint:
+`build/versioned-docs/output/current/build/ddox/site/index.html`.
+
+**Evidence boundary:** the example audit proves the repository's
+compiled per-symbol Example gate, not that every example has been
+visually inspected or that all 463 pages pass the human consumer
+comprehension test. The standalone Getting Started Helmert example
+still needs a separate explicit DMD/LDC consumer compilation. These
+results apply to commit `79de38b`; any subsequent docs change
+requires revalidation before release sign-off. GitHub Actions
+completion remains a separate gate.
