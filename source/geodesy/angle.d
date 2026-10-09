@@ -185,7 +185,10 @@ public:
     }
 
     /**
-     * Construct from degrees.
+     * Make a general angle from degrees.
+     *
+     * Use this for bearings or rotations when invalid input should raise
+     * an exception. A general `Angle` has no latitude/longitude bounds.
      *
      * Params:
      *     degrees = Finite angle in degrees.
