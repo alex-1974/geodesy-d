@@ -118,7 +118,11 @@ public:
     }
 
     /**
-     * Construct a geodetic coordinate.
+     * Make a latitude/longitude position with ellipsoidal height.
+     *
+     * Use this form when invalid height should raise an exception. If the
+     * height is unknown, use `GeographicCoordinate` instead of treating
+     * it as zero.
      *
      * Params:
      *     latitude = Geodetic latitude.
