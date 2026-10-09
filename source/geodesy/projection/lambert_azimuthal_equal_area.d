@@ -1146,7 +1146,11 @@ public:
     }
 
 
-    /** Project a geographic coordinate or throw. */
+    /** Put a geographic position onto this equal-area map.
+     *
+     * Returns easting and northing in the ellipsoid's linear unit. Use
+     * `tryForward` when projection failure should not throw.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1180,7 +1184,11 @@ public:
     }
 
 
-    /** Reverse a projected coordinate without throwing. */
+    /** Recover latitude and longitude from this equal-area grid.
+     *
+     * The coordinate must lie in the supported represented disk. This
+     * checked form returns `false` when it cannot be reversed.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1236,7 +1244,10 @@ public:
     }
 
 
-    /** Reverse a projected coordinate or throw. */
+    /** Recover a geographic position from the equal-area grid.
+     *
+     * Use `tryReverse` to test invalid input without throwing.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
