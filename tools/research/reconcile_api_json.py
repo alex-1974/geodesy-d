@@ -15,8 +15,8 @@ KINDS = {"function", "template", "struct", "class", "interface",
          "enum", "enum member", "alias", "variable", "constructor"}
 TEST_NAME = re.compile(r"^__(?:unittest|lambda|foreach|ctor|dtor|postblit)")
 PRIVATE_NAME = re.compile(r"^_")
-DIRECT_ACCESS = re.compile(r"\\b(private|package(?:\\([^)]*\\))?|protected|public|export)\\s+(?=(?:struct|class|interface|enum|alias|template)\\b)")
-ACCESS_BLOCK = re.compile(r"^\\s*(private|package(?:\\([^)]*\\))?|protected|public|export)\\s*:\\s*(?://.*)?$")
+DIRECT_ACCESS = re.compile(r"\b(private|package(?:\([^)]*\))?|protected|public|export)\s+(?=(?:struct|class|interface|enum|alias|template)\b)")
+ACCESS_BLOCK = re.compile(r"^\s*(private|package(?:\([^)]*\))?|protected|public|export)\s*:\s*(?://.*)?$")
 
 
 def source_visibility(source, line, name):
