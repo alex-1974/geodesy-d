@@ -1096,7 +1096,12 @@ public:
     }
 
 
-    /** Solve a signed-distance direct rhumb problem without throwing. */
+    /** Find a destination from a start point, constant bearing and distance.
+     *
+     * Use this checked form when the route may be invalid or may reach a
+     * pole. A successful result contains the destination position. Distance
+     * uses the ellipsoid's linear unit and may be signed.
+     */
     bool tryDirect(
         const GeographicCoordinate!T start,
         const Angle!T bearing,
