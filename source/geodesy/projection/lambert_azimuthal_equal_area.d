@@ -1,9 +1,13 @@
 /**
- * Bounded ellipsoidal Lambert Azimuthal Equal Area projection.
+ * Make a map that preserves area when projecting geographic positions.
  *
- * Project geographic coordinates with a prepared ellipsoidal LAEA operation.
- * The same API supports spherical and oblate ellipsoids. CRS authority lookup
- * and named EPSG presets remain outside the projection kernel.
+ * Choose Lambert Azimuthal Equal Area when comparing mapped areas matters
+ * more than preserving local angles, as in equal-area continental mapping.
+ * Set the projection centre and ellipsoid, then convert between geographic
+ * and flat coordinates. The mathematical projection does not look up named
+ * coordinate systems or EPSG presets.
+ *
+ * This implementation supports spherical and oblate ellipsoids.
  *
  * Standards:
  *     The mathematical family follows ellipsoidal Lambert Azimuthal Equal
