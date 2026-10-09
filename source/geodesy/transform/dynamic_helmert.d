@@ -261,8 +261,11 @@ public:
     }
 
     /**
-     * Construct from canonical base parameters and canonical rates without
-     * throwing.
+     * Build a time-dependent transformation from base parameters and yearly rates.
+     *
+     * Use the published static parameters at their reference epoch, plus
+     * their yearly changes. Rotations use radians; rotation rates use
+     * radians/year. Scale and scale rate are dimensionless.
      *
      * Rotation rates are radians/year and scale rate is dimensionless/year.
      * Translation rates use the same linear unit as the base translations.
@@ -359,8 +362,11 @@ public:
     }
 
     /**
-     * Construct from EPSG-style arc-second/ppm base values and rates without
-     * throwing.
+     * Build a time-dependent transformation from EPSG-style parameters.
+     *
+     * This factory accepts rotations in arc-seconds, scale in ppm, and
+     * corresponding rates per year. The reference epoch describes when
+     * those published parameter values apply.
      *
      * Params use caller linear units for translations, arc-seconds for
      * rotations, ppm for scale difference, and the corresponding units per
@@ -497,7 +503,10 @@ public:
     }
 
     /**
-     * Evaluate the effective static Helmert parameters at an observation epoch.
+     * Get the effective seven static parameters for an observation year.
+     *
+     * The rates are applied for the elapsed years since the reference
+     * epoch. Use this to inspect or reuse the epoch-specific parameters.
      *
      * Returns:
      *     `true` when the epoch and all propagated parameters are finite and
@@ -620,8 +629,11 @@ public:
     }
 
     /**
-     * Apply the dynamic transformation at an observation epoch without
-     * throwing.
+     * Transform Earth-centred XYZ coordinates at an observation epoch.
+     *
+     * The observation epoch controls how many years of parameter change
+     * are applied after the reference epoch. This checked call returns
+     * `false` rather than throwing on failure.
      */
     bool tryApply(
         const GeocentricCoordinate!T source,
