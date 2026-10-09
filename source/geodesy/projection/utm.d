@@ -1392,13 +1392,15 @@ public:
 
 
 /**
- * Project a geographic coordinate using standard automatic UTM zone and
- * hemisphere policy.
+ * Convert latitude and longitude to UTM easting and northing in metres.
  *
- * The accepted automatic latitude domain is -80 degrees inclusive to +84
- * degrees exclusive. Zone selection applies the Norway and Svalbard
- * exceptions. This convenience operation prepares the selected zone per call;
- * bulk callers in a known zone should reuse `UtmProjection!T`.
+ * The function chooses the standard UTM zone and hemisphere for this position
+ * and returns both with the projected coordinates. Use it for individual
+ * positions when you do not know the zone in advance. For many positions
+ * in one fixed zone, prepare and reuse `UtmProjection!T` instead.
+ *
+ * Automatic conversion accepts latitudes from -80 degrees inclusive to
+ * +84 degrees exclusive and applies the Norway and Svalbard zone exceptions.
  *
  * Params:
  *     source = Geographic source coordinate.
