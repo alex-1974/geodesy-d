@@ -122,3 +122,29 @@ and result carriers have been read on rendered pages.
 Each completed page must record the four answers, a realistic Example,
 and the explicit failure/units/domain contract. A module introduction
 does not substitute for reviewing the public operations it exports.
+
+
+## Core-coordinate reading pass
+
+The module introductions for `GeographicCoordinate`, `GeodeticCoordinate`,
+`GeocentricCoordinate`, and `geodesy.conversion` now start with their
+distinct consumer uses:
+
+- **Geographic:** latitude and longitude without height, for surface routes
+  and map projections.
+- **Geodetic:** latitude, longitude and *ellipsoidal* height, for conversion
+  to or from Earth-centred coordinates. Ellipsoidal height is not automatically
+  height above sea level.
+- **Geocentric:** X/Y/Z from the Earth's centre, suitable for ECEF work
+  and reference-frame transformations.
+- **Conversion:** forward geodetic-to-XYZ and reverse XYZ-to-geodetic,
+  explicitly requiring a matching reference ellipsoid.
+
+The conversion documentation also distinguishes the checked `try*` form
+from the throwing form. Existing numerical-domain, unit and geocentre
+restrictions remain part of the full function comments.
+
+**Coverage:** This is a reviewed module-entry pass plus selected conversion
+operations, not a completed sign-off for every public property and overload.
+Remaining detailed work includes factories, constructors, all conversion
+overloads, and the rendered DDox page-by-page audit.
