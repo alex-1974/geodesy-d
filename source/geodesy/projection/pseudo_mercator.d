@@ -1587,7 +1587,10 @@ public:
 
 
         /**
-     * Project a geographic coordinate on the bounded Pseudo-Mercator sheet.
+     * Convert latitude and longitude into the familiar web-map grid.
+     *
+     * The result gives easting and northing in the ellipsoid's linear
+     * unit. This is for map display, not accurate surface measurement.
      *
      * Latitude must lie in the supported closed interval [-88,+88] degrees.
      * Longitude is interpreted on the principal wrapped sheet relative to the
@@ -1746,7 +1749,10 @@ public:
 
 
         /**
-     * Reverse a projected coordinate from the bounded represented sheet.
+     * Convert web-map grid coordinates back to latitude and longitude.
+     *
+     * The input must lie on this projection's supported coordinate sheet;
+     * it cannot represent geographic positions at the poles.
      *
      * The represented sheet is the one produced by the corresponding forward
      * operation, including its latitude and wrapped-longitude boundaries.
