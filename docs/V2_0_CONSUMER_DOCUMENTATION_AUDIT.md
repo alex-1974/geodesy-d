@@ -447,3 +447,25 @@ throwing convenience methods.
 **Scope:** Ddoc wording only. Exact exception, numeric and type contracts
 remain authoritative. Generated DDox review, fully compilable new consumer
 examples and complete public-method coverage are still pending.
+
+
+## Local-pivot transformation and coordinate conversion reading pass
+
+Revised the `molodensky_badekas` module introduction and its checked
+EPSG interchange constructor, `tryApply` and throwing `apply` comments.
+The consumer now sees that published Molodensky-Badekas parameters include
+a three-dimensional evaluation point, unlike an ordinary seven-parameter
+Helmert transform. Translation/evaluation-point coordinates must use the
+same linear unit as source XYZ; published rotation and scale inputs use
+arc-seconds and ppm.
+
+Clarified the `conversion` module introduction: geodetic ↔ geocentric
+conversions change the **representation** of coordinates on the supplied
+ellipsoid; they do **not** change reference frames or datums. Heights are
+ellipsoidal, not heights above mean sea level. Existing checked/throwing
+conversions and special handling of the exact geocentre were retained.
+
+**Remaining:** individual Molodensky-Badekas canonical constructors,
+properties and throwing factory; transformation-chain consumer examples;
+all remaining symbol pages and generated DDox checks. This review
+changed documentation only.
