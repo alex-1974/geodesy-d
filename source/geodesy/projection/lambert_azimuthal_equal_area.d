@@ -798,7 +798,11 @@ public:
     }
 
 
-    /** Prepare a Lambert Azimuthal Equal Area projection without throwing. */
+    /** Set up an equal-area map with a chosen geographic centre.
+     *
+     * Supply the ellipsoid, central latitude and longitude, and the
+     * false easting/northing defined by the map grid. Offsets share the
+     * ellipsoid's length unit. Returns `false` for unsupported parameters. */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfProjectionCentre,
@@ -954,7 +958,10 @@ public:
     }
 
 
-    /** Prepare a Lambert Azimuthal Equal Area projection or throw. */
+    /** Set up an equal-area grid from its centre and coordinate offsets.
+     *
+     * Use `tryFromParameters` to handle invalid configuration without
+     * an exception. */
     static LambertAzimuthalEqualArea fromParameters(
         const Ellipsoid!T ellipsoid,
         const Latitude!T latitudeOfProjectionCentre,
