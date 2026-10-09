@@ -168,3 +168,23 @@ The expected initial 1,914 DMD candidate records are evidence from
 the previously supplied CSV, **not** a claim that this updated script
 has executed successfully on the XPS yet. Feature/API freeze remains
 open pending review.
+
+
+## XPS run: string-valued source-line regression (2026-10-09)
+
+The XPS successfully generated 1,914 DMD triage rows, matched 463 DDox
+page names and counted 488 DDox prototypes (10 pages with multiple
+prototypes). Yet `Explicit source visibility evidence: 0` was a
+**tool defect**, not evidence of absent public declarations.
+
+Inspection of the uploaded CSV confirmed that `line` is read back as
+a string (for example `"82"`), while the lexical source checker only
+accepted Python integers. All 1,914 rows therefore fell through to
+`lexical_scope_unverified`; no source-based protection evaluation was
+actually performed in that run.
+
+Fixed the checker to convert source-line strings to integers, with
+explicit handling for malformed and out-of-range positions. The
+previous `source_visibility_hint`/`source_visibility_evidence`
+columns must be discarded and regenerated before they are used for
+API decisions. This does not change the 488-prototype DDox census.
