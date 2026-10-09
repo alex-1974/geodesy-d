@@ -1,10 +1,11 @@
 /**
- * Geographic/geocentric coordinate conversion with a robust inverse.
+ * Convert between latitude/longitude/height and Earth-centred X/Y/Z.
  *
- * Convert between geodetic latitude/longitude/height and geocentric X/Y/Z
- * using EPSG method 9602 semantics. Forward conversion uses the ellipsoidal
- * Cartesian equations. Reverse conversion remains robust for difficult
- * interior and near-evolute positions as well as ordinary terrestrial input.
+ * Use `geodeticToGeocentric` to turn a geographic position with ellipsoidal
+ * height into Cartesian coordinates. Use `geocentricToGeodetic` to get
+ * latitude, longitude and ellipsoidal height back. Both operations need the
+ * reference ellipsoid used by the coordinates. They follow EPSG method 9602
+ * and include robust handling of difficult reverse-conversion cases.
  *
  * Standards:
  *     EPSG method 9602 -- Geographic/geocentric conversions.
