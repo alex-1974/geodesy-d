@@ -157,7 +157,13 @@ public:
     }
 
     /**
-     * Construct from canonical parameters without throwing.
+     * Prepare a local-pivot transformation from an existing Helmert7 parameter set.
+     *
+     * Use this factory when the published Molodensky-Badekas operation
+     * supplies a convention-specific set of seven parameters plus three
+     * source-frame XYZ coordinates for its evaluation point. These pivot
+     * coordinates must use the same length unit as source XYZ. On failure
+     * return `false` instead of throwing.
      *
      * Params:
      *     baseParameters = Convention-specific Helmert-family parameters.
@@ -263,7 +269,11 @@ public:
         assert(transform.evaluationPointY == 2.0);
     }
 
-    /** Construct from canonical parameters. */
+    /** Prepare a local-pivot transform from seven parameters and an XYZ pivot.
+     *
+     * Use the checked `tryFromCanonical` alternative when an invalid
+     * pivot or non-representable derived transform should not throw.
+     */
     static MolodenskyBadekas10!(T, convention) fromCanonical(
         const Helmert7!(T, convention) baseParameters,
         const T evaluationPointX,
@@ -353,7 +363,12 @@ public:
         assert(transform.baseParameters.translationX == 1.0);
     }
 
-    /** Construct from EPSG arc-second/ppm units. */
+    /** Prepare the local-pivot transform from published EPSG-style parameters.
+     *
+     * Rotations are in arc-seconds, scale difference is in ppm, and all
+     * translations and evaluation-point coordinates use the source XYZ
+     * length unit. Use `tryFromArcSecondsAndPpm` for checked construction.
+     */
     static MolodenskyBadekas10!(T, convention) fromArcSecondsAndPpm(
         const T translationX,
         const T translationY,
