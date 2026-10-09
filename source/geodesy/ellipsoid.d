@@ -400,17 +400,17 @@ public:
         return _semiMajorAxis;
     }
 
-    /** Equatorial radius alias for the canonical semi-axis `a`. */
-    @property T equatorialRadius() const pure nothrow @safe @nogc
-    {
-        return _semiMajorAxis;
-    }
-
     /// Example reading the semi-major axis.
     @safe unittest
     {
         import geodesy;
         assert(wgs84!double().semiMajorAxis == 6_378_137.0);
+    }
+
+    /** Equatorial radius alias for the canonical semi-axis `a`. */
+    @property T equatorialRadius() const pure nothrow @safe @nogc
+    {
+        return _semiMajorAxis;
     }
 
     /** Flattening `f`. */
