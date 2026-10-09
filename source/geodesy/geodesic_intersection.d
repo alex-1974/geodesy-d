@@ -4395,6 +4395,53 @@ if (isGeodesyScalar!T)
 }
 
 
+/// Example enumerating intersections without throwing.
+@safe unittest
+{
+    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
+    GeodesicIntersectionSolver!double intersector;
+    assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
+        solver, intersector));
+
+    const firstStart = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(0.0),
+        Longitude!double.fromDegrees(0.0));
+    const secondStart = firstStart;
+
+    GeodesicLine!double firstLine;
+    GeodesicLine!double secondLine;
+
+    assert(GeodesicLine!double.tryFromGeodesic(
+        solver, firstStart, Angle!double.fromDegrees(30.0), firstLine));
+    assert(GeodesicLine!double.tryFromGeodesic(
+        solver, secondStart, Angle!double.fromDegrees(120.0), secondLine));
+
+    GeodesicIntersectionWorkspaceEntry!double[16] starts;
+    bool[16] skip;
+    GeodesicIntersectionWorkspaceEntry!double[32] found;
+    GeodesicIntersectionWorkspaceEntry!double[16] centers;
+    GeodesicIntersectionWorkspace!double workspace;
+
+    assert(GeodesicIntersectionWorkspace!double.tryFromStorage(
+        starts[], skip[], found[], centers[], workspace));
+
+    GeodesicIntersectionPoint!double[8] output;
+    GeodesicIntersectionEnumeration enumeration;
+
+    assert(tryAllGeodesicIntersections(
+        intersector,
+        firstLine,
+        secondLine,
+        1_000_000.0,
+        output[],
+        workspace,
+        enumeration));
+
+    assert(enumeration.isValid);
+    assert(enumeration.total >= 1);
+}
+
+
 /** Throwing prepared-state zero-reference all-intersection enumeration. */
 GeodesicIntersectionEnumeration allGeodesicIntersections(T)(
     const GeodesicIntersectionSolver!T intersector,
@@ -4453,53 +4500,6 @@ if (isGeodesyScalar!T)
     return enumeration;
 }
 
-
-
-/// Example enumerating intersections without throwing.
-@safe unittest
-{
-    const solver = Geodesic!double.fromEllipsoid(wgs84!double());
-    GeodesicIntersectionSolver!double intersector;
-    assert(GeodesicIntersectionSolver!double.tryFromGeodesic(
-        solver, intersector));
-
-    const firstStart = GeographicCoordinate!double.fromComponents(
-        Latitude!double.fromDegrees(0.0),
-        Longitude!double.fromDegrees(0.0));
-    const secondStart = firstStart;
-
-    GeodesicLine!double firstLine;
-    GeodesicLine!double secondLine;
-
-    assert(GeodesicLine!double.tryFromGeodesic(
-        solver, firstStart, Angle!double.fromDegrees(30.0), firstLine));
-    assert(GeodesicLine!double.tryFromGeodesic(
-        solver, secondStart, Angle!double.fromDegrees(120.0), secondLine));
-
-    GeodesicIntersectionWorkspaceEntry!double[16] starts;
-    bool[16] skip;
-    GeodesicIntersectionWorkspaceEntry!double[32] found;
-    GeodesicIntersectionWorkspaceEntry!double[16] centers;
-    GeodesicIntersectionWorkspace!double workspace;
-
-    assert(GeodesicIntersectionWorkspace!double.tryFromStorage(
-        starts[], skip[], found[], centers[], workspace));
-
-    GeodesicIntersectionPoint!double[8] output;
-    GeodesicIntersectionEnumeration enumeration;
-
-    assert(tryAllGeodesicIntersections(
-        intersector,
-        firstLine,
-        secondLine,
-        1_000_000.0,
-        output[],
-        workspace,
-        enumeration));
-
-    assert(enumeration.isValid);
-    assert(enumeration.total >= 1);
-}
 
 
 /** Throwing prepared-state all-intersection enumeration. */

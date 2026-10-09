@@ -16,9 +16,11 @@ v1.2.0
 ~~~
 
 v1.2.0 completed M3 — Navigation & Polar Geodesy and was published on
-2026-10-07. It preserves the frozen v1 source contract. M4 — Reference Frames
-is complete on `develop`; the next planned development milestone is M5 —
-Advanced Ellipsoidal Geometry.
+2026-10-07. It preserves the frozen v1 source contract. The current `develop`
+line has since completed M4 — Reference Frames, M5 — Advanced Ellipsoidal
+Geometry, and the qualified prolate geodesic admission from #69. The active
+release target is v2.0.0, focused on consolidation, API stabilization, and
+qualification rather than another capability milestone.
 
 The frozen v1 API already provides:
 
@@ -299,7 +301,7 @@ transformation pipelines.
 
 # M5 — Advanced Ellipsoidal Geometry
 
-**Status:** active.
+**Status:** completed on `develop`.
 
 **Goal:** add higher-order geodetic geometry only after the line/differential
 geodesic primitives from M2 are stable.
@@ -316,10 +318,11 @@ Preferred order:
 4. #48 — admit geodesic circles/loci only if #46/#47 or a concrete consumer
    demonstrates value beyond repeated `Geodesic.direct` calls.
 
-#69 — prolate ellipsoid support is a separate numerical-domain admission track.
-It may be researched in parallel but does not block the oblate/spherical M5
-geometry sequence because admitting negative flattening would broaden the
-library-wide `Ellipsoid!T` contract.
+#69 — prolate ellipsoid support was completed as a separate numerical-domain
+admission track after R69.1 through R69.5 research qualification. `Ellipsoid!T`
+now represents rotational ellipsoids more generally, while `Geodesic!T`
+admits the qualified interval `-0.01 <= f <= 0.01`. Stronger prolate stress
+models remain outside the supported geodesic domain.
 
 Issues:
 
@@ -338,6 +341,62 @@ They do not transfer general topology responsibility from `geo-d` to
 Research must explicitly address ambiguity and multiplicity on a closed
 ellipsoid, especially for antipodal, nearly parallel, or coincident
 configurations.
+
+---
+
+# v2.0 — Consolidation and API Stabilization
+
+**Goal:** turn the post-v1 development line into a deliberately consolidated
+major release before adding another capability family.
+
+v2.0 is not primarily a breadth release. Its purpose is to integrate and harden
+the work completed after v1.2, especially M4 and M5, and to use the major-version
+boundary to correct any API inconsistencies that should not be carried forward
+indefinitely.
+
+Included consolidation scope:
+
+- integrate and document the complete M4 reference-frame family;
+- integrate and document the complete M5 advanced-ellipsoidal-geometry family;
+- retain the qualified prolate geodesic domain from #69;
+- audit naming and family symmetry across checked/throwing/prepared APIs;
+- audit public result types, `.init` validity semantics, units, angle
+  conventions, failure channels, and aggregate exports;
+- identify APIs that should be renamed, simplified, deprecated, or removed only
+  where the v2 major-version boundary provides a clear long-term benefit;
+- remove stale post-v1 roadmap/status wording and reconcile README, API,
+  CHANGELOG, DDox, ADRs, examples, and release metadata;
+- establish controlled numerical and performance baselines for the complete
+  public surface;
+- retain independent external-oracle gates and the six-compiler release matrix;
+- run fresh external-consumer tests before API freeze and again on the exact
+  release candidate.
+
+Explicitly excluded from the initial v2.0 scope:
+
+- M6 physical-geodesy feature implementation;
+- gravity/geoid datasets or model loaders;
+- new projection families without a concrete consumer;
+- CRS databases, authority lookup, WKT/PROJJSON, or operation discovery;
+- feature additions whose main purpose is merely reference-library parity.
+
+Preferred release sequence:
+
+1. repository/status/documentation reconciliation and complete public-family/API inventory;
+2. feature freeze and immutable `freeze/feature-2.0.0` checkpoint;
+3. record the release baseline on the frozen feature set;
+4. numerical-regression, domain, performance, and codegen qualification;
+5. compatibility, naming, failure, result-carrier, and complete public API audit;
+6. API correction window for justified v2-only changes;
+7. immutable API freeze;
+8. Ddoc/examples/comments and migration-documentation polish;
+9. exact-head compiler/platform/oracle/consumer release-candidate gates;
+10. release-candidate publication audit;
+11. promote the qualified state to `main`, tag, and publish v2.0.0.
+
+The v2.0 release should therefore answer a stronger question than “what else can
+the library do?”: **is the API and numerical contract we already have the one we
+want to support for the next long-lived major line?**
 
 ---
 
