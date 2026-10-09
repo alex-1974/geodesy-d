@@ -413,6 +413,13 @@ public:
         return _semiMajorAxis;
     }
 
+    /// Example reading the equatorial radius.
+    @safe unittest
+    {
+        import geodesy;
+        assert(wgs84!double().equatorialRadius == 6_378_137.0);
+    }
+
     /** Flattening `f`. */
     @property T flattening() const pure nothrow @safe @nogc
     {
