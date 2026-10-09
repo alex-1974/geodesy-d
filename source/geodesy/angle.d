@@ -371,7 +371,10 @@ public:
     }
 
     /**
-     * Construct a latitude from degrees.
+     * Make a north/south geographic latitude from degrees.
+     *
+     * Use this for the latitude of a position. Values must lie between
+     * -90 degrees (South Pole) and +90 degrees (North Pole).
      *
      * Params:
      *     degrees = Latitude in the closed interval [-90,+90] degrees.
