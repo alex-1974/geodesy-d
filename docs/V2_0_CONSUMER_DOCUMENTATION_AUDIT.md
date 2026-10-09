@@ -469,3 +469,23 @@ conversions and special handling of the exact geocentre were retained.
 properties and throwing factory; transformation-chain consumer examples;
 all remaining symbol pages and generated DDox checks. This review
 changed documentation only.
+
+
+## Molodensky-Badekas constructors and complete frame-workflow example
+
+Revised the public constructor descriptions for
+`MolodenskyBadekas10.tryFromCanonical`, `fromCanonical`, and
+`fromArcSecondsAndPpm`. The reader now sees when a source-frame XYZ
+evaluation point is needed, how the published rotation convention is
+selected, and how checked construction differs from throwing construction.
+
+Expanded `docs/getting-started.md` with a full task-oriented sequence:
+geodetic coordinate -> Earth-centred XYZ -> convention-specific Helmert7
+source-to-target transformation -> geodetic coordinate in the target frame.
+All sample transformation parameters are explicitly identified as
+illustrative **not real datum-transformation parameters**. The sample also
+makes the source/target ellipsoid distinction explicit.
+
+**Validation status:** the example was built from existing public API
+signatures but has not yet been independently compiled in this pass.
+Full rendered DDox and CI checks remain required.
