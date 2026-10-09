@@ -308,3 +308,26 @@ constraints remain in the technical sections.
 **Coverage is partial:** public constructors, factors, forward/reverse
 overloads, and rendered DDox pages need individual consumer checks before
 these modules can be marked complete.
+
+
+## Projection forward/reverse method reading pass
+
+The descriptions for projected-coordinate conversion have received a
+function-level Consumer review in `TransverseMercator`,
+`PolarStereographic`, `UpsProjection`,
+`LambertConformalConic`, `LambertAzimuthalEqualArea` and
+`PseudoMercator`.
+
+Each description now begins with the caller's question: converting a
+geographic position into the selected grid, or recovering latitude and
+longitude from grid coordinates. It distinguishes ordinary throwing
+convenience calls from checked `try*` methods where those methods exist.
+
+The existing domain notes remain decisive: Transverse Mercator has a
+bounded central-meridian range; UPS uses polar latitude/representation
+rules; LAEA's inverse requires a position inside its supported disk; and
+Pseudo-Mercator is not a distance or area measurement substitute.
+
+**Next:** Review each projection's parameters and factory contracts,
+factor outputs and individual DDox examples. This pass does not certify
+every overload or public symbol page.
