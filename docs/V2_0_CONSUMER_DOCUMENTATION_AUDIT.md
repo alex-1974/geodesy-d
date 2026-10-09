@@ -169,3 +169,22 @@ geocentre fails).
 
 This records a focused construction pass only; the remaining public getters,
 overloads, and DDox pages still require individual consumer sign-off.
+
+
+## Angle and route-choice reading pass
+
+The opening Ddoc for `geodesy.angle`, `geodesy.geodesic`, and
+`geodesy.rhumb` now begins with the caller's task rather than numerical
+implementation details.
+
+| Consumer choice | Answer conveyed by the documentation |
+| --- | --- |
+| `Angle` vs `Latitude` vs `Longitude` | General angles/bearings are distinct from north/south and east/west positions; construct explicitly from degrees or radians. |
+| Geodesic inverse vs direct | With two positions, calculate shortest surface distance and azimuths; with a start position, azimuth and distance, find the destination. |
+| Rhumb vs geodesic | Use rhumb for a constant compass bearing; use geodesic for a shortest surface route. |
+| Repeated calculations | Reuse a prepared solver/line where supported rather than rebuilding state on each call. |
+
+**Scope:** module-entry review completed for these three modules. Their public
+factory methods, direct/inverse overloads, result carriers and associated
+DDox pages still require page-level, four-question review. The existing
+geodesic and rhumb domain limits and pole policies remain intact.
