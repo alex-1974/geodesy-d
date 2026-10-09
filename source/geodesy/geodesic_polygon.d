@@ -1,9 +1,10 @@
 /**
- * Streaming ellipsoidal polygon perimeter and signed-area accumulation.
+ * Measure the perimeter and enclosed signed area of a geographic polygon.
  *
- * Accumulate perimeter and signed area from an ordered stream of geographic
- * vertices. The module measures a geodesic polygon; it does not own polygon
- * topology, ring validity, holes, containment, or overlay.
+ * Add the polygon's vertices in order, then compute the result. Each edge
+ * follows the shortest geodesic between consecutive positions, including the
+ * closing edge from the last vertex to the first. The module measures the
+ * outline; it does not check ring validity, holes, containment or overlays.
  *
  * Polygon edges are shortest geodesics between consecutive geographic
  * vertices. The closing edge from the last vertex back to the first is
