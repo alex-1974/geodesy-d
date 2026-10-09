@@ -163,9 +163,12 @@ def main() -> None:
         if status == "existing" and not has_example:
             fail(f"expected rendered Example is missing: {name}")
 
-    if compiled_examples != counts["existing"]:
+    # Rendered HTML is checked per symbol above. A symbol can legitimately
+    # own multiple documented unittests, so do not require one-to-one counts.
+    # Still require at least as many source examples as covered symbol pages.
+    if compiled_examples < counts["existing"]:
         fail(
-            "documented unittest count does not match existing examples: "
+            "fewer documented unittests than covered public symbols: "
             f"{compiled_examples} documented unittests, "
             f"{counts['existing']} existing audit rows"
         )
