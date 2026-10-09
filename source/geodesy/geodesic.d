@@ -1714,7 +1714,11 @@ public:
 
 
         /**
-     * Solve the shortest inverse geodesic problem without throwing.
+     * Find the shortest surface distance and bearings between two positions.
+     *
+     * Use this checked form for start and end coordinates when failure
+     * should be reported as `false` instead of an exception. The result
+     * includes distance, initial bearing and final forward bearing.
      *
      * The final azimuth is the forward heading of the same oriented geodesic
      * continuing beyond the endpoint, not the back azimuth. Coincident
