@@ -188,3 +188,17 @@ explicit handling for malformed and out-of-range positions. The
 previous `source_visibility_hint`/`source_visibility_evidence`
 columns must be discarded and regenerated before they are used for
 API decisions. This does not change the 488-prototype DDox census.
+
+## XPS rerun: zero lexical hits diagnosed
+
+A fresh uploaded CSV again had 1,914 rows and zero explicit-access hits, despite
+valid line positions. Source inspection confirms that, for example,
+`geodesy.geodesic.GeodesicLineRawPosition` is declared
+`private struct` at line 2438. The actual defect was doubly escaped
+regular-expression metacharacters in the Python raw-string patterns
+(`\\\\b` versus `\\b`), causing those patterns to search for literal
+backslash sequences rather than word boundaries. This was corrected in
+commit `6bf8134`. The line conversion fix in `1c8d53d` remains in place.
+
+Re-run the triage after updating the branch. **Until that succeeds, no
+lexical visibility classification based on these CSVs is trusted.**
