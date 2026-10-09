@@ -8,14 +8,13 @@ import argparse
 import csv
 import json
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 KINDS = {"function", "template", "struct", "class", "interface",
          "enum", "enum member", "alias", "variable", "constructor"}
 TEST_NAME = re.compile(r"^__(?:unittest|lambda|foreach|ctor|dtor|postblit)")
 PRIVATE_NAME = re.compile(r"^_")
-DECLARATION = re.compile(r"\\b(?:struct|class|interface|enum|alias|template|union|mixin)\\b")
 DIRECT_ACCESS = re.compile(r"\\b(private|package(?:\\([^)]*\\))?|protected|public|export)\\s+(?=(?:struct|class|interface|enum|alias|template)\\b)")
 ACCESS_BLOCK = re.compile(r"^\\s*(private|package(?:\\([^)]*\\))?|protected|public|export)\\s*:\\s*(?://.*)?$")
 
@@ -37,8 +36,7 @@ def source_visibility(source, line, name):
             return match.group(1), "explicit_declaration"
     # A colon clause is informative only within its lexical scope. We intentionally
     # do not resolve braces, mixins or conditional compilation here.
-    block = [ACCESS_BLOCK.match(x) for x in source[:line]]
-    if any(block):
+    if any(ACCESS_BLOCK.match(x) for x in source[:line]):
         return "unknown", "access_block_requires_parser"
     return "unknown", "lexical_scope_unverified"
 
