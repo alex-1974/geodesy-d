@@ -202,3 +202,24 @@ commit `6bf8134`. The line conversion fix in `1c8d53d` remains in place.
 
 Re-run the triage after updating the branch. **Until that succeeds, no
 lexical visibility classification based on these CSVs is trusted.**
+
+
+## XPS verification: regex correction validated
+
+User-supplied fourth triage CSV (2026-10-09) has **1,914** rows.
+The corrected lexical check now detects **32 explicit modifier records**:
+31 `private`, one `package(geodesy)`; **1,882** remain `unknown`.
+Evidence breakdown: 1,487 `access_block_requires_parser`, 395
+`lexical_scope_unverified`, 32 `explicit_declaration`.
+The 32 are *records*, not unique declarations: template wrappers can
+duplicate aggregate declarations. Thus the previous zero-match bug is
+resolved, but accessibility is nowhere near conclusively classified.
+The `access_block_requires_parser` flag simply means an access label
+occurs earlier in the module; it does **not** establish that the label
+controls the present declaration. Do not silently upgrade `unknown`
+to `public`, and do not close C1 based on these counts.
+
+Next engineering step: source-aware D lexer/parser with correct brace
+nesting, access-label regions and conditional compilation, followed by
+positive/negative external compiler probes for borderline symbols and
+signature-level reconciliation of the 488 DDox prototypes.
