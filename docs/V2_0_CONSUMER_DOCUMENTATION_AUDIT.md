@@ -256,3 +256,29 @@ Reviewed and updated the public introductions for `GeodesicLine`,
 polygon edge/point methods, exception contracts and compiled DDox examples
 remains open. Avoid claiming that these modules have passed their full
 four-question consumer gate until those checks are recorded.
+
+
+## Prepared operations — method-level reading pass
+
+Reviewed and improved the checked method descriptions for
+`GeodesicLine.tryPosition`, `tryArcPosition`,
+`tryPositionUnrolled`, `tryArcPositionUnrolled`,
+`RhumbLine.tryPosition` and the polygon operations
+`tryAddPoint`, `addPoint`, `tryCompute`, `compute`.
+The `RhumbLine.position` throwing convenience method was also revised.
+
+Consumer decisions highlighted:
+
+- Use **distance-based line positions** for offsets in metres when using
+  WGS 84; arc positions instead take an auxiliary-sphere `Angle`.
+- Use **unrolled longitude** only when crossing the antimeridian or preserving
+  complete turns matters.
+- Negative distances move backward along the selected oriented line.
+- Polygon vertices are added in boundary order. Failed checked addition
+  does not change the accumulator.
+- Polygon `compute` closes the polygon automatically without changing its
+  stored state. Checked and throwing methods offer distinct failure handling.
+
+This records a focused method-reading pass, **not** a full DDox-page
+certification. Overloads, examples, and remaining prepared methods need
+further review.
