@@ -1556,7 +1556,12 @@ public:
     }
 
 
-    /** Evaluate a signed distance along this prepared line without throwing. */
+    /** Find a point a given distance along this constant-bearing route.
+     *
+     * Pass distance in the ellipsoid's linear unit (metres for WGS 84).
+     * A negative value travels backward. On success, the result contains
+     * the destination; failure returns `false` without throwing.
+     */
     bool tryPosition(
         const T distance,
         out RhumbDirectResult!T result) const
@@ -1593,7 +1598,11 @@ public:
     }
 
 
-    /** Evaluate a signed distance along this prepared line or throw. */
+    /** Return the destination a given distance along this constant-bearing route.
+     *
+     * Distance uses the ellipsoid's linear unit and may be negative.
+     * Use `tryPosition` when you want to handle failure without exceptions.
+     */
     RhumbDirectResult!T position(
         const T distance) const
         @safe
