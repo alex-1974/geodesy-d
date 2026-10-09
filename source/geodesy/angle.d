@@ -124,7 +124,10 @@ public:
     }
 
     /**
-     * Construct from degrees without throwing.
+     * Make an angle from degrees without throwing.
+     *
+     * Use this when the angle comes from input data that may be invalid.
+     * The result holds radians internally; read `.degrees` to get degrees.
      *
      * Params:
      *     degrees = Finite angle in degrees.
