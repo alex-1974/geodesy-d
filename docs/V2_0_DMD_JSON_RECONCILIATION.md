@@ -223,3 +223,31 @@ Next engineering step: source-aware D lexer/parser with correct brace
 nesting, access-label regions and conditional compilation, followed by
 positive/negative external compiler probes for borderline symbols and
 signature-level reconciliation of the 488 DDox prototypes.
+
+
+## External compiler access probes
+
+New `tools/research/probe_api_access.py` generates temporary **consumer
+modules outside the `geodesy` package** for every unique, non-nested type,
+alias, or template candidate missing its own DDox page. It asks DMD or LDC
+whether a fully qualified symbol lookup compiles through
+`__traits(compiles, ...)`, and records results and compiler diagnostics
+in a deterministic CSV. Unlike lexical scanning, this tests actual compiler
+access control. It intentionally does **not** instantiate arbitrary
+templates or establish callable overload compatibility. Both an
+inaccessible declaration and a non-expression symbol can yield the
+negative status; such cases need follow-up positive/negative consumer probes.
+
+```sh
+git pull --ff-only
+python3 tools/research/probe_api_access.py \
+  build/v2-dmd-ddox-triage.csv build/v2-api-access-dmd.csv --compiler dmd
+python3 tools/research/probe_api_access.py \
+  build/v2-dmd-ddox-triage.csv build/v2-api-access-ldc.csv --compiler ldc2
+```
+
+Compiler probes must be executed and compared on the XPS before the
+results are interpreted. Do not claim this as a completed compiler audit
+until both CSVs and their logs have been inspected. The initial gate
+is **name accessibility**, not exhaustive API signatures, template
+constraints or UFCS resolution.
