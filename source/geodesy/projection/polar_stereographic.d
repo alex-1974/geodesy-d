@@ -1058,7 +1058,11 @@ public:
     }
 
 
-    /** Project a geographic coordinate or throw. */
+    /** Convert a position near the chosen pole into grid coordinates.
+     *
+     * Returns easting and northing in the ellipsoid's linear unit. Use
+     * `tryForward` when invalid input should return `false` instead.
+     */
     ProjectedCoordinate!T forward(
         const GeographicCoordinate!T source) const
         @safe
@@ -1181,7 +1185,11 @@ public:
     }
 
 
-    /** Reverse a projected coordinate without throwing. */
+    /** Convert polar-grid easting and northing back to latitude and longitude.
+     *
+     * This checked form returns `false` when the input is outside the
+     * supported projection rather than throwing an exception.
+     */
     bool tryReverse(
         const ProjectedCoordinate!T source,
         out GeographicCoordinate!T result) const
@@ -1244,7 +1252,10 @@ public:
     }
 
 
-    /** Reverse a projected coordinate or throw. */
+    /** Convert polar-grid coordinates back to a geographic position.
+     *
+     * Use `tryReverse` for a non-throwing failure result.
+     */
     GeographicCoordinate!T reverse(
         const ProjectedCoordinate!T source) const
         @safe
