@@ -158,7 +158,11 @@ if (isGeodesyScalar!W)
 
 
 /**
- * Convert a geodetic coordinate to geocentric Cartesian coordinates.
+ * Convert latitude, longitude and ellipsoidal height to Earth-centred XYZ.
+ *
+ * Use this checked operation when you want to handle conversion failure
+ * without an exception. On success, `result` holds X, Y and Z in the same
+ * linear unit as the input height and ellipsoid axes.
  *
  * Implements the forward direction of EPSG coordinate operation method 9602
  * (Geographic/geocentric conversions). Longitude is interpreted relative to
@@ -216,7 +220,7 @@ if (isGeodesyScalar!T)
         result);
 }
 
-/// Example using bool tryGeodeticToGeocentric(T)( const GeodeticCoordinate!T source, const Ellipsoid!T ellipsoid, out Geocent.
+/// Example converting a geographic position to Earth-centred XYZ without exceptions.
 @safe unittest
 {
     import geodesy;
@@ -236,7 +240,10 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Throwing convenience wrapper for `tryGeodeticToGeocentric`.
+ * Convert latitude, longitude and ellipsoidal height to Earth-centred XYZ.
+ *
+ * Use this form when invalid input should raise an exception; use
+ * `tryGeodeticToGeocentric` to handle failure through a `bool` result.
  *
  * Params:
  *     source = Geodetic coordinate to convert.
@@ -1121,7 +1128,7 @@ if (isGeodesyScalar!T)
         result);
 }
 
-/// Example using bool tryGeocentricToGeodetic(T)( const GeocentricCoordinate!T source, const Ellipsoid!T ellipsoid, out Geode.
+/// Example converting Earth-centred XYZ to latitude, longitude and height.
 @safe unittest
 {
     import geodesy;
@@ -1141,7 +1148,10 @@ if (isGeodesyScalar!T)
 
 
 /**
- * Throwing convenience wrapper for `tryGeocentricToGeodetic`.
+ * Convert Earth-centred XYZ back to latitude, longitude and height.
+ *
+ * Use this form when conversion failure should raise an exception; use
+ * `tryGeocentricToGeodetic` to handle failure through a `bool` result.
  *
  * Params:
  *     source = Geocentric Cartesian coordinate to convert.
