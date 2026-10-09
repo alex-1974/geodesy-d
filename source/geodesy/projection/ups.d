@@ -1,10 +1,10 @@
 /**
- * Universal Polar Stereographic policy, tagging, and prepared projection.
+ * Convert positions in the polar regions to standard UPS metre coordinates.
  *
- * Use UPS for WGS 84 polar coordinates with standard north/south tagging,
- * automatic UTM/UPS transition rules, and the documented overlap. The module
- * supplies fixed UPS parameters and coordinate policy while reusing the
- * Polar Stereographic mathematics.
+ * UPS is the standard polar companion to UTM. Use automatic UPS for positions
+ * beyond the normal UTM latitude band, or prepare `UpsProjection` when
+ * working repeatedly in one polar hemisphere. The result includes north/south
+ * tagging; the underlying mathematics comes from Polar Stereographic.
  *
  * Standards:
  *     EPSG:5041 / EPSG:5042 use EPSG method 9810 on WGS 84 with
