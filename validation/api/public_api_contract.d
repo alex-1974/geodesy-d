@@ -40,6 +40,10 @@ static assert(is(ConformalProjectionFactors!float));
 static assert(is(ConformalProjectionFactors!double));
 static assert(is(ConformalProjectionFactors!real));
 
+static assert(is(EqualEarth!float));
+static assert(is(EqualEarth!double));
+static assert(is(EqualEarth!real));
+
 static assert(is(PseudoMercator!float));
 static assert(is(PseudoMercator!double));
 static assert(is(PseudoMercator!real));
