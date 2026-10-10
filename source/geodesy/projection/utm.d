@@ -168,7 +168,7 @@ public:
      *
      * Returns:
      *     `true` for a valid zone number; otherwise `false`. On failure
-     *     `result` remains `.init` on failure.
+     *     `result` remains `.init`.
      */
     static bool tryFromNumber(
         const uint number,
