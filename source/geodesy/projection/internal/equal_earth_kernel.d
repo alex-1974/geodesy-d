@@ -86,6 +86,12 @@ package(geodesy.projection) bool equalEarthReverseKernel(
     const double tMax = asin(k);
     const double limit = polynomial(tMax);
     const double target = y / radius;
+    if (target == 0.0 && x == 0.0)
+    {
+        beta = 0.0;
+        deltaLongitude = 0.0;
+        return true;
+    }
     if (!(fabs(target) <= limit))
         return false;
 
