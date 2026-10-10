@@ -431,7 +431,7 @@ public:
     import geodesy.ellipsoid : wgs84;
     import std.meta : AliasSeq;
 
-    foreach (T; AliasSeq!(float, double, real))
+    static foreach (T; AliasSeq!(float, double, real))
     {
         EqualEarth!T projection;
         assert(EqualEarth!T.tryFromParameters(
