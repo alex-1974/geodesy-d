@@ -2,6 +2,10 @@
 
 This document defines the stable public **v1 API baseline** for `geodesy-d`.
 
+For the feature-frozen v2.0 development line, see the
+[v1.x → v2.0 migration guide](V2_0_MIGRATION.md).
+This is pre-release guidance, not a replacement for this historical v1 contract.
+
 The baseline was frozen for v1.0.0 and remains authoritative across compatible
 v1.x releases. Patch releases may correct implementation or documentation
 defects without changing this public source contract.
