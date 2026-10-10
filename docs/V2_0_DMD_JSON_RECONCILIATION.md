@@ -277,3 +277,33 @@ This revised script must be executed on DMD and LDC before classifying
 the earlier negatives. Even if controls pass, template-specific
 instantiation/signature checks remain necessary. The feature/API
 freeze gate stays open.
+
+
+## XPS validation: positive access controls pass (2026-10-10)
+
+The user-provided XPS terminal transcript confirms that the repaired
+`probe_api_access.py` ran to completion under **both DMD and LDC**.
+
+- Both known-public instantiated coordinate type controls passed for
+  each compiler: `PASS: two public symbol lookup controls`.
+- 198/198 candidate probes returned
+  `inaccessible_or_nonexpression` under DMD, with a completed CSV.
+- 198/198 candidate probes returned the same classification under LDC,
+  with a completed CSV.
+- No per-candidate `compiler_error` occurred.
+- This result removes the previously identified *missing positive
+  control* concern for instantiated public types; it **does not**
+  resolve the semantic ambiguity of probing uninstantiated templates
+  through `__traits(compiles, module.symbol)`.
+
+The full terminal log, not independently uploaded CSVs from this
+particular run, is the evidence for these counts. No implication is
+made about complete public API signature equivalence.
+
+**Next gate:** add a known-private negative control, verify a
+*known-public uninstantiated template* case, and stratify negative
+results by declaration kind and source-level access status. For
+templates with parameters, test a valid instantiation chosen from
+their declarations rather than using `__traits(compiles, name)`
+as an accessibility oracle. Full 488-prototype overload/constraints
+verification and C1 freeze authorization remain outstanding.
