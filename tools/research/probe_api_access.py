@@ -70,6 +70,25 @@ def probe(compiler, module, name, timeout):
         return "inaccessible_or_nonexpression", (yes.stderr or yes.stdout)[-1200:]
 
 
+def control_probe(compiler, expression, expected, timeout):
+    """Check that the harness can recognize known-accessible symbols."""
+    with tempfile.TemporaryDirectory(prefix="geodesy-api-control-") as d:
+        path = pathlib.Path(d) / "control.d"
+        path.write_text(
+            "module api_access_control;\\n"
+            "import geodesy;\\n"
+            f'enum bool works = __traits(compiles, {expression});\\n'
+            f'static assert(works == {str(expected).lower()}, "control mismatch");\\n',
+            encoding="utf-8")
+        p = subprocess.run(
+            [compiler, "-o-", f"-I{ROOT / 'source'}", str(path)],
+            cwd=d, text=True, capture_output=True, timeout=timeout)
+        if p.returncode:
+            raise RuntimeError(
+                f"{compiler} control failed: {expression}: "
+                f"{(p.stderr or p.stdout)[-1500:]}")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("triage_csv", type=pathlib.Path)
@@ -78,7 +97,7 @@ def main():
     p.add_argument("--timeout", type=int, default=30)
     p.add_argument("--all", action="store_true")
     args = p.parse_args()
-    rows = list(csv.DictReader(args.triage_csv.open(newline="", encoding="utf-8")))
+    # Reject a false-negative-only harness before interpreting a single candidate.\n    control_probe(args.compiler, "geodesy.GeodeticCoordinate!double", True, args.timeout)\n    control_probe(args.compiler, "geodesy.angle.Angle!double", True, args.timeout)\n    print("PASS: two public symbol lookup controls")\n    rows = list(csv.DictReader(args.triage_csv.open(newline="", encoding="utf-8")))
     selected = list(candidates(rows, args.all))
     args.report_csv.parent.mkdir(parents=True, exist_ok=True)
     with args.report_csv.open("w", newline="", encoding="utf-8") as f:
