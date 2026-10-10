@@ -307,3 +307,9 @@ templates with parameters, test a valid instantiation chosen from
 their declarations rather than using `__traits(compiles, name)`
 as an accessibility oracle. Full 488-prototype overload/constraints
 verification and C1 freeze authorization remain outstanding.
+
+## Additional control coverage (2026-10-10)
+
+The access-probe harness now includes two additional checks before candidate execution: a known-private templated implementation struct (`geodesy.geodesic.GeodesicLineRawPosition!double`) must be inaccessible from an external module, and a known-public type template (`geodesy.Angle!double`) must be accessible. Together with the two prior public-coordinate controls, this exercises positive instantiated-template and negative private-type paths. These new controls **have not yet been run on the XPS**; their runtime results must be established with DMD and LDC, not inferred from the script.
+
+A known-public uninstantiated template name is not necessarily a valid expression in `__traits(compiles, module.symbol)`. Thus 198 earlier negative results remain a candidate triage, not definitive classification. The exact 488-prototype parameter/attribute/constraint comparison is still outstanding.
