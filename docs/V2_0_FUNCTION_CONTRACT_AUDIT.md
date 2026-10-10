@@ -151,3 +151,19 @@ difference count is zero, with 378 selected return/attribute matches,
 12 opaque function types, 35 overload rows, and 63 nonfunction rows,
 assuming no other input changes. These are **expectations**, not
 results of a compiler or XPS execution.
+
+## Fourth XPS contract CSV: balanced-template fix confirmed (2026-10-10)
+
+The uploaded `v2-function-contract-audit(3).csv` contains 488 rows, with the **exact expected distribution** after the reverse-balanced-parenthesis fix:
+
+| Status | Rows |
+| --- | ---: |
+| `return_and_selected_attributes_match` | **378** |
+| `return_or_selected_attribute_difference` | **0** |
+| `opaque_or_complex_type_review` | **12** |
+| `overload_pairing_pending` | **35** |
+| `nonfunction_separate_review` | **63** |
+
+The twelve opaque cases are seven `GeodesicIntersectionEnumeration` methods/properties (`isValid`, `minimumFoundCapacity`, `requiredTiles`, `status`, `total`, `truncated`, `written`) and five `UtmZone` methods/properties (`centralMeridianDegrees`, `fromNumber`, `isValid`, `number`, `tryFromNumber`). The DMD function type field is empty in these twelve report records.
+
+This confirms the parser fix on XPS, **not** complete function-contract equivalence: method qualifiers, template constraints, defaults, ambiguous overload pairing, and actual consumer compilation remain outstanding. Next: pair the 35 overloads by validated parameter tuples and compile the twelve opaque functions in external consumer modules under DMD and LDC. The 63 nonfunction records require kind-specific verification. Freeze remains open.
