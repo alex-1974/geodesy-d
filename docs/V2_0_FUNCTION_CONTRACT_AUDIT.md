@@ -121,3 +121,33 @@ DDox inputs were tied to a pinned, clean Git commit. Record a commit
 SHA, source cleanliness, capture manifests and hashes before release
 qualification. Do not promote the 364 partial selected-attribute
 matches to complete API contract certification.
+
+
+## Third XPS CSV: 14 false signature differences isolated (2026-10-10)
+
+Uploaded `v2-function-contract-audit(2).csv` still has **488** rows:
+364 selected return/attribute matches; 14 `return_or_selected_attribute_difference`;
+12 opaque DMD function types; 35 overload rows awaiting pairing;
+63 nonfunction rows.
+
+All 14 reported differences are template return types in Helmert7,
+Helmert14 and MolodenskyBadekas10 families. The old DMD parser split
+at the **first** opening parenthesis, mistaking `!(T, convention)`
+in the return type for the callable argument list. Offline independent
+cross-check of the uploaded 14 DMD type strings using the **final
+balanced parenthesis group** confirms their normalized return tokens
+match the DDox return tokens in all 14 cases.
+
+The parser now extracts the final balanced callable group; a
+regression test uses `Helmert7!(T, convention)()`. The change is
+**pending validation with the full script on XPS** and does not
+establish complete attribute/qualifier compatibility or override the
+remaining 12 opaque DMD records. No library API change is warranted
+on this evidence.
+
+Run regression tests and regenerate `build/v2-function-contract-audit.csv`
+with the existing same-head DMD/DDox CSV inputs. The expected
+difference count is zero, with 378 selected return/attribute matches,
+12 opaque function types, 35 overload rows, and 63 nonfunction rows,
+assuming no other input changes. These are **expectations**, not
+results of a compiler or XPS execution.
