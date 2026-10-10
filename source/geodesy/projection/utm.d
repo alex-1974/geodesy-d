@@ -1543,8 +1543,8 @@ if (isGeodesyScalar!T)
  *
  * Returns:
  *     `true` when explicit-zone preparation and delegated reverse TM
- *     projection succeed; otherwise `false`. On failure `result` remains
- *     unchanged.
+ *     projection succeed; otherwise `false`. The `out` result is initialized
+ *     on entry; do not use its value if reverse projection fails.
  */
 bool tryReverseUtm(T)(
     const UtmCoordinate!T source,
