@@ -59,6 +59,35 @@ Benchmark measurements are only comparable when run under the documented
 controlled settings. Do not represent a hosted runner as the stable XPS
 benchmark baseline.
 
+## Evidence checkpoint — 2026-10-10 (non-release candidate)
+
+Recorded `develop` commit: `216ac3ac09ef3ea32f4063ec50fcf04b83f769a6`.
+
+| Check | Evidence | Result | Limitation |
+| --- | --- | --- | --- |
+| Six DMD/LDC compiler + fresh DUB consumer jobs, aggregate docs | [M3 integration run 38054313106](https://github.com/alex-1974/geodesy-d/actions/runs/38054313106), manual dispatch on `develop` | Seven jobs PASS | Establishes this commit, not a future RC. |
+| Controlled XPS M3 performance | Local `build/m3-v2-develop-baseline.txt`; LDC 1.41.0, CPU 2, governor=performance, no_turbo=1, 1M iterations | Measurements recorded | Retain local raw file; not a general cross-machine speed guarantee. |
+| LCC forward repeat | Three controlled runs on `develop`: 269.389 / 265.007 / 260.461 ns/op; PROJ: 201.620 / 178.961 / 175.882 ns/op | Median 265.007 vs 178.961 ns/op; PROJ faster | Only three samples, runtime noise, benchmark-level comparison. |
+| LCC validation-only experiment | [PR #123](https://github.com/alex-1974/geodesy-d/pull/123), six LCC measurements: 245.042, 245.037, 297.354, 272.381, 272.309, 269.829 ns/op | CI green; experiment closed without merge | No repeatable speed benefit established. |
+
+### Release-specific outstanding evidence
+
+The following differential workflows already exist and support manual dispatch.
+Their **successful historical runs are not evidence for this exact candidate**
+unless the run explicitly names the pinned commit:
+
+- `geodesic-prolate-validation.yml` — GeographicLib comparison;
+- `dynamic-helmert-validation.yml` — EPSG/PROJ reference-frame comparison;
+- `molodensky-badekas-validation.yml` — EPSG/PROJ reference-frame comparison.
+
+Check the other family workflows and their exact triggering source SHA before
+declaring all independent numerical release-oracle gates PASS. The benchmark
+result does not substitute for differential accuracy validation.
+
+There is no measured benefit supporting further speculative LCC micro-optimizations.
+Keep `develop` unchanged until a concrete failure or profiled hot spot warrants
+code changes.
+
 ## Current limits
 
 - This plan does not assert fresh six-compiler, cross-platform or
