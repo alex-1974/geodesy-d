@@ -38,7 +38,8 @@ def main():
         raise SystemExit("ERROR: tracked or untracked source changes: " + changes[:800])
     names = ["v2-public-ddox-prototypes.csv", "v2-dmd-ddox-triage.csv",
              "v2-overload-pairing.csv", "v2-paired-overload-contracts.csv",
-             "v2-overload-constraint-candidates.csv", "v2-defaults-receivers.csv"]
+             "v2-overload-constraint-candidates.csv", "v2-defaults-receivers.csv",
+             "v2-enum-contracts.csv"]
     evidence = []
     for name in names:
         path = root / "build" / name
