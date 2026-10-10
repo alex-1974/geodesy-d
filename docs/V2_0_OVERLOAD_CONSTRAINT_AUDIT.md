@@ -54,3 +54,37 @@ Also outstanding for full C1: defaults, method qualifiers, all
 compiler attributes, kind-aware verification of 63 nonfunction
 declarations, reproducible same-clean-commit capture, consumer
 overload resolution, and final freeze policy.
+
+## XPS CSV classification — 2026-10-10
+
+The supplied `v2-overload-constraint-candidates.csv` contains **35**
+records. The exact status distribution is:
+
+| Classification | Count |
+| --- | ---: |
+| `wrapper_line_pair_constraint_available` | **27** |
+| `no_template_wrapper` | **8** |
+| unresolved or ambiguous pairing | **0** |
+
+Every one of the **27** same-source-line template wrapper records
+reports the exact DMD constraint text `isGeodesyScalar!T`. They cover
+`allGeodesicIntersections` (3), `closestGeodesicIntersection` (4),
+`nextGeodesicIntersection` (4), `tryAllGeodesicIntersections` (4),
+`tryClosestGeodesicIntersection` (8) and
+`tryNextGeodesicIntersection` (4).
+
+The other **8** records are two each of
+`Geodesic.tryDirect`, `Geodesic.tryInverse`,
+`GeodesicLine.tryArcPosition`, and
+`GeodesicLine.tryPosition`. They have no separate same-name DMD
+template wrapper in this flattened triage. Their enclosing aggregate
+template constraints remain a separate review dimension.
+
+**Interpretation:** This confirms traceable DMD wrapper candidates
+and consistent extracted constraint strings, **not** compilation
+acceptance/rejection, DDox/source constraint equivalence, or actual
+template-instantiation behavior. Next verify the six declarations
+against source and compile both accepted and deliberately invalid
+`T` examples under DMD and LDC. In particular, a negative
+`__traits(compiles, uninstantiatedTemplateName)` is not sufficient:
+test concrete instantiations. Freeze remains open.
