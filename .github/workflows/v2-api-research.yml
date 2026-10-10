@@ -121,6 +121,12 @@ jobs:
             build/v2-dmd-ddox-triage.csv \
             build/v2-defaults-receivers.csv
 
+      - name: Pin provenance of generated evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/snapshot_api_evidence.py
+
       - name: Upload research evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,6 +135,7 @@ jobs:
           path: |
             build/v2-*.csv
             build/api-json-dmd/manifest.json
+            build/v2-evidence-manifest.json
             build/external_intersection_overload_calls.d
             build/external_nonfunction_api.d
           if-no-files-found: warn
