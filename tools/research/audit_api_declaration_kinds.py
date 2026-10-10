@@ -15,7 +15,7 @@ from collections import Counter, defaultdict
 
 
 def squash(value):
-    return re.sub(r"\\s+", "", value)
+    return re.sub(r"\s+", "", value)
 
 
 def check(ddox, candidates):
@@ -37,7 +37,7 @@ def check(ddox, candidates):
     if signature.startswith("struct ") and "struct" in kinds:
         wrappers = [row for row in candidates if row["kind"] == "template"]
         constraints = {squash(w["constraint"]) for w in wrappers if w["constraint"]}
-        ddox_constraint = re.search(r"\\bif\\s*\\((.*?)\\)\\s*;", signature)
+        ddox_constraint = re.search(r"\bif\s*\((.*?)\)\s*;", signature)
         if ddox_constraint and constraints:
             if squash(ddox_constraint.group(1)) not in constraints:
                 return "struct_template_constraint_difference", " | ".join(sorted(constraints))
