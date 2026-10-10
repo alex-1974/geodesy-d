@@ -14,11 +14,11 @@ from pathlib import Path
 ATTRS = ("pure", "nothrow", "@nogc", "@safe", "@trusted", "@system",
          "@property", "ref", "scope", "return")
 MODES = {"static", "abstract", "final", "override", "synchronized", "deprecated"}
-FUNCTION_TYPE = re.compile(r"^(.*?)\\((.*)\\)$")
+FUNCTION_TYPE = re.compile(r"^(.*?)\((.*)\\)$")
 
 
 def norm(s):
-    return re.sub(r"\\s+", "", s).replace("const(uint)", "constuint")
+    return re.sub(r"\s+", "", s).replace("const(uint)", "constuint")
 
 
 def signature_parts(ddox):
@@ -53,7 +53,7 @@ def type_parts(dmd):
 def ddox_return(text, symbol):
     leaf = re.escape(symbol.split(".")[-1])
     # Avoid treating a constructor as returning the class type.
-    m = re.search(r"^\\s*(.*?)\\b" + leaf + r"\\s*\\(", text)
+    m = re.search(r"^\s*(.*?)\b" + leaf + r"\s*\(", text)
     if not m:
         return None
     pre = [x for x in m.group(1).strip().split()
