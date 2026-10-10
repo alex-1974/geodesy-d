@@ -30,7 +30,7 @@ def generate(modules):
             f"       is(__traits(getMember, m{i}, tname) == class) ||",
             f"       is(__traits(getMember, m{i}, tname) == union) ||",
             f"       is(__traits(getMember, m{i}, tname) == interface))) {{",
-            f"      static foreach (memberName; __traits(allMembers, __traits(getMember, m{i}, tname))) {{",
+            f"      static foreach (memberName; __traits(derivedMembers, __traits(getMember, m{i}, tname))) {{",
             "        static if (__traits(compiles,",
             f"          __traits(getProtection, __traits(getMember, __traits(getMember, m{i}, tname), memberName)))) {{",
             f'          pragma(msg, "{MARKER}\\t{module}\\t" ~ tname ~',
