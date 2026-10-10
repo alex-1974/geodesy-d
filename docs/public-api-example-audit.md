@@ -305,6 +305,14 @@ The audit is complete when:
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryForward` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryFromParameters` | existing | Pseudo-Mercator |
 | `geodesy.projection.pseudo_mercator.PseudoMercator.tryReverse` | existing | Pseudo-Mercator |
+| `geodesy.projection.equal_earth.EqualEarth` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.forward` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.fromParameters` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.isValid` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.reverse` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.tryForward` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.tryFromParameters` | existing | Equal Earth |
+| `geodesy.projection.equal_earth.EqualEarth.tryReverse` | existing | Equal Earth |
 | `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea` | existing | Lambert Azimuthal Equal Area |
 | `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.isValid` | existing | Lambert Azimuthal Equal Area |
 | `geodesy.projection.lambert_azimuthal_equal_area.LambertAzimuthalEqualArea.tryFromParameters` | existing | Lambert Azimuthal Equal Area |

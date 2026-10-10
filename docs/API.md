@@ -1239,3 +1239,24 @@ executes the differential corpus with platform `real` wherever it is wider than
 `double`.
 
 Normal CI runs the aggregate contract for DMD and LDC.
+
+## Equal Earth (v2.1 candidate)
+
+`EqualEarth<T>` is available from `import geodesy;` for `T = float | double | real`.
+It provides `tryFromParameters`/`fromParameters`, `tryForward`/`forward`,
+`tryReverse`/`reverse`, and `isValid`. The input is a strong
+`GeographicCoordinate<T>` and the output a `ProjectedCoordinate<T>`.
+The central meridian, false easting, and false northing are explicit.
+
+Supported models: spheres and oblate ellipsoids with flattening between zero
+and 0.01 inclusive. The represented world footprint is bounded and invalid
+reverse inputs are rejected. Linear units match the ellipsoid axes.
+
+**Precision policy:** `float`, `double`, and `real` currently all use `double`
+working precision. Thus `real` does not provide extra internal precision;
+public input/output types are retained. `float` outputs have the ordinary
+single-precision Earth-scale rounding limitations. Numerical acceptance
+includes independent PROJ 9.5.1 spherical and WGS 84 reference fixtures.
+
+This is a v2.1 development addition; it does not revise historical v1 or
+released v2.0 contracts.
