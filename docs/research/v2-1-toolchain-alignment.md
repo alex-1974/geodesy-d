@@ -57,3 +57,43 @@ audit is not by itself proof every workspace library uses the same
 versioned matrix. Verify other repositories separately before closing
 #17 on that basis. Avoid changing unrelated repositories in the
 geodesy-d v2.1 implementation PR.
+
+## Cross-repository develop CI inventory (2026-10-10)
+
+Read-only inspection of `.github/workflows/ci.yml` on each repository's
+`develop` branch confirmed the following **develop CI selections**, not
+complete release-matrix coverage:
+
+| Repository | Observed develop CI compiler versions |
+| --- | --- |
+| geo-d | DMD 2.111.0 / LDC 1.41.0; additional DMD/LDC latest surveillance |
+| geo3-d | DMD 2.111.0 / LDC 1.41.0 |
+| euclid-core-d | DMD 2.111.0 / LDC 1.41.0 |
+| color-d | DMD 2.113.0 / LDC 1.43.0 |
+| raster-d | DMD 2.111.0 / LDC 1.41.0 |
+| imagery-d | DMD 2.111.0 / LDC 1.41.0 |
+| containers-d | DMD 2.111.0 / LDC 1.41.0 |
+| quantities-d | DMD 2.111.0 / LDC 1.41.0 |
+
+There is no reason to force all these fast develop gates to use identical
+version lists. Alignment requires a **declared minimum**, explicit release
+qualifications, and separation of pinned baseline from moving latest
+surveillance. These develop-file observations do **not** prove whether each
+other repository's release workflows run the six-version matrix.
+
+Remaining acceptance for #17:
+1. Inventory relevant release workflows separately for each library, including
+   compiler identity and versions, without modifying unrelated repositories.
+2. Record any intentional differences and actual gaps. Where a release gate is
+   missing versions, open repository-scoped follow-up instead of silently
+   imposing a change from geodesy-d.
+3. Verify a representative clean consumer and publication gate against pinned
+   versions at the next geodesy-d release candidate.
+4. Close the cross-repository issue only after evidence is complete.
+
+## v2.1 geodesy-d follow-up
+
+The Equal Earth external consumer workflow introduced in v2.1 also runs the
+same six pinned versions. This is an additional package-root test that covers
+`EqualEarth!float`, `!double` and `!real`; it does not replace the
+pre-existing release compiler-and-consumer gate.
