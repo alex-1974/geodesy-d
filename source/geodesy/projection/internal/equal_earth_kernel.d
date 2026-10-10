@@ -142,6 +142,10 @@ package(geodesy.projection) bool equalEarthReverseKernel(
     double x, y;
     assert(equalEarthForwardKernel(1.0, 0.0, 0.0, x, y));
     assert(x == 0.0 && y == 0.0);
+    double originBeta, originLongitude;
+    assert(equalEarthReverseKernel(1.0, 0.0, 0.0,
+        originBeta, originLongitude));
+    assert(originBeta == 0.0 && originLongitude == 0.0);
 
     assert(equalEarthForwardKernel(1.0, 0.0, PI, x, y));
     double beta, longitude;
