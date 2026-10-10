@@ -116,6 +116,10 @@ jobs:
             build/v2-public-ddox-prototypes.csv \
             build/v2-dmd-ddox-triage.csv \
             build/v2-overload-constraint-candidates.csv
+          python3 tools/research/audit_defaults_and_receivers.py \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-dmd-ddox-triage.csv \
+            build/v2-defaults-receivers.csv
 
       - name: Upload research evidence
         if: always()
