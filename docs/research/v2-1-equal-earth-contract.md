@@ -1,6 +1,8 @@
 # v2.1.0 Equal Earth — mathematical and API research checkpoint
 
-Status: **research, no implementation/API admitted yet**. Tracks #116.
+Status: **implemented on `develop` via PR #136 and PR #137**; this file
+retains the research/design contract. See `docs/V2_1_RELEASE_READINESS.md`
+for remaining release qualification. Tracks #116.
 
 ## Authority and purpose
 
