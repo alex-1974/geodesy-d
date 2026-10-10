@@ -85,11 +85,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          dmd_status=0
+          ldc_status=0
           python3 tools/research/compiler_aggregate_census.py \
             --compiler dmd --output build/v2-aggregate-dmd.csv \
-            --source-output build/external_aggregate_probe.d
+            --source-output build/external_aggregate_probe.d || dmd_status=$?
           python3 tools/research/compiler_aggregate_census.py \
-            --compiler ldc2 --output build/v2-aggregate-ldc.csv
+            --compiler ldc2 --output build/v2-aggregate-ldc.csv || ldc_status=$?
+          echo "Aggregate reflection: DMD exit=$dmd_status, LDC exit=$ldc_status"
+          if (( dmd_status != 0 || ldc_status != 0 )); then
+            exit 1
+          fi
           diff -u build/v2-aggregate-dmd.csv build/v2-aggregate-ldc.csv
           echo 'PASS: DMD/LDC public aggregate member census agrees'
 
