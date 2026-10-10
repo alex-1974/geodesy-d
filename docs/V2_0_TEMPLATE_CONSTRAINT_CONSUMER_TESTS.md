@@ -42,3 +42,14 @@ constraints have **not** been behaviorally qualified.
 This test also does not validate the 63 nonfunction declaration
 contracts, complete method qualifiers, all default arguments or full
 overload resolution. C1 and both freeze gates remain open.
+
+## XPS qualification result (2026-10-10)
+
+User executed the external fixture under `set -euo pipefail` at source commit `910cd83840ca0cd91ab16eba96be7227db98e70d`:
+
+- **DMD64 v2.111.0:** `dmd -o- -Isource tools/research/fixtures/external_template_constraints.d` — **PASS**.
+- **LDC 1.41.0** (DMD 2.111.0 frontend, LLVM 19.1.7): `ldc2 -o- -Isource tools/research/fixtures/external_template_constraints.d` — **PASS**.
+
+Fixture asserts acceptance of `float`, `double`, `real` and rejection of `int`, `uint`, `string`, `const(double)` for the scalar policy; checks concrete allowed/disallowed `Geodesic!T` and `GeodesicLine!T` instantiations from an external consumer module. Both compiler commands were followed by explicit PASS output with the shell stop-on-error mode enabled.
+
+**Scope:** The scalar-policy and aggregate-template constraint checks are now qualified for these two compiler versions. **Not qualified:** the 27 overloaded *free function* templates, requiring valid concrete call expressions for each overload. This does not authorize API/feature freeze.
