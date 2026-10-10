@@ -20,6 +20,11 @@ class ContractParsingTests(unittest.TestCase):
         sig = "Angle !T asAngle ( ) const pure nothrow @nogc @property @safe ;"
         self.assertEqual(ddox_return(sig, "Latitude.asAngle"), "Angle!T")
 
+    def test_multi_argument_template_return(self):
+        sig = "static Helmert7 !(T,convention) fromCanonical ( const T x ) @safe ;"
+        self.assertEqual(ddox_return(sig, "Helmert7.fromCanonical"),
+                         "Helmert7!(T,convention)")
+
     def test_opaque_dmd_type_unresolved(self):
         self.assertIsNone(type_parts(""))
 
