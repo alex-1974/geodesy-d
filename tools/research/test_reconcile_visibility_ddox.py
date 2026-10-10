@@ -10,6 +10,9 @@ class VisibilityDDoxReconciliationTests(unittest.TestCase):
             dict(module="geodesy.angle", name="Internal", protection="private"),
             dict(module="geodesy.angle", name="Unlisted", protection="public"),
             dict(module="geodesy", name="Angle", protection="public"),
+            dict(module="geodesy", name="geodesy", protection="public"),
+            dict(module="geodesy", name="object", protection="public"),
+            dict(module="geodesy.angle", name="object", protection="public"),
         ]
         docs = [dict(module="geodesy.angle", symbol="Angle")]
         actual = {(r["module"], r["name"]): r["status"]
@@ -20,6 +23,9 @@ class VisibilityDDoxReconciliationTests(unittest.TestCase):
                          "public_name_requires_review")
         self.assertEqual(actual[("geodesy", "Angle")],
                          "root_member_requires_reexport_review")
+        self.assertEqual(actual[("geodesy", "geodesy")], "root_module_self_name")
+        self.assertEqual(actual[("geodesy", "object")], "implicit_object_import")
+        self.assertEqual(actual[("geodesy.angle", "object")], "implicit_object_import")
 
     def test_member_pages_are_not_top_level_names(self):
         entries = [dict(module="geodesy.angle", name="Angle", protection="public")]
