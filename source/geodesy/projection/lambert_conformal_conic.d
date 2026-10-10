@@ -378,16 +378,18 @@ private:
     W _fConstant = W.nan;
     W _rho0 = W.nan;
 
-    /** Compute signed rho for an accepted latitude. */
+    /**
+     * Compute signed rho for an accepted latitude.
+     *
+     * Internal precondition: the caller has verified isValid.
+     * forwardWorking is the sole caller and performs that check.
+     */
     bool rhoForLatitude(
         const W latitude,
         out W rho) const
         pure nothrow @safe @nogc
     {
         rho = W.nan;
-
-        if (!isValid)
-            return false;
 
         const W hp = halfPi!W;
 
