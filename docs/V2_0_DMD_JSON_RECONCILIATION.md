@@ -313,3 +313,36 @@ verification and C1 freeze authorization remain outstanding.
 The access-probe harness now includes two additional checks before candidate execution: a known-private templated implementation struct (`geodesy.geodesic.GeodesicLineRawPosition!double`) must be inaccessible from an external module, and a known-public type template (`geodesy.Angle!double`) must be accessible. Together with the two prior public-coordinate controls, this exercises positive instantiated-template and negative private-type paths. These new controls **have not yet been run on the XPS**; their runtime results must be established with DMD and LDC, not inferred from the script.
 
 A known-public uninstantiated template name is not necessarily a valid expression in `__traits(compiles, module.symbol)`. Thus 198 earlier negative results remain a candidate triage, not definitive classification. The exact 488-prototype parameter/attribute/constraint comparison is still outstanding.
+
+
+## XPS controls and overloaded-family priority (2026-10-10)
+
+The most recent XPS run at commit `0931def` confirms the probe harness
+prints `PASS: public and private accessibility controls` under both
+DMD and LDC. Both runs then complete 198 negative lookup results and
+write their respective CSV files. These results establish that the
+controls themselves compile, **not** that all 198 uninstantiated
+templates/types are proven private.
+
+Independent analysis of the supplied DDox and DMD triage CSV files
+finds **488** prototype rows on **463** distinct public symbol pages.
+Every DDox page name has a same-name candidate in the DMD triage CSV.
+Ten DDox symbol pages contain more than one rendered prototype:
+
+| Symbol | Prototypes |
+|---|---:|
+| `Geodesic.tryDirect` | 2 |
+| `Geodesic.tryInverse` | 2 |
+| `GeodesicLine.tryArcPosition` | 2 |
+| `GeodesicLine.tryPosition` | 2 |
+| `allGeodesicIntersections` | 3 |
+| `closestGeodesicIntersection` | 4 |
+| `nextGeodesicIntersection` | 4 |
+| `tryAllGeodesicIntersections` | 4 |
+| `tryClosestGeodesicIntersection` | 8 |
+| `tryNextGeodesicIntersection` | 4 |
+
+**Next:** compare each overload with the compiler's exact callable
+signature, parameter modes, qualifiers, template constraints and
+attributes. Then cover the 453 single-prototype pages. Treat
+name-level matches as triage evidence only, not signature equivalence.
