@@ -2602,7 +2602,7 @@ package bool researchTryReverseFactors(
      *
      * Returns:
      *     `true` for a valid projection and supported, representable source;
-     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     otherwise `false`. The `out` result is initialized on entry; only use its value when the call succeeds.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -2716,7 +2716,7 @@ package bool researchTryReverseFactors(
      *
      * Returns:
      *     `true` for a valid projection and supported represented coordinate;
-     *     otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     otherwise `false`. The `out` result is initialized on entry; only use its value when the call succeeds.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
