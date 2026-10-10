@@ -82,3 +82,7 @@ type records; then test return/attribute/receiver qualifiers with
 DMD and LDC. Retain a separate kind-aware gate for the 63
 nonfunction rows. Rebuild all inputs on a single pinned commit
 before sign-off.
+
+## Return-token parser improvement
+
+The parser was extended to recognize DDox return types whose template suffixes are separated by spaces, for example `Angle !T` and `GeodeticCoordinate !T`. A dedicated fixture verifies `Latitude.asAngle`. The initial 252-match/138-opaque results predate this change; **no new match count is claimed** until XPS reruns the regression tests and the full audit. The report remains partial: overload pairing, receiver qualifiers, default arguments and full template constraints require separate gates.
