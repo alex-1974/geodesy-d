@@ -10,7 +10,7 @@
  */
 module geodesy.projection.internal.equal_earth_kernel;
 
-import std.math : asin, cos, fabs, sin, sqrt;
+import std.math : asin, cos, fabs, isFinite, sin, sqrt;
 
 private enum double a1 = 1.340264;
 private enum double a2 = -0.081106;
@@ -47,11 +47,11 @@ package bool equalEarthForwardKernel(
 {
     x = double.nan;
     y = double.nan;
-    if (!(radius > 0.0) || radius != radius
+    if (!(radius > 0.0) || !isFinite(radius)
+        || !isFinite(beta)
         || fabs(beta) > 1.57079632679489661923
-        || beta != beta
+        || !isFinite(deltaLongitude)
         || fabs(deltaLongitude) > 3.14159265358979323846
-        || deltaLongitude != deltaLongitude)
         return false;
 
     const double theta = asin(k * sin(beta));
@@ -61,7 +61,7 @@ package bool equalEarthForwardKernel(
 
     x = radius * deltaLongitude * cos(theta) / (k * d);
     y = radius * polynomial(theta);
-    return x == x && y == y;
+    return isFinite(x) && isFinite(y);
 }
 
 /**
@@ -79,8 +79,8 @@ package bool equalEarthReverseKernel(
     beta = double.nan;
     deltaLongitude = double.nan;
 
-    if (!(radius > 0.0) || radius != radius
-        || x != x || y != y)
+    if (!(radius > 0.0) || !isFinite(radius)
+        || !isFinite(x) || !isFinite(y))
         return false;
 
     const double tMax = asin(k);
@@ -126,7 +126,7 @@ package bool equalEarthReverseKernel(
 
     beta = asin(sineBeta);
     deltaLongitude = lon;
-    return beta == beta && lon == lon;
+    return isFinite(beta) && isFinite(lon);
 }
 
 @safe unittest
@@ -156,4 +156,7 @@ package bool equalEarthReverseKernel(
 
     assert(!equalEarthReverseKernel(1.0, 100.0, 0.0, beta, longitude));
     assert(!equalEarthForwardKernel(-1.0, 0.0, 0.0, x, y));
+    assert(!equalEarthForwardKernel(double.infinity, 0.0, 0.0, x, y));
+    assert(!equalEarthForwardKernel(1.0, double.infinity, 0.0, x, y));
+    assert(!equalEarthReverseKernel(1.0, double.infinity, 0.0, beta, longitude));
 }
