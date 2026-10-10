@@ -7,8 +7,8 @@ class AggregateCensusTests(unittest.TestCase):
     def test_generated_reflection_checks_protection(self):
         source = generate(["geodesy.angle"])
         self.assertIn("import m0 = geodesy.angle;", source)
-        self.assertIn("__traits(allMembers, T)", source)
-        self.assertIn("__traits(getProtection, __traits(getMember, T, memberName))",
+        self.assertIn("__traits(allMembers, __traits(getMember, m0, tname))", source)
+        self.assertIn("__traits(getProtection, __traits(getMember, __traits(getMember, m0, tname), memberName))",
                       source)
         self.assertIn("__GEODESY_AGG__\\tgeodesy.angle\\t", source)
 
