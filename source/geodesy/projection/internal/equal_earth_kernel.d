@@ -37,7 +37,7 @@ private double derivative(double t)
 }
 
 /** Calculate the spherical/authalic forward kernel (no false offsets). */
-package bool equalEarthForwardKernel(
+package(geodesy.projection) bool equalEarthForwardKernel(
     double radius,
     double beta,
     double deltaLongitude,
@@ -68,7 +68,7 @@ package bool equalEarthForwardKernel(
  * Invert the bounded Equal Earth polynomial for a represented world map.
  * Reject points outside the curved map footprint, not just its y-range.
  */
-package bool equalEarthReverseKernel(
+package(geodesy.projection) bool equalEarthReverseKernel(
     double radius,
     double x,
     double y,
@@ -86,6 +86,12 @@ package bool equalEarthReverseKernel(
     const double tMax = asin(k);
     const double limit = polynomial(tMax);
     const double target = y / radius;
+    if (target == 0.0 && x == 0.0)
+    {
+        beta = 0.0;
+        deltaLongitude = 0.0;
+        return true;
+    }
     if (!(fabs(target) <= limit))
         return false;
 
@@ -136,6 +142,10 @@ package bool equalEarthReverseKernel(
     double x, y;
     assert(equalEarthForwardKernel(1.0, 0.0, 0.0, x, y));
     assert(x == 0.0 && y == 0.0);
+    double originBeta, originLongitude;
+    assert(equalEarthReverseKernel(1.0, 0.0, 0.0,
+        originBeta, originLongitude));
+    assert(originBeta == 0.0 && originLongitude == 0.0);
 
     assert(equalEarthForwardKernel(1.0, 0.0, PI, x, y));
     double beta, longitude;

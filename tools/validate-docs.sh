@@ -70,7 +70,7 @@ for symbol in \
   PseudoMercator TransverseMercator UtmProjection ConformalProjectionFactors \
   Rhumb RhumbLine RhumbDirectResult RhumbInverseResult \
   PolarStereographic UpsHemisphere UpsCoordinate UpsProjection \
-  LambertConformalConic LambertAzimuthalEqualArea; do
+  LambertConformalConic LambertAzimuthalEqualArea EqualEarth; do
   grep -q "$symbol" "$repo/docs/API.md" || {
     echo "FAIL: docs/API.md does not mention public symbol family: $symbol" >&2
     exit 1
