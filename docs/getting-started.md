@@ -135,14 +135,18 @@ const ok =
 assert(ok);
 ```
 
-Throwing convenience form:
+Throwing convenience form (equivalent valid input):
 
 ```d
-auto ecef =
-    geodeticToGeocentric(
-        coordinate,
-        ellipsoid
-    );
+import geodesy;
+
+const earth = wgs84!double();
+const position = GeodeticCoordinate!double.fromComponents(
+    Latitude!double.fromDegrees(48.0),
+    Longitude!double.fromDegrees(16.0),
+    200.0
+);
+const ecef = geodeticToGeocentric(position, earth);
 ```
 
 Throwing forms use `GeodesyValueException` when the documented operation cannot produce a valid result.
