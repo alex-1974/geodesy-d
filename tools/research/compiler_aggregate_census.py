@@ -9,9 +9,7 @@ import argparse
 import csv
 from pathlib import Path
 
-from compiler_visibility_census import (
-    PACKAGE, exported_modules, parse_records, run_census,
-)
+from compiler_visibility_census import PACKAGE, exported_modules
 
 MARKER = "__GEODESY_AGG__"
 
@@ -87,15 +85,22 @@ def main():
     rows = parse(log)
     if not rows:
         raise SystemExit("no aggregate-member records emitted")
-    if any(r["protection"] == "unresolved" for r in rows):
-        raise SystemExit("aggregate-member protection could not be resolved")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["module", "type", "member", "protection"])
         writer.writeheader()
         writer.writerows(rows)
-    print(f"PASS: reflected {len(rows)} public-aggregate member entries")
+    unresolved = [r for r in rows if r["protection"] == "unresolved"]
+    print(f"Reflected {len(rows)} public-aggregate member entries; "
+          f"unresolved={len(unresolved)}")
     print(f"Report: {args.output}")
+    for row in unresolved:
+        print("UNRESOLVED: {module}.{type}.{member} "
+              "(compiler={compiler})".format(**row, compiler=args.compiler))
+    if unresolved:
+        raise SystemExit("FAIL: aggregate-member protection unresolved: "
+                         + str(len(unresolved)))
+    print("PASS: aggregate member protections resolved")
 
 
 if __name__ == "__main__":
