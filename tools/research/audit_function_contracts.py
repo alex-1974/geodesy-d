@@ -91,9 +91,9 @@ def run(ddox_file, triage_file, output):
                 creturn, cattr = candidates[0]
                 # The DMD prefix includes method-level 'const', which DDox
                 # places after parentheses. Both are scanned globally.
-                state = ("return_and_attributes_match" if
+                state = ("return_and_selected_attributes_match" if
                          norm(dret) == norm(creturn) and
-                         dattr == cattr else "return_or_attribute_difference")
+                         dattr == cattr else "return_or_selected_attribute_difference")
             out.append({"module": module, "symbol": symbol,
                         "overload": row["overload"], "status": state,
                         "ddox_return": dret or "",
