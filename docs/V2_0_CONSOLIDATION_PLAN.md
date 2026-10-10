@@ -1,6 +1,6 @@
 # geodesy-d v2.0.0 consolidation plan
 
-Status: **PLANNING**
+Status: **FEATURE FROZEN — C5 API stabilization in progress**
 
 ## Goal
 
@@ -56,13 +56,17 @@ baseline and performance/numerical qualification.
 
 ## C2 — feature freeze
 
-- [ ] create immutable `freeze/feature-2.0.0` checkpoint;
-- [ ] cut a `release/2.0` stabilization branch from the same exact commit if a
-      dedicated stabilization branch is used;
-- [ ] admit no new capability family after this point;
+- [x] create immutable `freeze/feature-2.0.0` checkpoint;
+- [x] cut `release/2.0` from the feature-freeze commit;
+- [x] admit no new capability family after this point (policy active);
 - [ ] continue stabilization work allowed by the workspace release contract:
       correctness fixes, regression tests, validation, performance work, API
       corrections discovered by the audit, documentation, CI, and packaging.
+
+Feature checkpoint: `01d2bbc1822d99ef711d5d78487597b76e650211`.
+The annotated `freeze/feature-2.0.0` tag resolves to this SHA; `release/2.0`
+was created from the same commit. This records the feature boundary, **not**
+an API or release qualification freeze.
 
 ## C3 — release baseline
 
