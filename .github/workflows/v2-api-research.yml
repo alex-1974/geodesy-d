@@ -100,6 +100,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/research/dmd_api_json_snapshot.py --compiler dmd
+          python3 tools/research/verify_enum_contracts.py \
+            build/api-json-dmd \
+            build/v2-enum-contracts.csv \
+            build/external_enum_contracts.d
+          dmd -o- -Isource build/external_enum_contracts.d
+          ldc2 -o- -Isource build/external_enum_contracts.d
           python3 tools/research/reconcile_api_json.py \
             build/api-json-dmd \
             build/v2-public-ddox-prototypes.csv \
@@ -138,4 +144,5 @@ jobs:
             build/v2-evidence-manifest.json
             build/external_intersection_overload_calls.d
             build/external_nonfunction_api.d
+            build/external_enum_contracts.d
           if-no-files-found: warn
