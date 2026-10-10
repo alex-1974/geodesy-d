@@ -53,6 +53,8 @@ jobs:
 
       - name: Generate current DDox evidence
         shell: bash
+        env:
+          DC: dmd
         run: |
           set -euo pipefail
           bash tools/build-versioned-docs.sh
