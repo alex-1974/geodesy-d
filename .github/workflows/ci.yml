@@ -47,6 +47,12 @@ jobs:
         shell: bash
         run: tools/validate-api.sh
 
+      - name: Representative v2 package consumer (compile-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$DC" -o- -Isource tools/fixtures/v2_public_consumer_smoke.d
+
       - name: Documentation contract
         if: matrix.compiler == 'dmd-latest'
         shell: bash
