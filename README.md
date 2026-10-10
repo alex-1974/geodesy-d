@@ -24,18 +24,6 @@ The library is designed around a small, explicit numerical core:
 
 ## What can I do with it?
 
-Convert a geographic position into Earth-centred XYZ coordinates or into
-UTM easting and northing. Measure the shortest surface distance and bearing
-between two positions, find the nearest point on a route, or convert
-coordinates between reference frames. Choose the operation that matches
-the coordinate data and reference model you have.
-
-Start with the [guided examples](docs/getting-started.md). The first example
-below shows several operations together; for a single task, follow the
-corresponding section of the guide.
-
-## What can I do with it?
-
 Convert geographic positions into Earth-centred XYZ or UTM coordinates.
 Measure the shortest surface distance and bearing between places, find
 the closest point on a route segment, or transform coordinates between
