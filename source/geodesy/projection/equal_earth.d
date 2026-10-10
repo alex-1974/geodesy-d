@@ -340,3 +340,48 @@ public:
         assert(!invalid.isValid);
     }
 }
+
+/**
+ * Differential fixtures independently generated with PROJ 9.5.1
+ * (+proj=eqearth +lon_0=0, WGS84 and spherical a=b=6371000).
+ * Distances are in metres. These values must not be derived from this module.
+ */
+@safe unittest
+{
+    import geodesy.ellipsoid : wgs84;
+
+    const sphere = Ellipsoid!double.fromFlattening(6_371_000.0, 0.0);
+    const ellipsoids = [sphere, wgs84!double()];
+    const lon = [16.37208, 117.196763611, -179.999, 175.0];
+    const lat = [48.20849, 34.0575469444, 85.0, -55.0];
+    const sphericalX = [1_312_345.48091405, 10_295_861.09219202,
+                        -10_326_640.10435293, 13_246_250.77046278];
+    const sphericalY = [5_816_365.43582457, 4_256_722.06905651,
+                        8_345_677.93982351, -6_484_657.08620553];
+    const ellipsoidalX = [1_313_648.69768603, 10_302_257.07829061,
+                          -10_327_625.55645225, 13_260_771.75350931];
+    const ellipsoidalY = [5_803_253.62355814, 4_242_849.75761119,
+                          8_345_267.17633819, -6_473_350.64232608];
+
+    foreach (model; 0 .. 2)
+    {
+        const projection = EqualEarth!double.fromParameters(
+            ellipsoids[model], Longitude!double.fromDegrees(0), 0.0, 0.0);
+        foreach (i; 0 .. lon.length)
+        {
+            const source = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(lat[i]),
+                Longitude!double.fromDegrees(lon[i]));
+            const projected = projection.forward(source);
+            const expectedX = model == 0 ? sphericalX[i] : ellipsoidalX[i];
+            const expectedY = model == 0 ? sphericalY[i] : ellipsoidalY[i];
+            assert(fabs(projected.easting - expectedX) < 0.025);
+            assert(fabs(projected.northing - expectedY) < 0.025);
+
+            GeographicCoordinate!double recovered;
+            assert(projection.tryReverse(projected, recovered));
+            assert(fabs(recovered.latitude.degrees - lat[i]) < 1e-7);
+            assert(fabs(recovered.longitude.degrees - lon[i]) < 1e-7);
+        }
+    }
+}
