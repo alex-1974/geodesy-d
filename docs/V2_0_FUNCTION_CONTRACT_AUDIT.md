@@ -86,3 +86,38 @@ before sign-off.
 ## Return-token parser improvement
 
 The parser was extended to recognize DDox return types whose template suffixes are separated by spaces, for example `Angle !T` and `GeodeticCoordinate !T`. A dedicated fixture verifies `Latitude.asAngle`. The initial 252-match/138-opaque results predate this change; **no new match count is claimed** until XPS reruns the regression tests and the full audit. The report remains partial: overload pairing, receiver qualifiers, default arguments and full template constraints require separate gates.
+
+
+## Same-head XPS rerun and return-template parser (2026-10-10)
+
+The newly supplied `v2-function-contract-audit(1).csv`, produced after
+rebuilding DDox and DMD JSON in the same working tree, reports **488**
+DDox rows:
+
+| Status | Count |
+| --- | ---: |
+| `return_and_selected_attributes_match` | 364 |
+| `opaque_or_complex_type_review` | 26 |
+| `overload_pairing_pending` | 35 |
+| `nonfunction_separate_review` | 63 |
+| `return_or_selected_attribute_difference` | 0 |
+
+The 26 unresolved function rows divide into **12 cases with an empty
+DMD function type**, notably seven
+`GeodesicIntersectionEnumeration` and five `UtmZone` members, and
+**14 templated-return DDox parsing cases**, notably
+`Helmert7`, `Helmert14`, `MolodenskyBadekas10` and their
+conversion functions.
+
+The parser was further amended to accept comma-separated template
+return arguments (e.g. `Helmert7 !(T,convention)`), with a regression
+fixture. **No new counts are asserted until an XPS rerun.**
+The 35 overloaded function rows remain unpaired and the 63
+nonfunction rows remain outside this report's scope.
+
+The new CSV supplies improved same-working-tree input consistency,
+but the resulting CSV alone does **not** prove that the manifest and
+DDox inputs were tied to a pinned, clean Git commit. Record a commit
+SHA, source cleanliness, capture manifests and hashes before release
+qualification. Do not promote the 364 partial selected-attribute
+matches to complete API contract certification.
