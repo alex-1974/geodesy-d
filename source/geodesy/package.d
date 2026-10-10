@@ -38,7 +38,7 @@
  * See_Also:
  *     `GeodeticCoordinate`, `GeocentricCoordinate`, `TopocentricFrame`,
  *     `TransverseMercator`, `UtmProjection`, `PolarStereographic`, `UpsProjection`,
- *     `LambertConformalConic`, `LambertAzimuthalEqualArea`, `Geodesic`,
+ *     `LambertConformalConic`, `LambertAzimuthalEqualArea`, `EqualEarth`, `Geodesic`,
  *     `Rhumb`, `RhumbLine`
  *
  * Authors:
@@ -73,6 +73,7 @@ public import geodesy.scalar;
 
 public import geodesy.conversion;
 public import geodesy.projection.factors;
+public import geodesy.projection.equal_earth;
 public import geodesy.projection.lambert_azimuthal_equal_area;
 public import geodesy.projection.lambert_conformal_conic;
 public import geodesy.projection.pseudo_mercator;
