@@ -88,7 +88,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` when `ellipsoidalHeight` is NaN or
-     *     infinite. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     infinite. On failure, the `out` result remains `.init` (the `out` parameter is initialized on entry).
      */
     static bool tryFromComponents(
         const Latitude!T latitude,
@@ -259,4 +259,19 @@ unittest
         latitude, longitude, double.nan, candidate));
     assertThrown!GeodesyValueException(
         GeodeticCoordinate!double.fromComponents(latitude, longitude, double.infinity));
+}
+
+/// Regression: unsuccessful checked geodetic construction resets the out parameter.
+@safe unittest
+{
+    import geodesy;
+    auto result = GeodeticCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0), 171.0);
+    assert(!GeodeticCoordinate!double.tryFromComponents(
+        Latitude!double.fromDegrees(48.0),
+        Longitude!double.fromDegrees(16.0), double.nan, result));
+    assert(result.latitude.degrees == 0.0);
+    assert(result.longitude.degrees == 0.0);
+    assert(result.ellipsoidalHeight == 0.0);
 }
