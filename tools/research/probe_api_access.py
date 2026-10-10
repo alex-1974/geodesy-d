@@ -97,7 +97,11 @@ def main():
     p.add_argument("--timeout", type=int, default=30)
     p.add_argument("--all", action="store_true")
     args = p.parse_args()
-    # Reject a false-negative-only harness before interpreting a single candidate.\n    control_probe(args.compiler, "geodesy.GeodeticCoordinate!double", True, args.timeout)\n    control_probe(args.compiler, "geodesy.GeocentricCoordinate!double", True, args.timeout)\n    print("PASS: two public symbol lookup controls")\n    rows = list(csv.DictReader(args.triage_csv.open(newline="", encoding="utf-8")))
+    # Reject a false-negative-only harness before interpreting a single candidate.
+    control_probe(args.compiler, "geodesy.GeodeticCoordinate!double", True, args.timeout)
+    control_probe(args.compiler, "geodesy.GeocentricCoordinate!double", True, args.timeout)
+    print("PASS: two public symbol lookup controls")
+    rows = list(csv.DictReader(args.triage_csv.open(newline="", encoding="utf-8")))
     selected = list(candidates(rows, args.all))
     args.report_csv.parent.mkdir(parents=True, exist_ok=True)
     with args.report_csv.open("w", newline="", encoding="utf-8") as f:
