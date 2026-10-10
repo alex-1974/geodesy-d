@@ -34,3 +34,9 @@ No XPS run has yet confirmed the new tool's result counts. Do not
 mark this as a complete API-contract PASS before inspecting the
 per-overload CSV. The 63 nonfunction declarations also await full
 kind-specific verification. C1 feature/API freeze remains open.
+
+## XPS result: 35 overload contracts (2026-10-10)
+
+The submitted `v2-paired-overload-contracts.csv` contains **35 records**. All records have `parameters=unique_match`, `return_type=selected_match`, and `selected_attributes=selected_match`. There are **zero reported differences**, no unresolved return types, and every one of the 35 records has `template_constraints=pending`.
+
+This verifies the *selected* return-type and attribute spelling for all 35 uniquely paired overloads. It does not verify template constraints, default expressions, receiver qualifiers, all compiler attributes or actual overload resolution. Results are from the XPS-generated CSV; compiler test commands were not included in this upload. Preserve PR #117 as Draft and do not set freeze tags.
