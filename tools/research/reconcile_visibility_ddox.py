@@ -50,6 +50,11 @@ def main():
     print("Visibility/DDox name-only triage:", counts)
     print("PASS: wrote conservative public-surface review queue to", args.report_csv)
     print("NOTE: public_name_requires_review does not imply unintended accessibility.")
+    for row in rows:
+        if row["status"] in ("public_name_requires_review",
+                             "root_member_requires_reexport_review"):
+            print("REVIEW: {module}.{name} [{status}]".format(**row))
+
 
 
 if __name__ == "__main__":
