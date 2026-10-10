@@ -100,7 +100,13 @@ def main():
     # Reject a false-negative-only harness before interpreting a single candidate.
     control_probe(args.compiler, "geodesy.GeodeticCoordinate!double", True, args.timeout)
     control_probe(args.compiler, "geodesy.GeocentricCoordinate!double", True, args.timeout)
-    print("PASS: two public symbol lookup controls")
+    # Negative visibility control is an explicitly private repository struct.
+    control_probe(args.compiler,
+                  "geodesy.geodesic.GeodesicLineRawPosition!double",
+                  False, args.timeout)
+    # Public type-template instantiations are valid expressions here.
+    control_probe(args.compiler, "geodesy.Angle!double", True, args.timeout)
+    print("PASS: public and private accessibility controls")
     rows = list(csv.DictReader(args.triage_csv.open(newline="", encoding="utf-8")))
     selected = list(candidates(rows, args.all))
     args.report_csv.parent.mkdir(parents=True, exist_ok=True)
