@@ -118,7 +118,6 @@ jobs:
             build/api-json-dmd \
             build/v2-enum-contracts.csv \
             build/external_enum_contracts.d
-            build/external_visibility_probe.d
           dmd -o- -Isource build/external_enum_contracts.d
           ldc2 -o- -Isource build/external_enum_contracts.d
           python3 tools/research/reconcile_api_json.py \
@@ -160,4 +159,5 @@ jobs:
             build/external_intersection_overload_calls.d
             build/external_nonfunction_api.d
             build/external_enum_contracts.d
+            build/external_visibility_probe.d
           if-no-files-found: warn
