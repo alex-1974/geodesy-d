@@ -29,14 +29,23 @@ class ContractPairingTests(unittest.TestCase):
             self.assertEqual(row["template_constraints"], "pending")
 
     def test_opaque_compiler_type_is_not_a_match(self):
-        pages = [{"module": "geodesy.test", "symbol": "call", "overload": str(i),
-                  "signature": "bool call(int x) @safe;"} for i in (1, 2)]
-        dmd = [{"module": "geodesy.test", "symbol": "call", "kind": "function",
-                "line": str(i), "parameters": '[{"type":"int","name":"x"}]',
-                "type": ""} for i in (10, 20)]
+        pages = [
+            {"module": "geodesy.test", "symbol": "call", "overload": "1",
+             "signature": "bool call(int x) @safe;"},
+            {"module": "geodesy.test", "symbol": "call", "overload": "2",
+             "signature": "bool call(double x) @safe;"},
+        ]
+        dmd = [
+            {"module": "geodesy.test", "symbol": "call", "kind": "function",
+             "line": str(line), "parameters": parameters, "type": ""}
+            for line, parameters in (
+                (10, '[{"type":"int","name":"x"}]'),
+                (20, '[{"type":"double","name":"x"}]'),
+            )
+        ]
         result = audit(pages, dmd)
-        self.assertTrue(all(x["parameters"] == "missing_or_ambiguous"
-                            for x in result))
+        self.assertTrue(all(x["parameters"] == "unique_match" for x in result))
+        self.assertTrue(all(x["return_type"] == "unresolved" for x in result))
 
 
 if __name__ == "__main__":
