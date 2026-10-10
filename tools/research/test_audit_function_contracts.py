@@ -16,6 +16,10 @@ class ContractParsingTests(unittest.TestCase):
             type_parts("const pure nothrow @nogc @safe bool(const T x)"),
             ("bool", frozenset({"pure", "nothrow", "@nogc", "@safe"})))
 
+    def test_templated_return_from_ddox(self):
+        sig = "Angle !T asAngle ( ) const pure nothrow @nogc @property @safe ;"
+        self.assertEqual(ddox_return(sig, "Latitude.asAngle"), "Angle!T")
+
     def test_opaque_dmd_type_unresolved(self):
         self.assertIsNone(type_parts(""))
 
