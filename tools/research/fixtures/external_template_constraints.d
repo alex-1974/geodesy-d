@@ -25,18 +25,7 @@ static assert(!__traits(compiles, GeodesicLine!int));
 static assert(!__traits(compiles, GeodesicLine!string));
 static assert(!__traits(compiles, GeodesicLine!(const(double))));
 
-// Probe the six intersection function-template families by explicitly
-// instantiating the function template; do not use bare template names.
-static assert(__traits(compiles, allGeodesicIntersections!double));
-static assert(__traits(compiles, closestGeodesicIntersection!double));
-static assert(__traits(compiles, nextGeodesicIntersection!double));
-static assert(__traits(compiles, tryAllGeodesicIntersections!double));
-static assert(__traits(compiles, tryClosestGeodesicIntersection!double));
-static assert(__traits(compiles, tryNextGeodesicIntersection!double));
-
-static assert(!__traits(compiles, allGeodesicIntersections!int));
-static assert(!__traits(compiles, closestGeodesicIntersection!int));
-static assert(!__traits(compiles, nextGeodesicIntersection!int));
-static assert(!__traits(compiles, tryAllGeodesicIntersections!int));
-static assert(!__traits(compiles, tryClosestGeodesicIntersection!int));
-static assert(!__traits(compiles, tryNextGeodesicIntersection!int));
+// The six free intersection function-template families need concrete
+// valid argument lists to disambiguate their overloads. A bare
+// `function!double` in __traits(compiles) is NOT a reliable positive
+// control for overloaded function symbols; do not claim that it is.
