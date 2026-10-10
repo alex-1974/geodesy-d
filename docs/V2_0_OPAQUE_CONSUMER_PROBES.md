@@ -30,3 +30,16 @@ record compiler versions and source SHA, then update the results.
 See `docs/V2_0_OVERLOAD_PAIRING.md` for the separate 35-overload
 parameter-key matching exercise. Neither gate alone authorizes
 feature or API freeze.
+
+## XPS DMD and LDC execution (2026-10-10)
+
+The user ran both documented external fixture compile commands from the repository root:
+
+```sh
+dmd -o- -Isource tools/research/fixtures/external_contract_opaque.d
+ldc2 -o- -Isource tools/research/fixtures/external_contract_opaque.d
+```
+
+Both returned to the shell prompt without error output. This is evidence that **the same external consumer fixture compiled under both compilers**, checking twelve opaque DMD-JSON method/property return types, selected `@safe` and `pure nothrow @nogc` call contexts. The paste does not print compiler versions or an explicit exit-code capture; because both commands were issued sequentially without `set -e`, the absence of visible diagnostics is a successful-compilation indication rather than independently recorded zero exit codes. For final gate evidence, rerun with `set -euo pipefail`, versions, source SHA and explicit PASS markers.
+
+This is *not* complete compiler verification of all function attributes, templates, overload resolution or nonfunction declarations. Feature/API freeze remains open.
