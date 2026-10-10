@@ -20,8 +20,16 @@ def main():
     root = a.root.resolve()
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root,
                                      text=True).strip()
-    changes = subprocess.check_output(["git", "status", "--porcelain"], cwd=root,
-                                      text=True).strip()
+    # Generated build/ files are deliberately untracked and must not cause
+    # false dirty-source failures. Reject *all* other source changes.
+    tracked = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=root, text=True).strip()
+    untracked = subprocess.check_output(
+        ["git", "ls-files", "--others", "--exclude-standard"],
+        cwd=root, text=True).splitlines()
+    unexpected = [p for p in untracked if not p.startswith("build/")]
+    changes = tracked + ("\n" + "\n".join(unexpected) if unexpected else "")
     compiler_manifest_path = root / "build/api-json-dmd/manifest.json"
     compiler_manifest = json.loads(compiler_manifest_path.read_text(encoding="utf-8"))
     if compiler_manifest.get("source_commit") != commit:
