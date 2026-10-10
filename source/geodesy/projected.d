@@ -64,7 +64,7 @@ public:
      *
      * Returns:
      *     `true` on success; `false` when either component is NaN or
-     *     infinite. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     infinite. On failure, the `out` result remains `.init` (the `out` parameter is initialized on entry).
      */
     static bool tryFromComponents(
         const T easting,
@@ -189,4 +189,13 @@ unittest
 
     assertThrown!GeodesyValueException(
         ProjectedCoordinate!double.fromComponents(double.nan, 0.0));
+}
+
+/// Regression: unsuccessful checked projected construction resets the out parameter.
+@safe unittest
+{
+    import geodesy;
+    auto result = ProjectedCoordinate!double.fromComponents(12.0, 34.0);
+    assert(!ProjectedCoordinate!double.tryFromComponents(double.nan, 10.0, result));
+    assert(result.easting == 0.0 && result.northing == 0.0);
 }
