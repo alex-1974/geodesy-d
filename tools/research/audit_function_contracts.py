@@ -61,7 +61,7 @@ def ddox_return(text, symbol):
     # DDox separates template suffixes: "Angle !T", "Result !(T, U)".
     # Keep composite types together, but do not guess multiword return types.
     joined = "".join(pre)
-    if not joined or "," in joined or "{" in joined:
+    if not joined or "{" in joined:
         return None
     return joined
 
