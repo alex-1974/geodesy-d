@@ -74,6 +74,17 @@ jobs:
           ldc2 -o- -Isource build/external_intersection_overload_calls.d
           echo 'PASS: 81 concrete DMD and LDC overload calls compile'
 
+      - name: Generate and compile 63 nonfunction structural consumers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/generate_nonfunction_consumer.py \
+            build/v2-public-ddox-prototypes.csv \
+            build/external_nonfunction_api.d
+          dmd -o- -Isource build/external_nonfunction_api.d
+          ldc2 -o- -Isource build/external_nonfunction_api.d
+          echo 'PASS: 63 nonfunction DDox records structurally consumer-checked'
+
       - name: Compile previously qualified scalar fixtures
         shell: bash
         run: |
@@ -115,4 +126,5 @@ jobs:
             build/v2-*.csv
             build/api-json-dmd/manifest.json
             build/external_intersection_overload_calls.d
+            build/external_nonfunction_api.d
           if-no-files-found: warn
