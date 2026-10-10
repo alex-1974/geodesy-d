@@ -62,6 +62,43 @@ jobs:
             build/versioned-docs/output/current/build/ddox/site \
             build/v2-public-ddox-prototypes.csv
 
+      - name: Reflect public/private module visibility with DMD and LDC
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/compiler_visibility_census.py \
+            --compiler dmd \
+            --output build/v2-visibility-dmd.csv \
+            --source-output build/external_visibility_probe.d
+          python3 tools/research/compiler_visibility_census.py \
+            --compiler ldc2 \
+            --output build/v2-visibility-ldc.csv
+          diff -u build/v2-visibility-dmd.csv build/v2-visibility-ldc.csv
+          echo 'PASS: DMD/LDC module visibility reflection agrees'
+          python3 tools/research/reconcile_visibility_ddox.py \
+            build/v2-visibility-dmd.csv \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-visibility-ddox-triage.csv
+          echo 'PASS: reflected module/DDox name-review queue generated'
+
+      - name: Reflect aggregate members with DMD and LDC
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmd_status=0
+          ldc_status=0
+          python3 tools/research/compiler_aggregate_census.py \
+            --compiler dmd --output build/v2-aggregate-dmd.csv \
+            --source-output build/external_aggregate_probe.d || dmd_status=$?
+          python3 tools/research/compiler_aggregate_census.py \
+            --compiler ldc2 --output build/v2-aggregate-ldc.csv || ldc_status=$?
+          echo "Aggregate reflection: DMD exit=$dmd_status, LDC exit=$ldc_status"
+          if (( dmd_status != 0 || ldc_status != 0 )); then
+            exit 1
+          fi
+          diff -u build/v2-aggregate-dmd.csv build/v2-aggregate-ldc.csv
+          echo 'PASS: DMD/LDC public aggregate member census agrees'
+
       - name: Generate and compile concrete intersection calls
         shell: bash
         run: |
@@ -145,4 +182,6 @@ jobs:
             build/external_intersection_overload_calls.d
             build/external_nonfunction_api.d
             build/external_enum_contracts.d
+            build/external_visibility_probe.d
+            build/external_aggregate_probe.d
           if-no-files-found: warn
