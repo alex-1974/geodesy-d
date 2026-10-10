@@ -14,7 +14,7 @@ from pathlib import Path
 ATTRS = ("pure", "nothrow", "@nogc", "@safe", "@trusted", "@system",
          "@property", "ref", "scope", "return")
 MODES = {"static", "abstract", "final", "override", "synchronized", "deprecated"}
-FUNCTION_TYPE = re.compile(r"^(.*?)\((.*)\\)$")
+FUNCTION_TYPE = re.compile(r"^(.*?)\((.*)\)$")
 
 
 def norm(s):
