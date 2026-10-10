@@ -385,3 +385,66 @@ public:
         }
     }
 }
+
+/** Qualify finite-domain rejection and the equatorial seam for double. */
+@safe unittest
+{
+    import geodesy.ellipsoid : wgs84;
+
+    const projection = EqualEarth!double.fromParameters(
+        wgs84!double(), Longitude!double.fromDegrees(0),
+        1200.0, -4500.0);
+
+    GeographicCoordinate!double ignored;
+    assert(!projection.tryReverse(
+        ProjectedCoordinate!double.fromComponents(100_000_000.0, -4500.0),
+        ignored));
+    assert(!projection.tryReverse(
+        ProjectedCoordinate!double.fromComponents(1200.0, 100_000_000.0),
+        ignored));
+
+    foreach (degrees; [-179.999, -100.0, 0.0, 100.0, 179.999])
+    {
+        const source = GeographicCoordinate!double.fromComponents(
+            Latitude!double.fromDegrees(0.0),
+            Longitude!double.fromDegrees(degrees));
+        const projected = projection.forward(source);
+        GeographicCoordinate!double reverse;
+        assert(projection.tryReverse(projected, reverse));
+        assert(fabs(reverse.latitude.degrees) < 1e-10);
+        assert(fabs(reverse.longitude.degrees - degrees) < 1e-8);
+    }
+
+    const north = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(90.0),
+        Longitude!double.fromDegrees(0.0));
+    const south = GeographicCoordinate!double.fromComponents(
+        Latitude!double.fromDegrees(-90.0),
+        Longitude!double.fromDegrees(0.0));
+    assert(isFinite(projection.forward(north).northing));
+    assert(isFinite(projection.forward(south).northing));
+}
+
+/** Instantiate checked and throwing Equal Earth operations for each scalar. */
+@safe unittest
+{
+    import geodesy.ellipsoid : wgs84;
+    import std.meta : AliasSeq;
+
+    foreach (T; AliasSeq!(float, double, real))
+    {
+        EqualEarth!T projection;
+        assert(EqualEarth!T.tryFromParameters(
+            wgs84!T(), Longitude!T.fromDegrees(cast(T) 0),
+            cast(T) 0, cast(T) 0, projection));
+        const point = GeographicCoordinate!T.fromComponents(
+            Latitude!T.fromDegrees(cast(T) 30),
+            Longitude!T.fromDegrees(cast(T) 45));
+        const mapped = projection.forward(point);
+        GeographicCoordinate!T back;
+        assert(projection.tryReverse(mapped, back));
+        const T tolerance = is(T == float) ? cast(T) 0.001 : cast(T) 1e-7;
+        assert(fabs(back.latitude.degrees - cast(T) 30) < tolerance);
+        assert(fabs(back.longitude.degrees - cast(T) 45) < tolerance);
+    }
+}
