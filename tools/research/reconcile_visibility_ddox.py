@@ -18,6 +18,13 @@ def reconcile(reflected, ddox):
         module, name, protection = (entry[k] for k in ("module", "name", "protection"))
         if protection != "public":
             status = "nonpublic_declared"
+        elif name == "object":
+            # D's implicit object module appears in allMembers of each module.
+            # It is not a declaration of geodesy-d itself.
+            status = "implicit_object_import"
+        elif module == "geodesy" and name == "geodesy":
+            # The root module's self-name is not an API declaration.
+            status = "root_module_self_name"
         elif module == "geodesy":
             status = "root_member_requires_reexport_review"
         elif (module, name) in documented:
@@ -50,6 +57,11 @@ def main():
     print("Visibility/DDox name-only triage:", counts)
     print("PASS: wrote conservative public-surface review queue to", args.report_csv)
     print("NOTE: public_name_requires_review does not imply unintended accessibility.")
+    unexpected = [row for row in rows if row["status"] in
+                  ("public_name_requires_review", "root_member_requires_reexport_review")]
+    if unexpected:
+        raise SystemExit("unclassified public module-level names: " +
+                         ", ".join(r["module"] + "." + r["name"] for r in unexpected))
     for row in rows:
         if row["status"] in ("public_name_requires_review",
                              "root_member_requires_reexport_review"):
