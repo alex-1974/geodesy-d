@@ -113,6 +113,13 @@ public:
             && _radius > 0.0 && isFinite(_qp) && _qp > 0.0;
     }
 
+    /// Example: check the invalid default projection state.
+    @safe unittest
+    {
+        EqualEarth!double projection;
+        assert(!projection.isValid);
+    }
+
     /** Try to prepare the supported sphere/oblate Equal Earth projection. */
     static bool tryFromParameters(
         const Ellipsoid!T ellipsoid,
@@ -149,6 +156,16 @@ public:
         return true;
     }
 
+    /// Example: prepare a WGS 84 Equal Earth projection without throwing.
+    @safe unittest
+    {
+        import geodesy.ellipsoid : wgs84;
+        EqualEarth!double projection;
+        assert(EqualEarth!double.tryFromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0),
+            0.0, 0.0, projection));
+    }
+
     /** Prepare a projection or throw for unsupported parameters. */
     static EqualEarth fromParameters(
         const Ellipsoid!T ellipsoid,
@@ -161,6 +178,15 @@ public:
                 falseEasting, falseNorthing, result))
             throw new GeodesyValueException("Invalid Equal Earth parameters.");
         return result;
+    }
+
+    /// Example: use a throwing factory for known valid parameters.
+    @safe unittest
+    {
+        import geodesy.ellipsoid : wgs84;
+        auto projection = EqualEarth!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+        assert(projection.isValid);
     }
 
     /** Project a geographic coordinate without throwing. */
@@ -187,6 +213,20 @@ public:
             cast(T) (y + cast(double) _falseNorthing), result);
     }
 
+    /// Example: check the forward projection.
+    @safe unittest
+    {
+        import geodesy.ellipsoid : wgs84;
+        auto projection = EqualEarth!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+        ProjectedCoordinate!double result;
+        assert(projection.tryForward(
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(0),
+                Longitude!double.fromDegrees(0)), result));
+        assert(result.easting == 0.0);
+    }
+
     /** Project a geographic coordinate; throws on failure. */
     ProjectedCoordinate!T forward(const GeographicCoordinate!T source) const @safe
     {
@@ -194,6 +234,19 @@ public:
         if (!tryForward(source, result))
             throw new GeodesyValueException("Equal Earth forward failed.");
         return result;
+    }
+
+    /// Example: project an equatorial point.
+    @safe unittest
+    {
+        import geodesy.ellipsoid : wgs84;
+        auto projection = EqualEarth!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+        auto projected = projection.forward(
+            GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(0),
+                Longitude!double.fromDegrees(0)));
+        assert(projected.northing == 0.0);
     }
 
     /** Invert a point in the represented Equal Earth footprint. */
@@ -226,6 +279,18 @@ public:
         return true;
     }
 
+    /// Example: invert an Equal Earth coordinate without throwing.
+    @safe unittest
+    {
+        import geodesy.ellipsoid : wgs84;
+        auto projection = EqualEarth!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+        GeographicCoordinate!double result;
+        assert(projection.tryReverse(
+            ProjectedCoordinate!double.fromComponents(0.0, 0.0), result));
+        assert(result.latitude.degrees == 0.0);
+    }
+
     /** Invert a projected point or throw on failure. */
     GeographicCoordinate!T reverse(const ProjectedCoordinate!T source) const @safe
     {
@@ -234,6 +299,26 @@ public:
             throw new GeodesyValueException("Equal Earth reverse failed.");
         return result;
     }
+    /// Example: invert the map origin.
+    @safe unittest
+    {
+        import geodesy.ellipsoid : wgs84;
+        auto projection = EqualEarth!double.fromParameters(
+            wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+        auto result = projection.reverse(
+            ProjectedCoordinate!double.fromComponents(0.0, 0.0));
+        assert(result.latitude.degrees == 0.0);
+    }
+
+}
+
+/// Example: construct a prepared Equal Earth projection.
+@safe unittest
+{
+    import geodesy.ellipsoid : wgs84;
+    auto projection = EqualEarth!double.fromParameters(
+        wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+    assert(projection.isValid);
 }
 
 /** Verify public double and float projection round trips. */
