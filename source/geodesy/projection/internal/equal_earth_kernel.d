@@ -51,7 +51,7 @@ package bool equalEarthForwardKernel(
         || !isFinite(beta)
         || fabs(beta) > 1.57079632679489661923
         || !isFinite(deltaLongitude)
-        || fabs(deltaLongitude) > 3.14159265358979323846
+        || fabs(deltaLongitude) > 3.14159265358979323846)
         return false;
 
     const double theta = asin(k * sin(beta));
