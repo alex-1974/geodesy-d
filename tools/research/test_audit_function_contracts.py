@@ -25,6 +25,14 @@ class ContractParsingTests(unittest.TestCase):
         self.assertEqual(ddox_return(sig, "Helmert7.fromCanonical"),
                          "Helmert7!(T,convention)")
 
+    def test_dmd_template_return_balanced_parentheses(self):
+        parsed = type_parts(
+            "const pure nothrow @nogc @property @safe "
+            "Helmert7!(T, convention)()")
+        self.assertEqual(parsed[0], "Helmert7!(T,convention)")
+        self.assertEqual(parsed[1],
+                         {"pure", "nothrow", "@nogc", "@property", "@safe"})
+
     def test_opaque_dmd_type_unresolved(self):
         self.assertIsNone(type_parts(""))
 
