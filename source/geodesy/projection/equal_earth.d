@@ -432,7 +432,7 @@ public:
     import std.meta : AliasSeq;
 
     static foreach (T; AliasSeq!(float, double, real))
-    {
+    {{
         EqualEarth!T projection;
         assert(EqualEarth!T.tryFromParameters(
             wgs84!T(), Longitude!T.fromDegrees(cast(T) 0),
@@ -446,5 +446,5 @@ public:
         const T tolerance = is(T == float) ? cast(T) 0.001 : cast(T) 1e-7;
         assert(fabs(back.latitude.degrees - cast(T) 30) < tolerance);
         assert(fabs(back.longitude.degrees - cast(T) 45) < tolerance);
-    }
+    }}
 }
