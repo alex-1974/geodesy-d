@@ -30,3 +30,49 @@ python3 tools/research/audit_api_declaration_kinds.py \
 ```
 
 Re-run DMD JSON, DDox, and all reports on the **same pinned commit** before the final C1 decision. No release freeze is authorized from current snapshots.
+
+
+## XPS kind-audit CSV results (2026-10-10)
+
+The uploaded `v2-api-declaration-kind-audit.csv` contains **488 rows**
+and the following mutually exclusive statuses:
+
+| Status | Rows |
+| --- | ---: |
+| `function_pending_full_contract` | 423 |
+| `struct_kind_constraint_matched` | 45 |
+| `alias_target_matched` | 6 |
+| `enum_kind_matched_members_pending` | 7 |
+| `struct_kind_matched_constraints_pending` | 2 |
+| `opaque_dmd_parameter_type` | 2 |
+| `class_kind_matched_base_pending` | 1 |
+| `constructor_parameters_pending` | 1 |
+| `template_declaration_pending` | 1 |
+| **Total** | **488** |
+
+All records receive an explicit classification. This **does not**
+mean 488 fully qualified or consumer-verified contracts.
+
+The two struct records awaiting constraint review are
+`GeodesicIntersectionEnumeration` and `UtmZone`.
+The class and its constructor are
+`GeodesyValueException` and `GeodesyValueException.this`.
+The outstanding template is `isGeodesyScalar`.
+
+The seven enum families awaiting member/value checks are
+`GeodesicIntersectionCoincidence`,
+`GeodesicIntersectionEnumerationStatus`,
+`GeodesicSegmentIntersectionKind`,
+`GeodesicSegmentNearestKind`, `UpsHemisphere`,
+`UtmHemisphere`, and `HelmertConvention`.
+
+The six matched alias families are
+`CoordinateFrameHelmert14`, `PositionVectorHelmert14`,
+`CoordinateFrameHelmert`, `PositionVectorHelmert`,
+`CoordinateFrameMolodenskyBadekas`, and
+`PositionVectorMolodenskyBadekas`.
+
+**Outstanding:** return types, D attributes, member signatures,
+default values, enum member values, alias accessibility,
+actual instantiated constraints, external consumer compilation,
+and an exact same-head DMD/DDox baseline. Freeze gates remain open.
