@@ -37,17 +37,34 @@ def type_parts(dmd):
         return None
     attr = frozenset(x for x in ATTRS if re.search(
         r"(?<![A-Za-z_])" + re.escape(x) + r"(?![A-Za-z_])", raw))
-    m = FUNCTION_TYPE.match(raw)
-    if not m:
+    # The callable parameter list is the final balanced (...) group.
+    # A return type may itself contain template arguments, e.g.
+    # Helmert7!(T, convention)(). A regex matching the first "("
+    # incorrectly treats those template arguments as call parameters.
+    if not raw.endswith(")"):
         return None
-    prefix = m.group(1)
-    # Extract rightmost type token after qualifiers; simple scalar/template returns.
-    tokens = prefix.split()
+    depth = 0
+    opening = None
+    for index in range(len(raw) - 1, -1, -1):
+        char = raw[index]
+        if char == ")":
+            depth += 1
+        elif char == "(":
+            depth -= 1
+            if depth == 0:
+                opening = index
+                break
+            if depth < 0:
+                return None
+    if opening is None:
+        return None
+    prefix = raw[:opening].strip()
     qualifiers = {"const", "immutable", "shared", "inout"} | set(ATTRS)
-    returns = [x for x in tokens if x not in qualifiers]
-    if len(returns) != 1:
+    returns = [token for token in prefix.split() if token not in qualifiers]
+    result = "".join(returns)
+    if not result or "{" in result:
         return None
-    return returns[0], attr
+    return result, attr
 
 
 def ddox_return(text, symbol):
