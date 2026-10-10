@@ -18,6 +18,7 @@ private enum double a3 = 0.000893;
 private enum double a4 = 0.003796;
 private enum double k = 0.8660254037844386467637231707529361834714;
 
+/** Evaluate the Equal Earth meridional polynomial F(theta). */
 private double polynomial(double t)
     pure nothrow @safe @nogc
 {
@@ -26,6 +27,7 @@ private double polynomial(double t)
     return t * (a1 + a2 * t2 + t6 * (a3 + a4 * t2));
 }
 
+/** Evaluate the derivative F'(theta) needed by both directions. */
 private double derivative(double t)
     pure nothrow @safe @nogc
 {
