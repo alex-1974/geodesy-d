@@ -58,7 +58,12 @@ def ddox_return(text, symbol):
         return None
     pre = [x for x in m.group(1).strip().split()
            if x not in MODES and x not in ATTRS]
-    return pre[-1] if len(pre) == 1 else None
+    # DDox separates template suffixes: "Angle !T", "Result !(T, U)".
+    # Keep composite types together, but do not guess multiword return types.
+    joined = "".join(pre)
+    if not joined or "," in joined or "{" in joined:
+        return None
+    return joined
 
 
 def run(ddox_file, triage_file, output):
