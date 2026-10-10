@@ -251,3 +251,29 @@ results are interpreted. Do not claim this as a completed compiler audit
 until both CSVs and their logs have been inspected. The initial gate
 is **name accessibility**, not exhaustive API signatures, template
 constraints or UFCS resolution.
+
+
+## External lookup archive: both compilers agree on 198 negative probes
+
+The XPS archive `geodesy-v2-api-access.tar.gz` contains both
+`v2-api-access-dmd.csv` and `v2-api-access-ldc.csv`.
+
+- 198 distinct name candidates in each CSV, identical and in the same order.
+- DMD: 198 `inaccessible_or_nonexpression`, zero positive lookups,
+  zero `compiler_error`.
+- LDC: exactly the same classifications for all 198.
+- Composition: 195 template candidates, two enums, one struct.
+
+**Interpretation is currently limited.** The negative test
+`__traits(compiles, module.symbol)` is not proven to be appropriate for
+all symbol kinds, especially uninstantiated templates. No known-public
+positive control had been run with that original harness. Therefore
+`198/198` negative is **not evidence that 198 symbols are private**.
+
+The probe script now performs two known-public positive lookup controls
+(`geodesy.GeodeticCoordinate!double` and
+`geodesy.GeocentricCoordinate!double`) and stops if either fails.
+This revised script must be executed on DMD and LDC before classifying
+the earlier negatives. Even if controls pass, template-specific
+instantiation/signature checks remain necessary. The feature/API
+freeze gate stays open.
