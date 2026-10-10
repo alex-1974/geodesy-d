@@ -81,6 +81,18 @@ jobs:
             build/v2-visibility-ddox-triage.csv
           echo 'PASS: reflected module/DDox name-review queue generated'
 
+      - name: Reflect aggregate members with DMD and LDC
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/compiler_aggregate_census.py \
+            --compiler dmd --output build/v2-aggregate-dmd.csv \
+            --source-output build/external_aggregate_probe.d
+          python3 tools/research/compiler_aggregate_census.py \
+            --compiler ldc2 --output build/v2-aggregate-ldc.csv
+          diff -u build/v2-aggregate-dmd.csv build/v2-aggregate-ldc.csv
+          echo 'PASS: DMD/LDC public aggregate member census agrees'
+
       - name: Generate and compile concrete intersection calls
         shell: bash
         run: |
@@ -165,4 +177,5 @@ jobs:
             build/external_nonfunction_api.d
             build/external_enum_contracts.d
             build/external_visibility_probe.d
+            build/external_aggregate_probe.d
           if-no-files-found: warn
