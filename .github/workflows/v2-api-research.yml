@@ -1,0 +1,116 @@
+name: v2 API Research Gate
+
+on:
+  pull_request:
+    paths:
+      - 'tools/research/**'
+      - 'docs/V2_0_**'
+      - '.github/workflows/v2-api-research.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-research:
+    name: DMD and LDC consumer research
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with historical documentation tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install DMD baseline
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: dmd-2.111.0
+
+      - name: Install LDC
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ldc-latest
+
+      - name: Install Python HTML parser
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-bs4
+
+      - name: Versions and pinned checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          dmd --version
+          ldc2 --version
+          python3 --version
+
+      - name: Research tool unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools/research -p 'test_*.py'
+
+      - name: Generate current DDox evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/build-versioned-docs.sh
+          python3 tools/research/ddox_signature_census.py \
+            build/versioned-docs/output/current/build/ddox/site \
+            build/v2-public-ddox-prototypes.csv
+
+      - name: Generate and compile concrete intersection calls
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/generate_intersection_consumer.py \
+            build/v2-public-ddox-prototypes.csv \
+            build/external_intersection_overload_calls.d
+          test "$(grep -c '^void probe_' build/external_intersection_overload_calls.d)" -eq 81
+          dmd -o- -Isource build/external_intersection_overload_calls.d
+          ldc2 -o- -Isource build/external_intersection_overload_calls.d
+          echo 'PASS: 81 concrete DMD and LDC overload calls compile'
+
+      - name: Compile previously qualified scalar fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          for compiler in dmd ldc2; do
+            "$compiler" -o- -Isource tools/research/fixtures/external_template_constraints.d
+            "$compiler" -o- -Isource tools/research/fixtures/external_contract_opaque.d
+          done
+          echo 'PASS: DMD and LDC scalar/opaque consumer fixtures'
+
+      - name: Capture compiler declaration snapshot and compare
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/dmd_api_json_snapshot.py --compiler dmd
+          python3 tools/research/reconcile_api_json.py \
+            build/api-json-dmd \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-dmd-ddox-triage.csv
+          python3 tools/research/overload_pairing.py \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-dmd-ddox-triage.csv \
+            build/v2-overload-pairing.csv
+          python3 tools/research/audit_paired_overloads.py \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-dmd-ddox-triage.csv \
+            build/v2-paired-overload-contracts.csv
+          python3 tools/research/audit_overload_constraints.py \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-dmd-ddox-triage.csv \
+            build/v2-overload-constraint-candidates.csv
+
+      - name: Upload research evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-api-research-evidence
+          path: |
+            build/v2-*.csv
+            build/api-json-dmd/manifest.json
+            build/external_intersection_overload_calls.d
+          if-no-files-found: warn
