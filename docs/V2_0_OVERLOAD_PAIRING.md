@@ -39,3 +39,7 @@ or visibility proof. Full return type/attribute comparisons for all
 35 paired overloads, consumer compilations of the twelve opaque DMD
 functions, remaining nonfunction checks and same-head clean snapshot
 manifest verification are pending. Do not set freeze tags.
+
+## XPS CSV verification (2026-10-10)
+
+The uploaded `v2-overload-pairing.csv` was independently inspected: **35 rows** across **ten** documented overload families; all 35 statuses are `unique_parameter_match`. There are zero ambiguous or missing parameter matches, zero duplicate `(module, symbol, overload)` rows, and every row supplies a DMD source line. This confirms the **parameter-based pairing gate** on XPS evidence. The CSV does not report execution of the external DMD/LDC consumer fixture and does not validate return types, attributes, template constraints or runtime overload resolution. No freeze is authorized.
