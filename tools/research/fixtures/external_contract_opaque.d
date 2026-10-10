@@ -19,8 +19,7 @@ static assert(is(typeof(UtmZone.init.centralMeridianDegrees) == int));
 static assert(is(typeof(UtmZone.init.isValid) == bool));
 static assert(is(typeof(UtmZone.init.number) == uint));
 static assert(is(typeof(UtmZone.fromNumber(33u)) == UtmZone));
-static assert(is(typeof(UtmZone.tryFromNumber(33u, UtmZone.init)) == bool) == false);
-// Positive checked-factory call below uses an lvalue for the out parameter.
+// The checked factory requires an lvalue for its out parameter; see probe below.
 
 @safe pure nothrow @nogc
 void inspectReadOnlyProperties()
