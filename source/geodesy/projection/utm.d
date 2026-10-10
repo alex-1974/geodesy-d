@@ -168,7 +168,7 @@ public:
      *
      * Returns:
      *     `true` for a valid zone number; otherwise `false`. On failure
-     *     `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     `result` remains `.init`.
      */
     static bool tryFromNumber(
         const uint number,
@@ -324,7 +324,7 @@ public:
      *
      * Returns:
      *     `true` for structurally valid input; otherwise `false`. On
-     *     failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     failure `result` remains `.init`.
      */
     static bool tryFromComponents(
         const UtmZone zone,
@@ -801,7 +801,7 @@ public:
      *
      * Returns:
      *     `true` when policy parameters and delegated TM preparation
-     *     succeed; otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     succeed; otherwise `false`. On failure `result` remains `.init`.
      */
     static bool tryFromZone(
         const Ellipsoid!T ellipsoid,
@@ -1056,7 +1056,8 @@ public:
      *
      * Returns:
      *     `true` when this projection is valid and delegated TM projection
-     *     succeeds; otherwise `false`. On failure `result` is initialized to `.init` on entry and has no guaranteed value on failure.
+     *     succeeds; otherwise `false`. The `out` result is initialized on entry;
+     *     do not use its value if projection fails.
      */
     bool tryForward(
         const GeographicCoordinate!T source,
@@ -1220,8 +1221,8 @@ public:
      *
      * Returns:
      *     `true` when this projection is valid and delegated bounded TM
-     *     reverse succeeds; otherwise `false`. On failure `result` remains
-     *     unchanged.
+     *     reverse succeeds; otherwise `false`. The `out` result is initialized
+     *     on entry; do not use its value if reverse projection fails.
      */
     bool tryReverse(
         const ProjectedCoordinate!T source,
@@ -1542,8 +1543,8 @@ if (isGeodesyScalar!T)
  *
  * Returns:
  *     `true` when explicit-zone preparation and delegated reverse TM
- *     projection succeed; otherwise `false`. On failure `result` remains
- *     unchanged.
+ *     projection succeed; otherwise `false`. The `out` result is initialized
+ *     on entry; do not use its value if reverse projection fails.
  */
 bool tryReverseUtm(T)(
     const UtmCoordinate!T source,
