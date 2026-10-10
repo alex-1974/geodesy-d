@@ -1,6 +1,6 @@
 # geodesy-d v2.0.0 consolidation plan
 
-Status: **FEATURE FROZEN — C5 API stabilization in progress**
+Status: **FEATURE + API FROZEN — C8/C9 final release qualification**
 
 ## Goal
 

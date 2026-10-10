@@ -6,7 +6,7 @@ It is intentionally smaller than a complete CRS engine. The library provides wel
 
 ## Status
 
-**Stable v1 line — v1.2.0 released. M3 Navigation & Polar Geodesy is complete.**
+**Stable release: v1.2.0. The v2.0.0 API is feature- and API-frozen on `release/2.0`, undergoing final release qualification.**
 
 `geodesy-d v1.0.0` was released on September 26, 2026. The frozen v1 public
 API includes the accepted coordinate, transformation, projection, geodesic,
@@ -14,10 +14,10 @@ and topocentric families documented below.
 
 v1.2.0 is the current published stable feature release. It completes M3
 Navigation & Polar Geodesy while preserving the frozen v1 source-compatibility
-baseline. On `develop`, M4 — Reference Frames and M5 — Advanced Ellipsoidal
-Geometry are complete, including the qualified prolate geodesic domain.
-The next target is v2.0.0: consolidation and public API stabilization,
-not another feature-expansion milestone.
+baseline. M4 — Reference Frames and M5 — Advanced Ellipsoidal Geometry are complete,
+including the qualified prolate geodesic domain. The v2.0.0 stabilization
+branch has passed its API freeze and is undergoing final documentation and
+release validation; it is **not yet a published stable release**.
 
 ## Responsibility boundary
 
