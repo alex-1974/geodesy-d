@@ -75,10 +75,10 @@ def control_probe(compiler, expression, expected, timeout):
     with tempfile.TemporaryDirectory(prefix="geodesy-api-control-") as d:
         path = pathlib.Path(d) / "control.d"
         path.write_text(
-            "module api_access_control;\\n"
-            "import geodesy;\\n"
-            f'enum bool works = __traits(compiles, {expression});\\n'
-            f'static assert(works == {str(expected).lower()}, "control mismatch");\\n',
+            "module api_access_control;\n"
+            "import geodesy;\n"
+            f'enum bool works = __traits(compiles, {expression});\n'
+            f'static assert(works == {str(expected).lower()}, "control mismatch");\n',
             encoding="utf-8")
         p = subprocess.run(
             [compiler, "-o-", f"-I{ROOT / 'source'}", str(path)],
