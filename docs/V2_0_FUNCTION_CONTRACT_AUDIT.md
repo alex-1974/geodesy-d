@@ -49,3 +49,36 @@ be silently marked verified.
 **Reproducibility:** all DMD JSON and DDox snapshots must be
 regenerated on the same pinned commit before sign-off. No feature-
 or API-freeze tag is authorized at this stage.
+
+
+## XPS CSV evaluation (2026-10-10)
+
+The uploaded `v2-function-contract-audit.csv` includes 488 DDox
+rows. The first selected-return/attribute checker reports:
+
+| Status | Rows |
+| --- | ---: |
+| `return_and_selected_attributes_match` | 252 |
+| `opaque_or_complex_type_review` | 138 |
+| `nonfunction_separate_review` | 63 |
+| `overload_pairing_pending` | 35 |
+| `return_or_selected_attribute_difference` | 0 |
+
+**Do not mistake 0 differences for full agreement.** The 252 matches
+reflect the limited parsing implemented by this script, not complete
+semantic signature equivalence. In the 138 unresolved function
+records, **126** have no parsed DDox return token and **12**
+have no readable DMD function type in the report. Examples of
+DDox-return parser limitations include templated returns such as
+`Angle!T`, `Ellipsoid!T`, `GeographicCoordinate!T` and
+`GeodesicDirectResult!T`; zero DMD type tokens occur in some
+`GeodesicIntersectionEnumeration` properties. The 35 overloaded
+prototype records still need unambiguous parameter-key pairing.
+
+Next: improve DDox return-type recognition for templated and
+qualified types; explicitly pair overloaded function records using
+the already validated parameter comparison; inspect unparseable DMD
+type records; then test return/attribute/receiver qualifiers with
+DMD and LDC. Retain a separate kind-aware gate for the 63
+nonfunction rows. Rebuild all inputs on a single pinned commit
+before sign-off.
