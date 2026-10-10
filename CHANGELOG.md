@@ -4,6 +4,15 @@ All notable changes to `geodesy-d` will be documented here.
 
 ## [Unreleased]
 
+### Planned (v2.1.0; not yet implemented)
+
+- Standardize the controlled DMD/LDC toolchain policy and release matrix (#17).
+- Add the Equal Earth projection, EPSG method 1078, after numerical and
+  external-PROJ qualification (#116).
+- Physical geodesy and gravity model work (#49, #50) is excluded.
+
+## [2.0.0] - 2026-10-10
+
 ### Added
 
 - Added prolate rotational-ellipsoid representation to `Ellipsoid!T`,
