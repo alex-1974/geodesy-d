@@ -85,7 +85,7 @@ private:
             latitude = beta >= 0 ? PI / 2.0 : -PI / 2.0;
             return true;
         }
-        if (_e2 == 0.0)
+        if (_e2 == 0.0 || beta == 0.0)
         {
             latitude = beta;
             return true;
