@@ -62,6 +62,20 @@ jobs:
             build/versioned-docs/output/current/build/ddox/site \
             build/v2-public-ddox-prototypes.csv
 
+      - name: Reflect public/private module visibility with DMD and LDC
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/research/compiler_visibility_census.py \
+            --compiler dmd \
+            --output build/v2-visibility-dmd.csv \
+            --source-output build/external_visibility_probe.d
+          python3 tools/research/compiler_visibility_census.py \
+            --compiler ldc2 \
+            --output build/v2-visibility-ldc.csv
+          diff -u build/v2-visibility-dmd.csv build/v2-visibility-ldc.csv
+          echo 'PASS: DMD/LDC module visibility reflection agrees'
+
       - name: Generate and compile concrete intersection calls
         shell: bash
         run: |
@@ -104,6 +118,7 @@ jobs:
             build/api-json-dmd \
             build/v2-enum-contracts.csv \
             build/external_enum_contracts.d
+            build/external_visibility_probe.d
           dmd -o- -Isource build/external_enum_contracts.d
           ldc2 -o- -Isource build/external_enum_contracts.d
           python3 tools/research/reconcile_api_json.py \
