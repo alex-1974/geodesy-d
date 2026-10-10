@@ -75,6 +75,11 @@ jobs:
             --output build/v2-visibility-ldc.csv
           diff -u build/v2-visibility-dmd.csv build/v2-visibility-ldc.csv
           echo 'PASS: DMD/LDC module visibility reflection agrees'
+          python3 tools/research/reconcile_visibility_ddox.py \
+            build/v2-visibility-dmd.csv \
+            build/v2-public-ddox-prototypes.csv \
+            build/v2-visibility-ddox-triage.csv
+          echo 'PASS: reflected module/DDox name-review queue generated'
 
       - name: Generate and compile concrete intersection calls
         shell: bash
