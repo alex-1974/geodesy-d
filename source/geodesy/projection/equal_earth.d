@@ -464,3 +464,35 @@ public:
         assert(fabs(back.longitude.degrees - cast(T) 45) < tolerance);
     }}
 }
+
+
+/** Regression grid for the bounded authalic inverse, including polar approaches. */
+@safe unittest
+{
+    import geodesy.ellipsoid : wgs84;
+    import std.math : fabs;
+
+    const projection = EqualEarth!double.fromParameters(
+        wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+    const double[] latitudes = [
+        -89.999999, -89.99, -85.0, -60.0, -30.0, -1.0,
+        -0.000001, 0.0, 0.000001, 1.0, 30.0, 60.0, 85.0,
+        89.99, 89.999999
+    ];
+    const double[] longitudes = [-179.999, -100.0, 0.0, 100.0, 179.999];
+    foreach (lat; latitudes)
+    {
+        foreach (lon; longitudes)
+        {
+            const original = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(lat),
+                Longitude!double.fromDegrees(lon));
+            ProjectedCoordinate!double projected;
+            assert(projection.tryForward(original, projected));
+            GeographicCoordinate!double recovered;
+            assert(projection.tryReverse(projected, recovered));
+            assert(fabs(recovered.latitude.degrees - lat) < 2e-6);
+            assert(fabs(recovered.longitude.degrees - lon) < 2e-6);
+        }
+    }
+}
