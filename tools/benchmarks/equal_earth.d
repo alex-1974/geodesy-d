@@ -5,6 +5,8 @@ module equal_earth_benchmark;
 import geodesy;
 import std.datetime.stopwatch : StopWatch, AutoStart;
 import std.stdio : writeln;
+import std.math : fabs;
+import std.conv : to;
 
 void main()
 {
@@ -28,7 +30,16 @@ void main()
 
     ProjectedCoordinate!double[4] mapped;
     foreach (i; 0 .. inputs.length)
-        assert(projection.tryForward(inputs[i], mapped[i]));
+    {
+        if (!projection.tryForward(inputs[i], mapped[i]))
+            throw new Exception("Equal Earth benchmark preflight forward failed");
+        GeographicCoordinate!double recovered;
+        if (!projection.tryReverse(mapped[i], recovered))
+            throw new Exception("Equal Earth benchmark preflight reverse failed for input " ~ i.to!string);
+        if (fabs(recovered.latitude.radians - inputs[i].latitude.radians) > 1e-9
+            || fabs(recovered.longitude.radians - inputs[i].longitude.radians) > 1e-9)
+            throw new Exception("Equal Earth benchmark preflight roundtrip mismatch for input " ~ i.to!string);
+    }
 
     double forwardChecksum = 0.0;
     auto forwardTimer = StopWatch(AutoStart.yes);
@@ -36,7 +47,7 @@ void main()
     {
         ProjectedCoordinate!double value;
         if (!projection.tryForward(inputs[i % inputs.length], value))
-            assert(0);
+            throw new Exception("Equal Earth benchmark forward failed");
         forwardChecksum += value.easting;
     }
     forwardTimer.stop();
@@ -47,7 +58,7 @@ void main()
     {
         GeographicCoordinate!double value;
         if (!projection.tryReverse(mapped[i % mapped.length], value))
-            assert(0);
+            throw new Exception("Equal Earth benchmark reverse failed");
         reverseChecksum += value.latitude.radians;
     }
     reverseTimer.stop();
