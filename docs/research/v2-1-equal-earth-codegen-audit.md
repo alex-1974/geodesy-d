@@ -74,3 +74,46 @@ Newton reverse speedup. This does **not** close the independent codegen
 audit gate or authorize publishing `v2.1.0`.
 
 No other workspace repository is modified by this recipe.
+
+## Submitted XPS disassembly inspection (2026-10-11)
+
+Archive: `equal-earth-codegen.tar.gz` supplied by the developer, containing
+`dmd.asm.txt`, `dmd.nm.txt`, `ldc.asm.txt`, and `ldc.nm.txt`.
+No raw `.o` files, compiler-version transcript or runtime allocation trace
+were included, so compiler version provenance follows the proposed command,
+not independent metadata in the archive.
+
+The archive provides 55,803 DMD disassembly lines, 34,910 LDC
+lines, and 937/977 symbol-table lines. Sections were isolated by
+`Disassembly of section` headings and their relocation records inspected;
+searching the entire object for allocation symbols would incorrectly mix
+benchmark harness, formatting, exceptions and checked kernels.
+
+| Checked-path function | DMD direct relocation observations | LDC direct relocation observations |
+| --- | --- | --- |
+| `tryForward` | `toAuthalic`, forward kernel, `ProjectedCoordinate.tryFromComponents` | `toAuthalic`; trigonometry inlined from forward kernel (`sin`, `asin`, `cos`) |
+| `tryReverse` | reverse kernel, `fromAuthalic`, checked latitude/longitude factories | reverse kernel, `fromAuthalic` (latitude/longitude conversion optimized inline) |
+| `fromAuthalic` | `authalicQ` | `sin`, `logImpl` (authalic expression partially inlined) |
+| `toAuthalic` | `authalicQ`, `atan2Asm` | `sin`, `logImpl`, `asin` |
+| Equal Earth forward kernel | `atan2Asm` | `sin`, `asin`, `cos` |
+| Equal Earth reverse kernel | two `atan2Asm` relocations | `asin`, `sin`, `cos`, `asin` |
+
+Neither compiler's **isolated checked-path source sections** has a direct
+`gc_malloc`, `gc_qalloc` or `_d_allocclass` relocation. The full object
+**does** contain allocator symbols: DMD lists unresolved `gc_malloc` and
+`gc_qalloc`; LDC additionally lists `_d_allocclass`. These symbols cannot
+be assigned to the checked hot path based on the global symbol table.
+
+**Qualified conclusion:** compiler-checked `@nogc` attributes remain in
+public checked signatures, and this source-section relocation inspection
+found no direct GC allocator calls from the Equal Earth checked functions.
+The two compilers produce materially different inlining and math-helper
+calls. This is **not** proof that all math-helper transitive paths avoid
+non-GC/C allocation, or that the linked executable never allocates.
+
+**Additional evidence needed for a fully closed strict allocation gate:**
+compiler-version transcript, exact git SHA of generated objects, raw object
+files or isolated linked wrapper, and inspection of reachable math-helper
+calls or a targeted allocation trace. In particular, `@nogc` alone cannot
+establish absence of allocation by external C libraries. Do not claim a
+full end-to-end allocation-free proof on the supplied archive alone.
