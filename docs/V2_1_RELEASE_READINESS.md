@@ -32,6 +32,17 @@ Baseline stable release: `v2.0.0` on `main`.
   pinned release gates use DMD 2.111.0/2.112.1/2.113.0 and
   LDC 1.41.0/1.42.0/1.43.0.
 - PR #138 docs merge passed CI, DDox and the Equal Earth consumer workflow.
+- PR #143 inverse-authalic Newton plus bisection fallback merged into
+  `develop` at `a4306fc74ae1c51a82562f69bceccc9aaae75a9c`.
+  Its exact pre-merge candidate `41dcf1ac9141261218e9cd64f2e39b6f499e64bf`
+  passed **10/10 triggered workflows**, including the added polar/antimeridian
+  grid on ARM64 runners. The final XPS timings are recorded in
+  `docs/research/v2-1-equal-earth-newton-xps-results.md`:
+  reverse throughput improved 4.24x (DMD) and 3.76x (LDC) for four sampled
+  locations. These are local benchmarks, not global speed guarantees.
+- The `develop` squash merge SHA itself has **no separately recorded workflow
+  runs** at this checkpoint; passing PR-head workflows must not be relabelled
+  as post-merge results.
 
 ## Gates required *before* release
 
@@ -40,9 +51,9 @@ Baseline stable release: `v2.0.0` on `main`.
 - [ ] Perform explicit public API and numerical behaviour review, including
       Equal Earth units, pole/antimeridian conventions, `real` precision
       statement, and unsupported prolate flattening.
-- [ ] Confirm safety/attribute and allocation/codegen evidence for checked
-      paths; run/review an Equal Earth release-mode benchmark (no unmeasured
-      performance claim).
+- [ ] Complete allocation/codegen assembly inspection for checked paths.
+      XPS release-mode benchmark **completed** and documented for DMD 2.111.0
+      and LDC 1.41.0; performance evidence alone does not close this gate.
 - [ ] Complete the bounded #17 acceptance for `geodesy-d`; separately track
       any workspace-wide work without modifying sibling repositories.
 - [ ] Freeze feature set and then API with annotated checkpoints according
