@@ -73,7 +73,7 @@ private:
         return isFinite(beta);
     }
 
-    /** Recover geodetic latitude with bounded monotone bisection. */
+    /** Recover geodetic latitude using bracketed, bounded Newton steps. */
     bool fromAuthalic(double beta, out double latitude) const
         pure nothrow @safe @nogc
     {
@@ -93,16 +93,32 @@ private:
         const double target = _qp * sin(beta);
         double lo = -PI / 2.0;
         double hi = PI / 2.0;
-        foreach (_; 0 .. 65)
+        double phi = beta;
+        foreach (_; 0 .. 24)
         {
-            const double mid = (lo + hi) * 0.5;
-            if (authalicQ(_e2, _e, mid) < target)
-                lo = mid;
+            const double residual = authalicQ(_e2, _e, phi) - target;
+            if (residual < 0.0)
+                lo = phi;
             else
-                hi = mid;
+                hi = phi;
+
+            const double s = sin(phi);
+            const double c = cos(phi);
+            const double denominator = 1.0 - _e2 * s * s;
+            const double slope = 2.0 * (1.0 - _e2) * c
+                / (denominator * denominator);
+            const double trial = phi - residual / slope;
+            const double next = isFinite(trial) && trial > lo && trial < hi
+                ? trial : (lo + hi) * 0.5;
+            if (fabs(next - phi) <= 4.0 * double.epsilon)
+            {
+                latitude = next;
+                return true;
+            }
+            phi = next;
         }
-        latitude = (lo + hi) * 0.5;
-        return true;
+        // Do not silently return an unconverged inverse.
+        return false;
     }
 
 public:
