@@ -117,8 +117,21 @@ private:
             }
             phi = next;
         }
-        // Do not silently return an unconverged inverse.
-        return false;
+        // Near a pole the derivative tends to zero. Preserve the
+        // pre-optimization monotone inverse as a bounded fallback when
+        // the safeguarded Newton steps do not converge.
+        lo = -PI / 2.0;
+        hi = PI / 2.0;
+        foreach (_; 0 .. 65)
+        {
+            const double mid = (lo + hi) * 0.5;
+            if (authalicQ(_e2, _e, mid) < target)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        latitude = (lo + hi) * 0.5;
+        return true;
     }
 
 public:
