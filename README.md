@@ -132,16 +132,16 @@ void main()
 
 ## Status
 
-**Current stable feature release: v1.2.0.**
+**Current stable release: v2.0.0 (2026-10-10).**
 
-v1.2.0 completes M3 — Navigation & Polar Geodesy. The current `develop` line
-has since completed M4 — Reference Frames and M5 — Advanced Ellipsoidal
-Geometry, including the qualified prolate geodesic domain.
+v2.0.0 consolidated M4 reference frames, M5 advanced ellipsoidal geometry,
+and the qualified prolate geodesic domain. Its public API is frozen and the
+release passed the six-compiler and independent validation gates.
 
-The next release target is **v2.0.0**, planned primarily as a consolidation and
-API-stabilization release rather than another breadth milestone. Physical
-geodesy / gravity work remains research-only for now and is not part of the
-initial v2.0 scope.
+The proposed **v2.1.0** scope is deliberately narrow: standardize the
+DMD/LDC toolchain policy (#17) and add the Equal Earth projection (EPSG method
+1078, #116). Physical geodesy/gravity (#49/#50) is separate research, **not**
+part of v2.1.0.
 
 ## Documentation
 

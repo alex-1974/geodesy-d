@@ -12,15 +12,17 @@ forward as active roadmap text.
 The released stable line is:
 
 ~~~text
-v1.2.0
+v2.0.0
 ~~~
 
-v1.2.0 completed M3 — Navigation & Polar Geodesy and was published on
-2026-10-07. It preserves the frozen v1 source contract. The current `develop`
-line has since completed M4 — Reference Frames, M5 — Advanced Ellipsoidal
-Geometry, and the qualified prolate geodesic admission from #69. The active
-release target is v2.0.0, focused on consolidation, API stabilization, and
-qualification rather than another capability milestone.
+v2.0.0 was published on 2026-10-10 after feature/API freezes, a six-compiler
+consumer gate, and 28 successful release workflows. It consolidates the M4
+Reference Frames and M5 Advanced Ellipsoidal Geometry families and the
+qualified prolate geodesic domain. v1.2.0 (2026-10-07) remains the historical
+M3 release and v1 compatibility baseline.
+
+The next proposed target is **v2.1.0**, limited to controlled DMD/LDC toolchain
+alignment (#17) and Equal Earth projection (EPSG method 1078, #116).
 
 The frozen v1 API already provides:
 
@@ -397,6 +399,37 @@ Preferred release sequence:
 The v2.0 release should therefore answer a stronger question than “what else can
 the library do?”: **is the API and numerical contract we already have the one we
 want to support for the next long-lived major line?**
+
+---
+
+
+# v2.1 — Toolchain consolidation and Equal Earth
+
+**Status:** scoped, implementation not yet complete.
+
+Included:
+
+- **#17** — align reproducible DMD/LDC compiler commands, release CI and
+  documented compiler-specific workarounds across the workspace. Keep the
+  proven 2.111/2.112/2.113 DMD and 1.41/1.42/1.43 LDC six-compiler release
+  matrix; no new compiler or toolchain replacement merely for this release.
+- **#116** — implement bounded Equal Earth (EPSG operation method 1078)
+  as an independent, prepared, pure-D projection family consistent with the
+  existing checked/throwing, strong-coordinate, and Ddoc conventions.
+  Qualify spherical and terrestrial oblate ellipsoidal forward/inverse paths
+  independently against PROJ and boundary/round-trip cases.
+
+Excluded:
+
+- M6 physical geodesy, normal gravity, geoid/gravity data (#49, #50);
+- additional new projection families, CRS authority databases, WKT/PROJJSON,
+  raster reprojection or geospatial application policy;
+- unrelated v2 public API refactoring.
+
+Release gates: focused API/family review for the new projection, numerical
+and differential oracles, DMD/LDC unit/consumer checks, generated documentation,
+feature/API freeze checkpoints and exact-release-candidate qualification.
+The v2.0 public contract remains source-compatible.
 
 ---
 

@@ -4,6 +4,37 @@ All notable changes to `geodesy-d` will be documented here.
 
 ## [Unreleased]
 
+### Added (v2.1.0 candidate; unreleased)
+
+- Added prepared `EqualEarth!T` (EPSG method 1078), supporting spherical and
+  terrestrial oblate ellipsoids, explicit central meridian/false offsets,
+  checked and throwing forward/reverse APIs, and aggregate `import geodesy;` (#116).
+- Documented Equal Earth internal `double` working precision for public
+  `float`, `double`, and `real` rather than promising extra `real` precision.
+
+### Performance
+
+- Accelerated inverse Equal Earth authalic-latitude recovery with a bounded
+  Newton iteration and monotone bisection fallback, without public API changes.
+- Measured reverse-projection median wall-time speedups on the XPS of 4.24x
+  (DMD 2.111.0) and 3.76x (LDC 1.41.0) over seven paired runs;
+  see `docs/research/v2-1-equal-earth-newton-xps-results.md`.
+
+### Validation
+
+- Added spherical/WGS 84 independent PROJ 9.5.1 reference fixtures,
+  boundary and inverse round-trip tests, and an isolated Equal Earth consumer
+  workflow for DMD 2.111.0/2.112.1/2.113.0 and LDC 1.41.0/1.42.0/1.43.0.
+- Reconciled `geodesy-d` compiler policy and documented read-only workspace
+  CI observations; cross-repository completion remains open in #17.
+
+### Scope
+
+- Physical geodesy and gravity model work (#49, #50) remains excluded.
+- v2.1.0 has **not** been feature/API frozen or released.
+
+## [2.0.0] - 2026-10-10
+
 ### Added
 
 - Added prolate rotational-ellipsoid representation to `Ellipsoid!T`,

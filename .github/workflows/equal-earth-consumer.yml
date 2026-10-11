@@ -1,0 +1,44 @@
+name: Equal Earth external consumer
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-consumer:
+    name: ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - dmd-2.111.0
+          - dmd-2.112.1
+          - dmd-2.113.0
+          - ldc-1.41.0
+          - ldc-1.42.0
+          - ldc-1.43.0
+    steps:
+      - name: Checkout dependency source
+        uses: actions/checkout@v6
+        with:
+          path: geodesy-d
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v2
+        with:
+          compiler: ${{ matrix.compiler }}
+      - name: Build and run outside library tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir consumer
+          cp geodesy-d/tools/fixtures/equal_earth_consumer.d consumer/app.d
+          cd consumer
+          "$DC" -i -I../geodesy-d/source -of=consumer app.d
+          ./consumer
