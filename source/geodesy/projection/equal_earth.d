@@ -73,7 +73,7 @@ private:
         return isFinite(beta);
     }
 
-    /** Recover geodetic latitude with bounded monotone bisection. */
+    /** Recover geodetic latitude using bracketed, bounded Newton steps. */
     bool fromAuthalic(double beta, out double latitude) const
         pure nothrow @safe @nogc
     {
@@ -93,6 +93,35 @@ private:
         const double target = _qp * sin(beta);
         double lo = -PI / 2.0;
         double hi = PI / 2.0;
+        double phi = beta;
+        foreach (_; 0 .. 24)
+        {
+            const double residual = authalicQ(_e2, _e, phi) - target;
+            if (residual < 0.0)
+                lo = phi;
+            else
+                hi = phi;
+
+            const double s = sin(phi);
+            const double c = cos(phi);
+            const double denominator = 1.0 - _e2 * s * s;
+            const double slope = 2.0 * (1.0 - _e2) * c
+                / (denominator * denominator);
+            const double trial = phi - residual / slope;
+            const double next = isFinite(trial) && trial > lo && trial < hi
+                ? trial : (lo + hi) * 0.5;
+            if (fabs(next - phi) <= 4.0 * double.epsilon)
+            {
+                latitude = next;
+                return true;
+            }
+            phi = next;
+        }
+        // Near a pole the derivative tends to zero. Preserve the
+        // pre-optimization monotone inverse as a bounded fallback when
+        // the safeguarded Newton steps do not converge.
+        lo = -PI / 2.0;
+        hi = PI / 2.0;
         foreach (_; 0 .. 65)
         {
             const double mid = (lo + hi) * 0.5;
@@ -447,4 +476,36 @@ public:
         assert(fabs(back.latitude.degrees - cast(T) 30) < tolerance);
         assert(fabs(back.longitude.degrees - cast(T) 45) < tolerance);
     }}
+}
+
+
+/** Regression grid for the bounded authalic inverse, including polar approaches. */
+@safe unittest
+{
+    import geodesy.ellipsoid : wgs84;
+    import std.math : fabs;
+
+    const projection = EqualEarth!double.fromParameters(
+        wgs84!double(), Longitude!double.fromDegrees(0), 0.0, 0.0);
+    const double[] latitudes = [
+        -89.999999, -89.99, -85.0, -60.0, -30.0, -1.0,
+        -0.000001, 0.0, 0.000001, 1.0, 30.0, 60.0, 85.0,
+        89.99, 89.999999
+    ];
+    const double[] longitudes = [-179.999, -100.0, 0.0, 100.0, 179.999];
+    foreach (lat; latitudes)
+    {
+        foreach (lon; longitudes)
+        {
+            const original = GeographicCoordinate!double.fromComponents(
+                Latitude!double.fromDegrees(lat),
+                Longitude!double.fromDegrees(lon));
+            ProjectedCoordinate!double projected;
+            assert(projection.tryForward(original, projected));
+            GeographicCoordinate!double recovered;
+            assert(projection.tryReverse(projected, recovered));
+            assert(fabs(recovered.latitude.degrees - lat) < 2e-6);
+            assert(fabs(recovered.longitude.degrees - lon) < 2e-6);
+        }
+    }
 }
