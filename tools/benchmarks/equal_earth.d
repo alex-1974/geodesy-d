@@ -5,6 +5,8 @@ module equal_earth_benchmark;
 import geodesy;
 import std.datetime.stopwatch : StopWatch, AutoStart;
 import std.stdio : writeln;
+import std.math : fabs;
+import std.conv : to;
 
 void main()
 {
@@ -33,7 +35,10 @@ void main()
             throw new Exception("Equal Earth benchmark preflight forward failed");
         GeographicCoordinate!double recovered;
         if (!projection.tryReverse(mapped[i], recovered))
-            throw new Exception("Equal Earth benchmark preflight reverse failed");
+            throw new Exception("Equal Earth benchmark preflight reverse failed for input " ~ i.to!string);
+        if (fabs(recovered.latitude.radians - inputs[i].latitude.radians) > 1e-9
+            || fabs(recovered.longitude.radians - inputs[i].longitude.radians) > 1e-9)
+            throw new Exception("Equal Earth benchmark preflight roundtrip mismatch for input " ~ i.to!string);
     }
 
     double forwardChecksum = 0.0;
