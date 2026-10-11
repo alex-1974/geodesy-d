@@ -26,10 +26,15 @@ ldc-1.41.0 -O3 -release -i -Isource \
 ```
 
 Run each binary several times on an otherwise idle host and report the
-median and dispersion, not one lucky run. The tool prints the operation
-count, elapsed wall-clock seconds and a checksum. The checksum helps
-keep the result observable; the benchmark exercises both the public
-checked forward and reverse paths.
+median and dispersion, not one lucky run. The tool reports **separate**
+forward and reverse operation counts, elapsed wall-clock seconds and
+checksums. It cycles through four geographic test coordinates rather than
+repeating one invariant input. Both modes exercise the public checked API.
+
+Calculate operations per second per mode as `operations / elapsed_seconds`.
+Do not combine both modes into one throughput number. Beware of compiler
+optimizations and warm-up effects, and validate the checksums between builds.
+The probe is intended for comparison, not a certified microbenchmark.
 
 This is a baseline harness, **not** an allocation proof or an optimization
 comparison. For codegen qualification, inspect symbols and generated
